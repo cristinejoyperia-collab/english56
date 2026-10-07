@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juicy Fruit Spelling Adventure - 2 Player Battle</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            user-select: none;
+            overflow: hidden;
+            transition: background 0.5s ease;
+        }
+
+        /* Default Background Theme */
+        .theme-tropical {
+            background: linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%);
+        }
+        .theme-orange {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #feada6 100%);
+        }
+        .theme-apple {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        .theme-berry {
+            background: linear-gradient(135deg, #654ea3 0%, #eaafc8 100%);
+        }
+        .theme-chalkboard {
+            background: #22382B;
+            border: 12px solid #5A3D28;
+        }
+        .theme-aqua {
+            background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+        }
+
+        .font-fredoka {
+            font-family: 'Fredoka One', cursive;
+        }
+
+        /* Bouncy Buttons */
+        .btn-juicy {
+            transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 6px 0 rgba(0,0,0,0.2);
+        }
+        .btn-juicy:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0 rgba(0,0,0,0.25);
+        }
+        .btn-juicy:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.2);
+        }
+
+        /* Flying Floating Lowercase Letters */
+        .floating-letter {
+            position: absolute;
+            cursor: pointer;
+            transition: transform 0.15s ease-out, opacity 0.2s;
+            will-change: transform, top, left;
+            filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.3));
+        }
+        .floating-letter:hover {
+            filter: drop-shadow(0 12px 20px rgba(255, 230, 0, 0.9)) scale(1.18);
+        }
+
+        /* Shake Animation */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        /* Glassmorphism Panel */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(12px);
+            border: 3px solid rgba(255, 255, 255, 0.6);
+        }
+        .glass-dark {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border: 3px solid rgba(255, 255, 255, 0.15);
+        }
+    </style>
+</head>
+<body id="game-body" class="theme-tropical h-screen w-screen overflow-hidden text-slate-800">
+
+    <!-- Background Decoration Bubbles -->
+    <div id="bg-bubbles-container" class="absolute inset-0 pointer-events-none overflow-hidden z-0 opacity-20">
+        <div class="absolute bg-white rounded-full w-96 h-96 -top-20 -left-20 blur-2xl animate-pulse"></div>
+        <div class="absolute bg-yellow-300 rounded-full w-80 h-80 top-1/2 -right-20 blur-2xl"></div>
+        <div class="absolute bg-emerald-400 rounded-full w-72 h-72 -bottom-10 left-1/3 blur-2xl"></div>
+    </div>
+
+    <!-- TOP HEADER / DASHBOARD & SCOREBOARD -->
+    <header class="relative z-30 w-full px-3 py-2 glass-panel shadow-lg flex flex-wrap items-center justify-between gap-2 border-b-4 border-amber-400">
+        
+        <!-- Left: Word Progress & Settings -->
+        <div class="flex items-center gap-2">
+            <div class="bg-amber-400 text-amber-950 font-fredoka px-3 py-1.5 rounded-2xl text-base md:text-lg shadow flex items-center gap-2">
+                <i class="fa-solid fa-lemon text-xl animate-bounce"></i>
+                <span>Word <span id="current-word-num">1</span>/10</span>
+            </div>
+
+            <!-- Settings / Theme Button -->
+            <button onclick="openSettingsModal()" class="btn-juicy bg-indigo-600 hover:bg-indigo-700 text-white font-fredoka px-3 py-1.5 rounded-2xl flex items-center gap-2 text-sm md:text-base">
+                <i class="fa-solid fa-sliders text-yellow-300"></i>
+                <span class="hidden sm:inline">Dashboard</span>
+            </button>
+        </div>
+
+        <!-- Center 1: HEAD-TO-HEAD MATCHUP & SCOREBOARD -->
+        <div class="flex items-center gap-2 md:gap-4 bg-white/90 px-3 py-1.5 rounded-3xl border-2 border-amber-300 shadow-inner">
+            
+            <!-- Group 1 / Player 1 -->
+            <div class="flex items-center gap-2">
+                <div class="text-right">
+                    <div class="text-[10px] uppercase font-bold text-rose-500 tracking-wider">Group 1</div>
+                    <div id="p1-name-display" class="font-fredoka text-xs md:text-sm text-slate-800 truncate max-w-[110px] md:max-w-[150px]">20陳旻希 Elle</div>
+                </div>
+                <div class="bg-rose-500 text-white font-fredoka px-2.5 py-0.5 rounded-xl flex items-center gap-1 shadow">
+                    <span id="p1-score-display" class="text-lg md:text-2xl text-yellow-200">0</span>
+                    <div class="flex flex-col ml-1">
+                        <button onclick="adjustScore('p1', 10)" class="text-[9px] bg-rose-700 hover:bg-rose-800 px-1 font-bold leading-none rounded-t" title="+10">+</button>
+                        <button onclick="adjustScore('p1', -10)" class="text-[9px] bg-rose-800 hover:bg-rose-900 px-1 font-bold leading-none rounded-b" title="-10">-</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VS Badge & Randomizer trigger -->
+            <button onclick="openSpinnerModal()" class="btn-juicy bg-gradient-to-r from-amber-400 to-orange-500 text-amber-950 font-fredoka px-2.5 py-1 rounded-full text-xs md:text-sm flex items-center gap-1 shadow animate-pulse">
+                <span>VS</span>
+                <i class="fa-solid fa-dice text-xs"></i>
+            </button>
+
+            <!-- Group 2 / Player 2 -->
+            <div class="flex items-center gap-2">
+                <div class="bg-sky-500 text-white font-fredoka px-2.5 py-0.5 rounded-xl flex items-center gap-1 shadow">
+                    <span id="p2-score-display" class="text-lg md:text-2xl text-yellow-200">0</span>
+                    <div class="flex flex-col ml-1">
+                        <button onclick="adjustScore('p2', 10)" class="text-[9px] bg-sky-700 hover:bg-sky-800 px-1 font-bold leading-none rounded-t" title="+10">+</button>
+                        <button onclick="adjustScore('p2', -10)" class="text-[9px] bg-sky-800 hover:bg-sky-900 px-1 font-bold leading-none rounded-b" title="-10">-</button>
+                    </div>
+                </div>
+                <div class="text-left">
+                    <div class="text-[10px] uppercase font-bold text-sky-600 tracking-wider">Group 2</div>
+                    <div id="p2-name-display" class="font-fredoka text-xs md:text-sm text-slate-800 truncate max-w-[110px] md:max-w-[150px]">15廖平叡 Ryan</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center 2: Timer -->
+        <div class="flex items-center gap-1.5 bg-slate-900 text-white px-3 py-1 rounded-full font-fredoka shadow">
+            <i class="fa-solid fa-stopwatch text-rose-400 text-lg" id="timer-icon"></i>
+            <span id="timer-display" class="text-xl md:text-2xl tracking-wider text-amber-300">90s</span>
+        </div>
+
+        <!-- Right: Control Actions -->
+        <div class="flex items-center gap-1.5">
+            <button id="audio-toggle-btn" onclick="toggleMute()" class="btn-juicy bg-teal-500 hover:bg-teal-600 text-white p-2 rounded-xl text-base" title="Toggle Sound">
+                <i id="audio-icon" class="fa-solid fa-volume-high"></i>
+            </button>
+            <button id="pause-btn" onclick="togglePause()" class="btn-juicy bg-amber-500 hover:bg-amber-600 text-white p-2 rounded-xl text-base" title="Pause Game">
+                <i class="fa-solid fa-pause"></i>
+            </button>
+            <button onclick="nextQuestion()" class="btn-juicy bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1.5 rounded-xl font-fredoka flex items-center gap-1 text-xs md:text-sm">
+                <span>Next</span>
+                <i class="fa-solid fa-forward"></i>
+            </button>
+            <button onclick="confirmEndGame()" class="btn-juicy bg-rose-500 hover:bg-rose-600 text-white p-2 rounded-xl text-base" title="End Game">
+                <i class="fa-solid fa-flag-checkered"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- PLAY AREA CONTAINER -->
+    <main id="play-area" class="relative z-10 w-full h-[calc(100vh-75px)] flex flex-col justify-between items-center p-3">
+
+        <!-- Top Word Prompt Header -->
+        <div class="text-center mt-1 z-20">
+            <h2 class="font-fredoka text-2xl md:text-4xl text-slate-800 drop-shadow-md flex items-center justify-center gap-3">
+                <span id="fruit-emoji-icon" class="text-4xl md:text-5xl">🍊</span>
+                <span id="word-prompt-title">Spell the Fruit!</span>
+            </h2>
+            <p class="text-slate-700 text-xs md:text-sm font-bold mt-0.5 bg-white/60 px-3 py-0.5 rounded-full inline-block backdrop-blur-sm">
+                Catch the big lowercase letters floating on screen!
+            </p>
+        </div>
+
+        <!-- Target Spelling Slots (Center-Bottom) -->
+        <div class="z-20 mb-6 w-full max-w-4xl flex flex-col items-center">
+            <!-- Target Letter Containers -->
+            <div id="word-slots-container" class="flex flex-wrap justify-center gap-2 md:gap-3 p-3 bg-white/80 backdrop-blur-md rounded-3xl border-4 border-amber-300 shadow-2xl max-w-full">
+                <!-- Slots populated dynamically -->
+            </div>
+
+            <!-- Action Controls -->
+            <div class="flex items-center gap-3 mt-3">
+                <button onclick="clearCurrentSpelling()" class="btn-juicy bg-amber-500 hover:bg-amber-600 text-white font-fredoka px-4 py-1.5 rounded-2xl flex items-center gap-2 text-sm shadow">
+                    <i class="fa-solid fa-rotate-left"></i> Reset Spelling
+                </button>
+                <button onclick="speakCurrentWord()" class="btn-juicy bg-sky-500 hover:bg-sky-600 text-white font-fredoka px-4 py-1.5 rounded-2xl flex items-center gap-2 text-sm shadow">
+                    <i class="fa-solid fa-volume-high"></i> Hear Word
+                </button>
+            </div>
+        </div>
+
+        <!-- Floating Letters Container -->
+        <div id="letters-canvas" class="absolute inset-0 z-10 overflow-hidden pointer-events-auto">
+            <!-- Dynamic lowercase letters created and animated via JS -->
+        </div>
+    </main>
+
+
+    <!-- DUAL SPINNER WHEEL / COMPETITION SELECTOR MODAL -->
+    <div id="spinner-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-md hidden">
+        <div class="glass-panel w-full max-w-2xl p-6 rounded-3xl shadow-2xl text-center relative border-4 border-amber-400 m-4 max-h-[90vh] overflow-y-auto">
+            
+            <h3 class="font-fredoka text-2xl md:text-3xl text-amber-600 mb-1 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-trophy text-amber-500"></i> Face-Off Randomizer
+            </h3>
+            <p class="text-slate-600 text-xs md:text-sm font-semibold mb-4">Spin to select 1 competitor from Group 1 & Group 2!</p>
+
+            <!-- Dual Wheel Layout -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-2">
+                
+                <!-- Group 1 Wheel -->
+                <div class="bg-rose-50 p-3 rounded-2xl border-2 border-rose-300 flex flex-col items-center">
+                    <h4 class="font-fredoka text-rose-600 text-base mb-2">🔴 Group 1</h4>
+                    <div class="relative w-48 h-48 my-1">
+                        <div class="absolute -top-2 left-1/2 -translate-x-1/2 z-20 text-rose-600 text-2xl drop-shadow">
+                            <i class="fa-solid fa-caret-down"></i>
+                        </div>
+                        <canvas id="wheel1-canvas" width="190" height="190" class="rounded-full shadow-md border-2 border-white"></canvas>
+                    </div>
+                    <div id="winner1-display" class="font-fredoka text-sm md:text-base text-rose-700 mt-2 h-8 flex items-center justify-center font-bold">
+                        Ready Group 1
+                    </div>
+                    <button onclick="spinSingleWheel(1)" class="mt-1 btn-juicy bg-rose-500 hover:bg-rose-600 text-white font-fredoka px-4 py-1.5 rounded-xl text-xs">
+                        Spin Group 1
+                    </button>
+                </div>
+
+                <!-- Group 2 Wheel -->
+                <div class="bg-sky-50 p-3 rounded-2xl border-2 border-sky-300 flex flex-col items-center">
+                    <h4 class="font-fredoka text-sky-600 text-base mb-2">🔵 Group 2</h4>
+                    <div class="relative w-48 h-48 my-1">
+                        <div class="absolute -top-2 left-1/2 -translate-x-1/2 z-20 text-sky-600 text-2xl drop-shadow">
+                            <i class="fa-solid fa-caret-down"></i>
+                        </div>
+                        <canvas id="wheel2-canvas" width="190" height="190" class="rounded-full shadow-md border-2 border-white"></canvas>
+                    </div>
+                    <div id="winner2-display" class="font-fredoka text-sm md:text-base text-sky-700 mt-2 h-8 flex items-center justify-center font-bold">
+                        Ready Group 2
+                    </div>
+                    <button onclick="spinSingleWheel(2)" class="mt-1 btn-juicy bg-sky-500 hover:bg-sky-600 text-white font-fredoka px-4 py-1.5 rounded-xl text-xs">
+                        Spin Group 2
+                    </button>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex flex-wrap justify-center gap-3 mt-4">
+                <button id="spin-both-btn" onclick="spinBothWheels()" class="btn-juicy bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 font-fredoka px-6 py-2.5 rounded-2xl text-lg shadow-lg flex items-center gap-2">
+                    <i class="fa-solid fa-rotate text-xl"></i> SPIN BOTH WHEELS!
+                </button>
+                <button onclick="closeSpinnerModal()" class="btn-juicy bg-slate-800 hover:bg-slate-900 text-white font-fredoka px-6 py-2.5 rounded-2xl text-base">
+                    Start Match!
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- TEACHER DASHBOARD & BACKGROUND SETTINGS MODAL -->
+    <div id="settings-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-md hidden">
+        <div class="glass-panel w-full max-w-2xl p-6 rounded-3xl shadow-2xl relative border-4 border-indigo-400 m-4 max-h-[90vh] overflow-y-auto text-slate-800">
+            
+            <div class="flex justify-between items-center mb-4 pb-2 border-b-2 border-slate-200">
+                <h3 class="font-fredoka text-2xl text-indigo-700 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders"></i> Teacher Dashboard & Settings
+                </h3>
+                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600 text-2xl">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Background Theme Switcher -->
+            <div class="mb-6">
+                <h4 class="font-fredoka text-lg text-slate-700 mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-palette text-amber-500"></i> Classroom Background Theme
+                </h4>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
+                    <button onclick="setTheme('theme-tropical')" class="btn-juicy p-3 rounded-2xl text-xs font-bold text-slate-800 bg-emerald-200 border-2 border-emerald-400 flex items-center gap-2 justify-center">
+                        🌴 Tropical Orchard
+                    </button>
+                    <button onclick="setTheme('theme-orange')" class="btn-juicy p-3 rounded-2xl text-xs font-bold text-slate-800 bg-orange-200 border-2 border-orange-400 flex items-center gap-2 justify-center">
+                        🍊 Orange Sunshine
+                    </button>
+                    <button onclick="setTheme('theme-apple')" class="btn-juicy p-3 rounded-2xl text-xs font-bold text-white bg-emerald-600 border-2 border-emerald-400 flex items-center gap-2 justify-center">
+                        🍏 Green Apple
+                    </button>
+                    <button onclick="setTheme('theme-berry')" class="btn-juicy p-3 rounded-2xl text-xs font-bold text-white bg-purple-500 border-2 border-purple-300 flex items-center gap-2 justify-center">
+                        🫐 Berry Smoothie
+                    </button>
+                    <button onclick="setTheme('theme-chalkboard')" class="btn-juicy p-3 rounded-2xl text-xs font-bold text-amber-200 bg-emerald-900 border-2 border-amber-600 flex items-center gap-2 justify-center">
+                        ✏️ Chalkboard
+                    </button>
+                    <button onclick="setTheme('theme-aqua')" class="btn-juicy p-3 rounded-2xl text-xs font-bold text-white bg-sky-500 border-2 border-sky-300 flex items-center gap-2 justify-center">
+                        🌊 Underwater Aqua
+                    </button>
+                </div>
+
+                <!-- Custom Image URL Input -->
+                <div class="flex gap-2">
+                    <input type="text" id="custom-bg-url" placeholder="Paste Custom Background Image URL..." class="flex-1 px-3 py-2 text-xs rounded-xl border-2 border-slate-300 outline-none focus:border-indigo-500">
+                    <button onclick="applyCustomBgUrl()" class="btn-juicy bg-indigo-600 text-white text-xs font-bold px-4 py-2 rounded-xl">Apply Image</button>
+                </div>
+            </div>
+
+            <!-- Manage Roster Lists -->
+            <div class="mb-4">
+                <h4 class="font-fredoka text-lg text-slate-700 mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-users text-indigo-500"></i> Manage Group Student Rosters
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs font-bold text-rose-600 block mb-1">Group 1 Students (Comma or Newline)</label>
+                        <textarea id="group1-textarea" class="w-full h-28 p-2 rounded-xl border-2 border-rose-300 text-xs font-mono focus:ring-2 focus:ring-rose-400 outline-none"></textarea>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-sky-600 block mb-1">Group 2 Students (Comma or Newline)</label>
+                        <textarea id="group2-textarea" class="w-full h-28 p-2 rounded-xl border-2 border-sky-300 text-xs font-mono focus:ring-2 focus:ring-sky-400 outline-none"></textarea>
+                    </div>
+                </div>
+                <button onclick="saveStudentRosters()" class="mt-2 btn-juicy bg-emerald-600 text-white font-fredoka px-4 py-2 rounded-xl text-xs w-full">
+                    Save Roster Changes
+                </button>
+            </div>
+
+            <!-- Game Management -->
+            <div class="pt-3 border-t border-slate-200 flex justify-between items-center">
+                <button onclick="resetScoresOnly()" class="text-rose-600 hover:text-rose-800 text-xs font-bold">
+                    <i class="fa-solid fa-rotate"></i> Reset Match Scores
+                </button>
+                <button onclick="closeSettingsModal()" class="btn-juicy bg-slate-800 text-white font-fredoka px-5 py-1.5 rounded-xl text-xs">
+                    Close Dashboard
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAUSE MODAL -->
+    <div id="pause-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-md hidden">
+        <div class="glass-panel p-8 rounded-3xl text-center max-w-md w-full border-4 border-amber-400 shadow-2xl m-4">
+            <i class="fa-solid fa-pause text-6xl text-amber-500 mb-4 animate-bounce"></i>
+            <h2 class="font-fredoka text-4xl text-slate-800 mb-2">Game Paused</h2>
+            <p class="text-slate-600 mb-6 font-medium">Take a break! The timer is paused.</p>
+            <div class="flex flex-col gap-3">
+                <button onclick="togglePause()" class="btn-juicy bg-emerald-500 hover:bg-emerald-600 text-white font-fredoka py-3.5 rounded-2xl text-xl shadow-md">
+                    Resume Game
+                </button>
+                <button onclick="confirmEndGame()" class="btn-juicy bg-rose-500 hover:bg-rose-600 text-white font-fredoka py-2.5 rounded-2xl text-lg shadow-md">
+                    End Game
+                </button>
+            </div>
+        </div>
+    </div >
+
+    <!-- SUMMARY / GAME OVER MODAL -->
+    <div id="summary-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/85 backdrop-blur-md hidden">
+        <div class="glass-panel p-8 rounded-3xl text-center max-w-lg w-full border-4 border-emerald-400 shadow-2xl m-4">
+            <div class="text-6xl mb-2">🏆</div>
+            <h2 class="font-fredoka text-4xl text-amber-500 mb-1">Match Finished!</h2>
+            <p class="text-slate-600 font-bold mb-4">Awesome spelling adventure everyone!</p>
+            
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-rose-100 rounded-2xl p-4 border-2 border-rose-300">
+                    <div class="text-xs text-rose-600 font-bold uppercase">Group 1 Score</div>
+                    <div id="final-p1-score" class="font-fredoka text-4xl text-rose-600 my-1">0</div>
+                </div>
+                <div class="bg-sky-100 rounded-2xl p-4 border-2 border-sky-300">
+                    <div class="text-xs text-sky-600 font-bold uppercase">Group 2 Score</div>
+                    <div id="final-p2-score" class="font-fredoka text-4xl text-sky-600 my-1">0</div>
+                </div>
+            </div>
+
+            <button onclick="resetWholeGame()" class="btn-juicy bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-fredoka px-8 py-3.5 rounded-2xl text-2xl shadow-lg w-full">
+                <i class="fa-solid fa-rotate-right mr-2"></i> Play Again
+            </button>
+        </div>
+    </div>
+
+
+    <script>
+        /* WORDS LIST */
+        const WORDS_DATA = [
+            { word: "oranges", emoji: "🍊" },
+            { word: "apples", emoji: "🍎" },
+            { word: "bananas", emoji: "🍌" },
+            { word: "pineapples", emoji: "🍍" },
+            { word: "papaya", emoji: "🥭" },
+            { word: "grape", emoji: "🍇" },
+            { word: "orange", emoji: "🍊" },
+            { word: "guava", emoji: "🍐" },
+            { word: "grapes", emoji: "🍇" },
+            { word: "pineapple", emoji: "🍍" }
+        ];
+
+        /* DEFAULT STUDENT GROUP ROSTERS */
+        let group1Students = [
+            "20陳旻希 Elle", "12許孜佑 Jeremy", "01鄭梵德 Doster", "26張佳語 Amy",
+            "23陳梓婕 Nini", "22黃宥蓁 Yuki", "25陳佩縈 Paiseley", "08許駿杰 Jay",
+            "17林欣儀 Peggy", "18石安柔 Zoe", "02黃宥杰 Clay", "04黃宥橙 Parry",
+            "16林芷妘 Joy"
+        ];
+
+        let group2Students = [
+            "15廖平叡 Ryan", "13周柏安 Andy", "07李逸昕 Liam", "14吳昊祈 Chris",
+            "09鄭昀育 Paul", "19江詠安 Joanne", "24李蕎恩 Joann", "03何師汛 Steven",
+            "05于駿逸 Johnny", "10林衍昊 Mark", "06陳國豪 Sam", "11張沐言 Solomon",
+            "21李依璇 Benita"
+        ];
+
+        /* GAME STATE VARIABLES */
+        let currentWordIndex = 0;
+        let currentTyped = "";
+        let scoreP1 = 0;
+        let scoreP2 = 0;
+        let p1ActiveStudent = "20陳旻希 Elle";
+        let p2ActiveStudent = "15廖平叡 Ryan";
+
+        let timeLeft = 90;
+        let timerInterval = null;
+        let isPaused = false;
+        let isMuted = false;
+        let floatingLetters = [];
+        let animationFrameId = null;
+
+        // Wheels state
+        let wheel1Angle = 0;
+        let wheel2Angle = 0;
+        let isSpinning1 = false;
+        let isSpinning2 = false;
+
+        /* WEBAUDIO SYNTHESIZER FOR JUICY SOUND FX */
+        let audioCtx = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function playJuicySound(type) {
+            if (isMuted) return;
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+
+                if (type === 'pop') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(450, now);
+                    osc.frequency.exponentialRampToValueAtTime(1300, now + 0.08);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.09);
+                } else if (type === 'wrong') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(190, now);
+                    osc.frequency.linearRampToValueAtTime(110, now + 0.2);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.21);
+                } else if (type === 'success') {
+                    const notes = [523.25, 659.25, 783.99, 1046.50];
+                    notes.forEach((freq, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                        gain.gain.setValueAtTime(0.3, now + idx * 0.08);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.3);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + idx * 0.08);
+                        osc.stop(now + idx * 0.08 + 0.35);
+                    });
+                } else if (type === 'tick') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(800, now);
+                    gain.gain.setValueAtTime(0.05, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.04);
+                } else if (type === 'spin') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, now);
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.04);
+                }
+            } catch(e) {
+                console.log("Audio error", e);
+            }
+        }
+
+        function speakCurrentWord() {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const wordObj = WORDS_DATA[currentWordIndex];
+                const utterance = new SpeechSynthesisUtterance(wordObj.word);
+                utterance.rate = 0.85;
+                utterance.pitch = 1.1;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        const LETTER_COLORS = [
+            { bg: "from-pink-400 to-rose-500", text: "text-white", border: "border-pink-300" },
+            { bg: "from-amber-400 to-orange-500", text: "text-slate-900", border: "border-yellow-200" },
+            { bg: "from-emerald-400 to-teal-600", text: "text-white", border: "border-emerald-200" },
+            { bg: "from-sky-400 to-blue-600", text: "text-white", border: "border-sky-200" },
+            { bg: "from-purple-400 to-indigo-600", text: "text-white", border: "border-purple-200" },
+            { bg: "from-fuchsia-400 to-pink-600", text: "text-white", border: "border-fuchsia-200" }
+        ];
+
+        function setupWordSlots() {
+            currentTyped = "";
+            const wordObj = WORDS_DATA[currentWordIndex];
+            if (!wordObj) return;
+
+            const wordNumEl = document.getElementById("current-word-num");
+            if (wordNumEl) wordNumEl.innerText = currentWordIndex + 1;
+
+            const emojiEl = document.getElementById("fruit-emoji-icon");
+            if (emojiEl) emojiEl.innerText = wordObj.emoji;
+
+            const container = document.getElementById("word-slots-container");
+            if (!container) return;
+
+            container.innerHTML = "";
+            const targetWord = wordObj.word.toLowerCase();
+
+            for (let i = 0; i < targetWord.length; i++) {
+                const slot = document.createElement("div");
+                slot.id = `slot-${i}`;
+                slot.className = "w-11 h-14 md:w-16 md:h-20 bg-slate-100/90 rounded-2xl border-4 border-dashed border-amber-300 flex items-center justify-center font-fredoka text-3xl md:text-5xl text-slate-300 shadow-inner select-none transition-all";
+                slot.innerText = "_";
+                container.appendChild(slot);
+            }
+        }
+
+        function createFloatingLetters() {
+            const canvas = document.getElementById("letters-canvas");
+            canvas.innerHTML = "";
+            floatingLetters = [];
+
+            const currentTargetWord = WORDS_DATA[currentWordIndex].word;
+            
+            // Generate EXACTLY the letters of the target word (e.g. 'o','r','a','n','g','e','s' = 7 letters)
+            const lettersArray = currentTargetWord.toLowerCase().split('');
+
+            const canvasWidth = window.innerWidth;
+            const canvasHeight = window.innerHeight - 170;
+
+            lettersArray.forEach((char, index) => {
+                const el = document.createElement("div");
+                const styleObj = LETTER_COLORS[index % LETTER_COLORS.length];
+
+                // Ensure letters are LOWERCASE and BIG (Exact 1-to-1 matching count)
+                el.className = `floating-letter font-fredoka text-5xl md:text-7xl px-6 py-4 md:px-8 md:py-5 rounded-3xl bg-gradient-to-br ${styleObj.bg} ${styleObj.text} border-4 ${styleObj.border} shadow-2xl flex items-center justify-center select-none cursor-pointer transform hover:scale-110`;
+                el.innerText = char.toLowerCase();
+                el.dataset.index = index;
+
+                let x = Math.random() * (canvasWidth - 120) + 20;
+                let y = Math.random() * (canvasHeight - 240) + 100;
+
+                let vx = (Math.random() - 0.5) * 2.2;
+                let vy = (Math.random() - 0.5) * 2.2;
+                if (Math.abs(vx) < 0.8) vx = 1.2 * (Math.random() > 0.5 ? 1 : -1);
+                if (Math.abs(vy) < 0.8) vy = -1.2 * (Math.random() > 0.5 ? 1 : -1);
+
+                el.style.left = `${x}px`;
+                el.style.top = `${y}px`;
+
+                el.addEventListener("click", () => handleLetterClick(char, el, index));
+
+                canvas.appendChild(el);
+
+                floatingLetters.push({
+                    id: index,
+                    element: el,
+                    char: char,
+                    x: x,
+                    y: y,
+                    vx: vx,
+                    vy: vy,
+                    collected: false
+                });
+            });
+        }
+
+        function animateLetters() {
+            if (!isPaused) {
+                const canvasWidth = window.innerWidth;
+                const canvasHeight = window.innerHeight - 170;
+
+                floatingLetters.forEach(item => {
+                    if (item.collected) return;
+
+                    item.x += item.vx;
+                    item.y += item.vy;
+
+                    if (item.x <= 10 || item.x >= canvasWidth - 110) {
+                        item.vx *= -1;
+                    }
+                    if (item.y <= 90 || item.y >= canvasHeight - 110) {
+                        item.vy *= -1;
+                    }
+
+                    item.element.style.left = `${item.x}px`;
+                    item.element.style.top = `${item.y}px`;
+                });
+            }
+            animationFrameId = requestAnimationFrame(animateLetters);
+        }
+
+        function handleLetterClick(letter, element, letterId) {
+            if (isPaused) return;
+
+            const targetWord = WORDS_DATA[currentWordIndex].word;
+            const nextExpectedChar = targetWord[currentTyped.length];
+
+            if (letter.toLowerCase() === nextExpectedChar) {
+                playJuicySound('pop');
+                const slotIndex = currentTyped.length;
+                currentTyped += letter.toLowerCase();
+
+                // Mark as collected and fade/remove from floating canvas
+                const item = floatingLetters.find(l => l.id === letterId);
+                if (item) {
+                    item.collected = true;
+                }
+                element.style.transform = "scale(0) rotate(180deg)";
+                element.style.opacity = "0";
+                setTimeout(() => {
+                    element.remove();
+                }, 200);
+
+                const slot = document.getElementById(`slot-${slotIndex}`);
+                if (slot) {
+                    slot.innerText = letter.toLowerCase();
+                    slot.className = "w-11 h-14 md:w-16 md:h-20 bg-emerald-500 rounded-2xl border-4 border-white flex items-center justify-center font-fredoka text-3xl md:text-5xl text-white shadow-lg animate-bounce";
+                }
+
+                if (currentTyped === targetWord) {
+                    wordCompletedSuccess();
+                }
+            } else {
+                playJuicySound('wrong');
+                const container = document.getElementById("word-slots-container");
+                container.classList.add("animate-shake");
+                setTimeout(() => {
+                    container.classList.remove("animate-shake");
+                }, 400);
+            }
+        }
+
+        function clearCurrentSpelling() {
+            setupWordSlots();
+            createFloatingLetters();
+            playJuicySound('pop');
+        }
+
+        function wordCompletedSuccess() {
+            playJuicySound('success');
+            adjustScore('p1', 50);
+            adjustScore('p2', 50);
+
+            // Safely execute confetti if CDN loaded, otherwise use custom particle burst fallback
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 90,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            } else {
+                triggerFallbackConfetti();
+            }
+
+            setTimeout(() => {
+                nextQuestion();
+            }, 1600);
+        }
+
+        // Custom particle confetti fallback effect when CDN script is blocked or offline
+        function triggerFallbackConfetti() {
+            const colors = ['#f43f5e', '#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899'];
+            for (let i = 0; i < 40; i++) {
+                const p = document.createElement('div');
+                p.style.position = 'fixed';
+                p.style.left = '50vw';
+                p.style.top = '50vh';
+                p.style.width = Math.random() * 8 + 6 + 'px';
+                p.style.height = Math.random() * 8 + 6 + 'px';
+                p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                p.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                p.style.zIndex = '9999';
+                p.style.pointerEvents = 'none';
+                p.style.transition = 'transform 1s cubic-bezier(0.1, 0.8, 0.3, 1), opacity 1s ease-out';
+                document.body.appendChild(p);
+
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 120 + Math.random() * 220;
+                const tx = Math.cos(angle) * dist;
+                const ty = Math.sin(angle) * dist - 80;
+
+                requestAnimationFrame(() => {
+                    p.style.transform = `translate(${tx}px, ${ty}px) rotate(${Math.random() * 360}deg)`;
+                    p.style.opacity = '0';
+                });
+
+                setTimeout(() => p.remove(), 1050);
+            }
+        }
+
+        /* TIMER MANAGEMENT */
+        function startTimer() {
+            clearInterval(timerInterval);
+            timeLeft = 90;
+            updateTimerDisplay();
+
+            timerInterval = setInterval(() => {
+                if (!isPaused) {
+                    timeLeft--;
+                    updateTimerDisplay();
+
+                    if (timeLeft <= 10 && timeLeft > 0) {
+                        playJuicySound('tick');
+                    }
+
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        playJuicySound('wrong');
+                        nextQuestion();
+                    }
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const display = document.getElementById("timer-display");
+            display.innerText = `${timeLeft}s`;
+
+            if (timeLeft <= 15) {
+                display.className = "text-xl md:text-2xl tracking-wider text-rose-500 font-bold animate-pulse";
+            } else {
+                display.className = "text-xl md:text-2xl tracking-wider text-amber-300";
+            }
+        }
+
+        /* SCORES & NAVIGATION */
+        function adjustScore(player, amount) {
+            if (player === 'p1') {
+                scoreP1 = Math.max(0, scoreP1 + amount);
+                document.getElementById("p1-score-display").innerText = scoreP1;
+            } else {
+                scoreP2 = Math.max(0, scoreP2 + amount);
+                document.getElementById("p2-score-display").innerText = scoreP2;
+            }
+        }
+
+        function resetScoresOnly() {
+            scoreP1 = 0;
+            scoreP2 = 0;
+            document.getElementById("p1-score-display").innerText = "0";
+            document.getElementById("p2-score-display").innerText = "0";
+        }
+
+        function nextQuestion() {
+            currentWordIndex++;
+            if (currentWordIndex >= WORDS_DATA.length) {
+                endGameSummary();
+                return;
+            }
+
+            setupWordSlots();
+            createFloatingLetters();
+            startTimer();
+            openSpinnerModal();
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            document.getElementById("pause-modal").classList.toggle("hidden", !isPaused);
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            document.getElementById("audio-icon").className = isMuted ? "fa-solid fa-volume-xmark" : "fa-solid fa-volume-high";
+        }
+
+        function confirmEndGame() {
+            if (confirm("End game now and view final scores?")) {
+                endGameSummary();
+            }
+        }
+
+        function endGameSummary() {
+            clearInterval(timerInterval);
+            isPaused = true;
+            document.getElementById("pause-modal").classList.add("hidden");
+            document.getElementById("summary-modal").classList.remove("hidden");
+            document.getElementById("final-p1-score").innerText = scoreP1;
+            document.getElementById("final-p2-score").innerText = scoreP2;
+            playJuicySound('success');
+        }
+
+        function resetWholeGame() {
+            currentWordIndex = 0;
+            resetScoresOnly();
+            document.getElementById("summary-modal").classList.add("hidden");
+            isPaused = false;
+            
+            setupWordSlots();
+            createFloatingLetters();
+            startTimer();
+            openSpinnerModal();
+        }
+
+
+        function drawWheelCanvas(canvasId, students, angle, colorScheme) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext("2d");
+            const width = canvas.width;
+            const height = canvas.height;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radius = width / 2 - 8;
+
+            ctx.clearRect(0, 0, width, height);
+            if (students.length === 0) return;
+
+            const sliceAngle = (2 * Math.PI) / students.length;
+
+            for (let i = 0; i < students.length; i++) {
+                const a = angle + i * sliceAngle;
+
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, a, a + sliceAngle);
+                ctx.fillStyle = colorScheme[i % colorScheme.length];
+                ctx.fill();
+                ctx.lineWidth = 1.5;
+                ctx.strokeStyle = "#ffffff";
+                ctx.stroke();
+
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(a + sliceAngle / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "bold 10px Quicksand";
+                // Shorten name for wheel display
+                const displayName = students[i].replace(/^[0-9]+/, '').trim();
+                ctx.fillText(displayName, radius - 10, 4);
+                ctx.restore();
+            }
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 15, 0, 2 * Math.PI);
+            ctx.fillStyle = "#ffffff";
+            ctx.fill();
+        }
+
+        function drawBothWheels() {
+            const colors1 = ['#f43f5e', '#fb7185', '#e11d48', '#fda4af', '#f43f5e'];
+            const colors2 = ['#0284c7', '#38bdf8', '#0369a1', '#7dd3fc', '#0284c7'];
+
+            drawWheelCanvas("wheel1-canvas", group1Students, wheel1Angle, colors1);
+            drawWheelCanvas("wheel2-canvas", group2Students, wheel2Angle, colors2);
+        }
+
+        function spinSingleWheel(groupNum) {
+            if (groupNum === 1 && isSpinning1) return;
+            if (groupNum === 2 && isSpinning2) return;
+
+            const students = groupNum === 1 ? group1Students : group2Students;
+            if (students.length === 0) return;
+
+            if (groupNum === 1) isSpinning1 = true;
+            if (groupNum === 2) isSpinning2 = true;
+
+            document.getElementById(`winner${groupNum}-display`).innerText = "Spinning...";
+
+            const duration = 2800;
+            const startTime = performance.now();
+            const startAngle = groupNum === 1 ? wheel1Angle : wheel2Angle;
+            const totalRot = Math.PI * 2 * (4 + Math.random() * 4);
+
+            function animate(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                const currentAngle = startAngle + totalRot * easeOut;
+
+                if (groupNum === 1) wheel1Angle = currentAngle;
+                else wheel2Angle = currentAngle;
+
+                drawBothWheels();
+                playJuicySound('spin');
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    if (groupNum === 1) isSpinning1 = false;
+                    else isSpinning2 = false;
+                    calculateWheelWinner(groupNum);
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        function spinBothWheels() {
+            spinSingleWheel(1);
+            spinSingleWheel(2);
+        }
+
+        function calculateWheelWinner(groupNum) {
+            const students = groupNum === 1 ? group1Students : group2Students;
+            const angle = groupNum === 1 ? wheel1Angle : wheel2Angle;
+
+            const normalizedAngle = (2 * Math.PI - (angle % (2 * Math.PI))) % (2 * Math.PI);
+            const sliceAngle = (2 * Math.PI) / students.length;
+            const adjustedAngle = (normalizedAngle + Math.PI / 2) % (2 * Math.PI);
+            const selectedIndex = Math.floor(adjustedAngle / sliceAngle) % students.length;
+
+            const winner = students[selectedIndex];
+            if (groupNum === 1) {
+                p1ActiveStudent = winner;
+                document.getElementById("p1-name-display").innerText = winner;
+                document.getElementById("winner1-display").innerText = `⭐ ${winner}`;
+            } else {
+                p2ActiveStudent = winner;
+                document.getElementById("p2-name-display").innerText = winner;
+                document.getElementById("winner2-display").innerText = `⭐ ${winner}`;
+            }
+
+            playJuicySound('success');
+        }
+
+        function openSpinnerModal() {
+            document.getElementById("spinner-modal").classList.remove("hidden");
+            drawBothWheels();
+        }
+
+        function closeSpinnerModal() {
+            document.getElementById("spinner-modal").classList.add("hidden");
+            speakCurrentWord();
+        }
+
+
+        function setTheme(themeClass) {
+            const body = document.getElementById("game-body");
+            body.className = `${themeClass} h-screen w-screen overflow-hidden text-slate-800`;
+            body.style.backgroundImage = "";
+            playJuicySound('pop');
+        }
+
+        function applyCustomBgUrl() {
+            const url = document.getElementById("custom-bg-url").value.trim();
+            if (url) {
+                const body = document.getElementById("game-body");
+                body.className = "h-screen w-screen overflow-hidden text-slate-800";
+                body.style.backgroundImage = `url('${url}')`;
+                body.style.backgroundSize = "cover";
+                body.style.backgroundPosition = "center";
+                playJuicySound('pop');
+            }
+        }
+
+        function openSettingsModal() {
+            document.getElementById("group1-textarea").value = group1Students.join("\n");
+            document.getElementById("group2-textarea").value = group2Students.join("\n");
+            document.getElementById("settings-modal").classList.remove("hidden");
+        }
+
+        function closeSettingsModal() {
+            document.getElementById("settings-modal").classList.add("hidden");
+        }
+
+        function saveStudentRosters() {
+            const g1Val = document.getElementById("group1-textarea").value;
+            const g2Val = document.getElementById("group2-textarea").value;
+
+            const parseList = (str) => str.split(/[\n,]+/).map(s => s.trim()).filter(s => s.length > 0);
+
+            const parsed1 = parseList(g1Val);
+            const parsed2 = parseList(g2Val);
+
+            if (parsed1.length > 0) group1Students = parsed1;
+            if (parsed2.length > 0) group2Students = parsed2;
+
+            drawBothWheels();
+            playJuicySound('pop');
+            alert("Group rosters updated successfully!");
+        }
+
+        /* KEYBOARD SUPPORT */
+        window.addEventListener("keydown", (e) => {
+            if (isPaused) return;
+            const char = e.key.toLowerCase();
+            if (/^[a-z]$/.test(char)) {
+                const matchingItem = floatingLetters.find(item => !item.collected && item.char.toLowerCase() === char);
+                if (matchingItem) {
+                    handleLetterClick(char, matchingItem.element, matchingItem.id);
+                }
+            } else if (e.key === "Backspace") {
+                clearCurrentSpelling();
+            }
+        });
+
+        /* INITIALIZATION */
+        window.onload = function() {
+            setupWordSlots();
+            createFloatingLetters();
+            animateLetters();
+            startTimer();
+
+            window.addEventListener("resize", () => {
+                createFloatingLetters();
+            });
+
+            setTimeout(() => {
+                openSpinnerModal();
+            }, 400);
+        };
+    </script>
+</body>
+</html>
