@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentence Builder Clash</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
+        
+        body {
+            font-family: 'Comic Sans MS', 'Comic Sans', 'Chalkboard SE', 'Comic Neue', sans-serif;
+            /* Using the exact filename you provided for the background */
+            background-image: url('bg_main.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        /* Semi-transparent overlay to ensure readability */
+        .bg-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(4px);
+            z-index: -1;
+        }
+
+        h1, h2, h3, .heading-font {
+            font-family: 'Fredoka One', cursive;
+        }
+
+        /* Floating Animation for Bubbles */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .bubble {
+            transition: box-shadow 0.2s ease, filter 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15), inset 0 -4px 0 rgba(0,0,0,0.15);
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .bubble:hover {
+            filter: brightness(1.1);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.2), inset 0 -4px 0 rgba(0,0,0,0.15);
+        }
+
+        .bubble:active {
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3), inset 0 -1px 0 rgba(0,0,0,0.2);
+            transform: translateY(2px) !important;
+            animation: none;
+        }
+
+        /* Static bubble for answer slots (no floating) */
+        .bubble-static {
+            animation: none !important;
+            transform: none !important;
+        }
+
+        /* Realistic Glass Bubble - Colorful & Bigger Words */
+        .glass-bubble {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px 28px;
+            border-radius: 50px;
+            font-size: 1.75rem; 
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 
+                inset 2px 2px 6px rgba(255,255,255,0.6),
+                inset -4px -4px 8px rgba(0,0,0,0.3),
+                0 6px 12px rgba(0,0,0,0.3);
+            border: 3px solid rgba(255,255,255,0.9);
+            transition: transform 0.1s ease, filter 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            animation: float 4s ease-in-out infinite;
+            margin: 6px;
+            
+            /* Highly visible text with Comic Book outline */
+            color: white;
+            text-shadow: 
+                2px 2px 0 #000,
+                -2px -2px 0 #000,
+                2px -2px 0 #000,
+                -2px 2px 0 #000,
+                0 4px 6px rgba(0,0,0,0.8);
+        }
+
+        /* Shading overlay for 3D effect regardless of base color */
+        .glass-bubble::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 100%);
+            border-radius: 50px;
+            pointer-events: none;
+        }
+
+        /* Glossy reflection on top left */
+        .glass-bubble::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 15%;
+            width: 35%;
+            height: 25%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.9), rgba(255,255,255,0));
+            border-radius: 50%;
+            transform: rotate(-20deg);
+            pointer-events: none;
+        }
+
+        .glass-bubble:hover {
+            filter: brightness(1.15) contrast(1.1);
+        }
+
+        .glass-bubble:active {
+            transform: scale(0.95) !important;
+        }
+
+        .split-screen {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .side {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-radius: 2rem;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .team-a-bg { background: rgba(255, 200, 200, 0.95); border: 4px solid #ff7b7b; }
+        .team-b-bg { background: rgba(200, 230, 255, 0.95); border: 4px solid #7b9cff; }
+
+        .answer-box {
+            min-height: 100px;
+            border: 4px dashed rgba(0,0,0,0.2);
+            border-radius: 1.5rem;
+            background: rgba(255,255,255,0.6);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            gap: 15px;
+        }
+
+        .screen { display: none; }
+        .screen.active { display: flex; }
+
+        .central-image-container {
+            height: 220px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: white;
+            border-radius: 1.5rem;
+            border: 6px solid #fbbf24;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+            overflow: hidden;
+            margin: 0 auto;
+            max-width: 400px;
+        }
+        
+        .central-image-container img {
+            max-height: 100%;
+            max-width: 100%;
+            object-fit: cover;
+        }
+
+        /* Confetti Elements */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            z-index: 9999;
+            pointer-events: none;
+            animation: fall linear forwards;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* Slot Machine Effect */
+        .slot-machine-text {
+            display: inline-block;
+            transition: transform 0.05s ease;
+        }
+        .blur-text {
+            filter: blur(2px);
+            opacity: 0.8;
+            transform: translateY(-5px);
+        }
+
+        /* Overlays */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 100;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+            backdrop-filter: blur(5px);
+        }
+
+        /* Shake Animation for incorrect answers */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        /* Controls Top Bar */
+        .game-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 10px;
+            z-index: 50;
+        }
+    </style>
+</head>
+<body>
+    <!-- SCREEN 1: Start Screen -->
+    <div id="screen-start" class="screen active min-h-screen flex-col justify-center items-center p-4">
+        <div class="w-full max-w-4xl bg-white p-3 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-12 border-[12px] border-indigo-400 overflow-hidden">
+            <!-- Using the exact filename you provided for the cover -->
+            <img src="gamecover.gif" alt="Game Cover Image" class="w-full h-auto rounded-xl" onerror="this.onerror=null; this.src='https://placehold.co/800x400/eeeeee/999999?text=gamecover.gif';">
+        </div>
+        <button onclick="initAudioAndStart()" class="heading-font text-5xl bg-yellow-400 hover:bg-yellow-300 text-yellow-900 py-6 px-20 rounded-full bubble transition-all shadow-[0_10px_20px_rgba(0,0,0,0.4)] border-8 border-white animate-bounce">START GAME!</button>
+    </div>
+
+    <!-- SCREEN 2: Name Randomizer -->
+    <div id="screen-randomizer" class="screen min-h-screen flex-col items-center p-8 w-full max-w-7xl mx-auto">
+        <h1 class="text-5xl md:text-7xl text-white drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] mb-6 heading-font">Team Selector</h1>
+        
+        <div class="w-full flex flex-col lg:flex-row gap-6 flex-1 mb-8">
+            
+            <!-- Team A Roster Input -->
+            <div class="lg:w-1/4 bg-red-50/95 p-6 rounded-3xl shadow-xl flex flex-col border-4 border-red-200">
+                <h2 class="heading-font text-2xl mb-4 text-red-600 text-center">Team A Roster</h2>
+                <textarea id="name-list-a" class="flex-1 min-h-[250px] p-4 rounded-xl border-4 border-red-100 focus:outline-none focus:border-red-400 font-bold text-gray-700 text-xl resize-none leading-relaxed">Alex
+Bella
+Charlie
+Daisy
+Evan
+Fiona</textarea>
+                <div class="mt-4 text-center font-bold text-red-500 text-lg bg-white py-2 rounded-full shadow-inner" id="roster-count-a">6 left</div>
+            </div>
+
+            <!-- VS Selection -->
+            <div class="lg:w-2/4 bg-white/95 p-8 rounded-3xl shadow-2xl flex flex-col items-center justify-center relative border-4 border-yellow-300">
+                <div class="flex w-full justify-around items-center gap-2 flex-1">
+                    <!-- Team A Slot -->
+                    <div class="flex-1 flex flex-col items-center">
+                        <h2 class="heading-font text-red-500 text-3xl mb-4 bg-red-100 px-6 py-2 rounded-full border-4 border-red-200">Team A</h2>
+                        <div class="bg-red-50 w-full rounded-3xl border-8 border-red-400 h-40 flex items-center justify-center shadow-inner mb-4 relative overflow-hidden">
+                            <span id="player-a-display" class="text-4xl md:text-5xl font-black text-red-600 slot-machine-text">???</span>
+                        </div>
+                        <button onclick="redrawPlayer('A')" class="bg-red-400 text-white px-4 py-2 rounded-full font-bold hover:bg-red-500 bubble shadow-lg" id="btn-redraw-a" disabled>Spin Again</button>
+                    </div>
+
+                    <div class="heading-font text-5xl text-yellow-500 drop-shadow-lg mx-2 flex-shrink-0 animate-pulse">VS</div>
+
+                    <!-- Team B Slot -->
+                    <div class="flex-1 flex flex-col items-center">
+                        <h2 class="heading-font text-blue-500 text-3xl mb-4 bg-blue-100 px-6 py-2 rounded-full border-4 border-blue-200">Team B</h2>
+                        <div class="bg-blue-50 w-full rounded-3xl border-8 border-blue-400 h-40 flex items-center justify-center shadow-inner mb-4 relative overflow-hidden">
+                            <span id="player-b-display" class="text-4xl md:text-5xl font-black text-blue-600 slot-machine-text">???</span>
+                        </div>
+                        <button onclick="redrawPlayer('B')" class="bg-blue-400 text-white px-4 py-2 rounded-full font-bold hover:bg-blue-500 bubble shadow-lg" id="btn-redraw-b" disabled>Spin Again</button>
+                    </div>
+                </div>
+
+                <div class="w-full flex gap-4 mt-8">
+                    <button onclick="spinNames()" class="flex-1 heading-font text-3xl bg-green-500 hover:bg-green-400 text-white py-5 px-8 rounded-full bubble shadow-xl border-4 border-green-300" id="btn-spin">SPIN!</button>
+                    <button onclick="goToGame()" id="btn-start-battle" class="hidden flex-1 heading-font text-3xl bg-yellow-400 hover:bg-yellow-300 text-yellow-900 py-5 px-8 rounded-full bubble shadow-xl border-4 border-yellow-200">FIGHT! ⚔️</button>
+                </div>
+            </div>
+
+            <!-- Team B Roster Input -->
+            <div class="lg:w-1/4 bg-blue-50/95 p-6 rounded-3xl shadow-xl flex flex-col border-4 border-blue-200">
+                <h2 class="heading-font text-2xl mb-4 text-blue-600 text-center">Team B Roster</h2>
+                <textarea id="name-list-b" class="flex-1 min-h-[250px] p-4 rounded-xl border-4 border-blue-100 focus:outline-none focus:border-blue-400 font-bold text-gray-700 text-xl resize-none leading-relaxed">George
+Hannah
+Ian
+Jenny
+Kevin
+Lily</textarea>
+                <div class="mt-4 text-center font-bold text-blue-500 text-lg bg-white py-2 rounded-full shadow-inner" id="roster-count-b">6 left</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN 3: Game Screen -->
+    <div id="screen-game" class="screen min-h-screen flex-col relative w-full max-w-7xl mx-auto">
+        
+        <!-- Pause and End Controls -->
+        <div class="game-controls">
+            <button onclick="pauseGame()" class="bg-indigo-500 hover:bg-indigo-400 text-white font-bold py-2 px-6 rounded-full shadow-md border-2 border-indigo-200 bubble">Pause</button>
+            <button onclick="endGame()" class="bg-red-500 hover:bg-red-400 text-white font-bold py-2 px-6 rounded-full shadow-md border-2 border-red-200 bubble">End Game</button>
+        </div>
+
+        <!-- Top Scoring & Prompt Bar -->
+        <div class="bg-white/95 rounded-b-3xl shadow-xl flex flex-col md:flex-row justify-between items-center p-4 px-8 z-10 border-b-8 border-yellow-400 mt-12 md:mt-0">
+            <!-- Score A -->
+            <div class="flex items-center gap-4 bg-red-100 p-2 pr-6 rounded-full border-4 border-red-300">
+                <div class="bg-red-500 text-white heading-font text-3xl w-14 h-14 flex items-center justify-center rounded-full shadow-inner" id="score-a-display">0</div>
+                <div class="heading-font text-2xl text-red-600" id="game-player-a">Player A</div>
+            </div>
+            
+            <!-- Central Round Info -->
+            <div class="flex flex-col items-center mx-4 my-2 md:my-0">
+                <div class="heading-font text-3xl text-indigo-800 bg-indigo-100 px-6 py-1 rounded-full mb-2 border-2 border-indigo-200" id="round-display">Round 1</div>
+                <div class="text-2xl font-bold text-gray-700 prompt-text">Question here</div>
+            </div>
+
+            <!-- Score B -->
+            <div class="flex items-center gap-4 bg-blue-100 p-2 pl-6 rounded-full border-4 border-blue-300">
+                <div class="heading-font text-2xl text-blue-600" id="game-player-b">Player B</div>
+                <div class="bg-blue-500 text-white heading-font text-3xl w-14 h-14 flex items-center justify-center rounded-full shadow-inner" id="score-b-display">0</div>
+            </div>
+        </div>
+
+        <!-- Central Image -->
+        <div class="w-full flex justify-center -mt-6 z-20">
+            <div class="central-image-container bg-white">
+                <img id="central-img" src="" alt="Prompt Image">
+            </div>
+        </div>
+
+        <!-- Split Screen Gameplay -->
+        <div class="split-screen -mt-16 pt-24 pb-8">
+            <!-- Team A Side (Left) -->
+            <div class="side team-a-bg">
+                <div class="bg-white/90 p-6 rounded-3xl shadow-md text-center mb-4 flex-1 flex flex-col border-4 border-white/50">
+                    <h3 class="heading-font text-2xl text-red-500 mb-4 bg-red-100 inline-block mx-auto px-6 py-1 rounded-full">Build the Answer</h3>
+                    
+                    <div class="answer-box mb-8" id="answer-box-a"></div>
+                    
+                    <h3 class="heading-font text-xl text-gray-500 mb-4">Word Pool</h3>
+                    <div class="flex flex-wrap justify-center gap-4 min-h-[150px]" id="word-pool-a"></div>
+                </div>
+                <div class="text-center flex flex-col gap-3">
+                    <button onclick="checkAnswer('A')" class="heading-font bg-green-500 text-white px-8 py-4 rounded-full text-2xl bubble shadow-xl w-full border-4 border-green-300">SUBMIT ANSWER</button>
+                    <button onclick="clearAnswer('A')" class="bg-white/50 text-gray-700 px-4 py-2 rounded-full font-bold hover:bg-white bubble text-sm w-32 mx-auto border-2 border-gray-300">Clear All</button>
+                </div>
+            </div>
+
+            <!-- Team B Side (Right) -->
+            <div class="side team-b-bg">
+                <div class="bg-white/90 p-6 rounded-3xl shadow-md text-center mb-4 flex-1 flex flex-col border-4 border-white/50">
+                    <h3 class="heading-font text-2xl text-blue-500 mb-4 bg-blue-100 inline-block mx-auto px-6 py-1 rounded-full">Build the Answer</h3>
+                    
+                    <div class="answer-box mb-8" id="answer-box-b"></div>
+                    
+                    <h3 class="heading-font text-xl text-gray-500 mb-4">Word Pool</h3>
+                    <div class="flex flex-wrap justify-center gap-4 min-h-[150px]" id="word-pool-b"></div>
+                </div>
+                <div class="text-center flex flex-col gap-3">
+                    <button onclick="checkAnswer('B')" class="heading-font bg-green-500 text-white px-8 py-4 rounded-full text-2xl bubble shadow-xl w-full border-4 border-green-300">SUBMIT ANSWER</button>
+                    <button onclick="clearAnswer('B')" class="bg-white/50 text-gray-700 px-4 py-2 rounded-full font-bold hover:bg-white bubble text-sm w-32 mx-auto border-2 border-gray-300">Clear All</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlays -->
+
+    <!-- Pause Overlay -->
+    <div id="pause-overlay" class="overlay heading-font">
+        <div class="text-7xl text-white drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] mb-12 text-center">Game Paused</div>
+        <button onclick="resumeGame()" class="bg-green-500 text-white px-12 py-5 rounded-full text-4xl bubble border-8 border-green-200 shadow-2xl">Resume Play ▶</button>
+    </div>
+
+    <!-- Winner / Review Overlay -->
+    <div id="winner-overlay" class="overlay">
+        <div id="winner-text" class="heading-font text-7xl text-yellow-400 drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] mb-8 text-center leading-tight">Team Wins!</div>
+        
+        <!-- Review Box -->
+        <div class="bg-white/95 rounded-3xl p-8 text-center max-w-3xl mb-10 border-8 border-indigo-200 shadow-2xl text-gray-800">
+            <h4 class="heading-font text-3xl text-indigo-400 mb-4 bg-indigo-50 inline-block px-6 py-1 rounded-full">Review</h4>
+            
+            <div class="mb-4">
+                <span class="font-bold text-gray-400 text-lg uppercase tracking-wider">Question:</span>
+                <p class="text-3xl font-bold text-indigo-900 mt-1" id="review-question"></p>
+            </div>
+            
+            <div class="bg-green-50 p-4 rounded-2xl border-2 border-green-200">
+                <span class="font-bold text-gray-400 text-lg uppercase tracking-wider">Correct Answer:</span>
+                <p class="text-4xl font-black text-green-600 mt-2 tracking-wide" id="review-answer"></p>
+            </div>
+        </div>
+
+        <button onclick="nextRound()" class="heading-font bg-white text-indigo-900 px-12 py-5 rounded-full text-4xl bubble border-8 border-indigo-200 shadow-2xl">Choose Next Players ➔</button>
+    </div>
+    
+    <!-- End Game Overlay -->
+    <div id="end-overlay" class="overlay heading-font">
+        <div class="text-8xl text-yellow-400 drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] mb-6">Game Over!</div>
+        <div id="final-score-text" class="text-5xl text-white mb-12 text-center drop-shadow-lg max-w-4xl leading-tight bg-black/40 p-8 rounded-3xl"></div>
+        <button onclick="resetGame()" class="bg-yellow-400 text-indigo-900 px-12 py-5 rounded-full text-4xl bubble border-8 border-yellow-200 shadow-2xl">Play Again ↻</button>
+    </div>
+
+    <script>
+        // --- Web Audio API Synth Sounds ---
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playTone(freq, type, duration, vol = 0.1) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playSpinSound() {
+            if (!audioCtx) return;
+            playTone(400 + Math.random() * 400, 'sine', 0.1, 0.05);
+        }
+
+        function playCorrectSound() {
+            if (!audioCtx) return;
+            playTone(440, 'sine', 0.1, 0.1);
+            setTimeout(() => playTone(554, 'sine', 0.1, 0.1), 100);
+            setTimeout(() => playTone(659, 'sine', 0.2, 0.1), 200);
+            setTimeout(() => playTone(880, 'sine', 0.4, 0.1), 300);
+        }
+
+        function playWrongSound() {
+            if (!audioCtx) return;
+            playTone(300, 'sawtooth', 0.2, 0.1);
+            setTimeout(() => playTone(250, 'sawtooth', 0.4, 0.1), 150);
+        }
+
+        function playWinSound() {
+            if (!audioCtx) return;
+            const notes = [523.25, 659.25, 783.99, 1046.50];
+            notes.forEach((freq, i) => {
+                setTimeout(() => playTone(freq, 'square', 0.2, 0.08), i * 150);
+            });
+            setTimeout(() => playTone(1046.50, 'square', 0.6, 0.08), notes.length * 150);
+        }
+
+        // --- Data & State ---
+        const questions = [
+            { prompt: "Where are you from?", target: "I am from the USA.", image: "usa_1person.jpg" },
+            { prompt: "Where are you from?", target: "We are from France.", image: "france_2people.jpg" },
+            { prompt: "Where are they from?", target: "They are from Japan.", image: "japan_5people.jpg" },
+            { prompt: "I am from Korea.", target: "Where are you from?", image: "korea_1person.jpg" },
+            { prompt: "They are from Australia.", target: "Where are they from?", image: "australia_5people.jpg" },
+            { prompt: "Where is she from?", target: "She is from Vietnam.", image: "vietnam_girl.jpg" },
+            { prompt: "Where is he from?", target: "He is from the UK.", image: "uk_boy.jpg" },
+            { prompt: "Marie is from the USA.", target: "Where is Marie from?", image: "usa_marie.jpg" },
+            { prompt: "What do you like to do in your free time?", target: "We like to play basketball.", image: "basketball_kids.jpg" },
+            { prompt: "Arrange the question:", target: "What do they like to do in their free time?", image: "freetime_they.jpg" },
+            { prompt: "Arrange the question:", target: "What does she like to do in her free time?", image: "freetime_she.jpg" },
+            { prompt: "What does Amy like to do in her free time?", target: "She likes to go shopping.", image: "shopping_amy.jpg" },
+            { prompt: "Arrange the question:", target: "What does he like to do in his free time?", image: "freetime_he.jpg" },
+            { prompt: "Arrange the question:", target: "What does Ben like to do in his free time?", image: "freetime_ben.jpg" }
+        ];
+
+        // Vibrant Colors for Word Bubbles
+        const bubbleColors = [
+            '#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', 
+            '#3b82f6', '#8b5cf6', '#ec4899', '#f43f5e', '#14b8a6'
+        ];
+
+        let availableNamesA = [];
+        let availableNamesB = [];
+        
+        let playerA = null;
+        let playerB = null;
+        let spinInterval = null;
+        
+        let scoreA = 0;
+        let scoreB = 0;
+        let currentRound = 0;
+
+        let stateA = { pool: [], answer: [] };
+        let stateB = { pool: [], answer: [] };
+
+        // --- Utilities ---
+        function createConfetti() {
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+            for (let i = 0; i < 80; i++) {
+                let conf = document.createElement('div');
+                conf.className = 'confetti';
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                conf.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                conf.style.animationDelay = (Math.random() * 0.5) + 's';
+                document.body.appendChild(conf);
+                setTimeout(() => conf.remove(), 5000);
+            }
+        }
+
+        // --- Navigation & Game State Controls ---
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function initAudioAndStart() {
+            initAudio();
+            scoreA = 0;
+            scoreB = 0;
+            currentRound = 0;
+            goToRandomizer();
+        }
+
+        function pauseGame() {
+            document.getElementById('pause-overlay').style.display = 'flex';
+        }
+
+        function resumeGame() {
+            document.getElementById('pause-overlay').style.display = 'none';
+        }
+
+        // --- Randomizer Logic (Split Teams) ---
+        function goToRandomizer() {
+            showScreen('screen-randomizer');
+            updateRosterCount();
+            
+            document.getElementById('name-list-a').addEventListener('input', updateRosterCount);
+            document.getElementById('name-list-b').addEventListener('input', updateRosterCount);
+            
+            document.getElementById('btn-start-battle').classList.add('hidden');
+            document.getElementById('btn-spin').innerText = "SPIN!";
+            document.getElementById('btn-redraw-a').disabled = true;
+            document.getElementById('btn-redraw-b').disabled = true;
+            document.getElementById('player-a-display').innerText = "???";
+            document.getElementById('player-b-display').innerText = "???";
+        }
+
+        function updateRosterCount() {
+            const namesA = document.getElementById('name-list-a').value.split('\n').map(n => n.trim()).filter(n => n.length > 0);
+            const namesB = document.getElementById('name-list-b').value.split('\n').map(n => n.trim()).filter(n => n.length > 0);
+            
+            document.getElementById('roster-count-a').innerText = `${namesA.length} left`;
+            document.getElementById('roster-count-b').innerText = `${namesB.length} left`;
+        }
+
+        function parseNames() {
+            availableNamesA = document.getElementById('name-list-a').value.split('\n').map(n => n.trim()).filter(n => n.length > 0);
+            availableNamesB = document.getElementById('name-list-b').value.split('\n').map(n => n.trim()).filter(n => n.length > 0);
+        }
+
+        function runSlotMachineAnimation(targetA, targetB, callback) {
+            const displayA = document.getElementById('player-a-display');
+            const displayB = document.getElementById('player-b-display');
+            
+            document.getElementById('btn-spin').disabled = true;
+            document.getElementById('btn-redraw-a').disabled = true;
+            document.getElementById('btn-redraw-b').disabled = true;
+            document.getElementById('btn-start-battle').classList.add('hidden');
+            
+            displayA.classList.add('blur-text');
+            displayB.classList.add('blur-text');
+
+            let ticks = 0;
+            const maxTicks = 40; 
+            
+            if(spinInterval) clearInterval(spinInterval);
+            
+            spinInterval = setInterval(() => {
+                displayA.innerText = availableNamesA.length > 0 ? availableNamesA[Math.floor(Math.random() * availableNamesA.length)] : "???";
+                displayB.innerText = availableNamesB.length > 0 ? availableNamesB[Math.floor(Math.random() * availableNamesB.length)] : "???";
+                playSpinSound();
+                
+                ticks++;
+                if (ticks >= maxTicks) {
+                    clearInterval(spinInterval);
+                    displayA.classList.remove('blur-text');
+                    displayB.classList.remove('blur-text');
+                    
+                    displayA.innerText = targetA;
+                    displayB.innerText = targetB;
+                    
+                    playWinSound();
+                    createConfetti();
+                    
+                    if(callback) callback();
+                }
+            }, 50);
+        }
+
+        function runSingleSlotMachine(team, targetName, callback) {
+            const display = document.getElementById(`player-${team.toLowerCase()}-display`);
+            const pool = team === 'A' ? availableNamesA : availableNamesB;
+            
+            display.classList.add('blur-text');
+            
+            let ticks = 0;
+            let tempInterval = setInterval(() => {
+                display.innerText = pool.length > 0 ? pool[Math.floor(Math.random() * pool.length)] : "???";
+                playSpinSound();
+                ticks++;
+                if (ticks >= 20) {
+                    clearInterval(tempInterval);
+                    display.classList.remove('blur-text');
+                    display.innerText = targetName;
+                    playWinSound();
+                    createConfetti();
+                    if(callback) callback();
+                }
+            }, 50);
+        }
+
+        function spinNames() {
+            parseNames();
+            
+            if (availableNamesA.length < 1) {
+                alert("Team A is out of players in the roster!");
+                return;
+            }
+            if (availableNamesB.length < 1) {
+                alert("Team B is out of players in the roster!");
+                return;
+            }
+            
+            let idxA = Math.floor(Math.random() * availableNamesA.length);
+            let pA = availableNamesA.splice(idxA, 1)[0];
+            
+            let idxB = Math.floor(Math.random() * availableNamesB.length);
+            let pB = availableNamesB.splice(idxB, 1)[0];
+
+            runSlotMachineAnimation(pA, pB, () => {
+                playerA = pA;
+                playerB = pB;
+                updateRosterUI();
+                
+                document.getElementById('btn-redraw-a').disabled = false;
+                document.getElementById('btn-redraw-b').disabled = false;
+                document.getElementById('btn-spin').innerText = "RE-SPIN BOTH";
+                document.getElementById('btn-spin').disabled = false;
+                document.getElementById('btn-start-battle').classList.remove('hidden');
+            });
+        }
+
+        function redrawPlayer(team) {
+            let pool = team === 'A' ? availableNamesA : availableNamesB;
+            
+            if (pool.length < 1) {
+                alert(`Team ${team} has no more players to draw!`);
+                return;
+            }
+            
+            let idx = Math.floor(Math.random() * pool.length);
+            let newPlayer = pool.splice(idx, 1)[0];
+
+            document.getElementById('btn-spin').disabled = true;
+            document.getElementById('btn-start-battle').classList.add('hidden');
+
+            runSingleSlotMachine(team, newPlayer, () => {
+                if (team === 'A') playerA = newPlayer;
+                else playerB = newPlayer;
+                
+                updateRosterUI();
+                document.getElementById('btn-spin').disabled = false;
+                document.getElementById('btn-start-battle').classList.remove('hidden');
+            });
+        }
+
+        function updateRosterUI() {
+            document.getElementById('name-list-a').value = availableNamesA.join('\n');
+            document.getElementById('name-list-b').value = availableNamesB.join('\n');
+            updateRosterCount();
+        }
+
+        // --- Game Setup Logic ---
+        function goToGame() {
+            if (!playerA || !playerB) return;
+            document.getElementById('game-player-a').innerText = playerA;
+            document.getElementById('game-player-b').innerText = playerB;
+            
+            updateScores();
+            showScreen('screen-game');
+            setupRound();
+        }
+
+        function shuffleArray(array) {
+            let arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function setupRound() {
+            const q = questions[currentRound];
+            document.getElementById('round-display').innerText = `Round ${currentRound + 1} / ${questions.length}`;
+            
+            document.querySelectorAll('.prompt-text').forEach(el => el.innerText = q.prompt);
+            
+            // Set the central image, with a fallback if the file is missing
+            const imgEl = document.getElementById('central-img');
+            imgEl.onerror = function() {
+                this.onerror = null;
+                this.src = `https://placehold.co/400x300/e2e8f0/475569?text=Missing:\\n${q.image}`;
+            };
+            imgEl.src = q.image;
+            
+            let words = q.target.split(' ').map(w => w.trim());
+            
+            let colorsForA = shuffleArray(bubbleColors);
+            let colorsForB = shuffleArray(bubbleColors);
+
+            stateA.pool = shuffleArray(words).map((w, i) => ({ 
+                id: `a_${i}`, 
+                text: w, 
+                color: colorsForA[i % colorsForA.length] 
+            }));
+            stateA.answer = [];
+            
+            stateB.pool = shuffleArray(words).map((w, i) => ({ 
+                id: `b_${i}`, 
+                text: w, 
+                color: colorsForB[i % colorsForB.length] 
+            }));
+            stateB.answer = [];
+
+            document.getElementById('winner-overlay').style.display = 'none';
+            renderBoard('A');
+            renderBoard('B');
+        }
+
+        // --- Gameplay Rendering & Interaction ---
+
+        function createBubble(wordObj, team, isPool) {
+            const div = document.createElement('div');
+            div.className = `glass-bubble select-none`;
+            div.innerText = wordObj.text;
+            
+            div.style.backgroundColor = wordObj.color;
+            
+            if (isPool) {
+                const randomDelay = Math.random() * 3;
+                div.style.animationDelay = `-${randomDelay}s`;
+            } else {
+                div.classList.add('bubble-static');
+            }
+
+            div.onclick = () => {
+                playSpinSound();
+                if(isPool) moveToAnswer(team, wordObj);
+                else moveToPool(team, wordObj);
+            };
+            return div;
+        }
+
+        function renderBoard(team) {
+            const state = team === 'A' ? stateA : stateB;
+            
+            const poolEl = document.getElementById(`word-pool-${team.toLowerCase()}`);
+            const ansEl = document.getElementById(`answer-box-${team.toLowerCase()}`);
+            
+            poolEl.innerHTML = '';
+            ansEl.innerHTML = '';
+
+            state.pool.forEach(wordObj => {
+                poolEl.appendChild(createBubble(wordObj, team, true));
+            });
+
+            state.answer.forEach(wordObj => {
+                ansEl.appendChild(createBubble(wordObj, team, false));
+            });
+        }
+
+        function moveToAnswer(team, wordObj) {
+            const state = team === 'A' ? stateA : stateB;
+            state.pool = state.pool.filter(w => w.id !== wordObj.id);
+            state.answer.push(wordObj);
+            renderBoard(team);
+        }
+
+        function moveToPool(team, wordObj) {
+            const state = team === 'A' ? stateA : stateB;
+            state.answer = state.answer.filter(w => w.id !== wordObj.id);
+            state.pool.push(wordObj);
+            renderBoard(team);
+        }
+
+        function clearAnswer(team) {
+            playSpinSound();
+            const state = team === 'A' ? stateA : stateB;
+            if (state.answer.length === 0) return;
+            
+            state.pool.push(...state.answer);
+            state.answer = [];
+            renderBoard(team);
+        }
+
+        function checkAnswer(team) {
+            const state = team === 'A' ? stateA : stateB;
+            const q = questions[currentRound];
+            
+            const builtSentence = state.answer.map(w => w.text).join(' ');
+            
+            if (builtSentence === q.target) {
+                playCorrectSound();
+                if (team === 'A') scoreA++;
+                else scoreB++;
+                
+                updateScores();
+                
+                const playerName = team === 'A' ? playerA : playerB;
+                document.getElementById('winner-text').innerText = `${playerName} Wins Round ${currentRound + 1}!`;
+                
+                document.getElementById('review-question').innerText = q.prompt;
+                document.getElementById('review-answer').innerText = q.target;
+
+                document.getElementById('winner-overlay').style.display = 'flex';
+                createConfetti();
+            } else {
+                playWrongSound();
+                const ansBox = document.getElementById(`answer-box-${team.toLowerCase()}`);
+                ansBox.classList.add('animate-shake');
+                setTimeout(() => {
+                    ansBox.classList.remove('animate-shake');
+                }, 400);
+            }
+        }
+
+        function updateScores() {
+            document.getElementById('score-a-display').innerText = scoreA;
+            document.getElementById('score-b-display').innerText = scoreB;
+        }
+
+        function nextRound() {
+            currentRound++;
+            document.getElementById('winner-overlay').style.display = 'none';
+            
+            if (currentRound >= questions.length) {
+                endGame();
+                return;
+            }
+
+            goToRandomizer();
+        }
+
+        function endGame() {
+            document.getElementById('pause-overlay').style.display = 'none';
+            document.getElementById('winner-overlay').style.display = 'none';
+
+            document.getElementById('end-overlay').style.display = 'flex';
+            
+            let finalMsg = "";
+            if (scoreA > scoreB) {
+                finalMsg = `🏆 Team A Wins! 🏆\nFinal Score: ${scoreA} - ${scoreB}`;
+            } else if (scoreB > scoreA) {
+                finalMsg = `🏆 Team B Wins! 🏆\nFinal Score: ${scoreB} - ${scoreA}`;
+            } else {
+                finalMsg = `It's a Tie!\nFinal Score: ${scoreA} - ${scoreB}`;
+            }
+            
+            document.getElementById('final-score-text').innerText = finalMsg;
+            playWinSound();
+            createConfetti();
+            
+            setTimeout(createConfetti, 1000);
+            setTimeout(createConfetti, 2000);
+        }
+
+        function resetGame() {
+            document.getElementById('end-overlay').style.display = 'none';
+            
+            playerA = null;
+            playerB = null;
+            scoreA = 0;
+            scoreB = 0;
+            currentRound = 0;
+            
+            goToRandomizer();
+        }
+    </script>
+</body>
+</html>
