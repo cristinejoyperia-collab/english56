@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spooky Feud! Halloween Taiwan Edition 🎃🧋</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <!-- Comic Neue fallback for systems without Comic Sans MS -->
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:ital,wght@0,400;0,700;1,700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-overlay: rgba(24, 10, 48, 0.78);
+    }
+
+    * {
+      font-family: 'Comic Sans MS', 'Comic Neue', 'Chalkboard SE', 'PingFang TC', 'Microsoft JhengHei', cursive, sans-serif !important;
+      user-select: none;
+    }
+
+    /* Fix FontAwesome icons since global font-family overrides them */
+    .fa, .fas, .far, .fal, .fab, .fa-solid, .fa-regular {
+      font-family: "Font Awesome 6 Free", "Font Awesome 5 Free" !important;
+      font-weight: 900;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      background-color: #160829;
+      color: #fff;
+    }
+
+    /* Custom Game Background Layer (Looks for local background-photo.jpg) */
+    #app-bg {
+      position: fixed;
+      inset: 0;
+      background-color: #17062c;
+      background-image: url('background-photo.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      z-index: -2;
+      transition: background-image 0.4s ease;
+    }
+
+    #app-bg-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-overlay);
+      z-index: -1;
+      pointer-events: none;
+      transition: background 0.2s ease;
+    }
+
+    /* Game Show Studio Lights Rim */
+    .feud-board-frame {
+      background: linear-gradient(145deg, #2a0e4d, #150629);
+      border: 6px solid #fbbf24;
+      box-shadow: 
+        0 0 25px rgba(251, 191, 36, 0.5),
+        inset 0 0 30px rgba(249, 115, 22, 0.35);
+      border-radius: 1.75rem;
+      position: relative;
+    }
+
+    /* 3D Flip Card Styles for Family Feud Slots */
+    .flip-card {
+      perspective: 1200px;
+      height: 108px;
+    }
+
+    @media (max-width: 768px) {
+      .flip-card {
+        height: 125px;
+      }
+    }
+
+    .flip-card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transform-style: preserve-3d;
+    }
+
+    .flip-card.revealed .flip-card-inner {
+      transform: rotateX(180deg);
+    }
+
+    .flip-card-front,
+    .flip-card-back {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Locked Front Card (Numbered Oval like Family Feud) */
+    .flip-card-front {
+      background: linear-gradient(180deg, #ff8800 0%, #c2410c 100%);
+      border: 4px solid #fde047;
+      box-shadow: 0 6px 0 #7c2d12, 0 10px 20px rgba(0, 0, 0, 0.45);
+      cursor: pointer;
+      justify-content: center;
+      transition: transform 0.15s ease, filter 0.15s ease;
+    }
+
+    .flip-card-front:hover {
+      filter: brightness(1.1);
+      transform: translateY(-2px);
+    }
+
+    /* Revealed Back Card (Answer + Points) */
+    .flip-card-back {
+      background: linear-gradient(180deg, #fef08a 0%, #facc15 100%);
+      border: 4px solid #ffffff;
+      box-shadow: 0 6px 0 #ca8a04, 0 0 25px rgba(250, 204, 21, 0.7);
+      color: #1e1b4b;
+      transform: rotateX(180deg);
+      padding: 0.6rem 1rem;
+    }
+
+    /* Bubbly Kids Game Buttons */
+    .btn-game {
+      border-bottom-width: 5px;
+      transition: all 0.12s ease;
+    }
+    .btn-game:active:not(:disabled) {
+      transform: translateY(3px);
+      border-bottom-width: 2px;
+    }
+
+    /* Floating Animations */
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0px) rotate(-3deg); }
+      50% { transform: translateY(-10px) rotate(3deg); }
+    }
+    .animate-float {
+      animation: floatSlow 3.5s ease-in-out infinite;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 15px #f97316, 0 0 30px #facc15; transform: scale(1); }
+      50% { box-shadow: 0 0 28px #ef4444, 0 0 65px #fde047; transform: scale(1.06); }
+    }
+    .pulse-attention {
+      animation: pulseGlow 1.3s infinite ease-in-out;
+    }
+
+    /* Giant Strike X Pop */
+    @keyframes strikePop {
+      0% { transform: scale(0.3) rotate(-15deg); opacity: 0; }
+      40% { transform: scale(1.15) rotate(5deg); opacity: 1; }
+      75% { transform: scale(0.95) rotate(-2deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+    .strike-anim {
+      animation: strikePop 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1e0b36;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #f97316;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+  <!-- Dynamic Background & Adjustable Overlay -->
+  <div id="app-bg"></div>
+  <div id="app-bg-overlay"></div>
+
+  <!-- Floating Decorative Spooky Taiwan Icons (Background Ambiance) -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden z-0 opacity-25">
+    <div class="absolute top-16 left-6 text-5xl animate-float">🎃</div>
+    <div class="absolute top-24 right-10 text-5xl animate-float" style="animation-delay: 0.8s;">🧋</div>
+    <div class="absolute bottom-36 left-12 text-5xl animate-float" style="animation-delay: 1.5s;">👻</div>
+    <div class="absolute bottom-40 right-14 text-5xl animate-float" style="animation-delay: 2.2s;">🛵</div>
+    <div class="absolute top-1/2 left-4 text-4xl animate-float" style="animation-delay: 1.1s;">🦇</div>
+    <div class="absolute top-1/3 right-6 text-4xl animate-float" style="animation-delay: 1.9s;">🏮</div>
+  </div>
+
+  <!-- ================= FLOATING MINI HOST CONTROLS ================= -->
+  <div id="mini-controls" class="fixed top-3 right-3 z-50 flex items-center gap-2 hidden">
+    <button onclick="toggleBGM()" id="btn-bgm-mini" class="w-11 h-11 rounded-full bg-indigo-600 border-2 border-indigo-400 text-white flex items-center justify-center shadow-lg hover:bg-indigo-500 transition-colors" title="Toggle Music">
+      <i class="fa-solid fa-music"></i>
+    </button>
+    <button onclick="triggerStrike()" class="w-11 h-11 rounded-full bg-red-600 border-2 border-red-400 text-white flex items-center justify-center shadow-lg hover:bg-red-500 transition-colors" title="Strike / Wrong Answer (X)">
+      <i class="fa-solid fa-xmark text-lg"></i>
+    </button>
+    <button onclick="switchScreen('cover')" class="w-11 h-11 rounded-full bg-orange-500 border-2 border-orange-300 text-white flex items-center justify-center shadow-lg hover:bg-orange-400 transition-colors" title="Home / Cover Screen">
+      <i class="fa-solid fa-house"></i>
+    </button>
+  </div>
+
+  <!-- ================= MAIN CONTENT AREA ================= -->
+  <main class="relative z-10 flex-1 flex flex-col justify-center items-center w-full h-full mx-auto">
+
+    <!-- ==================== 1. FULL-SCREEN COVER / SPLASH ==================== -->
+    <section id="screen-cover" class="fixed inset-0 z-50 flex flex-col items-center justify-end pb-12 bg-black">
+      
+      <!-- Full Bleed Cover Photo (Looks for local cover-photo.jpg) -->
+      <img id="cover-photo-img" 
+           src="cover-photo.jpg" 
+           onerror="this.src='https://placehold.co/1920x1080/2e1065/fde047?text=Please+save+cover-photo.jpg+in+your+folder!+%F0%9F%8E%83'"
+           alt="Game Cover" 
+           class="absolute inset-0 w-full h-full object-cover z-0" />
+      
+      <!-- Bottom gradient for button readability -->
+      <div class="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/80 to-transparent z-0"></div>
+
+      <!-- Floating Action Buttons -->
+      <div class="relative z-10 flex flex-wrap items-center justify-center gap-4">
+        <button onclick="startGame()" class="btn-game bg-gradient-to-b from-green-400 to-emerald-600 hover:from-green-300 hover:to-emerald-500 border-emerald-800 text-purple-950 font-extrabold text-2xl md:text-4xl px-12 py-5 rounded-3xl shadow-[0_0_40px_rgba(52,211,153,0.6)] flex items-center gap-3 pulse-attention">
+          <i class="fa-solid fa-play"></i>
+          <span>START GAME! 開始遊戲</span>
+        </button>
+
+        <label for="quick-cover-upload" class="btn-game bg-purple-700/90 hover:bg-purple-600 border-purple-950 text-white font-bold text-lg px-6 py-4 rounded-3xl cursor-pointer shadow-xl flex items-center gap-2 border-2 border-white/30 backdrop-blur-sm">
+          <i class="fa-solid fa-upload"></i>
+          <span>Change Cover 換封面</span>
+        </label>
+        <input id="quick-cover-upload" type="file" accept="image/*" class="hidden" onchange="handleCoverUpload(event)" />
+
+        <label for="quick-bg-upload" class="btn-game bg-indigo-700/90 hover:bg-indigo-600 border-indigo-950 text-white font-bold text-lg px-6 py-4 rounded-3xl cursor-pointer shadow-xl flex items-center gap-2 border-2 border-white/30 backdrop-blur-sm">
+          <i class="fa-solid fa-image"></i>
+          <span>Change Background 換背景</span>
+        </label>
+        <input id="quick-bg-upload" type="file" accept="image/*" class="hidden" onchange="handleBgUpload(event)" />
+      </div>
+    </section>
+
+    <!-- ==================== 2. MAIN GAMEPLAY SCREENS ==================== -->
+    <section id="screen-game" class="hidden w-full max-w-7xl px-3 py-3 md:px-6 flex-1 flex-col h-full items-center justify-center gap-4 mt-6">
+      
+      <!-- ================= SLIDE A: QUESTION, TIMER & WORD BANK ================= -->
+      <div id="slide-question" class="w-full flex-1 flex flex-col justify-between feud-board-frame p-6 md:p-8 relative">
+        
+        <!-- TOP: TIMER SECTION -->
+        <div class="w-full flex flex-col items-center justify-center mb-6 z-10">
+          <span id="q-badge" class="bg-amber-400 text-purple-950 font-extrabold px-5 py-1.5 rounded-full text-sm md:text-base shadow mb-4">
+            QUESTION 1 OF 10
+          </span>
+          
+          <div class="flex flex-col md:flex-row items-center justify-center gap-6 bg-purple-950/80 p-4 rounded-3xl border-2 border-purple-600/50 shadow-lg">
+            
+            <!-- Timer Circle -->
+            <div id="timer-circle" class="w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-amber-400 bg-purple-900 flex flex-col items-center justify-center shadow-[0_0_20px_rgba(251,191,36,0.4)] transition-colors">
+              <span id="timer-display" class="text-4xl md:text-5xl font-extrabold text-yellow-300 leading-none mt-1">30</span>
+              <span class="text-xs text-amber-200 font-bold mt-1">SEC 秒</span>
+            </div>
+
+            <!-- Timer Controls -->
+            <div class="flex flex-col items-center gap-3">
+              <div id="timer-status-banner" class="bg-purple-900/80 border border-purple-500 rounded-xl py-1.5 px-4 text-sm md:text-base font-bold text-amber-200 w-full text-center">
+                Ready! 點擊開始計時 30 秒
+              </div>
+              <div class="flex gap-3 w-full">
+                <button id="btn-timer-toggle" onclick="toggleTimer()" class="flex-1 btn-game bg-emerald-500 hover:bg-emerald-400 border-emerald-700 text-purple-950 font-extrabold py-3 px-4 rounded-2xl text-base md:text-lg flex items-center justify-center gap-2 shadow">
+                  <i id="timer-icon" class="fa-solid fa-play"></i>
+                  <span id="timer-btn-label">Start 開始</span>
+                </button>
+                <button onclick="resetTimer()" class="btn-game bg-slate-600 hover:bg-slate-500 border-slate-800 text-white font-bold py-3 px-4 rounded-2xl text-sm" title="Reset to 30 seconds">
+                  <i class="fa-solid fa-rotate-left"></i> 30s
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MIDDLE: QUESTION TEXT -->
+        <div class="text-center flex-1 flex flex-col items-center justify-center mb-6">
+          <h2 id="q-text-en" class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white leading-tight mb-4 drop-shadow-xl max-w-5xl">
+            Loading question...
+          </h2>
+          <p id="q-text-zh" class="text-2xl sm:text-3xl md:text-4xl font-bold text-amber-300 leading-snug drop-shadow-lg max-w-4xl">
+            載入題目中...
+          </p>
+          <div class="mt-5">
+            <button onclick="speakCurrentQuestion()" class="btn-game bg-sky-600 hover:bg-sky-500 border-sky-800 text-white font-bold px-5 py-2 rounded-xl flex items-center gap-2 shadow-lg text-lg">
+              <i class="fa-solid fa-volume-high"></i> Read Aloud 英文朗讀
+            </button>
+          </div>
+        </div>
+
+        <!-- BOTTOM: GAME SHOW QUIZ OPTIONS (A, B, C, D) -->
+        <div class="w-full bg-purple-950/90 border-4 border-dashed border-amber-400 rounded-3xl p-6 md:p-8 text-center shadow-2xl relative mx-auto max-w-6xl mt-4">
+          <div class="absolute -top-5 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-amber-400 to-orange-400 text-purple-950 font-extrabold px-6 py-2 rounded-full border-2 border-white shadow-lg text-lg md:text-xl flex items-center gap-2">
+            <i class="fa-solid fa-list-ul"></i> Options 提示選項
+          </div>
+          
+          <!-- Dynamic A,B,C,D Grid -->
+          <div id="hint-content" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 text-left">
+             <!-- injected here by JS -->
+          </div>
+        </div>
+
+        <!-- HIDDEN REVEAL BUTTON (Pops up when timer ends) -->
+        <div class="mt-6 flex flex-col items-center justify-center min-h-[90px] relative">
+          <button id="btn-goto-answers" onclick="showAnswersSlide()" class="hidden btn-game bg-gradient-to-r from-amber-400 via-yellow-300 to-orange-400 hover:from-yellow-300 hover:to-orange-300 text-purple-950 font-extrabold py-5 px-10 rounded-full text-2xl md:text-3xl shadow-[0_0_40px_rgba(251,191,36,0.6)] transition-all duration-300 transform scale-100 items-center justify-center gap-3 w-full max-w-xl mx-auto border-b-8 border-orange-700">
+            <i class="fa-solid fa-eye text-3xl"></i> 
+            <span>Reveal the Results! 公佈答案</span>
+          </button>
+          
+          <!-- Teacher shortcut to skip the wait -->
+          <button onclick="showAnswersSlide()" class="absolute bottom-[-10px] right-2 text-purple-400 hover:text-amber-300 font-bold text-sm underline opacity-70 hover:opacity-100 transition-opacity">
+            ⏭️ Skip to Answers (Teacher)
+          </button>
+        </div>
+      </div>
+
+      <!-- ================= SLIDE B: ANSWERS GRID (FLIP CARDS) ================= -->
+      <div id="slide-answers" class="hidden w-full flex-1 flex flex-col feud-board-frame p-5 md:p-8">
+        
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <h3 class="text-3xl md:text-4xl font-extrabold text-amber-300 drop-shadow flex items-center gap-3">
+            📊 SURVEY SAYS... 民調排行榜
+          </h3>
+          <div class="flex gap-3">
+            <button onclick="switchBackToQuestion()" class="btn-game bg-purple-800 hover:bg-purple-700 border-purple-950 text-white font-bold px-4 py-2 rounded-xl flex items-center gap-2">
+              <i class="fa-solid fa-arrow-left"></i> Back to Question
+            </button>
+            <button id="btn-reveal-all" onclick="revealAllResults()" class="btn-game bg-amber-400 hover:bg-amber-300 border-amber-600 text-purple-950 font-extrabold px-5 py-2 rounded-xl shadow flex items-center gap-2">
+              <i class="fa-solid fa-eye"></i> Flip All Cards
+            </button>
+          </div>
+        </div>
+
+        <!-- Pending Points Indicator for Group Awarding -->
+        <div class="flex justify-center mb-6">
+          <div class="bg-emerald-900/90 border-2 border-emerald-400 text-emerald-200 px-5 py-2 rounded-full text-base md:text-lg font-bold flex items-center gap-2 shadow-lg">
+            <i class="fa-solid fa-hand-point-down text-yellow-300 text-xl animate-bounce"></i>
+            <span id="award-prompt-text">Click a revealed answer or tap a Group below to add points! 點擊下方第1~7組加分！</span>
+          </div>
+        </div>
+
+        <!-- Answer Slots Grid -->
+        <div id="answers-grid" class="grid grid-cols-1 md:grid-cols-2 gap-5 flex-1 content-center">
+          <!-- Populated dynamically via JS -->
+        </div>
+
+        <!-- Bottom Prev / Next Question Bar -->
+        <div class="flex items-center justify-between mt-8 pt-5 border-t-4 border-purple-800/80">
+          <button id="btn-prev-q" onclick="prevQuestion()" class="btn-game bg-purple-800 hover:bg-purple-700 border-purple-950 text-amber-200 font-bold px-6 py-3 rounded-2xl text-lg flex items-center gap-2">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>Prev 上一題</span>
+          </button>
+
+          <div class="text-sm md:text-base text-purple-200 font-bold text-center hidden sm:block">
+            Shortcuts: <kbd class="bg-purple-950 px-2 py-1 rounded border border-purple-600">R</kbd> Flip All • <kbd class="bg-purple-950 px-2 py-1 rounded border border-purple-600">X</kbd> Strike
+          </div>
+
+          <button id="btn-next-q" onclick="nextQuestion()" class="btn-game bg-orange-500 hover:bg-orange-400 border-orange-700 text-white font-extrabold px-8 py-3 rounded-2xl text-lg flex items-center gap-2 shadow-lg">
+            <span>Next Question 下一題</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ==================== 3. FINAL PODIUM / WINNERS SCREEN ==================== -->
+    <section id="screen-podium" class="hidden w-full max-w-5xl feud-board-frame p-6 md:p-8 text-center my-auto">
+      <div class="text-5xl mb-2">🏆🎃🎉</div>
+      <h2 class="text-3xl md:text-5xl font-extrabold text-amber-300 drop-shadow mb-1">
+        FINAL SCOREBOARD & WINNERS!
+      </h2>
+      <p class="text-lg md:text-xl text-amber-100 font-bold mb-6">
+        萬聖節大對決・最終排行榜！恭喜所有小朋友！
+      </p>
+
+      <!-- Ranked Groups List -->
+      <div id="podium-rankings" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 text-left">
+        <!-- Populated by JS -->
+      </div>
+
+      <div class="flex flex-wrap justify-center gap-4">
+        <button onclick="switchScreen('game')" class="btn-game bg-purple-700 hover:bg-purple-600 border-purple-950 text-white font-bold px-6 py-3 rounded-2xl text-lg flex items-center gap-2">
+          <i class="fa-solid fa-rotate-left"></i>
+          <span>Back to Questions 回到題目</span>
+        </button>
+        <button onclick="playCheerSFX()" class="btn-game bg-amber-400 hover:bg-amber-300 border-amber-600 text-purple-950 font-extrabold px-6 py-3 rounded-2xl text-lg flex items-center gap-2">
+          <span>🎊</span>
+          <span>Play Victory Music 播放頒獎音樂</span>
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= PERSISTENT SCOREBOARD FOR GROUPS 1 - 7 ================= -->
+  <footer id="scoreboard-footer" class="hidden relative z-20 bg-purple-950/95 border-t-4 border-amber-400 px-3 py-2.5 shadow-[0_-8px_25px_rgba(0,0,0,0.6)] backdrop-blur-md w-full">
+    <div class="max-w-7xl mx-auto">
+      
+      <!-- Scoreboard Header & Selected Points Badge -->
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-2 px-1">
+        <div class="flex items-center gap-2">
+          <span class="text-amber-300 font-extrabold text-sm md:text-base flex items-center gap-1.5">
+            <i class="fa-solid fa-trophy text-yellow-400"></i>
+            <span>TEAM SCOREBOARD 小組計分板 (Groups 1–7)</span>
+          </span>
+          <span id="selected-points-badge" class="bg-gradient-to-r from-amber-400 to-orange-400 text-purple-950 font-extrabold text-xs md:text-sm px-3 py-0.5 rounded-full shadow">
+            Active Award: +1 pt (Click any answer card to select its points!)
+          </span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="resetAllScores()" class="text-xs bg-purple-900 hover:bg-red-800 text-purple-200 hover:text-white px-2.5 py-1 rounded-lg border border-purple-600 transition">
+            <i class="fa-solid fa-eraser"></i> Reset Scores 分數歸零
+          </button>
+        </div>
+      </div>
+
+      <!-- 7 Groups Grid -->
+      <div id="scoreboard-grid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+        <!-- Populated by JS for Groups 1 to 7 -->
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================= GIANT RED "X" STRIKE OVERLAY ================= -->
+  <div id="strike-overlay" onclick="hideStrikeOverlay()" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm cursor-pointer">
+    <div class="strike-anim flex flex-col items-center">
+      <div class="w-56 h-56 md:w-72 md:h-72 bg-red-600 border-8 border-white rounded-3xl shadow-[0_0_80px_#ef4444] flex items-center justify-center">
+        <span class="text-[140px] md:text-[180px] font-extrabold text-white leading-none drop-shadow-[0_6px_6px_rgba(0,0,0,0.6)]">X</span>
+      </div>
+      <div class="mt-4 bg-amber-400 text-purple-950 font-extrabold text-2xl md:text-3xl px-6 py-2 rounded-full border-4 border-white shadow-xl">
+        TRY AGAIN! 再猜猜看喔！
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= JAVASCRIPT LOGIC & DATA ================= -->
+  <script>
+    /********************************************************************
+     * 1. ALL 10 QUESTIONS & SURVEY DATA (English + Traditional Chinese)
+     ********************************************************************/
+    const QUESTIONS = [
+      {
+        id: 1,
+        questionEn: "We had a survey! The kids answered that this is the type of Halloween candy they want to eat for the rest of their lives.",
+        questionZh: "我們做了一個大調查！小朋友們說，這是他們這輩子最想永遠吃下去的萬聖節糖果！",
+        options: ["Chocolates (巧克力)", "Sour candy (酸味糖果)", "Gummy bears (小熊軟糖)", "Candy corn (玉米糖)"],
+        answers: [
+          { en: "Chocolate bars (Snickers, KitKat, etc.)", zh: "巧克力棒 (Snickers、KitKat 等)", points: 1, icon: "🍫" },
+          { en: "Sour candy (Sour Patch Kids, worms)", zh: "酸味糖果 (酸小人軟糖、酸蟲軟糖)", points: 1, icon: "🍬" },
+          { en: "Gummy bears / Fruit snacks", zh: "小熊軟糖 / 水果軟糖", points: 1, icon: "🧸" },
+          { en: "Candy corn", zh: "萬聖節玉米糖", points: 1, icon: "🌽" }
+        ]
+      },
+      {
+        id: 2,
+        questionEn: "If a ghost decided to haunt a school, what is the very first thing they would mess with?",
+        questionZh: "如果一隻調皮的鬼決定去學校搗蛋，祂第一件會惡作劇的東西是什麼？",
+        options: ["The classroom lights (教室電燈)", "Whiteboard (白板)", "The teacher's desk/chair (老師的桌椅)", "The cafeteria food (營養午餐)"],
+        answers: [
+          { en: "The classroom lights (flashing them on and off)", zh: "教室的電燈 (把燈開開關關閃個不停)", points: 1, icon: "💡" },
+          { en: "The whiteboard / chalkboard (drawing funny faces)", zh: "白板或黑板 (在上面畫搞笑鬼臉)", points: 1, icon: "🖍️" },
+          { en: "The teacher's desk / chair", zh: "老師的辦公桌或椅子", points: 1, icon: "🪑" },
+          { en: "The cafeteria food", zh: "學校的營養午餐", points: 1, icon: "🍱" }
+        ]
+      },
+      {
+        id: 3,
+        questionEn: "What if a ghost decided to haunt a local Taiwan night market? What stall would they hang out at the most?",
+        questionZh: "如果一隻鬼決定去台灣的夜市逛街搗蛋，祂最喜歡待在哪一個攤位？",
+        options: ["Stinky Tofu (臭豆腐)", "Bubble milk tea (珍珠奶茶)", "Fried chicken cutlet (炸雞排)", "Claw machine (夾娃娃機)"],
+        answers: [
+          { en: "Stinky Tofu stall (trying to scare people with the smell)", zh: "臭豆腐攤 (想用超濃的味道嚇人！)", points: 1, icon: "🍲" },
+          { en: "Bubble milk tea stand (trying to steal cups)", zh: "珍珠奶茶攤 (想偷喝別人的珍奶)", points: 1, icon: "🧋" },
+          { en: "Fried chicken cutlet / Ji Pai line", zh: "炸雞排排隊人潮 (大雞排太香了)", points: 1, icon: "🍗" },
+          { en: "The claw machine arcade", zh: "夾娃娃機店 (在機台裡面偷動爪子)", points: 1, icon: "🕹️" }
+        ]
+      },
+      {
+        id: 4,
+        questionEn: "What if you had to decorate a giant Taiwan-grown fruit like a Jack-o'-lantern instead of a pumpkin? Which one would be the most hilarious to carve?",
+        questionZh: "如果不用南瓜，而是要用巨大的「台灣在地水果」來刻萬聖節燈籠，哪一種水果刻起來最爆笑？",
+        options: ["Bitter melon (苦瓜)", "Watermelon (大西瓜)", "Dragon fruit (火龍果)", "Rambutan (紅毛丹)"],
+        answers: [
+          { en: "A bumpy bitter melon (Gua-gua)", zh: "一顆凹凸不平的苦瓜 (苦瓜燈籠)", points: 1, icon: "🥒" },
+          { en: "A huge watermelon", zh: "一顆超大西瓜", points: 1, icon: "🍉" },
+          { en: "A dragon fruit (it already looks kind of alien!)", zh: "火龍果 (它長得已經很像外星人了！)", points: 1, icon: "🐉" },
+          { en: "A hairy rambutan", zh: "毛茸茸的紅毛丹", points: 1, icon: "🔴" }
+        ]
+      },
+      {
+        id: 5,
+        questionEn: "What if a mischievous witch lost her broomstick over a Taiwanese city? What local vehicle would she most likely \"borrow\" to get around instead?",
+        questionZh: "如果一個調皮的巫婆在台灣城市上空弄丟了飛天掃帚，她最有可能「借用」哪一種台灣交通工具代步？",
+        options: ["Gogoro / Scooter (機車)", "YouBike (微笑單車)", "MRT train (捷運)", "Delivery scooter (外送機車)"],
+        answers: [
+          { en: "A Gogoro or scooter", zh: "Gogoro 電動車或摩托車", points: 1, icon: "🛵" },
+          { en: "A YouBike bicycle", zh: "YouBike 微笑單車", points: 1, icon: "🚲" },
+          { en: "The MRT train", zh: "捷運列車 (MRT)", points: 1, icon: "🚇" },
+          { en: "A delivery scooter (like Foodpanda or UberEats)", zh: "外送機車 (像是 Foodpanda 或 UberEats)", points: 1, icon: "📦" }
+        ]
+      },
+      {
+        id: 6,
+        questionEn: "What if a vampire got hungry in Taiwan past midnight? Where would they fly to grab a late-night snack?",
+        questionZh: "如果吸血鬼半夜在台灣肚子餓了，他們會飛去哪裡買宵夜吃？",
+        options: ["7-Eleven / FamilyMart (便利商店)", "24-hour Hot Pot (火鍋店)", "Midnight noodle shop (宵夜湯麵)", "Yong He Dou Jiang (永和豆漿)"],
+        answers: [
+          { en: "7-Eleven or FamilyMart (for a warm bao or tea egg)", zh: "7-11 或全家便利商店 (買熱包子或茶葉蛋)", points: 1, icon: "🏪" },
+          { en: "A 24-hour hot pot restaurant", zh: "24小時營業的火鍋店", points: 1, icon: "🥘" },
+          { en: "A midnight noodle soup shop (Yedian)", zh: "半夜開的宵夜湯麵攤", points: 1, icon: "🍜" },
+          { en: "A 24-hour Yong He Dou Jiang (soy milk shop)", zh: "24小時永和豆漿店 (吃燒餅油條)", points: 1, icon: "🥛" }
+        ]
+      },
+      {
+        id: 7,
+        questionEn: "What if a zombie hopped on a local Changhua bus to get to school? What would the driver say when they tapped their EasyCard?",
+        questionZh: "如果一隻殭屍在彰化搭公車去上學，當牠「嗶」悠遊卡的時候，公車司機會說什麼？",
+        options: ["Good morning! (早安小心腳步)", "Arm falling off! (手快掉下來了)", "Move to the back! (往後面移動)", "Student ID? (學生證呢)"],
+        answers: [
+          { en: "\"Good morning! Mind your step, please!\" (looking totally calm)", zh: "「早安！請小心腳步喔！」(司機超淡定覺得很正常)", points: 1, icon: "🚌" },
+          { en: "\"Hey, your arm is falling off!\"", zh: "「喂！同學，你的手臂快掉下來啦！」", points: 1, icon: "🧟" },
+          { en: "\"Please move to the back of the bus!\"", zh: "「請往車廂後面移動喔！」", points: 1, icon: "📢" },
+          { en: "\"Where is your student ID card?\"", zh: "「你的學生證在哪裡？」", points: 1, icon: "🪪" }
+        ]
+      },
+      {
+        id: 8,
+        questionEn: "What if a monster family wanted to go shopping on Nanyao Temple street? What shop would they spend all their allowance at?",
+        questionZh: "如果妖怪一家人去彰化南瑤宮附近的街道逛街，他們會把零用錢全部花在哪一家店？",
+        options: ["Stationery store (文具店)", "7-Eleven/FamilyMart (超商買冰)", "Traditional snack stall (傳統點心攤)", "Claw machine (夾娃娃機)"],
+        answers: [
+          { en: "A local stationery store (buying cute pens and erasers)", zh: "在地文具店 (買超可愛的筆和橡皮擦)", points: 1, icon: "✏️" },
+          { en: "A 7-Eleven or FamilyMart (for ice cream and Slurpees)", zh: "7-11 或全家超商 (買冰淇淋和思樂冰)", points: 1, icon: "🍦" },
+          { en: "A traditional snack stall (for peanut candy or pastries)", zh: "傳統古早味點心攤 (買花生糖或糕餅)", points: 1, icon: "🥜" },
+          { en: "A claw machine arcade", zh: "夾娃娃機店", points: 1, icon: "👾" }
+        ]
+      },
+      {
+        id: 9,
+        questionEn: "What if a vampire got tired of drinking red liquids and decided to try a sweet, trendy boba drink instead? What flavor would he order?",
+        questionZh: "如果吸血鬼喝膩了紅色的飲料，決定改喝甜甜又流行的手搖飲，他會點什麼口味？",
+        options: ["Brown sugar pearl milk tea (黑糖珍珠鮮奶)", "Strawberry smoothie (草莓冰沙)", "Taro milk tea (芋頭奶茶)"],
+        answers: [
+          { en: "Brown sugar pearl milk tea", zh: "黑糖珍珠鮮奶", points: 1, icon: "🧋" },
+          { en: "Strawberry smoothie with boba", zh: "草莓珍珠冰沙", points: 1, icon: "🍓" },
+          { en: "Taro milk tea (because it's purple and spooky)", zh: "芋頭奶茶 (因為是神祕的萬聖節紫色！)", points: 1, icon: "🍠" }
+        ]
+      },
+      {
+        id: 10,
+        questionEn: "What if a vampire walked up to a 50 Lan shop right at midnight? What drink order would make the worker do a double-take?",
+        questionZh: "如果吸血鬼在半夜12點走進「50嵐」飲料店，他點什麼飲料會讓店員嚇一跳？",
+        options: ["Number One + zero heartbeat (1號四季春珍波椰+零心跳)", "Red dragon fruit juice (紅龍果汁)", "Lemon juice with fangs (用獠牙喝檸檬汁)", "Match black cape (配黑色披風)"],
+        answers: [
+          { en: "\"Number One (Pearl & Coconut Jelly Milk Tea), 100% ice, and zero heartbeat!\"", zh: "「我要一杯1號(珍波椰)，正常冰，還有零心跳！」", points: 1, icon: "🧛" },
+          { en: "\"A large cup of pure red dragon fruit juice, extra sweet!\"", zh: "「一大杯鮮紅色的紅龍果汁，要全糖超甜！」", points: 1, icon: "🍹" },
+          { en: "\"Just a cup of fresh lemon juice—no straw, I use my fangs.\"", zh: "「只要一杯鮮榨檸檬汁——不用吸管，我用獠牙喝！」", points: 1, icon: "🍋" },
+          { en: "\"Whatever you have that matches my black cape!\"", zh: "「隨便來一杯跟我的黑色披風很搭的飲料！」", points: 1, icon: "🦇" }
+        ]
+      }
+    ];
+
+    /********************************************************************
+     * 2. STATE MANAGEMENT
+     ********************************************************************/
+    let currentQuestionIndex = 0;
+    let revealedSlots = {}; // tracks { "qIndex-ansIndex": true }
+    let timerSeconds = 30;
+    let timerInterval = null;
+    let isTimerRunning = false;
+    let selectedAwardPoints = 1;
+
+    // 7 Groups State
+    const groups = [
+      { id: 1, name: "Group 1 第1組", score: 0, icon: "🎃" },
+      { id: 2, name: "Group 2 第2組", score: 0, icon: "👻" },
+      { id: 3, name: "Group 3 第3組", score: 0, icon: "🧛" },
+      { id: 4, name: "Group 4 第4組", score: 0, icon: "🧙‍♀️" },
+      { id: 5, name: "Group 5 第5組", score: 0, icon: "🧟" },
+      { id: 6, name: "Group 6 第6組", score: 0, icon: "🦇" },
+      { id: 7, name: "Group 7 第7組", score: 0, icon: "🧋" }
+    ];
+
+    /********************************************************************
+     * 3. WEB AUDIO API SYNTHESIZER
+     ********************************************************************/
+    let audioCtx = null;
+    let bgmInterval = null;
+    let isBgmPlaying = false;
+
+    function getAudioCtx() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playDingSFX() {
+      try {
+        const ctx = getAudioCtx();
+        const now = ctx.currentTime;
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc1.type = 'triangle';
+        osc2.type = 'sine';
+        osc1.frequency.setValueAtTime(587.33, now); 
+        osc1.frequency.setValueAtTime(880, now + 0.09); 
+        osc2.frequency.setValueAtTime(1174.66, now + 0.09); 
+
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.75);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc1.start(now);
+        osc2.start(now + 0.09);
+        osc1.stop(now + 0.75);
+        osc2.stop(now + 0.75);
+      } catch (e) {}
+    }
+
+    function playTickSFX(urgent = false) {
+      try {
+        const ctx = getAudioCtx();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = urgent ? 'square' : 'sine';
+        osc.frequency.setValueAtTime(urgent ? 920 : 600, now);
+
+        gain.gain.setValueAtTime(urgent ? 0.15 : 0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.09);
+      } catch (e) {}
+    }
+
+    function playTimesUpSFX() {
+      try {
+        const ctx = getAudioCtx();
+        const now = ctx.currentTime;
+        const freqs = [330, 293.66, 261.63, 196]; 
+        freqs.forEach((f, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(f, now + idx * 0.14);
+          gain.gain.setValueAtTime(0.22, now + idx * 0.14);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.14 + 0.25);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + idx * 0.14);
+          osc.stop(now + idx * 0.14 + 0.26);
+        });
+      } catch (e) {}
+    }
+
+    function playStrikeSFX() {
+      try {
+        const ctx = getAudioCtx();
+        const now = ctx.currentTime;
+        [110, 116.5].forEach(freq => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(freq, now);
+          gain.gain.setValueAtTime(0.28, now);
+          gain.gain.exponentialRampToValueAtTime(0.005, now + 0.65);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.66);
+        });
+      } catch (e) {}
+    }
+
+    function playPointSFX() {
+      try {
+        const ctx = getAudioCtx();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(987.77, now); 
+        osc.frequency.setValueAtTime(1318.51, now + 0.07); 
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.36);
+      } catch (e) {}
+    }
+
+    function playCheerSFX() {
+      try {
+        const ctx = getAudioCtx();
+        const now = ctx.currentTime;
+        const notes = [523.25, 659.25, 783.99, 1046.50, 783.99, 1046.50];
+        const times = [0, 0.12, 0.24, 0.36, 0.52, 0.66];
+        notes.forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + times[i]);
+          gain.gain.setValueAtTime(0.28, now + times[i]);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + times[i] + 0.28);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + times[i]);
+          osc.stop(now + times[i] + 0.3);
+        });
+      } catch (e) {}
+    }
+
+    function toggleBGM() {
+      const btn = document.getElementById('btn-bgm-mini');
+      if (isBgmPlaying) {
+        clearInterval(bgmInterval);
+        isBgmPlaying = false;
+        btn.classList.remove('bg-green-500', 'border-green-400');
+        btn.classList.add('bg-indigo-600', 'border-indigo-400');
+      } else {
+        getAudioCtx();
+        isBgmPlaying = true;
+        btn.classList.remove('bg-indigo-600', 'border-indigo-400');
+        btn.classList.add('bg-green-500', 'border-green-400');
+
+        let step = 0;
+        const melody = [220, 261.63, 329.63, 311.13, 220, 329.63, 293.66, 246.94];
+        bgmInterval = setInterval(() => {
+          if (!isBgmPlaying) return;
+          try {
+            const ctx = getAudioCtx();
+            const now = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(melody[step % melody.length], now);
+            gain.gain.setValueAtTime(0.05, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.24);
+            step++;
+          } catch (e) {}
+        }, 280);
+      }
+    }
+
+    /********************************************************************
+     * 4. UI RENDERING & SLIDE FLOW
+     ********************************************************************/
+    function initApp() {
+      renderScoreboard();
+      renderQuestion();
+    }
+
+    function switchScreen(screenName) {
+      document.getElementById('screen-cover').classList.add('hidden');
+      document.getElementById('screen-game').classList.add('hidden');
+      document.getElementById('screen-game').classList.remove('flex');
+      document.getElementById('screen-podium').classList.add('hidden');
+      
+      const scoreboard = document.getElementById('scoreboard-footer');
+      const miniControls = document.getElementById('mini-controls');
+
+      if (screenName === 'cover') {
+        pauseTimer();
+        document.getElementById('screen-cover').classList.remove('hidden');
+        scoreboard.classList.add('hidden');
+        miniControls.classList.add('hidden');
+      } else if (screenName === 'game') {
+        document.getElementById('screen-game').classList.remove('hidden');
+        document.getElementById('screen-game').classList.add('flex');
+        scoreboard.classList.remove('hidden');
+        miniControls.classList.remove('hidden');
+        renderQuestion();
+      } else if (screenName === 'podium') {
+        pauseTimer();
+        document.getElementById('screen-podium').classList.remove('hidden');
+        scoreboard.classList.remove('hidden');
+        miniControls.classList.remove('hidden');
+        renderPodium();
+        playCheerSFX();
+      }
+    }
+
+    function startGame() {
+      playCheerSFX();
+      switchScreen('game');
+    }
+
+    function renderQuestion() {
+      const q = QUESTIONS[currentQuestionIndex];
+      
+      // Ensure Slide A (Question) is visible, Slide B (Answers) is hidden
+      switchBackToQuestion();
+
+      document.getElementById('q-badge').textContent = `QUESTION ${currentQuestionIndex + 1} OF ${QUESTIONS.length} • 第 ${currentQuestionIndex + 1} 題`;
+      document.getElementById('q-text-en').textContent = q.questionEn;
+      document.getElementById('q-text-zh').textContent = q.questionZh;
+      
+      // Randomize the order of options for display
+      const shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
+      
+      // Render A,B,C,D Options Grid
+      const letters = ['A', 'B', 'C', 'D'];
+      const hintContentHtml = shuffledOptions.map((opt, i) => `
+        <div class="bg-purple-900 border-2 border-amber-400/50 rounded-2xl p-4 flex items-center gap-4 shadow-lg transform transition hover:scale-105">
+          <div class="bg-amber-400 text-purple-950 font-extrabold text-2xl md:text-3xl w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center shrink-0 border-2 border-white shadow">
+            ${letters[i]}
+          </div>
+          <div class="text-xl md:text-2xl lg:text-3xl font-bold text-amber-100 leading-tight">
+            ${opt}
+          </div>
+        </div>
+      `).join('');
+      document.getElementById('hint-content').innerHTML = hintContentHtml;
+
+      // Hide the giant "Reveal the Results" button initially
+      const btnReveal = document.getElementById('btn-goto-answers');
+      btnReveal.classList.add('hidden');
+      btnReveal.classList.remove('flex');
+      btnReveal.classList.remove('pulse-attention');
+
+      // Reset timer
+      resetTimer();
+
+      // Render Answer Flip Cards for Slide B in advance
+      const grid = document.getElementById('answers-grid');
+      grid.innerHTML = q.answers.map((ans, aIdx) => {
+        const key = `${currentQuestionIndex}-${aIdx}`;
+        const isRevealed = !!revealedSlots[key];
+        return `
+          <div id="slot-${aIdx}" class="flip-card ${isRevealed ? 'revealed' : ''}" onclick="handleCardClick(${aIdx})">
+            <div class="flip-card-inner">
+              
+              <!-- FRONT: Locked Family Feud Numbered Slot -->
+              <div class="flip-card-front px-6">
+                <div class="flex items-center gap-4">
+                  <div class="w-14 h-14 rounded-full bg-purple-950 border-4 border-yellow-300 flex items-center justify-center shadow-inner">
+                    <span class="text-3xl font-extrabold text-yellow-300">${aIdx + 1}</span>
+                  </div>
+                  <div class="text-left">
+                    <div class="text-lg md:text-xl font-extrabold text-white drop-shadow">RANK #${aIdx + 1} 熱門答案</div>
+                    <div class="text-xs text-yellow-200 font-bold">Click to reveal 點擊翻開答案</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- BACK: Revealed Answer + Points -->
+              <div class="flip-card-back">
+                <div class="flex items-center gap-3 pr-2 flex-1 min-w-0">
+                  <div class="text-3xl md:text-4xl shrink-0">${ans.icon || '🎃'}</div>
+                  <div class="text-left min-w-0">
+                    <div class="text-base sm:text-lg md:text-xl font-extrabold text-purple-950 leading-tight break-words">
+                      ${ans.en}
+                    </div>
+                    <div class="text-sm sm:text-base font-bold text-orange-800 leading-tight mt-0.5 break-words">
+                      ${ans.zh}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Points Box -->
+                <div class="shrink-0 bg-purple-950 text-amber-300 border-2 border-amber-400 rounded-xl px-3 py-2 text-center shadow-md min-w-[74px]">
+                  <div class="text-2xl md:text-3xl font-extrabold leading-none">${ans.points}</div>
+                  <div class="text-[10px] font-bold text-amber-200 uppercase mt-0.5">POINT 分</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      updateRevealAllButtonState();
+    }
+
+    function showAnswersSlide() {
+      pauseTimer();
+      document.getElementById('slide-question').classList.add('hidden');
+      document.getElementById('slide-question').classList.remove('flex');
+      document.getElementById('slide-answers').classList.remove('hidden');
+      document.getElementById('slide-answers').classList.add('flex');
+    }
+
+    function switchBackToQuestion() {
+      document.getElementById('slide-answers').classList.add('hidden');
+      document.getElementById('slide-answers').classList.remove('flex');
+      document.getElementById('slide-question').classList.remove('hidden');
+      document.getElementById('slide-question').classList.add('flex');
+    }
+
+    function handleCardClick(ansIndex) {
+      const q = QUESTIONS[currentQuestionIndex];
+      const ans = q.answers[ansIndex];
+      const key = `${currentQuestionIndex}-${ansIndex}`;
+
+      if (!revealedSlots[key]) {
+        revealedSlots[key] = true;
+        const cardEl = document.getElementById(`slot-${ansIndex}`);
+        if (cardEl) cardEl.classList.add('revealed');
+        playDingSFX();
+      } else {
+        playPointSFX();
+      }
+
+      setActiveAwardPoints(ans.points, `Rank #${ansIndex + 1} (${ans.points} pt)`);
+      updateRevealAllButtonState();
+    }
+
+    function revealAllResults() {
+      const q = QUESTIONS[currentQuestionIndex];
+      let anyNew = false;
+      q.answers.forEach((ans, aIdx) => {
+        const key = `${currentQuestionIndex}-${aIdx}`;
+        if (!revealedSlots[key]) {
+          revealedSlots[key] = true;
+          anyNew = true;
+          setTimeout(() => {
+            const cardEl = document.getElementById(`slot-${aIdx}`);
+            if (cardEl) cardEl.classList.add('revealed');
+            playDingSFX();
+          }, aIdx * 220);
+        }
+      });
+
+      if (!anyNew) playDingSFX();
+      if (q.answers[0]) {
+        setActiveAwardPoints(q.answers[0].points, `Top Answer (${q.answers[0].points} pt)`);
+      }
+      updateRevealAllButtonState();
+    }
+
+    function hideAllResults() {
+      const q = QUESTIONS[currentQuestionIndex];
+      q.answers.forEach((_, aIdx) => {
+        delete revealedSlots[`${currentQuestionIndex}-${aIdx}`];
+        const cardEl = document.getElementById(`slot-${aIdx}`);
+        if (cardEl) cardEl.classList.remove('revealed');
+      });
+      updateRevealAllButtonState();
+    }
+
+    function updateRevealAllButtonState() {
+      const q = QUESTIONS[currentQuestionIndex];
+      const allRevealed = q.answers.every((_, idx) => revealedSlots[`${currentQuestionIndex}-${idx}`]);
+      const btn = document.getElementById('btn-reveal-all');
+      if (allRevealed) {
+        btn.innerHTML = `<i class="fa-solid fa-rotate-left"></i> Hide Cards`;
+        btn.onclick = hideAllResults;
+      } else {
+        btn.innerHTML = `<i class="fa-solid fa-eye"></i> Flip All Cards`;
+        btn.onclick = revealAllResults;
+      }
+    }
+
+    /********************************************************************
+     * 5. 30-SECOND TIMER
+     ********************************************************************/
+    function toggleTimer() {
+      if (isTimerRunning) {
+        pauseTimer();
+      } else {
+        startTimer();
+      }
+    }
+
+    function startTimer() {
+      if (timerSeconds <= 0) {
+        timerSeconds = 30;
+      }
+      isTimerRunning = true;
+      updateTimerUI();
+
+      document.getElementById('timer-icon').className = 'fa-solid fa-pause';
+      document.getElementById('timer-btn-label').textContent = 'Pause 暫停';
+      document.getElementById('timer-status-banner').innerHTML = '⏳ Kids answering... 小朋友討論搶答中！';
+      document.getElementById('timer-status-banner').className = 'bg-emerald-900/90 border border-emerald-400 rounded-xl py-1.5 px-4 text-sm md:text-base font-bold text-emerald-200 w-full text-center';
+
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timerSeconds--;
+        updateTimerUI();
+
+        if (timerSeconds > 0 && timerSeconds <= 5) {
+          playTickSFX(true);
+        } else if (timerSeconds > 5) {
+          playTickSFX(false);
+        }
+
+        if (timerSeconds <= 0) {
+          handleTimeUp();
+        }
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      isTimerRunning = false;
+      clearInterval(timerInterval);
+      document.getElementById('timer-icon').className = 'fa-solid fa-play';
+      document.getElementById('timer-btn-label').textContent = 'Start 開始';
+    }
+
+    function resetTimer() {
+      pauseTimer();
+      timerSeconds = 30;
+      updateTimerUI();
+      const banner = document.getElementById('timer-status-banner');
+      banner.innerHTML = 'Ready! 點擊開始計時 30 秒';
+      banner.className = 'bg-purple-900/80 border border-purple-500 rounded-xl py-1.5 px-4 text-sm md:text-base font-bold text-amber-200 w-full text-center';
+      
+      const btnReveal = document.getElementById('btn-goto-answers');
+      btnReveal.classList.add('hidden');
+      btnReveal.classList.remove('flex');
+      btnReveal.classList.remove('pulse-attention');
+    }
+
+    function handleTimeUp() {
+      pauseTimer();
+      timerSeconds = 0;
+      updateTimerUI();
+      playTimesUpSFX();
+
+      const banner = document.getElementById('timer-status-banner');
+      banner.innerHTML = '⏰ TIME\'S UP! 時間到！請點選下方公佈答案';
+      banner.className = 'bg-red-700 border-2 border-yellow-300 rounded-xl py-1.5 px-4 text-sm md:text-base font-extrabold text-white animate-bounce w-full text-center';
+
+      // Pops up the Reveal Results button exactly when time is up
+      const btnReveal = document.getElementById('btn-goto-answers');
+      btnReveal.classList.remove('hidden');
+      btnReveal.classList.add('flex');
+      btnReveal.classList.add('pulse-attention');
+    }
+
+    function updateTimerUI() {
+      const display = document.getElementById('timer-display');
+      const circle = document.getElementById('timer-circle');
+
+      display.textContent = timerSeconds;
+      if (timerSeconds <= 5 && timerSeconds > 0) {
+        circle.className = 'w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-red-500 bg-red-950 flex flex-col items-center justify-center shadow-[0_0_25px_#ef4444] animate-pulse';
+        display.className = 'text-4xl md:text-5xl font-extrabold text-red-300 leading-none mt-1';
+      } else if (timerSeconds === 0) {
+        circle.className = 'w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-red-500 bg-red-900 flex flex-col items-center justify-center shadow-[0_0_30px_#ef4444]';
+        display.className = 'text-4xl md:text-5xl font-extrabold text-white leading-none mt-1';
+      } else {
+        circle.className = 'w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-amber-400 bg-purple-900 flex flex-col items-center justify-center shadow-[0_0_20px_rgba(251,191,36,0.4)] transition-colors';
+        display.className = 'text-4xl md:text-5xl font-extrabold text-yellow-300 leading-none mt-1';
+      }
+    }
+
+    /********************************************************************
+     * 6. NAVIGATION, TTS & STRIKE OVERLAY
+     ********************************************************************/
+    function prevQuestion() {
+      if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        renderQuestion();
+      }
+    }
+
+    function nextQuestion() {
+      if (currentQuestionIndex < QUESTIONS.length - 1) {
+        currentQuestionIndex++;
+        renderQuestion();
+      } else {
+        switchScreen('podium');
+      }
+    }
+
+    function speakCurrentQuestion() {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const q = QUESTIONS[currentQuestionIndex];
+      const utter = new SpeechSynthesisUtterance(q.questionEn);
+      utter.lang = 'en-US';
+      utter.rate = 0.92;
+      utter.pitch = 1.08;
+      window.speechSynthesis.speak(utter);
+    }
+
+    function triggerStrike() {
+      playStrikeSFX();
+      const overlay = document.getElementById('strike-overlay');
+      overlay.classList.remove('hidden');
+      overlay.classList.add('flex');
+      setTimeout(() => {
+        hideStrikeOverlay();
+      }, 1700);
+    }
+
+    function hideStrikeOverlay() {
+      const overlay = document.getElementById('strike-overlay');
+      overlay.classList.add('hidden');
+      overlay.classList.remove('flex');
+    }
+
+    /********************************************************************
+     * 7. GROUPS 1 - 7 SCOREBOARD LOGIC
+     ********************************************************************/
+    function setActiveAwardPoints(pts, labelText) {
+      selectedAwardPoints = pts;
+      const badge = document.getElementById('selected-points-badge');
+      badge.textContent = `Active Award: +${pts} pt (${labelText})`;
+      const prompt = document.getElementById('award-prompt-text');
+      if (prompt) {
+        prompt.textContent = `Selected +${pts} pt! Click a Group (1-7) below to award points! 點擊下方組別即可加上 +${pts} 分！`;
+      }
+    }
+
+    function renderScoreboard() {
+      const container = document.getElementById('scoreboard-grid');
+      container.innerHTML = groups.map((g, idx) => `
+        <div class="bg-gradient-to-b from-purple-900 to-purple-950 border-2 border-amber-400/80 rounded-2xl p-2 flex flex-col justify-between shadow-md hover:border-yellow-300 transition">
+          <div class="flex items-center justify-between gap-1 mb-1">
+            <span class="text-xs md:text-sm font-extrabold text-amber-200 truncate">
+              ${g.icon} Group ${g.id} <span class="text-amber-400">第${g.id}組</span>
+            </span>
+          </div>
+          <div class="flex items-center justify-between gap-1.5 my-0.5">
+            <div id="group-score-${idx}" class="text-2xl md:text-3xl font-extrabold text-white bg-purple-950/90 border border-purple-600 rounded-xl px-2.5 py-0.5 min-w-[60px] text-center shadow-inner">
+              ${g.score}
+            </div>
+            <button onclick="adjustScore(${idx}, selectedAwardPoints)" class="flex-1 btn-game bg-gradient-to-b from-amber-400 to-orange-500 hover:from-yellow-300 hover:to-orange-400 border-orange-700 text-purple-950 font-extrabold text-xs md:text-sm py-1.5 px-2 rounded-xl shadow flex items-center justify-center gap-1" title="Add active survey answer points">
+              <i class="fa-solid fa-plus"></i>
+              <span>Award 加分</span>
+            </button>
+          </div>
+          <div class="flex items-center justify-between gap-1 mt-1">
+            <button onclick="adjustScore(${idx}, -1)" class="flex-1 bg-purple-800 hover:bg-red-700 text-purple-200 hover:text-white text-[11px] font-bold py-0.5 rounded-lg border border-purple-600 transition">-1</button>
+            <button onclick="adjustScore(${idx}, 1)" class="flex-1 bg-purple-800 hover:bg-emerald-600 text-purple-200 hover:text-white text-[11px] font-bold py-0.5 rounded-lg border border-purple-600 transition">+1</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function adjustScore(groupIdx, delta) {
+      groups[groupIdx].score = Math.max(0, groups[groupIdx].score + delta);
+      playPointSFX();
+      renderScoreboard();
+      const scoreEl = document.getElementById(`group-score-${groupIdx}`);
+      if (scoreEl) {
+        scoreEl.classList.add('scale-125', 'text-yellow-300');
+        setTimeout(() => {
+          scoreEl.classList.remove('scale-125', 'text-yellow-300');
+        }, 250);
+      }
+      if (!document.getElementById('screen-podium').classList.contains('hidden')) renderPodium();
+    }
+
+    function resetAllScores() {
+      groups.forEach(g => g.score = 0);
+      renderScoreboard();
+      if (!document.getElementById('screen-podium').classList.contains('hidden')) renderPodium();
+    }
+
+    function renderPodium() {
+      const sorted = [...groups].sort((a, b) => b.score - a.score);
+      const container = document.getElementById('podium-rankings');
+      const medals = ['🥇 1st Place 冠軍', '🥈 2nd Place 亞軍', '🥉 3rd Place 季軍'];
+      container.innerHTML = sorted.map((g, i) => {
+        const isTop3 = i < 3;
+        return `
+          <div class="${isTop3 ? 'bg-gradient-to-br from-amber-400/25 to-purple-900 border-2 border-amber-300' : 'bg-purple-950/80 border border-purple-600'} rounded-2xl p-4 flex items-center justify-between shadow-lg">
+            <div class="flex items-center gap-3">
+              <div class="text-3xl">${g.icon}</div>
+              <div>
+                <div class="text-xs font-extrabold ${isTop3 ? 'text-yellow-300' : 'text-purple-300'}">
+                  ${medals[i] || `Rank #${i + 1}`}
+                </div>
+                <div class="text-lg md:text-xl font-extrabold text-white">Group ${g.id} (第${g.id}組)</div>
+              </div>
+            </div>
+            <div class="text-2xl md:text-3xl font-extrabold text-amber-300 bg-purple-950 px-4 py-1.5 rounded-xl border border-amber-400/50">
+              ${g.score} <span class="text-xs">pts</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    /********************************************************************
+     * 8. FILE UPLOAD HANDLERS (for dynamically updating during runtime)
+     ********************************************************************/
+    function handleCoverUpload(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('cover-photo-img').src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function handleBgUpload(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('app-bg').style.backgroundImage = `url('${e.target.result}')`;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    /********************************************************************
+     * 9. KEYBOARD SHORTCUTS
+     ********************************************************************/
+    window.addEventListener('keydown', (e) => {
+      if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+      const gameVisible = !document.getElementById('screen-game').classList.contains('hidden');
+      if (!gameVisible) return;
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        toggleTimer();
+      } else if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        if(!document.getElementById('slide-question').classList.contains('hidden')){
+           showAnswersSlide();
+        } else {
+           revealAllResults();
+        }
+      } else if (e.key === 'x' || e.key === 'X') {
+        e.preventDefault();
+        triggerStrike();
+      } else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        nextQuestion();
+      } else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        prevQuestion();
+      } else if (['1', '2', '3', '4'].includes(e.key)) {
+        if(!document.getElementById('slide-answers').classList.contains('hidden')){
+          const idx = parseInt(e.key, 10) - 1;
+          const q = QUESTIONS[currentQuestionIndex];
+          if (q && q.answers[idx]) handleCardClick(idx);
+        }
+      }
+    });
+
+    window.onload = initApp;
+  </script>
+</body>
+</html>
+```<FollowUp label="Would you like to change any of the Halloween game questions to another holiday?" query="Yes, let's create a new set of questions around Christmas instead of Halloween."/>
