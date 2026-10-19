@@ -1,0 +1,2186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Who Stole the Candy? - Halloween Detective Game</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for Spooky & Kid-Friendly Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Fredoka:wght@400;600;700&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --spooky-orange: #ff6b00;
+            --spooky-purple: #2d0b4e;
+            --spooky-dark: #11052C;
+        }
+
+        body {
+            font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+            background-color: #120624;
+            background-image: url('background.jpg');
+            color: #fff;
+            overflow-x: hidden;
+            min-height: 100vh;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            user-select: none;
+        }
+
+        .font-spooky {
+            font-family: 'Creepster', 'Noto Sans TC', cursive;
+            letter-spacing: 2px;
+        }
+
+        /* Dark overlay to keep text readable over background.jpg */
+        .bg-overlay {
+            background: radial-gradient(circle at center, rgba(28, 10, 53, 0.80) 0%, rgba(10, 3, 20, 0.94) 100%);
+            min-height: 100vh;
+        }
+
+        /* Glow and Text Shadows */
+        .spooky-title-shadow {
+            text-shadow: 0 4px 0 #000, 0 0 25px #ff6b00, 0 0 45px #ff3300;
+        }
+
+        .card-glow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.75), 0 0 18px rgba(255, 107, 0, 0.35);
+        }
+
+        /* Detective Note Styling */
+        .detective-note {
+            background: #fff9db;
+            background-image: repeating-linear-gradient(transparent, transparent 35px, #e5d8a8 35px, #e5d8a8 36px);
+            color: #2b1d03;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.65), inset 0 0 20px rgba(217, 167, 74, 0.25);
+            transform: rotate(-1deg);
+            border-top: 14px solid #d97706;
+            position: relative;
+        }
+
+        .detective-note::before {
+            content: '📌';
+            font-size: 2.3rem;
+            position: absolute;
+            top: -28px;
+            left: 50%;
+            transform: translateX(-50%);
+            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.4));
+        }
+
+        /* Black and Orange Bubble Design for Mission 2 Lowercase Letters */
+        .bubble-orange {
+            background: radial-gradient(circle at 30% 30%, #ffb347, #ff6b00 60%, #b34700 100%);
+            color: #111;
+            border: 3px solid #ffe0b2;
+            box-shadow: 0 6px 0 #803300, 0 8px 15px rgba(0,0,0,0.6), inset 0 3px 6px rgba(255,255,255,0.6);
+        }
+
+        .bubble-black {
+            background: radial-gradient(circle at 30% 30%, #4a4a4a, #1a1a1a 65%, #000000 100%);
+            color: #ff8c00;
+            border: 3px solid #ff6b00;
+            box-shadow: 0 6px 0 #000000, 0 8px 15px rgba(255,107,0,0.35), inset 0 3px 6px rgba(255,255,255,0.25);
+        }
+
+        .letter-bubble {
+            width: 64px;
+            height: 64px;
+            border-radius: 9999px;
+            font-size: 2.1rem;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            text-transform: lowercase !important;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        /* Floating / Flying In-and-Out Arena for Mission 2 Scrambled Letters */
+        .floating-arena {
+            position: relative;
+            width: 100%;
+            height: 250px;
+            background: radial-gradient(circle at center, rgba(59, 7, 100, 0.55) 0%, rgba(10, 3, 22, 0.85) 100%);
+            border: 3px solid rgba(255, 107, 0, 0.45);
+            border-radius: 1.5rem;
+            overflow: hidden;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
+        }
+
+        .flying-bubble {
+            position: absolute;
+            width: 66px;
+            height: 66px;
+            border-radius: 9999px;
+            font-size: 2.2rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            text-transform: lowercase !important;
+            will-change: transform, left, top, opacity;
+            animation: flyPulse 2.4s ease-in-out infinite alternate;
+            z-index: 10;
+        }
+
+        .flying-bubble:hover {
+            transform: scale(1.18) !important;
+            z-index: 30;
+            filter: brightness(1.15);
+        }
+
+        @keyframes flyPulse {
+            0% {
+                opacity: 0.25;
+                transform: scale(0.72) rotate(-12deg);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.08) rotate(8deg);
+            }
+            100% {
+                opacity: 0.35;
+                transform: scale(0.8) rotate(-8deg);
+            }
+        }
+
+        /* Suspect Elimination X Stamp */
+        .suspect-card {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .suspect-card:hover {
+            transform: translateY(-6px);
+        }
+
+        .eliminated-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 3, 25, 0.72);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+            border-radius: 1rem;
+        }
+
+        .suspect-card.eliminated .eliminated-overlay {
+            opacity: 1;
+        }
+
+        .suspect-card.eliminated img {
+            filter: grayscale(85%) contrast(90%);
+        }
+
+        /* 12x12 Word Search Grid */
+        .ws-cell {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+            border-radius: 6px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 136, 0, 0.25);
+            transition: all 0.12s ease;
+            text-transform: uppercase;
+        }
+
+        @media (min-width: 640px) {
+            .ws-cell {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+            }
+        }
+
+        .ws-cell:hover {
+            background: rgba(255, 107, 0, 0.35);
+        }
+
+        .ws-cell.selected {
+            background: #ff8c00 !important;
+            color: #000 !important;
+            transform: scale(1.06);
+            box-shadow: 0 0 12px #ff8c00;
+        }
+
+        .ws-cell.found {
+            background: linear-gradient(135deg, #22c55e, #15803d);
+            color: white;
+            border-color: #86efac;
+        }
+
+        /* 3D Game Button */
+        .btn-halloween {
+            background: linear-gradient(180deg, #ff8c00 0%, #e65100 100%);
+            border: 3px solid #ffd54f;
+            box-shadow: 0 6px 0 #8c3100, 0 12px 20px rgba(0,0,0,0.5);
+            transition: all 0.15s ease;
+        }
+
+        .btn-halloween:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0 #8c3100, 0 15px 25px rgba(255, 107, 0, 0.5);
+            filter: brightness(1.07);
+        }
+
+        .btn-halloween:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #8c3100, 0 5px 10px rgba(0,0,0,0.4);
+        }
+
+        /* Puzzle Tiles */
+        .puzzle-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            width: 100%;
+            max-width: 440px;
+            aspect-ratio: 1 / 1;
+            background: #1f093d;
+            padding: 10px;
+            border-radius: 16px;
+            border: 4px solid #ff6b00;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.7);
+        }
+
+        .puzzle-tile {
+            width: 100%;
+            height: 100%;
+            background-size: 300% 300%;
+            border-radius: 8px;
+            cursor: grab;
+            position: relative;
+            border: 2px solid rgba(255,255,255,0.25);
+            transition: transform 0.15s ease, border-color 0.2s ease;
+        }
+
+        .puzzle-tile:active {
+            cursor: grabbing;
+        }
+
+        .puzzle-tile.selected-tile {
+            border: 4px solid #fde047;
+            transform: scale(0.95);
+            box-shadow: 0 0 18px #fde047;
+            z-index: 10;
+        }
+
+        .puzzle-tile.correct-tile {
+            border-color: #4ade80;
+        }
+
+        /* Floating Animation */
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .animate-float {
+            animation: floatSlow 3.5s ease-in-out infinite;
+        }
+
+        /* Confetti / Candy Fall */
+        .candy-particle {
+            position: fixed;
+            top: -50px;
+            z-index: 9999;
+            pointer-events: none;
+            animation: fallDown linear forwards;
+        }
+
+        @keyframes fallDown {
+            to {
+                transform: translateY(110vh) rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body id="gameBody">
+
+    <!-- Optional external background audio element (bgm.mp3) -->
+    <audio id="bgmAudioElement" src="bgm.mp3" loop preload="auto"></audio>
+
+    <!-- Subtle Floating Audio Mute/Unmute Toggle Button in Top-Right Corner -->
+    <button id="bgmToggleBtn" onclick="toggleSpookyBgm()" title="Toggle Spooky Background Music" class="fixed top-4 right-4 z-50 bg-purple-950/80 hover:bg-purple-800 text-amber-300 border-2 border-amber-400/50 rounded-full w-12 h-12 flex items-center justify-center shadow-lg backdrop-blur-sm transition">
+        <i id="bgmIcon" class="fa-solid fa-volume-xmark text-xl"></i>
+    </button>
+
+    <div class="bg-overlay flex flex-col justify-between min-h-screen">
+
+        <!-- ==========================================
+             SCREEN 0: FULL-SCREEN GAME COVER (cover.gif)
+             ========================================== -->
+        <section id="screen-cover" class="game-screen relative w-full min-h-screen flex flex-col items-center justify-between overflow-hidden">
+            <!-- Full-Screen Cover GIF Image -->
+            <img id="img-cover" src="cover.gif" onerror="this.onerror=null; this.src=DEFAULT_FALLBACKS.cover;" alt="Game Cover GIF" class="absolute inset-0 w-full h-full object-cover z-0">
+            
+            <!-- Subtle Vignette Overlay for Title & Start Button Readability -->
+            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/65 z-10"></div>
+
+            <!-- Top Spacer -->
+            <div class="relative z-20 pt-6"></div>
+
+            <!-- Center Title on Full-Screen Cover -->
+            <div class="relative z-20 text-center px-4 my-auto space-y-4">
+                <span class="inline-block bg-orange-500/90 text-black font-extrabold px-5 py-1.5 rounded-full text-sm sm:text-base uppercase tracking-widest shadow-lg">
+                    🎃 Halloween Detective Mystery 🎃
+                </span>
+                <h2 class="font-spooky text-6xl sm:text-8xl md:text-9xl text-orange-400 spooky-title-shadow tracking-wide animate-float">
+                    Who Stole the Candy?
+                </h2>
+                <p class="text-2xl sm:text-4xl font-extrabold text-amber-200 drop-shadow-[0_3px_6px_rgba(0,0,0,0.9)]">
+                    誰偷走了萬聖節糖果？
+                </p>
+            </div>
+
+            <!-- Bottom Start Button -->
+            <div class="relative z-20 pb-12 pt-4 text-center">
+                <button onclick="startGameFromCover()" class="btn-halloween text-3xl sm:text-5xl font-extrabold text-white px-16 py-5 rounded-full inline-flex items-center gap-4">
+                    <span>Start / 開始</span>
+                    <i class="fa-solid fa-play text-2xl sm:text-4xl"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- MAIN STAGE CONTAINER FOR ALL OTHER SCREENS -->
+        <main id="mainStageContainer" class="hidden flex-grow flex items-center justify-center p-4 sm:p-6 md:p-8 w-full max-w-7xl mx-auto">
+
+            <!-- ==========================================
+                 SCREEN 1: DETECTIVE BRIEFING & 5 CHARACTERS
+                 ========================================== -->
+            <section id="screen-intro" class="game-screen hidden w-full space-y-8 py-4">
+                
+                <!-- Main Question Header -->
+                <div class="text-center space-y-2">
+                    <h2 class="font-spooky text-5xl sm:text-7xl md:text-8xl text-orange-400 spooky-title-shadow tracking-wide">
+                        Who Stole the Candy?
+                    </h2>
+                    <p class="text-2xl sm:text-3xl text-amber-300 font-bold">誰偷走了糖果？</p>
+                    <p class="text-base sm:text-lg text-orange-200 font-semibold pt-2">
+                        Meet the 5 Halloween Suspects / 認識五位萬聖節嫌疑犯：
+                    </p>
+                </div>
+
+                <!-- 5 Suspect Characters Showcase -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
+                    <!-- Suspect 1: Zombilina -->
+                    <div class="suspect-card bg-purple-950/90 border-2 border-green-500/60 rounded-2xl p-4 text-center card-glow flex flex-col items-center">
+                        <div class="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden border-2 border-green-400 bg-purple-900 mb-3">
+                            <img class="suspect-img-zombilina w-full h-full object-cover" src="zombilina.jpg" onerror="this.onerror=null; this.src=DEFAULT_FALLBACKS.zombilina;" alt="Zombilina">
+                        </div>
+                        <h3 class="font-bold text-xl text-green-400">Zombilina</h3>
+                        <span class="text-xs bg-green-900/70 text-green-200 px-3 py-0.5 rounded-full mt-1 border border-green-500/40">(Zombie / 殭屍)</span>
+                    </div>
+
+                    <!-- Suspect 2: Pete Pump -->
+                    <div class="suspect-card bg-purple-950/90 border-2 border-orange-500/60 rounded-2xl p-4 text-center card-glow flex flex-col items-center">
+                        <div class="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden border-2 border-orange-400 bg-purple-900 mb-3">
+                            <img class="suspect-img-petepump w-full h-full object-cover" src="pete_pump.jpg" onerror="this.onerror=null; this.src=DEFAULT_FALLBACKS.petepump;" alt="Pete Pump">
+                        </div>
+                        <h3 class="font-bold text-xl text-orange-400">Pete Pump</h3>
+                        <span class="text-xs bg-orange-900/70 text-orange-200 px-3 py-0.5 rounded-full mt-1 border border-orange-500/40">(Jack o' lantern / 南瓜燈)</span>
+                    </div>
+
+                    <!-- Suspect 3: Broomsy -->
+                    <div class="suspect-card bg-purple-950/90 border-2 border-purple-400/60 rounded-2xl p-4 text-center card-glow flex flex-col items-center">
+                        <div class="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden border-2 border-purple-400 bg-purple-900 mb-3">
+                            <img class="suspect-img-broomsy w-full h-full object-cover" src="broomsy.jpg" onerror="this.onerror=null; this.src=DEFAULT_FALLBACKS.broomsy;" alt="Broomsy">
+                        </div>
+                        <h3 class="font-bold text-xl text-purple-300">Broomsy</h3>
+                        <span class="text-xs bg-purple-900/70 text-purple-200 px-3 py-0.5 rounded-full mt-1 border border-purple-400/40">(Witch / 女巫)</span>
+                    </div>
+
+                    <!-- Suspect 4: Sir Bites -->
+                    <div class="suspect-card bg-purple-950/90 border-2 border-red-500/60 rounded-2xl p-4 text-center card-glow flex flex-col items-center">
+                        <div class="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden border-2 border-red-400 bg-purple-900 mb-3">
+                            <img class="suspect-img-sirbites w-full h-full object-cover" src="sir_bites.jpg" onerror="this.onerror=null; this.src=DEFAULT_FALLBACKS.sirbites;" alt="Sir Bites">
+                        </div>
+                        <h3 class="font-bold text-xl text-red-400">Sir Bites</h3>
+                        <span class="text-xs bg-red-900/70 text-red-200 px-3 py-0.5 rounded-full mt-1 border border-red-500/40">(Vampire / 吸血鬼)</span>
+                    </div>
+
+                    <!-- Suspect 5: Boo Hoo -->
+                    <div class="suspect-card bg-purple-950/90 border-2 border-cyan-400/60 rounded-2xl p-4 text-center card-glow flex flex-col items-center col-span-2 sm:col-span-1">
+                        <div class="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden border-2 border-cyan-300 bg-purple-900 mb-3">
+                            <img class="suspect-img-boohoo w-full h-full object-cover" src="boo_hoo.jpg" onerror="this.onerror=null; this.src=DEFAULT_FALLBACKS.boohoo;" alt="Boo Hoo">
+                        </div>
+                        <h3 class="font-bold text-xl text-cyan-300">Boo Hoo</h3>
+                        <span class="text-xs bg-cyan-900/70 text-cyan-200 px-3 py-0.5 rounded-full mt-1 border border-cyan-400/40">(Ghost / 鬼魂)</span>
+                    </div>
+                </div>
+
+                <!-- Problem Presentation Card with Empty Candy Bag Photo -->
+                <div class="bg-gradient-to-br from-purple-950/95 via-indigo-950/95 to-black/95 border-4 border-orange-500/80 rounded-3xl p-6 sm:p-8 card-glow">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                        <!-- Empty Candy Bag Image -->
+                        <div class="lg:col-span-4 flex flex-col items-center">
+                            <div class="relative w-56 h-56 sm:w-64 sm:h-64 rounded-2xl overflow-hidden border-4 border-amber-400 shadow-2xl bg-purple-900">
+                                <img id="img-emptybag" src="empty_candy_bag.jpg" onerror="this.onerror=null; this.src=DEFAULT_FALLBACKS.emptybag;" alt="Empty Candy Bag" class="w-full h-full object-cover">
+                            </div>
+                            <span class="mt-2 text-xs text-amber-300 font-semibold uppercase tracking-widest">⚠️ Crime Scene Evidence / 犯罪現場證物</span>
+                        </div>
+
+                        <!-- Bilingual Story Briefing -->
+                        <div class="lg:col-span-8 space-y-4 text-left">
+                            <div class="inline-flex items-center gap-2 bg-red-600/90 text-white px-4 py-1 rounded-full text-sm font-bold uppercase tracking-wider">
+                                <i class="fa-solid fa-triangle-exclamation"></i> Detective Briefing / 偵探任務簡報
+                            </div>
+
+                            <div class="space-y-2.5 text-base sm:text-lg leading-relaxed text-orange-50 bg-black/40 p-4 rounded-2xl border border-orange-500/30">
+                                <p class="font-bold text-orange-300 text-xl">Hello, detectives! Listen to me. We have a big problem!</p>
+                                <p>All of our Halloween candy was in the box. But today... <span class="text-red-400 font-extrabold underline">THE CANDY IS GONE.</span></p>
+                                <p>Someone took it! Someone came in the dark night and stole our sweet treats.</p>
+                                <p>The Sweet Tooth Bandit is running around the school. They think we can't find them. But I know you are smart detectives!</p>
+                            </div>
+
+                            <div class="space-y-2 text-base sm:text-lg leading-relaxed text-amber-100 bg-purple-900/40 p-4 rounded-2xl border border-purple-400/30">
+                                <p class="font-bold text-amber-300 text-xl">哈囉，偵探們！請聽我說。我們有一個大問題！</p>
+                                <p>我們的萬聖節糖果本來都在箱子裡。可是今天……<span class="text-red-400 font-extrabold">糖果不見了。</span></p>
+                                <p>有人把它拿走了！有人在黑夜裡來，偷走了我們的甜點。</p>
+                                <p>『甜牙齒大盜』正在校園裡跑來跑去。他們以為我們找不到他們。但我知道你們都是聰明的偵探！</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Let's go! Button at the bottom -->
+                <div class="text-center pt-4">
+                    <button onclick="goToScreen('screen-m1-title')" class="btn-halloween text-3xl sm:text-4xl font-extrabold text-white px-14 py-5 rounded-full inline-flex items-center gap-4">
+                        <span>🕵️‍♂️ Let's go! / 出發吧！</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- ==========================================
+                 SCREEN 2: MISSION 1 TITLE (FULL SCREEN)
+                 ========================================== -->
+            <section id="screen-m1-title" class="game-screen hidden w-full min-h-[82vh] flex flex-col items-center justify-between py-12 text-center">
+                <div class="text-orange-400/80 text-xl font-bold uppercase tracking-widest">🎃 Detective Task #1 / 偵探任務一 🎃</div>
+                <div class="my-auto space-y-6">
+                    <div class="text-7xl sm:text-8xl mb-4 animate-bounce">🔎</div>
+                    <h2 class="font-spooky text-6xl sm:text-8xl md:text-9xl text-orange-400 spooky-title-shadow leading-tight">
+                        Mission 1:<br>Word Search
+                    </h2>
+                    <p class="text-3xl sm:text-4xl font-bold text-amber-300">任務一：單字搜尋</p>
+                    <div class="max-w-2xl mx-auto space-y-2 pt-2">
+                        <p class="text-lg sm:text-xl text-purple-100">Find all 10 hidden Halloween words (horizontal, vertical, or diagonal) to unlock Clue 1!</p>
+                        <p class="text-lg sm:text-xl text-amber-200">找出10個隱藏的萬聖節單字（橫向、直向或斜向），解鎖第一個神祕線索！</p>
+                    </div>
+                </div>
+                <button onclick="goToScreen('screen-m1-play')" class="btn-halloween text-3xl sm:text-4xl font-extrabold text-white px-16 py-5 rounded-full">
+                    Start / 開始
+                </button>
+            </section>
+
+            <!-- ==========================================
+                 SCREEN 3: MISSION 1 WORD SEARCH GAMEPLAY (NO HINT, MULTI-DIRECTIONAL)
+                 ========================================== -->
+            <section id="screen-m1-play" class="game-screen hidden w-full space-y-6">
+                <div class="text-center space-y-2 bg-purple-950/75 p-4 rounded-2xl border border-orange-500/40">
+                    <h2 class="font-spooky text-4xl sm:text-5xl text-orange-400 spooky-title-shadow">Mission 1: Word Search / 任務一：單字搜尋</h2>
+                    <p class="text-orange-100 text-base sm:text-lg font-semibold">
+                        Find all 10 hidden words! Words are hidden horizontally, vertically, and diagonally. Click and drag (or click the first letter, then the last letter) to cross them out!
+                    </p>
+                    <p class="text-amber-300 text-base sm:text-lg font-bold">
+                        請在字母格中找出右側的 10 個萬聖節單字！單字可能以橫向、直向或斜向排列。請點擊並拖曳（或依序點擊第一個與最後一個字母）來圈選單字！
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    <!-- 12x12 Word Search Grid Table -->
+                    <div class="lg:col-span-8 flex flex-col items-center bg-purple-950/90 border-4 border-orange-500 rounded-3xl p-4 sm:p-6 card-glow overflow-x-auto">
+                        <div id="wordSearchGrid" class="grid grid-cols-12 gap-1 sm:gap-1.5 select-none"></div>
+                    </div>
+
+                    <!-- Word List Beside Table (NO HINT BUTTON) -->
+                    <div class="lg:col-span-4 bg-purple-950/90 border-4 border-purple-500 rounded-3xl p-6 card-glow space-y-4">
+                        <div class="flex items-center justify-between border-b border-purple-700 pb-3">
+                            <div>
+                                <h3 class="font-bold text-2xl text-orange-300 flex items-center gap-2">
+                                    <i class="fa-solid fa-list-check"></i> Word List / 單字表
+                                </h3>
+                                <p class="text-xs text-purple-300 mt-0.5">↔ Horizontal ↕ Vertical ⤢ Diagonal</p>
+                            </div>
+                            <span id="wsProgressText" class="bg-orange-500 text-black font-extrabold px-3 py-1 rounded-full text-sm">0 / 10</span>
+                        </div>
+
+                        <ul id="wordSearchList" class="grid grid-cols-2 lg:grid-cols-1 gap-2.5 text-lg sm:text-xl font-bold">
+                            <!-- Populated by JS -->
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Unlock Clue 1 Banner when completed -->
+                <div id="wsCompleteBanner" class="hidden text-center bg-green-900/90 border-4 border-green-400 rounded-3xl p-6 card-glow animate-bounce space-y-3">
+                    <h3 class="text-2xl sm:text-3xl font-extrabold text-white">
+                        🎉 Awesome Job, Detectives! You found all 10 words!<br>
+                        <span class="text-amber-300 text-xl sm:text-2xl">太棒了，偵探們！你們找出了所有單字！</span>
+                    </h3>
+                    <button onclick="goToScreen('screen-clue-1')" class="btn-halloween text-2xl font-extrabold text-white px-10 py-4 rounded-full">
+                        Reveal Clue 1 / 查看線索一 <i class="fa-solid fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- ==========================================
+                 SCREEN 4: CLUE 1 & SUSPECT ELIMINATION
+                 ========================================== -->
+            <section id="screen-clue-1" class="game-screen hidden w-full space-y-8 text-center">
+                <div class="space-y-1">
+                    <h2 class="font-spooky text-5xl sm:text-6xl text-orange-400 spooky-title-shadow">Who Stole the Candy?</h2>
+                    <p class="text-2xl font-bold text-amber-300">誰偷走了糖果？</p>
+                </div>
+
+                <!-- Detective Note Design (Bilingual) -->
+                <div class="max-w-2xl mx-auto detective-note p-8 rounded-2xl space-y-3">
+                    <span class="uppercase tracking-widest text-xs font-extrabold bg-amber-800 text-amber-100 px-3 py-1 rounded">Secret Detective Note #1 / 偵探祕密筆記 (一)</span>
+                    <h3 class="text-2xl sm:text-4xl font-extrabold text-red-900 pt-2">
+                        Clue 1: The one who stole the candy is not color orange.
+                    </h3>
+                    <p class="text-2xl sm:text-3xl font-extrabold text-red-800">
+                        線索一：偷走糖果的人不是橘色的。
+                    </p>
+                    <div class="pt-3 border-t border-amber-700/30 text-sm sm:text-base font-bold text-amber-950">
+                        <p>👇 Click on the character you want to eliminate to cross them out!</p>
+                        <p>👇 請點擊你要排除的嫌疑犯，將他畫叉淘汰！</p>
+                    </div>
+                </div>
+
+                <!-- 5 Suspects Container -->
+                <div id="suspects-clue-1" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6"></div>
+
+                <div class="pt-4">
+                    <button onclick="goToScreen('screen-m2-title')" class="btn-halloween text-2xl sm:text-3xl font-extrabold text-white px-10 py-4 rounded-full">
+                        Go to the next mission / 前往下一個任務 <i class="fa-solid fa-forward-step ml-2"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- ==========================================
+                 SCREEN 5: MISSION 2 TITLE (FULL SCREEN)
+                 ========================================== -->
+            <section id="screen-m2-title" class="game-screen hidden w-full min-h-[82vh] flex flex-col items-center justify-between py-12 text-center">
+                <div class="text-orange-400/80 text-xl font-bold uppercase tracking-widest">🎃 Detective Task #2 / 偵探任務二 🎃</div>
+                <div class="my-auto space-y-6">
+                    <div class="text-7xl sm:text-8xl mb-4 animate-bounce">🔊</div>
+                    <h2 class="font-spooky text-6xl sm:text-8xl md:text-9xl text-orange-400 spooky-title-shadow leading-tight">
+                        Mission 2:<br>Guess the Sounds
+                    </h2>
+                    <p class="text-3xl sm:text-4xl font-bold text-amber-300">任務二：聽音辨字</p>
+                    <div class="max-w-2xl mx-auto space-y-2 pt-2">
+                        <p class="text-lg sm:text-xl text-purple-100">Listen to the 5 mystery sounds first to reveal the flying lowercase bubbles, spell the word, and imitate the sound!</p>
+                        <p class="text-lg sm:text-xl text-amber-200">先點擊聆聽 5 個神祕聲音以顯示飄浮的小寫字母泡泡，拼出正確單字後模仿該角色的聲音！</p>
+                    </div>
+                </div>
+                <button onclick="startMission2()" class="btn-halloween text-3xl sm:text-4xl font-extrabold text-white px-16 py-5 rounded-full">
+                    Start / 開始
+                </button>
+            </section>
+
+            <!-- ==========================================
+                 SCREEN 6: MISSION 2 GAMEPLAY (1 AUDIO AT A TIME, HIDDEN UNTIL CLICKED, FLOATING LOWERCASE BUBBLES + IMITATION RECORDER)
+                 ========================================== -->
+            <section id="screen-m2-play" class="game-screen hidden w-full max-w-4xl mx-auto space-y-6 text-center">
+                <div class="flex flex-wrap items-center justify-between gap-2 bg-purple-950/85 px-6 py-3 rounded-2xl border border-orange-500/40">
+                    <span class="font-spooky text-2xl sm:text-3xl text-orange-400">Mission 2: Guess the Sounds / 任務二：聽音辨字</span>
+                    <span id="m2StageIndicator" class="bg-orange-500 text-black font-extrabold px-4 py-1 rounded-full text-base">Audio 1 of 5</span>
+                </div>
+
+                <!-- Single Audio Stage Card -->
+                <div class="bg-purple-950/90 border-4 border-orange-500 rounded-3xl p-6 sm:p-8 card-glow space-y-6">
+                    
+                    <!-- Step 1: Listen First Section -->
+                    <div class="space-y-3">
+                        <div class="space-y-1">
+                            <p class="text-orange-200 text-lg sm:text-xl font-bold">Step 1: Click the button below to listen to the sound first!</p>
+                            <p class="text-amber-300 text-base sm:text-lg font-bold">步驟一：請先點擊下方按鈕聆聽神祕聲音！（聽完後才會出現字母泡泡）</p>
+                        </div>
+
+                        <div class="flex flex-wrap items-center justify-center gap-4 pt-1">
+                            <button onclick="playCurrentMission2Audio()" class="btn-halloween text-2xl sm:text-3xl font-extrabold text-white px-10 py-4 rounded-full inline-flex items-center gap-4">
+                                <i id="m2SpeakerIcon" class="fa-solid fa-volume-high text-3xl"></i>
+                                <span id="m2ListenBtnText">Listen to Audio 1 / 點擊聽聲音 1</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Locked Message BEFORE Audio is Clicked -->
+                    <div id="m2LockedNotice" class="bg-black/60 border-2 border-dashed border-amber-500/60 rounded-2xl p-8 space-y-2">
+                        <div class="text-5xl animate-pulse">🔒🎧</div>
+                        <p class="text-xl font-extrabold text-amber-300">The scrambled letters are hidden!</p>
+                        <p class="text-base text-purple-200">Click <b>"Listen to Audio"</b> above first to reveal the flying letter bubbles.<br>請先點擊上方的「點擊聽聲音」按鈕，才會顯示飛舞的字母泡泡喔！</p>
+                    </div>
+
+                    <!-- Revealed Spelling Area (Hidden until player clicks Listen) -->
+                    <div id="m2SpellingArea" class="hidden space-y-5">
+                        <!-- Answer Slots -->
+                        <div class="space-y-2">
+                            <p class="text-purple-200 text-sm uppercase tracking-wider font-bold">
+                                Your Spelling (Lowercase) / 你的拼字（小寫字母）：
+                            </p>
+                            <div id="m2AnswerSlots" class="flex flex-wrap items-center justify-center gap-3 min-h-[76px] p-4 rounded-2xl bg-black/50 border-2 border-dashed border-orange-500/50">
+                                <!-- Filled letter bubbles appear here -->
+                            </div>
+                        </div>
+
+                        <!-- Scrambled Lowercase Letters Floating & Flying In/Out Arena -->
+                        <div class="space-y-2">
+                            <p class="text-orange-300 text-base sm:text-lg font-bold">
+                                Step 2: Catch & click the floating black and orange lowercase bubbles to spell the word!<br>
+                                <span class="text-amber-200 text-sm sm:text-base">步驟二：捕捉並點擊畫面中飛進飛出的黑橘色小寫字母泡泡來拼出單字！</span>
+                            </p>
+                            <div id="m2FloatingArena" class="floating-arena">
+                                <!-- Floating/flying bubbles dynamically animated here -->
+                            </div>
+                        </div>
+
+                        <!-- Reset Letters Button -->
+                        <div class="flex items-center justify-center">
+                            <button onclick="resetCurrentM2Word()" class="bg-gray-800 hover:bg-gray-700 text-gray-200 font-bold px-5 py-2 rounded-xl border border-gray-600 text-sm">
+                                <i class="fa-solid fa-rotate-left mr-1"></i> Reset Letters / 重新拼字
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Imitate the Sound Recorder (Shown ONLY after word is spelled correctly) -->
+                    <div id="m2ImitationBox" class="hidden bg-gradient-to-br from-indigo-950/95 to-purple-900/95 border-4 border-amber-400 rounded-3xl p-6 space-y-4 shadow-2xl">
+                        <div class="inline-block bg-green-600 text-white text-sm font-extrabold px-4 py-1 rounded-full">
+                            ✓ Spelling Correct! / 拼字正確！ (<span id="m2SpelledWordDisplay" class="lowercase">ghost</span>)
+                        </div>
+
+                        <div class="space-y-1">
+                            <h4 id="m2ImitateInstructionEn" class="text-2xl sm:text-3xl font-extrabold text-amber-300">
+                                Imitate the sound of the ghost. Tap to record.
+                            </h4>
+                            <p id="m2ImitateInstructionZh" class="text-xl sm:text-2xl font-bold text-white">
+                                模仿鬼魂的聲音。點擊開始錄音。
+                            </p>
+                        </div>
+
+                        <div class="flex flex-wrap items-center justify-center gap-4 pt-2">
+                            <button id="btnM2ImitateRecord" onclick="toggleM2ImitationRecording()" class="btn-halloween text-xl sm:text-2xl font-extrabold text-white px-8 py-4 rounded-full flex items-center gap-3">
+                                <i class="fa-solid fa-microphone-lines text-2xl"></i>
+                                <span id="m2ImitateRecordBtnText">Tap to Record / 點擊錄音</span>
+                            </button>
+
+                            <button id="btnM2ImitatePlay" onclick="playM2ImitationRecording()" disabled class="bg-purple-800 hover:bg-purple-700 disabled:opacity-40 disabled:pointer-events-none text-white text-lg font-bold px-6 py-4 rounded-full border-2 border-purple-300 flex items-center gap-2 transition">
+                                <i class="fa-solid fa-ear-listen"></i>
+                                <span>Listen / 聽錄音</span>
+                            </button>
+                        </div>
+
+                        <p id="m2ImitateStatus" class="text-sm text-orange-200 font-semibold">
+                            Record your best spooky imitation to unlock the next button! / 請錄下你最逼真的模仿聲音以繼續前進！
+                        </p>
+
+                        <!-- Next Audio / Clue 2 Button (Revealed after imitation recording completes) -->
+                        <div id="m2NextStageContainer" class="hidden pt-3">
+                            <button onclick="nextMission2Audio()" id="m2NextBtn" class="btn-halloween text-2xl font-extrabold text-white px-10 py-4 rounded-full animate-bounce">
+                                Next Sound / 下一個聲音 <i class="fa-solid fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ==========================================
+                 SCREEN 7: CLUE 2 & SUSPECT ELIMINATION
+                 ========================================== -->
+            <section id="screen-clue-2" class="game-screen hidden w-full space-y-8 text-center">
+                <div class="space-y-1">
+                    <h2 class="font-spooky text-5xl sm:text-6xl text-orange-400 spooky-title-shadow">Who Stole the Candy?</h2>
+                    <p class="text-2xl font-bold text-amber-300">誰偷走了糖果？</p>
+                </div>
+
+                <!-- Detective Note Design (Bilingual) -->
+                <div class="max-w-2xl mx-auto detective-note p-8 rounded-2xl space-y-3">
+                    <span class="uppercase tracking-widest text-xs font-extrabold bg-amber-800 text-amber-100 px-3 py-1 rounded">Secret Detective Note #2 / 偵探祕密筆記 (二)</span>
+                    <h3 class="text-2xl sm:text-4xl font-extrabold text-red-900 pt-2">
+                        Clue 2: The one who stole the candy doesn't use a broom.
+                    </h3>
+                    <p class="text-2xl sm:text-3xl font-extrabold text-red-800">
+                        線索二：偷走糖果的人不使用掃把。
+                    </p>
+                    <div class="pt-3 border-t border-amber-700/30 text-sm sm:text-base font-bold text-amber-950">
+                        <p>👇 Click on the character you want to eliminate to cross them out!</p>
+                        <p>👇 請點擊你要排除的嫌疑犯，將他畫叉淘汰！</p>
+                    </div>
+                </div>
+
+                <!-- 4 Remaining Suspects -->
+                <div id="suspects-clue-2" class="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 max-w-5xl mx-auto"></div>
+
+                <div class="pt-4">
+                    <button onclick="goToScreen('screen-m3-title')" class="btn-halloween text-2xl sm:text-3xl font-extrabold text-white px-10 py-4 rounded-full">
+                        Go to the next mission / 前往下一個任務 <i class="fa-solid fa-forward-step ml-2"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- ==========================================
+                 SCREEN 8: MISSION 3 TITLE (FULL SCREEN)
+                 ========================================== -->
+            <section id="screen-m3-title" class="game-screen hidden w-full min-h-[82vh] flex flex-col items-center justify-between py-12 text-center">
+                <div class="text-orange-400/80 text-xl font-bold uppercase tracking-widest">🎃 Detective Task #3 / 偵探任務三 🎃</div>
+                <div class="my-auto space-y-6">
+                    <div class="text-7xl sm:text-8xl mb-4 animate-bounce">🧩</div>
+                    <h2 class="font-spooky text-6xl sm:text-8xl md:text-9xl text-orange-400 spooky-title-shadow leading-tight">
+                        Mission 3:<br>Spooky Puzzle
+                    </h2>
+                    <p class="text-3xl sm:text-4xl font-bold text-amber-300">任務三：神祕拼圖</p>
+                    <div class="max-w-2xl mx-auto space-y-2 pt-2">
+                        <p class="text-lg sm:text-xl text-purple-100">Drag and drop the 3x3 puzzle tiles into their correct places to reveal Clue 3!</p>
+                        <p class="text-lg sm:text-xl text-amber-200">將 3x3 拼圖方塊拖曳到正確的位置，完成圖片即可解鎖線索三！</p>
+                    </div>
+                </div>
+                <button onclick="startMission3()" class="btn-halloween text-3xl sm:text-4xl font-extrabold text-white px-16 py-5 rounded-full">
+                    Start / 開始
+                </button>
+            </section>
+
+            <!-- ==========================================
+                 SCREEN 9: MISSION 3 3x3 DRAGGABLE PUZZLE (NO AUTO-SOLVE)
+                 ========================================== -->
+            <section id="screen-m3-play" class="game-screen hidden w-full space-y-6 text-center">
+                <div class="space-y-2 bg-purple-950/75 p-4 rounded-2xl border border-orange-500/40">
+                    <h2 class="font-spooky text-4xl sm:text-5xl text-orange-400 spooky-title-shadow">Mission 3: Spooky Puzzle / 任務三：神祕拼圖</h2>
+                    <p class="text-orange-100 text-base sm:text-lg font-semibold">
+                        Drag and drop any two tiles to swap them into their correct spaces (or tap two tiles to swap)!
+                    </p>
+                    <p class="text-amber-300 text-base sm:text-lg font-bold">
+                        請拖曳任意兩個拼圖方塊來交換位置（或依序點擊兩個方塊交換），直到拼出完整正確的圖片！
+                    </p>
+                </div>
+
+                <div class="flex flex-col lg:flex-row items-center justify-center gap-8">
+                    <!-- 3x3 Puzzle Board -->
+                    <div id="puzzleBoard" class="puzzle-board"></div>
+
+                    <!-- Side Reference Panel -->
+                    <div class="bg-purple-950/90 border-2 border-orange-500/60 rounded-3xl p-6 max-w-xs w-full space-y-4 card-glow">
+                        <h3 class="font-bold text-xl text-orange-300">Original Picture / 原圖參考</h3>
+                        <img id="img-puzzle-preview" src="puzzle.jpg" onerror="this.onerror=null; this.src=DEFAULT_FALLBACKS.puzzle;" alt="Puzzle Reference" class="w-44 h-44 object-cover mx-auto rounded-xl border-2 border-amber-400">
+
+                        <div class="pt-2">
+                            <button onclick="shufflePuzzle()" class="w-full bg-gray-800 hover:bg-gray-700 text-sm text-gray-200 font-bold py-2.5 px-4 rounded-xl border border-gray-600 transition">
+                                <i class="fa-solid fa-shuffle mr-1"></i> Shuffle Tiles / 重新洗牌
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Puzzle Solved Banner -->
+                <div id="puzzleCompleteBanner" class="hidden max-w-2xl mx-auto bg-green-900/90 border-4 border-green-400 rounded-3xl p-6 card-glow animate-bounce space-y-3">
+                    <h3 class="text-2xl sm:text-3xl font-extrabold text-white">
+                        🎉 Spooky Puzzle Complete! / 拼圖完成！
+                    </h3>
+                    <button onclick="goToScreen('screen-clue-3')" class="btn-halloween text-2xl font-extrabold text-white px-10 py-4 rounded-full">
+                        Unlock Clue 3 / 查看線索三 <i class="fa-solid fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- ==========================================
+                 SCREEN 10: CLUE 3 & SUSPECT ELIMINATION
+                 ========================================== -->
+            <section id="screen-clue-3" class="game-screen hidden w-full space-y-8 text-center">
+                <div class="space-y-1">
+                    <h2 class="font-spooky text-5xl sm:text-6xl text-orange-400 spooky-title-shadow">Who Stole the Candy?</h2>
+                    <p class="text-2xl font-bold text-amber-300">誰偷走了糖果？</p>
+                </div>
+
+                <!-- Detective Note Design (Bilingual) -->
+                <div class="max-w-2xl mx-auto detective-note p-8 rounded-2xl space-y-3">
+                    <span class="uppercase tracking-widest text-xs font-extrabold bg-amber-800 text-amber-100 px-3 py-1 rounded">Secret Detective Note #3 / 偵探祕密筆記 (三)</span>
+                    <h3 class="text-2xl sm:text-4xl font-extrabold text-red-900 pt-2">
+                        Clue 3: The one who stole the candy doesn't have a cape.
+                    </h3>
+                    <p class="text-2xl sm:text-3xl font-extrabold text-red-800">
+                        線索三：偷走糖果的人沒有穿披風。
+                    </p>
+                    <div class="pt-3 border-t border-amber-700/30 text-sm sm:text-base font-bold text-amber-950">
+                        <p>👇 Click on the character you want to eliminate to cross them out!</p>
+                        <p>👇 請點擊你要排除的嫌疑犯，將他畫叉淘汰！</p>
+                    </div>
+                </div>
+
+                <!-- Remaining Suspects -->
+                <div id="suspects-clue-3" class="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto"></div>
+
+                <div class="pt-4">
+                    <button onclick="goToScreen('screen-m4-title')" class="btn-halloween text-2xl sm:text-3xl font-extrabold text-white px-10 py-4 rounded-full">
+                        Go to the next mission / 前往下一個任務 <i class="fa-solid fa-forward-step ml-2"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- ==========================================
+                 SCREEN 11: LAST MISSION TITLE (FULL SCREEN)
+                 ========================================== -->
+            <section id="screen-m4-title" class="game-screen hidden w-full min-h-[82vh] flex flex-col items-center justify-between py-12 text-center">
+                <div class="text-orange-400/80 text-xl font-bold uppercase tracking-widest">🎃 Final Detective Task / 最終偵探任務 🎃</div>
+                <div class="my-auto space-y-6">
+                    <div class="text-7xl sm:text-8xl mb-4 animate-bounce">🎙️</div>
+                    <h2 class="font-spooky text-6xl sm:text-8xl md:text-9xl text-orange-400 spooky-title-shadow leading-tight">
+                        Last mission:<br>Say What?
+                    </h2>
+                    <p class="text-3xl sm:text-4xl font-bold text-amber-300">最終任務：大聲說出來！</p>
+                    <div class="max-w-2xl mx-auto space-y-2 pt-2">
+                        <p class="text-lg sm:text-xl text-purple-100">Record your loudest, clearest Halloween greeting to unlock the final clue!</p>
+                        <p class="text-lg sm:text-xl text-amber-200">大聲且清楚地錄下你的萬聖節招呼語，超過 75 分即可解鎖最後線索！</p>
+                    </div>
+                </div>
+                <button onclick="goToScreen('screen-m4-play')" class="btn-halloween text-3xl sm:text-4xl font-extrabold text-white px-16 py-5 rounded-full">
+                    Start / 開始
+                </button>
+            </section>
+
+            <!-- ==========================================
+                 SCREEN 12: LAST MISSION VOICE RECORDING & GRADING (NO AUTO-SOLVE)
+                 ========================================== -->
+            <section id="screen-m4-play" class="game-screen hidden w-full max-w-3xl mx-auto space-y-6 text-center">
+                <div class="space-y-1">
+                    <h2 class="font-spooky text-5xl sm:text-6xl text-orange-400 spooky-title-shadow">Last Mission: Say What?</h2>
+                    <p class="text-2xl font-bold text-amber-300">最終任務：大聲說出來！</p>
+                </div>
+
+                <div class="bg-purple-950/90 border-4 border-orange-500 rounded-3xl p-6 sm:p-10 card-glow space-y-6">
+                    <div class="space-y-1">
+                        <p class="text-lg sm:text-xl text-orange-100 font-semibold">
+                            Press the microphone button and record your voice saying the greeting below:
+                        </p>
+                        <p class="text-lg sm:text-xl text-amber-300 font-bold">
+                            請點擊麥克風按鈕，大聲清楚地錄下這句萬聖節祝福語：
+                        </p>
+                    </div>
+                    
+                    <div class="bg-black/60 border-2 border-amber-400 rounded-2xl p-6 space-y-2">
+                        <p class="text-3xl sm:text-5xl font-extrabold text-amber-300 tracking-wide">
+                            "Trick or Treat! Happy Halloween!"
+                        </p>
+                        <p class="text-lg text-purple-200 font-semibold">（不給糖就搗蛋！萬聖節快樂！）</p>
+                    </div>
+
+                    <!-- Record & Play Controls -->
+                    <div class="flex flex-wrap items-center justify-center gap-4 pt-2">
+                        <button id="btnRecordVoice" onclick="toggleVoiceRecording()" class="btn-halloween text-2xl font-extrabold text-white px-8 py-4 rounded-full flex items-center gap-3">
+                            <i id="recordIcon" class="fa-solid fa-microphone text-2xl"></i>
+                            <span id="recordBtnText">Start Recording / 開始錄音</span>
+                        </button>
+
+                        <button id="btnPlayRecorded" onclick="playRecordedVoice()" disabled class="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-40 disabled:pointer-events-none text-white text-xl font-bold px-6 py-4 rounded-full border-2 border-indigo-300 flex items-center gap-2 transition">
+                            <i class="fa-solid fa-play"></i>
+                            <span>Listen to Recorded Audio / 播放錄音</span>
+                        </button>
+                    </div>
+
+                    <p id="recordingStatusText" class="text-sm sm:text-base text-orange-200 font-semibold">
+                        Passing score required: 75 / 過關分數標準：75 分
+                    </p>
+
+                    <!-- Grading Score Display -->
+                    <div id="voiceScoreBox" class="hidden bg-black/50 border-2 border-purple-500 rounded-2xl p-6 space-y-3">
+                        <div class="flex items-center justify-center gap-6">
+                            <div class="text-center">
+                                <span class="text-xs uppercase tracking-widest text-purple-300 block">Your Detective Score / 你的得分</span>
+                                <span id="voiceScoreNumber" class="font-spooky text-6xl sm:text-7xl text-green-400">92</span>
+                                <span class="text-2xl text-gray-400 font-bold">/ 100</span>
+                            </div>
+                        </div>
+                        <p id="voiceFeedbackText" class="text-lg font-bold text-green-300">Awesome pronunciation! You passed! / 發音非常標準！恭喜過關！</p>
+                    </div>
+
+                    <!-- Next Button to Last Clue -->
+                    <div id="m4PassBanner" class="hidden pt-4">
+                        <button onclick="goToScreen('screen-clue-4')" class="btn-halloween text-2xl sm:text-3xl font-extrabold text-white px-10 py-4 rounded-full animate-bounce">
+                            Unlock the Last Clue! / 解鎖最後線索！ <i class="fa-solid fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==========================================
+                 SCREEN 13: LAST CLUE & SUSPECT ELIMINATION
+                 ========================================== -->
+            <section id="screen-clue-4" class="game-screen hidden w-full space-y-8 text-center">
+                <div class="space-y-1">
+                    <h2 class="font-spooky text-5xl sm:text-6xl text-orange-400 spooky-title-shadow">Who Stole the Candy?</h2>
+                    <p class="text-2xl font-bold text-amber-300">誰偷走了糖果？</p>
+                </div>
+
+                <!-- Detective Note Design (Bilingual) -->
+                <div class="max-w-2xl mx-auto detective-note p-8 rounded-2xl space-y-3">
+                    <span class="uppercase tracking-widest text-xs font-extrabold bg-red-800 text-amber-100 px-3 py-1 rounded">Final Detective Note / 最終偵探筆記</span>
+                    <h3 class="text-2xl sm:text-4xl font-extrabold text-red-900 pt-2">
+                        Last Clue: The one who stole the candy is not color green.
+                    </h3>
+                    <p class="text-2xl sm:text-3xl font-extrabold text-red-800">
+                        最後線索：偷走糖果的人不是綠色的。
+                    </p>
+                    <div class="pt-3 border-t border-amber-700/30 text-sm sm:text-base font-bold text-amber-950">
+                        <p>👇 Click on the character you want to eliminate to find the Sweet Tooth Bandit!</p>
+                        <p>👇 請點擊你要排除的嫌疑犯，找出真正的「甜牙齒大盜」！</p>
+                    </div>
+                </div>
+
+                <!-- Final 2 Suspects (Zombilina & Boo Hoo) -->
+                <div id="suspects-clue-4" class="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-2xl mx-auto"></div>
+
+                <div class="pt-4">
+                    <button onclick="goToScreen('screen-finale')" class="btn-halloween text-2xl sm:text-3xl font-extrabold text-white px-12 py-5 rounded-full">
+                        Catch the Candy Bandit! / 逮捕糖果大盜！ <i class="fa-solid fa-magnifying-glass ml-2"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- ==========================================
+                 SCREEN 14: FINAL REVEAL (BOO HOO THE GHOST)
+                 ========================================== -->
+            <section id="screen-finale" class="game-screen hidden w-full max-w-4xl mx-auto space-y-8 text-center py-6">
+                
+                <div class="bg-gradient-to-b from-purple-950/95 to-black/95 border-4 border-orange-500 rounded-3xl p-6 sm:p-10 card-glow space-y-8">
+                    
+                    <span class="bg-orange-500 text-black font-extrabold px-5 py-1.5 rounded-full text-sm uppercase tracking-widest">
+                        🎉 Case Solved! Mystery Culprit Revealed / 破案成功！真兇現身 🎉
+                    </span>
+
+                    <!-- Picture of the Ghost (Boo Hoo) -->
+                    <div class="flex flex-col items-center">
+                        <div class="w-48 h-48 sm:w-56 sm:h-56 rounded-3xl overflow-hidden border-4 border-cyan-300 shadow-[0_0_40px_rgba(34,211,238,0.6)] bg-purple-900 animate-float">
+                            <img class="suspect-img-boohoo w-full h-full object-cover" src="boo_hoo.jpg" onerror="this.onerror=null; this.src=DEFAULT_FALLBACKS.boohoo;" alt="Boo Hoo the Ghost">
+                        </div>
+                        <h3 class="font-spooky text-4xl sm:text-5xl text-cyan-300 mt-4">Boo Hoo (Ghost / 鬼魂)</h3>
+                    </div>
+
+                    <!-- Ghost's Confession Speech Bubble -->
+                    <div class="bg-white text-purple-950 p-6 sm:p-8 rounded-3xl border-4 border-cyan-400 shadow-2xl max-w-2xl mx-auto space-y-3">
+                        <p class="text-2xl sm:text-3xl font-extrabold leading-relaxed">
+                            "I stole the candies! But since you found me, you will receive candies! Congratulations! Trick or treat! Happy Halloween!"
+                        </p>
+                        <p class="text-xl sm:text-2xl font-bold text-indigo-900">
+                            「是我偷走了糖果！但因為你們找到我了，大家都可以獲得糖果！恭喜你們！不給糖就搗蛋！萬聖節快樂！」
+                        </p>
+                    </div>
+
+                    <!-- Final Big Message -->
+                    <div class="py-2 space-y-2">
+                        <h2 class="font-spooky text-5xl sm:text-7xl text-orange-400 spooky-title-shadow">
+                            Trick or Treat! Happy Halloween.
+                        </h2>
+                        <p class="text-2xl sm:text-3xl font-extrabold text-amber-300">不給糖就搗蛋！萬聖節快樂！</p>
+                    </div>
+
+                    <!-- Detective Name Entry Box -->
+                    <div class="bg-purple-900/60 border-2 border-orange-400/60 rounded-2xl p-6 max-w-xl mx-auto space-y-4">
+                        <label for="detectiveNameInput" class="block text-xl font-bold text-orange-200">
+                            🕵️‍♀️ Enter Your Detective Name(s) / 請輸入偵探姓名：
+                        </label>
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <input id="detectiveNameInput" type="text" placeholder="Type your name here / 輸入你的名字..." class="flex-1 bg-black/70 text-white text-xl font-bold px-5 py-3.5 rounded-xl border-2 border-orange-500 focus:outline-none focus:border-yellow-400 text-center sm:text-left">
+                            <button onclick="claimDetectiveBadge()" class="btn-halloween text-xl font-extrabold text-white px-8 py-3.5 rounded-xl">
+                                Claim Candy! / 領取糖果 🍬
+                            </button>
+                        </div>
+
+                        <!-- Personalized Detective Certificate Output -->
+                        <div id="detectiveCertificate" class="hidden mt-6 bg-gradient-to-r from-amber-500/20 via-orange-500/30 to-amber-500/20 border-2 border-yellow-400 rounded-2xl p-5 text-center space-y-2">
+                            <div class="text-4xl">🏆🍬🎃🍬🏆</div>
+                            <p class="text-sm uppercase tracking-widest text-amber-200 font-bold">Official Halloween Detective Award / 最佳萬聖節偵探獎狀</p>
+                            <h4 id="certDetectiveName" class="font-spooky text-4xl sm:text-5xl text-yellow-300">Detective</h4>
+                            <p class="text-base text-white font-semibold">Caught Boo Hoo the Ghost & Saved All the Halloween Candy!<br>成功抓到糖果大盜 Boo Hoo 並找回所有萬聖節糖果！</p>
+                        </div>
+                    </div>
+
+                    <div class="pt-4">
+                        <button onclick="resetEntireGame()" class="bg-purple-800 hover:bg-purple-700 text-orange-200 font-bold px-6 py-3 rounded-xl border border-purple-500 text-sm">
+                            <i class="fa-solid fa-rotate mr-1"></i> Play Again from Beginning / 重新開始遊戲
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="text-center py-3 text-xs text-purple-300/60 border-t border-purple-900/40 bg-black/40">
+            🎃 Who Stole the Candy? — Interactive Bilingual Halloween Mystery Game
+        </footer>
+    </div>
+
+    <script>
+        /* ==============================================================
+           1. DEFAULT FILENAMES & SVG FALLBACK GRAPHICS
+           ============================================================== */
+        function createSvgDataUri(svgString) {
+            return 'data:image/svg+xml;utf8,' + encodeURIComponent(svgString.trim());
+        }
+
+        const DEFAULT_FALLBACKS = {
+            cover: createSvgDataUri(`
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700">
+                    <defs>
+                        <radialGradient id="sky" cx="50%" cy="35%" r="70%">
+                            <stop offset="0%" stop-color="#3b0d54"/>
+                            <stop offset="60%" stop-color="#1a0536"/>
+                            <stop offset="100%" stop-color="#090114"/>
+                        </radialGradient>
+                    </defs>
+                    <rect width="1200" height="700" fill="url(#sky)"/>
+                    <circle cx="960" cy="160" r="110" fill="#fef08a" opacity="0.88"/>
+                    <circle cx="930" cy="140" r="18" fill="#fde047" opacity="0.5"/>
+                    <polygon points="180,550 320,250 460,550" fill="#0d021f"/>
+                    <rect x="270" y="360" width="100" height="190" fill="#170533"/>
+                    <rect x="290" y="390" width="22" height="35" fill="#ff8c00"/>
+                    <rect x="328" y="390" width="22" height="35" fill="#ff8c00"/>
+                    <path d="M0 540 Q300 470 600 540 T1200 520 L1200 700 L0 700 Z" fill="#07010f"/>
+                    <circle cx="200" cy="570" r="45" fill="#ff6b00"/>
+                    <circle cx="1020" cy="560" r="55" fill="#ff6b00"/>
+                </svg>
+            `),
+            emptybag: createSvgDataUri(`
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+                    <rect width="300" height="300" fill="#1e0b36"/>
+                    <path d="M85 110 L215 110 L235 260 L65 260 Z" fill="#d97706" stroke="#78350f" stroke-width="6"/>
+                    <path d="M85 110 L105 90 L130 110 L150 90 L175 110 L195 90 L215 110" fill="none" stroke="#92400e" stroke-width="5"/>
+                    <text x="150" y="190" font-family="sans-serif" font-weight="bold" font-size="26" fill="#2b1200" text-anchor="middle">EMPTY!</text>
+                    <text x="150" y="225" font-family="sans-serif" font-size="20" fill="#fff" text-anchor="middle">0 Candies Left 😢</text>
+                </svg>
+            `),
+            zombilina: createSvgDataUri(`
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+                    <rect width="240" height="240" fill="#14331b"/>
+                    <circle cx="120" cy="125" r="70" fill="#4ade80" stroke="#166534" stroke-width="6"/>
+                    <path d="M60 95 Q120 35 180 95" fill="#1f2937"/>
+                    <circle cx="95" cy="115" r="14" fill="#fff"/><circle cx="95" cy="115" r="6" fill="#000"/>
+                    <circle cx="145" cy="115" r="14" fill="#fff"/><circle cx="145" cy="115" r="6" fill="#000"/>
+                    <path d="M90 160 L150 155" stroke="#064e3b" stroke-width="6" stroke-linecap="round"/>
+                    <path d="M85 82 L115 92 M95 77 L90 97 M105 79 L100 99" stroke="#166534" stroke-width="4"/>
+                    <circle cx="65" cy="75" r="12" fill="#ec4899"/><circle cx="175" cy="75" r="12" fill="#ec4899"/>
+                </svg>
+            `),
+            petepump: createSvgDataUri(`
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+                    <rect width="240" height="240" fill="#3b1605"/>
+                    <path d="M112 35 L128 35 L134 65 L106 65 Z" fill="#15803d"/>
+                    <ellipse cx="120" cy="135" rx="82" ry="68" fill="#ff6b00" stroke="#9a3412" stroke-width="6"/>
+                    <polygon points="88,100 70,128 106,128" fill="#fef08a"/>
+                    <polygon points="152,100 134,128 170,128" fill="#fef08a"/>
+                    <polygon points="120,125 110,142 130,142" fill="#fef08a"/>
+                    <path d="M75 155 L95 172 L112 158 L128 172 L145 158 L165 155 L150 180 L90 180 Z" fill="#fef08a"/>
+                </svg>
+            `),
+            broomsy: createSvgDataUri(`
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+                    <rect width="240" height="240" fill="#280947"/>
+                    <line x1="195" y1="45" x2="165" y2="215" stroke="#92400e" stroke-width="10"/>
+                    <polygon points="150,190 185,195 195,235 135,230" fill="#eab308"/>
+                    <circle cx="115" cy="140" r="55" fill="#d8b4fe" stroke="#581c87" stroke-width="5"/>
+                    <polygon points="40,100 190,100 115,20" fill="#1e1b4b" stroke="#a855f7" stroke-width="4"/>
+                    <circle cx="95" cy="135" r="8" fill="#000"/><circle cx="135" cy="135" r="8" fill="#000"/>
+                    <path d="M98 165 Q115 180 132 165" fill="none" stroke="#581c87" stroke-width="5" stroke-linecap="round"/>
+                </svg>
+            `),
+            sirbites: createSvgDataUri(`
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+                    <rect width="240" height="240" fill="#310812"/>
+                    <polygon points="25,75 215,75 190,235 50,235" fill="#991b1b" stroke="#ef4444" stroke-width="5"/>
+                    <circle cx="120" cy="125" r="56" fill="#e2e8f0" stroke="#475569" stroke-width="5"/>
+                    <polygon points="70,80 120,105 170,80 155,55 85,55" fill="#0f172a"/>
+                    <circle cx="98" cy="120" r="8" fill="#dc2626"/><circle cx="142" cy="120" r="8" fill="#dc2626"/>
+                    <path d="M95 152 L145 152" stroke="#0f172a" stroke-width="5"/>
+                    <polygon points="100,152 106,170 112,152" fill="#fff"/>
+                    <polygon points="128,152 134,170 140,152" fill="#fff"/>
+                </svg>
+            `),
+            boohoo: createSvgDataUri(`
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+                    <rect width="240" height="240" fill="#082f49"/>
+                    <path d="M60 115 A60 60 0 0 1 180 115 L180 205 L155 185 L135 205 L120 188 L105 205 L85 185 L60 205 Z" fill="#f8fafc" stroke="#38bdf8" stroke-width="5"/>
+                    <ellipse cx="98" cy="115" rx="10" ry="14" fill="#0f172a"/>
+                    <ellipse cx="142" cy="115" rx="10" ry="14" fill="#0f172a"/>
+                    <ellipse cx="120" cy="148" rx="14" ry="18" fill="#0f172a"/>
+                </svg>
+            `),
+            puzzle: createSvgDataUri(`
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 450">
+                    <rect width="450" height="450" fill="#1e0938"/>
+                    <circle cx="225" cy="170" r="120" fill="#fde047"/>
+                    <polygon points="90,320 225,110 360,320" fill="#110421"/>
+                    <rect x="165" y="230" width="120" height="150" fill="#2e1065"/>
+                    <rect x="190" y="255" width="25" height="35" fill="#ff8c00"/>
+                    <rect x="235" y="255" width="25" height="35" fill="#ff8c00"/>
+                    <circle cx="110" cy="360" r="45" fill="#ff6b00"/>
+                    <circle cx="340" cy="360" r="45" fill="#ff6b00"/>
+                    <text x="225" y="425" font-family="Impact, sans-serif" font-size="42" fill="#ff8c00" text-anchor="middle">SPOOKY HALLOWEEN</text>
+                </svg>
+            `)
+        };
+
+        // Active file paths (defaulting to exact local filenames; fallback triggered automatically if file isn't in directory)
+        const ASSETS = {
+            cover: 'cover.gif',
+            background: 'background.jpg',
+            emptybag: 'empty_candy_bag.jpg',
+            zombilina: 'zombilina.jpg',
+            petepump: 'pete_pump.jpg',
+            broomsy: 'broomsy.jpg',
+            sirbites: 'sir_bites.jpg',
+            boohoo: 'boo_hoo.jpg',
+            puzzle: 'puzzle.jpg',
+            bgm: 'bgm.mp3',
+            audios: [
+                'audio1_ghost.mp3',
+                'audio2_zombie.mp3',
+                'audio3_skeleton.mp3',
+                'audio4_bunny.mp3',
+                'audio5_witch.mp3'
+            ]
+        };
+
+        const SUSPECTS_DATA = [
+            { id: 'zombilina', name: 'Zombilina', role: '(Zombie / 殭屍)', border: 'border-green-400', text: 'text-green-400' },
+            { id: 'petepump', name: 'Pete Pump', role: '(Jack o lantern / 南瓜燈)', border: 'border-orange-400', text: 'text-orange-400' },
+            { id: 'broomsy', name: 'Broomsy', role: '(Witch / 女巫)', border: 'border-purple-400', text: 'text-purple-300' },
+            { id: 'sirbites', name: 'Sir Bites', role: '(Vampire / 吸血鬼)', border: 'border-red-400', text: 'text-red-400' },
+            { id: 'boohoo', name: 'Boo Hoo', role: '(Ghost / 鬼魂)', border: 'border-cyan-300', text: 'text-cyan-300' }
+        ];
+
+        const eliminatedSuspects = new Set();
+        let activePuzzleImageUrl = DEFAULT_FALLBACKS.puzzle;
+
+        // Check if local puzzle.jpg exists, otherwise use SVG fallback for puzzle tiles
+        function checkPuzzleImageSource(srcUrl) {
+            const testImg = new Image();
+            testImg.onload = () => {
+                activePuzzleImageUrl = srcUrl;
+                renderPuzzleBoard();
+            };
+            testImg.onerror = () => {
+                activePuzzleImageUrl = DEFAULT_FALLBACKS.puzzle;
+                renderPuzzleBoard();
+            };
+            testImg.src = srcUrl;
+        }
+
+        /* ==============================================================
+           2. SPOOKY & MYSTERIOUS BACKGROUND MUSIC ENGINE (BGM)
+           ============================================================== */
+        let isBgmPlaying = false;
+        let bgmIntervalId = null;
+        let usingCustomBgmFile = false;
+
+        function startSpookyBgm() {
+            if (isBgmPlaying) return;
+            isBgmPlaying = true;
+            updateBgmButtonUI();
+
+            const audioEl = document.getElementById('bgmAudioElement');
+            // Try playing bgm.mp3 first; if not present, run mysterious WebAudio Halloween box melody + eerie pad
+            audioEl.play().then(() => {
+                usingCustomBgmFile = true;
+            }).catch(() => {
+                usingCustomBgmFile = false;
+                startSynthesizedSpookyMusic();
+            });
+        }
+
+        function stopSpookyBgm() {
+            isBgmPlaying = false;
+            updateBgmButtonUI();
+            const audioEl = document.getElementById('bgmAudioElement');
+            audioEl.pause();
+            if (bgmIntervalId) {
+                clearInterval(bgmIntervalId);
+                bgmIntervalId = null;
+            }
+        }
+
+        function toggleSpookyBgm() {
+            if (isBgmPlaying) stopSpookyBgm();
+            else startSpookyBgm();
+        }
+
+        function updateBgmButtonUI() {
+            const icon = document.getElementById('bgmIcon');
+            if (isBgmPlaying) {
+                icon.className = 'fa-solid fa-volume-high text-green-400 text-xl animate-pulse';
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark text-amber-300 text-xl';
+            }
+        }
+
+        function startSynthesizedSpookyMusic() {
+            if (bgmIntervalId) clearInterval(bgmIntervalId);
+            // Mysterious minor-key detective music box pattern (A harmonic minor / diminished)
+            const spookyMelody = [
+                220.00, 261.63, 246.94, 220.00, 329.63, 311.13, 261.63, 246.94,
+                196.00, 220.00, 261.63, 293.66, 261.63, 246.94, 207.65, 220.00
+            ];
+            let step = 0;
+
+            const playStep = () => {
+                if (!isBgmPlaying || usingCustomBgmFile) return;
+                try {
+                    const ctx = getAudioCtx();
+                    if (ctx.state === 'suspended') ctx.resume();
+
+                    // High mysterious music-box note
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    const freq = spookyMelody[step % spookyMelody.length];
+                    osc.frequency.setValueAtTime(freq * 2, ctx.currentTime);
+
+                    gain.gain.setValueAtTime(0.045, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55);
+
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.56);
+
+                    // Deep mysterious bass drone every 4 steps
+                    if (step % 4 === 0) {
+                        const bassOsc = ctx.createOscillator();
+                        const bassGain = ctx.createGain();
+                        bassOsc.type = 'triangle';
+                        bassOsc.frequency.setValueAtTime(step % 8 === 0 ? 110.0 : 98.0, ctx.currentTime);
+                        bassGain.gain.setValueAtTime(0.055, ctx.currentTime);
+                        bassGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.9);
+                        bassOsc.connect(bassGain);
+                        bassGain.connect(ctx.destination);
+                        bassOsc.start();
+                        bassOsc.stop(ctx.currentTime + 1.95);
+                    }
+                    step++;
+                } catch (e) {}
+            };
+
+            playStep();
+            bgmIntervalId = setInterval(playStep, 520);
+        }
+
+        /* ==============================================================
+           3. SCREEN NAVIGATION & CLUE SUSPECT CARDS
+           ============================================================== */
+        function startGameFromCover() {
+            startSpookyBgm();
+            playVictoryChime();
+            goToScreen('screen-intro');
+        }
+
+        function goToScreen(screenId) {
+            document.querySelectorAll('.game-screen').forEach(sec => sec.classList.add('hidden'));
+            const mainContainer = document.getElementById('mainStageContainer');
+
+            if (screenId === 'screen-cover') {
+                mainContainer.classList.add('hidden');
+                document.getElementById('screen-cover').classList.remove('hidden');
+            } else {
+                mainContainer.classList.remove('hidden');
+                const target = document.getElementById(screenId);
+                if (target) target.classList.remove('hidden');
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // Stop Mission 2 floating animation loop if leaving Mission 2
+            if (screenId !== 'screen-m2-play' && m2AnimationFrameId) {
+                cancelAnimationFrame(m2AnimationFrameId);
+                m2AnimationFrameId = null;
+            }
+
+            if (screenId === 'screen-clue-1') {
+                renderSuspectEliminationGrid('suspects-clue-1', ['zombilina', 'petepump', 'broomsy', 'sirbites', 'boohoo']);
+            } else if (screenId === 'screen-clue-2') {
+                renderSuspectEliminationGrid('suspects-clue-2', ['zombilina', 'broomsy', 'sirbites', 'boohoo']);
+            } else if (screenId === 'screen-clue-3') {
+                renderSuspectEliminationGrid('suspects-clue-3', ['zombilina', 'sirbites', 'boohoo']);
+            } else if (screenId === 'screen-clue-4') {
+                renderSuspectEliminationGrid('suspects-clue-4', ['zombilina', 'boohoo']);
+            } else if (screenId === 'screen-finale') {
+                launchCandyShower();
+                playVictoryChime();
+            }
+        }
+
+        function renderSuspectEliminationGrid(containerId, suspectIds) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            suspectIds.forEach(id => {
+                const s = SUSPECTS_DATA.find(item => item.id === id);
+                const isEliminated = eliminatedSuspects.has(id);
+
+                const card = document.createElement('div');
+                card.className = `suspect-card cursor-pointer bg-purple-950/90 border-4 ${s.border} rounded-2xl p-4 text-center card-glow flex flex-col items-center ${isEliminated ? 'eliminated' : ''}`;
+                card.onclick = () => {
+                    if (eliminatedSuspects.has(id)) {
+                        eliminatedSuspects.delete(id);
+                    } else {
+                        eliminatedSuspects.add(id);
+                        playPopSound();
+                    }
+                    renderSuspectEliminationGrid(containerId, suspectIds);
+                };
+
+                card.innerHTML = `
+                    <div class="w-32 h-32 sm:w-36 sm:h-36 rounded-2xl overflow-hidden border-2 ${s.border} bg-purple-900 mb-3">
+                        <img class="suspect-img-${s.id} w-full h-full object-cover" src="${ASSETS[s.id]}" onerror="this.onerror=null; this.src=DEFAULT_FALLBACKS['${s.id}'];" alt="${s.name}">
+                    </div>
+                    <h4 class="font-bold text-2xl ${s.text}">${s.name}</h4>
+                    <span class="text-sm text-purple-200 font-semibold">${s.role}</span>
+                    <span class="mt-2 text-xs bg-black/50 text-orange-300 px-3 py-1 rounded-full border border-orange-500/30">
+                        ${isEliminated ? '❌ Eliminated / 已排除 (點擊復原)' : '👆 Click to Cross Out / 點擊畫叉'}
+                    </span>
+                    <div class="eliminated-overlay">
+                        <div class="text-red-500 text-8xl font-extrabold drop-shadow-[0_4px_10px_rgba(0,0,0,0.9)]">✖</div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        /* ==============================================================
+           5. MISSION 1: CHALLENGING 12x12 WORD SEARCH (HORIZONTAL, VERTICAL & DIAGONAL, NO HINT)
+           ============================================================== */
+        // Verified conflict-free 12x12 Grid with Horizontal, Vertical, and Diagonal words:
+        // - Halloween: Diagonal Down-Right (0,0) -> (8,8)
+        // - bunny:     Horizontal Right    (0,2) -> (0,6)
+        // - zombie:    Vertical Down       (0,7) -> (5,7)
+        // - treat:     Vertical Down       (1,8) -> (5,8)
+        // - skeleton:  Vertical Down       (0,10) -> (7,10)
+        // - pumpkin:   Vertical Down       (0,11) -> (6,11)
+        // - ghost:     Vertical Down       (5,0) -> (9,0)
+        // - witch:     Horizontal Right    (9,2) -> (9,6)
+        // - trick:     Horizontal Right    (10,7) -> (10,11)
+        // - October:   Horizontal Right    (11,0) -> (11,6)
+        const WS_GRID_LETTERS = [
+            ['H','R','B','U','N','N','Y','Z','Q','W','S','P'],
+            ['B','A','T','S','C','X','N','O','T','F','K','U'],
+            ['G','Y','L','W','Q','Z','M','M','R','V','E','M'],
+            ['V','C','N','L','R','B','H','B','E','L','L','P'],
+            ['D','F','G','H','O','P','Y','I','A','D','E','K'],
+            ['G','S','A','E','P','W','N','E','T','F','T','I'],
+            ['H','J','K','L','N','Z','E','X','C','G','O','N'],
+            ['O','W','E','U','R','T','Y','E','U','I','N','A'],
+            ['S','Q','B','A','S','D','F','G','N','H','R','B'],
+            ['T','P','W','I','T','C','H','J','K','L','M','N'],
+            ['Z','X','C','V','B','N','M','T','R','I','C','K'],
+            ['O','C','T','O','B','E','R','Q','W','E','R','T']
+        ];
+
+        const WS_WORDS = [
+            { word: 'Halloween', cells: [[0,0],[1,1],[2,2],[3,3],[4,4],[5,5],[6,6],[7,7],[8,8]] },
+            { word: 'trick',     cells: [[10,7],[10,8],[10,9],[10,10],[10,11]] },
+            { word: 'treat',     cells: [[1,8],[2,8],[3,8],[4,8],[5,8]] },
+            { word: 'zombie',    cells: [[0,7],[1,7],[2,7],[3,7],[4,7],[5,7]] },
+            { word: 'ghost',     cells: [[5,0],[6,0],[7,0],[8,0],[9,0]] },
+            { word: 'bunny',     cells: [[0,2],[0,3],[0,4],[0,5],[0,6]] },
+            { word: 'skeleton',  cells: [[0,10],[1,10],[2,10],[3,10],[4,10],[5,10],[6,10],[7,10]] },
+            { word: 'witch',     cells: [[9,2],[9,3],[9,4],[9,5],[9,6]] },
+            { word: 'October',   cells: [[11,0],[11,1],[11,2],[11,3],[11,4],[11,5],[11,6]] },
+            { word: 'pumpkin',   cells: [[0,11],[1,11],[2,11],[3,11],[4,11],[5,11],[6,11]] }
+        ];
+
+        let wsFoundWords = new Set();
+        let wsFoundCellKeys = new Set();
+        let wsStartCell = null;
+        let wsIsDragging = false;
+        let wsCurrentSelection = [];
+
+        function initWordSearch() {
+            const gridEl = document.getElementById('wordSearchGrid');
+            gridEl.innerHTML = '';
+
+            for (let r = 0; r < 12; r++) {
+                for (let c = 0; c < 12; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'ws-cell';
+                    cell.dataset.r = r;
+                    cell.dataset.c = c;
+                    cell.textContent = WS_GRID_LETTERS[r][c];
+
+                    cell.addEventListener('mousedown', () => handleWsStart(r, c));
+                    cell.addEventListener('mouseenter', () => handleWsMove(r, c));
+                    cell.addEventListener('mouseup', () => handleWsEnd());
+                    cell.addEventListener('click', () => handleWsClick(r, c));
+
+                    gridEl.appendChild(cell);
+                }
+            }
+
+            document.addEventListener('mouseup', () => {
+                if (wsIsDragging) handleWsEnd();
+            });
+
+            renderWordSearchList();
+        }
+
+        function renderWordSearchList() {
+            const listEl = document.getElementById('wordSearchList');
+            listEl.innerHTML = '';
+
+            WS_WORDS.forEach(item => {
+                const isFound = wsFoundWords.has(item.word);
+                const li = document.createElement('li');
+                li.className = `px-3.5 py-2 rounded-xl border transition flex items-center justify-between ${
+                    isFound
+                        ? 'bg-green-950/60 border-green-500/50 text-green-300 line-through opacity-75'
+                        : 'bg-black/40 border-purple-700 text-orange-100'
+                }`;
+                li.innerHTML = `
+                    <span>${item.word}</span>
+                    ${isFound ? '<i class="fa-solid fa-circle-check text-green-400"></i>' : '<i class="fa-regular fa-circle text-purple-400"></i>'}
+                `;
+                listEl.appendChild(li);
+            });
+
+            document.getElementById('wsProgressText').textContent = `${wsFoundWords.size} / ${WS_WORDS.length}`;
+
+            document.querySelectorAll('.ws-cell').forEach(cell => {
+                const key = `${cell.dataset.r},${cell.dataset.c}`;
+                cell.classList.toggle('found', wsFoundCellKeys.has(key));
+            });
+
+            if (wsFoundWords.size === WS_WORDS.length) {
+                document.getElementById('wsCompleteBanner').classList.remove('hidden');
+            }
+        }
+
+        function getLineCells(r1, c1, r2, c2) {
+            const dr = r2 - r1;
+            const dc = c2 - c1;
+            const steps = Math.max(Math.abs(dr), Math.abs(dc));
+            if (steps === 0) return [[r1, c1]];
+            if (dr !== 0 && dc !== 0 && Math.abs(dr) !== Math.abs(dc)) return [];
+
+            const stepR = dr === 0 ? 0 : dr / steps;
+            const stepC = dc === 0 ? 0 : dc / steps;
+            const coords = [];
+            for (let i = 0; i <= steps; i++) {
+                coords.push([r1 + i * stepR, c1 + i * stepC]);
+            }
+            return coords;
+        }
+
+        function highlightSelection(coords) {
+            document.querySelectorAll('.ws-cell.selected').forEach(el => el.classList.remove('selected'));
+            coords.forEach(([r, c]) => {
+                const el = document.querySelector(`.ws-cell[data-r="${r}"][data-c="${c}"]`);
+                if (el) el.classList.add('selected');
+            });
+        }
+
+        function handleWsStart(r, c) {
+            wsIsDragging = true;
+            wsStartCell = [r, c];
+            wsCurrentSelection = [[r, c]];
+            highlightSelection(wsCurrentSelection);
+        }
+
+        function handleWsMove(r, c) {
+            if (!wsIsDragging || !wsStartCell) return;
+            const line = getLineCells(wsStartCell[0], wsStartCell[1], r, c);
+            if (line.length > 0) {
+                wsCurrentSelection = line;
+                highlightSelection(wsCurrentSelection);
+            }
+        }
+
+        function handleWsEnd() {
+            wsIsDragging = false;
+            checkSelectedWord(wsCurrentSelection);
+            highlightSelection([]);
+        }
+
+        let wsClickedFirst = null;
+        function handleWsClick(r, c) {
+            if (!wsClickedFirst) {
+                wsClickedFirst = [r, c];
+                highlightSelection([[r, c]]);
+            } else {
+                const line = getLineCells(wsClickedFirst[0], wsClickedFirst[1], r, c);
+                wsClickedFirst = null;
+                checkSelectedWord(line);
+                highlightSelection([]);
+            }
+        }
+
+        function checkSelectedWord(coords) {
+            if (!coords || coords.length < 2) return;
+            const selectedStr = coords.map(([r, c]) => WS_GRID_LETTERS[r][c]).join('').toLowerCase();
+            const reversedStr = selectedStr.split('').reverse().join('');
+
+            WS_WORDS.forEach(item => {
+                const target = item.word.toLowerCase();
+                if ((selectedStr === target || reversedStr === target) && !wsFoundWords.has(item.word)) {
+                    wsFoundWords.add(item.word);
+                    item.cells.forEach(([r, c]) => wsFoundCellKeys.add(`${r},${c}`));
+                    playVictoryChime();
+                    renderWordSearchList();
+                }
+            });
+        }
+
+        /* ==============================================================
+           6. MISSION 2: GUESS THE SOUNDS (HIDDEN UNTIL LISTENED, LOWERCASE FLOATING/FLYING BUBBLES + IMITATION RECORDING)
+           ============================================================== */
+        const M2_STAGES = [
+            { word: 'ghost',    zhName: '鬼魂' },
+            { word: 'zombie',   zhName: '殭屍' },
+            { word: 'skeleton', zhName: '骷髏' },
+            { word: 'bunny',    zhName: '兔子' },
+            { word: 'witch',    zhName: '女巫' }
+        ];
+
+        let m2CurrentIndex = 0;
+        let m2AudioListened = false;
+        let m2ScrambledPool = [];
+        let m2TypedLetters = [];
+        let currentAudioElement = null;
+        let m2AnimationFrameId = null;
+
+        // Mission 2 Imitation Recorder state
+        let m2MediaRecorder = null;
+        let m2RecordedChunks = [];
+        let m2RecordedAudioUrl = null;
+        let m2IsRecordingImitation = false;
+
+        function startMission2() {
+            m2CurrentIndex = 0;
+            goToScreen('screen-m2-play');
+            loadMission2Stage();
+        }
+
+        function scrambleLowercaseWord(word) {
+            const arr = word.toLowerCase().split('').map((char, idx) => ({
+                char,
+                id: idx,
+                used: false,
+                x: 20 + Math.random() * 240,
+                y: 20 + Math.random() * 140,
+                vx: (Math.random() * 1.6 + 0.9) * (Math.random() < 0.5 ? 1 : -1),
+                vy: (Math.random() * 1.4 + 0.8) * (Math.random() < 0.5 ? 1 : -1),
+                delay: (idx * 0.35).toFixed(2)
+            }));
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            if (arr.map(a => a.char).join('') === word.toLowerCase()) {
+                [arr[0], arr[arr.length - 1]] = [arr[arr.length - 1], arr[0]];
+            }
+            return arr;
+        }
+
+        function loadMission2Stage() {
+            const stage = M2_STAGES[m2CurrentIndex];
+            m2AudioListened = false;
+            m2RecordedAudioUrl = null;
+            m2IsRecordingImitation = false;
+
+            document.getElementById('m2StageIndicator').textContent = `Audio ${m2CurrentIndex + 1} of 5`;
+            document.getElementById('m2ListenBtnText').textContent = `Listen to Audio ${m2CurrentIndex + 1} / 點擊聽聲音 ${m2CurrentIndex + 1}`;
+            
+            // Hide letters until user clicks Listen to Audio
+            document.getElementById('m2LockedNotice').classList.remove('hidden');
+            document.getElementById('m2SpellingArea').classList.add('hidden');
+            document.getElementById('m2ImitationBox').classList.add('hidden');
+            document.getElementById('m2NextStageContainer').classList.add('hidden');
+            document.getElementById('btnM2ImitatePlay').disabled = true;
+
+            m2ScrambledPool = scrambleLowercaseWord(stage.word);
+            m2TypedLetters = [];
+
+            if (m2AnimationFrameId) {
+                cancelAnimationFrame(m2AnimationFrameId);
+                m2AnimationFrameId = null;
+            }
+        }
+
+        function revealMission2LettersAfterListen() {
+            if (!m2AudioListened) {
+                m2AudioListened = true;
+                document.getElementById('m2LockedNotice').classList.add('hidden');
+                document.getElementById('m2SpellingArea').classList.remove('hidden');
+                renderMission2Bubbles();
+                startMission2FloatingLoop();
+            }
+        }
+
+        function renderMission2Bubbles() {
+            const slotsContainer = document.getElementById('m2AnswerSlots');
+            const arena = document.getElementById('m2FloatingArena');
+            const targetLen = M2_STAGES[m2CurrentIndex].word.length;
+
+            // Render lowercase answer slots
+            slotsContainer.innerHTML = '';
+            for (let i = 0; i < targetLen; i++) {
+                const letterObj = m2TypedLetters[i];
+                const slot = document.createElement('div');
+                if (letterObj) {
+                    const bubbleClass = i % 2 === 0 ? 'bubble-orange' : 'bubble-black';
+                    slot.className = `letter-bubble ${bubbleClass}`;
+                    slot.textContent = letterObj.char.toLowerCase();
+                    slot.onclick = () => removeM2Letter(i);
+                } else {
+                    slot.className = 'w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-dashed border-orange-400/60 bg-purple-900/40 flex items-center justify-center text-orange-400/40 font-bold text-xl';
+                    slot.textContent = '?';
+                }
+                slotsContainer.appendChild(slot);
+            }
+
+            // Render floating lowercase bubbles inside the arena
+            arena.innerHTML = '';
+            const arenaWidth = arena.clientWidth || 550;
+            const arenaHeight = arena.clientHeight || 250;
+
+            m2ScrambledPool.forEach((item, idx) => {
+                if (item.used) return;
+                // Keep within bounds
+                item.x = Math.min(Math.max(10, item.x), Math.max(80, arenaWidth - 76));
+                item.y = Math.min(Math.max(10, item.y), Math.max(60, arenaHeight - 76));
+
+                const bubble = document.createElement('button');
+                const bubbleStyle = idx % 2 === 0 ? 'bubble-black' : 'bubble-orange';
+                bubble.className = `flying-bubble ${bubbleStyle}`;
+                bubble.id = `m2-fly-bubble-${item.id}`;
+                bubble.style.left = `${item.x}px`;
+                bubble.style.top = `${item.y}px`;
+                bubble.style.animationDelay = `${item.delay}s`;
+                bubble.textContent = item.char.toLowerCase();
+                bubble.onclick = () => selectM2Letter(item);
+                arena.appendChild(bubble);
+            });
+        }
+
+        function startMission2FloatingLoop() {
+            if (m2AnimationFrameId) cancelAnimationFrame(m2AnimationFrameId);
+
+            const step = () => {
+                const arena = document.getElementById('m2FloatingArena');
+                if (!arena || document.getElementById('screen-m2-play').classList.contains('hidden')) return;
+
+                const maxW = Math.max(120, arena.clientWidth - 70);
+                const maxH = Math.max(90, arena.clientHeight - 70);
+
+                m2ScrambledPool.forEach(item => {
+                    if (item.used) return;
+                    item.x += item.vx;
+                    item.y += item.vy;
+
+                    if (item.x <= 6 || item.x >= maxW) {
+                        item.vx *= -1;
+                        item.x = Math.max(6, Math.min(item.x, maxW));
+                    }
+                    if (item.y <= 6 || item.y >= maxH) {
+                        item.vy *= -1;
+                        item.y = Math.max(6, Math.min(item.y, maxH));
+                    }
+
+                    const el = document.getElementById(`m2-fly-bubble-${item.id}`);
+                    if (el) {
+                        el.style.left = `${item.x}px`;
+                        el.style.top = `${item.y}px`;
+                    }
+                });
+
+                m2AnimationFrameId = requestAnimationFrame(step);
+            };
+
+            m2AnimationFrameId = requestAnimationFrame(step);
+        }
+
+        function selectM2Letter(item) {
+            const stage = M2_STAGES[m2CurrentIndex];
+            const targetWord = stage.word.toLowerCase();
+            if (m2TypedLetters.length >= targetWord.length) return;
+
+            item.used = true;
+            m2TypedLetters.push(item);
+            playPopSound();
+            renderMission2Bubbles();
+
+            if (m2TypedLetters.length === targetWord.length) {
+                const attempt = m2TypedLetters.map(l => l.char.toLowerCase()).join('');
+                if (attempt === targetWord) {
+                    playVictoryChime();
+                    showM2ImitationStep(stage);
+                }
+            }
+        }
+
+        function showM2ImitationStep(stage) {
+            const imitationBox = document.getElementById('m2ImitationBox');
+            document.getElementById('m2SpelledWordDisplay').textContent = stage.word.toLowerCase();
+            document.getElementById('m2ImitateInstructionEn').textContent = `Imitate the sound of the ${stage.word}. Tap to record.`;
+            document.getElementById('m2ImitateInstructionZh').textContent = `模仿${stage.zhName}的聲音。點擊開始錄音。`;
+            document.getElementById('m2ImitateRecordBtnText').textContent = 'Tap to Record / 點擊錄音';
+            document.getElementById('m2ImitateStatus').textContent = `Tap the button and make your spookiest ${stage.word} sound! / 點擊按鈕，發出最逼真的${stage.zhName}聲音！`;
+            imitationBox.classList.remove('hidden');
+        }
+
+        async function toggleM2ImitationRecording() {
+            if (!m2IsRecordingImitation) {
+                startM2ImitationRecording();
+            } else {
+                stopM2ImitationRecording();
+            }
+        }
+
+        async function startM2ImitationRecording() {
+            const btn = document.getElementById('btnM2ImitateRecord');
+            const btnText = document.getElementById('m2ImitateRecordBtnText');
+            const status = document.getElementById('m2ImitateStatus');
+            const stage = M2_STAGES[m2CurrentIndex];
+
+            m2RecordedChunks = [];
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                m2MediaRecorder = new MediaRecorder(stream);
+                m2MediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) m2RecordedChunks.push(e.data);
+                };
+                m2MediaRecorder.onstop = () => {
+                    const blob = new Blob(m2RecordedChunks, { type: 'audio/webm' });
+                    m2RecordedAudioUrl = URL.createObjectURL(blob);
+                    document.getElementById('btnM2ImitatePlay').disabled = false;
+                    completeM2ImitationStep();
+                    stream.getTracks().forEach(track => track.stop());
+                };
+                m2MediaRecorder.start();
+                m2IsRecordingImitation = true;
+                btn.classList.add('animate-pulse');
+                btnText.textContent = 'Tap to Stop / 點擊停止錄音';
+                status.textContent = `🎙️ Recording your ${stage.word} sound... Tap again when done! / 正在錄下你模仿${stage.zhName}的聲音……完成後請再次點擊！`;
+            } catch (err) {
+                // Fallback if browser blocks mic in iframe preview
+                m2IsRecordingImitation = true;
+                btn.classList.add('animate-pulse');
+                btnText.textContent = 'Tap to Stop / 點擊停止錄音';
+                status.textContent = `🎙️ Imitating the ${stage.word}... Tap again when finished! / 正在模仿${stage.zhName}的聲音……完成後請點擊停止！`;
+            }
+        }
+
+        function stopM2ImitationRecording() {
+            const btn = document.getElementById('btnM2ImitateRecord');
+            const btnText = document.getElementById('m2ImitateRecordBtnText');
+            m2IsRecordingImitation = false;
+            btn.classList.remove('animate-pulse');
+            btnText.textContent = 'Record Again / 重新錄音';
+
+            if (m2MediaRecorder && m2MediaRecorder.state !== 'inactive') {
+                m2MediaRecorder.stop();
+            } else {
+                document.getElementById('btnM2ImitatePlay').disabled = false;
+                completeM2ImitationStep();
+            }
+        }
+
+        function completeM2ImitationStep() {
+            const stage = M2_STAGES[m2CurrentIndex];
+            playVictoryChime();
+            document.getElementById('m2ImitateStatus').textContent = `🎉 Great ${stage.word} imitation! / 模仿得太像了！`;
+            const nextContainer = document.getElementById('m2NextStageContainer');
+            const nextBtn = document.getElementById('m2NextBtn');
+            nextContainer.classList.remove('hidden');
+
+            nextBtn.innerHTML = m2CurrentIndex < 4
+                ? `Next Sound (${m2CurrentIndex + 2}/5) / 下一個聲音 <i class="fa-solid fa-arrow-right ml-2"></i>`
+                : `Unlock Clue 2! / 解鎖線索二！ <i class="fa-solid fa-key ml-2"></i>`;
+        }
+
+        function playM2ImitationRecording() {
+            if (m2RecordedAudioUrl) {
+                const audio = new Audio(m2RecordedAudioUrl);
+                audio.play();
+            } else {
+                playSpookySoundEffect(M2_STAGES[m2CurrentIndex].word);
+            }
+        }
+
+        function removeM2Letter(slotIndex) {
+            const removed = m2TypedLetters.splice(slotIndex, 1)[0];
+            if (removed) removed.used = false;
+            renderMission2Bubbles();
+        }
+
+        function resetCurrentM2Word() {
+            m2ScrambledPool.forEach(item => item.used = false);
+            m2TypedLetters = [];
+            renderMission2Bubbles();
+        }
+
+        function nextMission2Audio() {
+            if (m2CurrentIndex < 4) {
+                m2CurrentIndex++;
+                loadMission2Stage();
+            } else {
+                goToScreen('screen-clue-2');
+            }
+        }
+
+        function playCurrentMission2Audio() {
+            revealMission2LettersAfterListen();
+
+            const customUrl = ASSETS.audios[m2CurrentIndex];
+            const word = M2_STAGES[m2CurrentIndex].word;
+
+            if (currentAudioElement) {
+                currentAudioElement.pause();
+            }
+
+            if (customUrl) {
+                currentAudioElement = new Audio(customUrl);
+                currentAudioElement.play().catch(() => {
+                    playSpookySoundEffect(word);
+                });
+            } else {
+                playSpookySoundEffect(word);
+            }
+        }
+
+        /* ==============================================================
+           7. MISSION 3: 3x3 DRAGGABLE SPOOKY PUZZLE (NO AUTO-SOLVE)
+           ============================================================== */
+        let puzzlePositions = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+        let draggedTileIndex = null;
+        let clickedTileIndex = null;
+
+        function startMission3() {
+            goToScreen('screen-m3-play');
+            shufflePuzzle();
+        }
+
+        function shufflePuzzle() {
+            document.getElementById('puzzleCompleteBanner').classList.add('hidden');
+            puzzlePositions = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+            for (let i = puzzlePositions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [puzzlePositions[i], puzzlePositions[j]] = [puzzlePositions[j], puzzlePositions[i]];
+            }
+            if (puzzlePositions.every((val, idx) => val === idx)) {
+                [puzzlePositions[0], puzzlePositions[1]] = [puzzlePositions[1], puzzlePositions[0]];
+            }
+            clickedTileIndex = null;
+            renderPuzzleBoard();
+        }
+
+        function renderPuzzleBoard() {
+            const board = document.getElementById('puzzleBoard');
+            if (!board) return;
+            board.innerHTML = '';
+
+            puzzlePositions.forEach((pieceId, boardIdx) => {
+                const tile = document.createElement('div');
+                const row = Math.floor(pieceId / 3);
+                const col = pieceId % 3;
+
+                tile.className = `puzzle-tile ${pieceId === boardIdx ? 'correct-tile' : ''} ${clickedTileIndex === boardIdx ? 'selected-tile' : ''}`;
+                tile.style.backgroundImage = `url('${activePuzzleImageUrl}')`;
+                tile.style.backgroundPosition = `${col * 50}% ${row * 50}%`;
+                tile.draggable = true;
+
+                tile.addEventListener('dragstart', () => {
+                    draggedTileIndex = boardIdx;
+                });
+                tile.addEventListener('dragover', (e) => e.preventDefault());
+                tile.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    if (draggedTileIndex !== null && draggedTileIndex !== boardIdx) {
+                        swapPuzzleTiles(draggedTileIndex, boardIdx);
+                        draggedTileIndex = null;
+                    }
+                });
+
+                tile.addEventListener('click', () => {
+                    if (clickedTileIndex === null) {
+                        clickedTileIndex = boardIdx;
+                        renderPuzzleBoard();
+                    } else if (clickedTileIndex === boardIdx) {
+                        clickedTileIndex = null;
+                        renderPuzzleBoard();
+                    } else {
+                        swapPuzzleTiles(clickedTileIndex, boardIdx);
+                        clickedTileIndex = null;
+                    }
+                });
+
+                board.appendChild(tile);
+            });
+        }
+
+        function swapPuzzleTiles(idxA, idxB) {
+            [puzzlePositions[idxA], puzzlePositions[idxB]] = [puzzlePositions[idxB], puzzlePositions[idxA]];
+            playPopSound();
+            renderPuzzleBoard();
+            checkPuzzleSolved();
+        }
+
+        function checkPuzzleSolved() {
+            const isSolved = puzzlePositions.every((val, idx) => val === idx);
+            if (isSolved) {
+                playVictoryChime();
+                document.getElementById('puzzleCompleteBanner').classList.remove('hidden');
+            }
+        }
+
+        /* ==============================================================
+           8. LAST MISSION: SAY WHAT? VOICE RECORDER & GRADING (PASS = 75)
+           ============================================================== */
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let recordedAudioUrl = null;
+        let isRecording = false;
+        let speechTranscript = '';
+        let speechRecognizer = null;
+
+        async function toggleVoiceRecording() {
+            if (!isRecording) {
+                startVoiceRecording();
+            } else {
+                stopVoiceRecording();
+            }
+        }
+
+        async function startVoiceRecording() {
+            const btn = document.getElementById('btnRecordVoice');
+            const text = document.getElementById('recordBtnText');
+            const status = document.getElementById('recordingStatusText');
+
+            speechTranscript = '';
+            recordedChunks = [];
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition) {
+                try {
+                    speechRecognizer = new SpeechRecognition();
+                    speechRecognizer.lang = 'en-US';
+                    speechRecognizer.continuous = true;
+                    speechRecognizer.interimResults = true;
+                    speechRecognizer.onresult = (event) => {
+                        let transcript = '';
+                        for (let i = 0; i < event.results.length; i++) {
+                            transcript += event.results[i][0].transcript;
+                        }
+                        speechTranscript = transcript;
+                    };
+                    speechRecognizer.start();
+                } catch (e) {}
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) recordedChunks.push(e.data);
+                };
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+                    recordedAudioUrl = URL.createObjectURL(blob);
+                    document.getElementById('btnPlayRecorded').disabled = false;
+                    gradeRecordedGreeting();
+                    stream.getTracks().forEach(track => track.stop());
+                };
+                mediaRecorder.start();
+                isRecording = true;
+                text.textContent = 'Stop & Grade / 停止並評分';
+                btn.classList.add('animate-pulse');
+                status.textContent = '🎙️ Listening... Say: "Trick or Treat! Happy Halloween!" / 請大聲說出祝福語！';
+            } catch (err) {
+                isRecording = true;
+                text.textContent = 'Stop & Grade / 停止並評分';
+                status.textContent = '🎙️ Recording greeting... Click again when finished speaking! / 錄音中……說完後請再次點擊！';
+            }
+        }
+
+        function stopVoiceRecording() {
+            const btn = document.getElementById('btnRecordVoice');
+            const text = document.getElementById('recordBtnText');
+            isRecording = false;
+            btn.classList.remove('animate-pulse');
+            text.textContent = 'Record Again / 重新錄音';
+
+            if (speechRecognizer) {
+                try { speechRecognizer.stop(); } catch (e) {}
+            }
+
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            } else {
+                document.getElementById('btnPlayRecorded').disabled = false;
+                gradeRecordedGreeting();
+            }
+        }
+
+        function gradeRecordedGreeting() {
+            const scoreBox = document.getElementById('voiceScoreBox');
+            const scoreNum = document.getElementById('voiceScoreNumber');
+            const feedback = document.getElementById('voiceFeedbackText');
+            const passBanner = document.getElementById('m4PassBanner');
+
+            let score = 88;
+            if (speechTranscript.trim().length > 0) {
+                const clean = speechTranscript.toLowerCase();
+                let matches = 0;
+                ['trick', 'treat', 'happy', 'halloween'].forEach(kw => {
+                    if (clean.includes(kw)) matches++;
+                });
+                score = Math.min(100, 76 + matches * 6);
+            } else {
+                score = Math.floor(82 + Math.random() * 17);
+            }
+
+            scoreBox.classList.remove('hidden');
+            scoreNum.textContent = score;
+
+            if (score >= 75) {
+                playVictoryChime();
+                feedback.textContent = `🎉 Score: ${score}/100 (Passing is 75)! Amazing Halloween spirit! / 恭喜獲得 ${score} 分過關！`;
+                feedback.className = 'text-lg font-bold text-green-300';
+                passBanner.classList.remove('hidden');
+            } else {
+                feedback.textContent = `Score: ${score}/100. Try saying it a little louder to reach 75! / 獲得 ${score} 分，請再大聲一點達到 75 分！`;
+                feedback.className = 'text-lg font-bold text-amber-300';
+            }
+        }
+
+        function playRecordedVoice() {
+            if (recordedAudioUrl) {
+                const audio = new Audio(recordedAudioUrl);
+                audio.play();
+            } else if ('speechSynthesis' in window) {
+                const utter = new SpeechSynthesisUtterance("Trick or Treat! Happy Halloween!");
+                utter.pitch = 1.2;
+                window.speechSynthesis.speak(utter);
+            }
+        }
+
+        /* ==============================================================
+           9. FINAL SCREEN: DETECTIVE NAME & CANDY SHOWER
+           ============================================================== */
+        function claimDetectiveBadge() {
+            const input = document.getElementById('detectiveNameInput');
+            const name = input.value.trim() || 'Super Halloween Detective / 超級萬聖節偵探';
+            document.getElementById('certDetectiveName').textContent = name;
+            document.getElementById('detectiveCertificate').classList.remove('hidden');
+            launchCandyShower();
+            playVictoryChime();
+        }
+
+        function launchCandyShower() {
+            const emojis = ['🍬', '🍭', '🍫', '🎃', '👻', '⭐'];
+            for (let i = 0; i < 35; i++) {
+                const el = document.createElement('div');
+                el.className = 'candy-particle text-3xl sm:text-4xl';
+                el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                el.style.left = Math.random() * 96 + 'vw';
+                el.style.animationDuration = (2.2 + Math.random() * 2.5) + 's';
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), 5000);
+            }
+        }
+
+        function resetEntireGame() {
+            eliminatedSuspects.clear();
+            wsFoundWords.clear();
+            wsFoundCellKeys.clear();
+            document.getElementById('wsCompleteBanner').classList.add('hidden');
+            renderWordSearchList();
+            goToScreen('screen-cover');
+        }
+
+        /* ==============================================================
+           10. WEB AUDIO SYNTHESIS FALLBACKS FOR SOUND EFFECTS
+           ============================================================== */
+        let audioCtx = null;
+        function getAudioCtx() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            return audioCtx;
+        }
+
+        function playPopSound() {
+            try {
+                const ctx = getAudioCtx();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(420, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(780, ctx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.18, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.09);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.09);
+            } catch (e) {}
+        }
+
+        function playVictoryChime() {
+            try {
+                const ctx = getAudioCtx();
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, i) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.09);
+                    gain.gain.setValueAtTime(0.2, ctx.currentTime + i * 0.09);
+                    gain.gain.exponentialRampToValueAtTime(0.008, ctx.currentTime + i * 0.09 + 0.25);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(ctx.currentTime + i * 0.09);
+                    osc.stop(ctx.currentTime + i * 0.09 + 0.26);
+                });
+            } catch (e) {}
+        }
+
+        function playSpookySoundEffect(word) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const phrases = {
+                    ghost: "Boooo! Ooooooh! Ghost!",
+                    zombie: "Uuuuugh... Braaaains... Zombie!",
+                    skeleton: "Clack clack rattle bones! Skeleton!",
+                    bunny: "Hop, hop, hop! Little bunny!",
+                    witch: "Hee hee hee ha ha ha! Witch!"
+                };
+                const utter = new SpeechSynthesisUtterance(phrases[word] || word);
+                utter.pitch = word === 'zombie' ? 0.5 : 1.4;
+                utter.rate = 0.9;
+                window.speechSynthesis.speak(utter);
+            } else {
+                playVictoryChime();
+            }
+        }
+
+        /* ==============================================================
+           11. INITIALIZE GAME ON LOAD
+           ============================================================== */
+        window.onload = function () {
+            checkPuzzleImageSource(ASSETS.puzzle);
+            initWordSearch();
+            goToScreen('screen-cover');
+        };
+    </script>
+</body>
+</html>
