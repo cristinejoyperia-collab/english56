@@ -35,7 +35,7 @@
       color: #fff;
     }
 
-    /* Custom Game Background Layer (Looks for local background-photo.jpg) */
+    /* Custom Game Background Layer */
     #app-bg {
       position: fixed;
       inset: 0;
@@ -104,7 +104,7 @@
       justify-content: space-between;
     }
 
-    /* Locked Front Card (Numbered Oval like Family Feud) */
+    /* Locked Front Card */
     .flip-card-front {
       background: linear-gradient(180deg, #ff8800 0%, #c2410c 100%);
       border: 4px solid #fde047;
@@ -119,7 +119,7 @@
       transform: translateY(-2px);
     }
 
-    /* Revealed Back Card (Answer + Points) */
+    /* Revealed Back Card (Answer + Option Letter Badge) */
     .flip-card-back {
       background: linear-gradient(180deg, #fef08a 0%, #facc15 100%);
       border: 4px solid #ffffff;
@@ -187,7 +187,7 @@
   <div id="app-bg"></div>
   <div id="app-bg-overlay"></div>
 
-  <!-- Floating Decorative Spooky Taiwan Icons (Background Ambiance) -->
+  <!-- Floating Decorative Spooky Taiwan Icons -->
   <div class="fixed inset-0 pointer-events-none overflow-hidden z-0 opacity-25">
     <div class="absolute top-16 left-6 text-5xl animate-float">🎃</div>
     <div class="absolute top-24 right-10 text-5xl animate-float" style="animation-delay: 0.8s;">🧋</div>
@@ -197,7 +197,7 @@
     <div class="absolute top-1/3 right-6 text-4xl animate-float" style="animation-delay: 1.9s;">🏮</div>
   </div>
 
-  <!-- ================= FLOATING MINI HOST CONTROLS ================= -->
+  <!-- FLOATING MINI HOST CONTROLS -->
   <div id="mini-controls" class="fixed top-3 right-3 z-50 flex items-center gap-2 hidden">
     <button onclick="toggleBGM()" id="btn-bgm-mini" class="w-11 h-11 rounded-full bg-indigo-600 border-2 border-indigo-400 text-white flex items-center justify-center shadow-lg hover:bg-indigo-500 transition-colors" title="Toggle Music">
       <i class="fa-solid fa-music"></i>
@@ -210,23 +210,19 @@
     </button>
   </div>
 
-  <!-- ================= MAIN CONTENT AREA ================= -->
+  <!-- MAIN CONTENT AREA -->
   <main class="relative z-10 flex-1 flex flex-col justify-center items-center w-full h-full mx-auto">
 
-    <!-- ==================== 1. FULL-SCREEN COVER / SPLASH ==================== -->
+    <!-- 1. FULL-SCREEN COVER / SPLASH -->
     <section id="screen-cover" class="fixed inset-0 z-50 flex flex-col items-center justify-end pb-12 bg-black">
-      
-      <!-- Full Bleed Cover Photo (Looks for local cover-photo.jpg) -->
       <img id="cover-photo-img" 
            src="cover-photo.jpg" 
            onerror="this.src='https://placehold.co/1920x1080/2e1065/fde047?text=Please+save+cover-photo.jpg+in+your+folder!+%F0%9F%8E%83'"
            alt="Game Cover" 
            class="absolute inset-0 w-full h-full object-cover z-0" />
       
-      <!-- Bottom gradient for button readability -->
       <div class="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/80 to-transparent z-0"></div>
 
-      <!-- Floating Action Buttons -->
       <div class="relative z-10 flex flex-wrap items-center justify-center gap-4">
         <button onclick="startGame()" class="btn-game bg-gradient-to-b from-green-400 to-emerald-600 hover:from-green-300 hover:to-emerald-500 border-emerald-800 text-purple-950 font-extrabold text-2xl md:text-4xl px-12 py-5 rounded-3xl shadow-[0_0_40px_rgba(52,211,153,0.6)] flex items-center gap-3 pulse-attention">
           <i class="fa-solid fa-play"></i>
@@ -247,27 +243,22 @@
       </div>
     </section>
 
-    <!-- ==================== 2. MAIN GAMEPLAY SCREENS ==================== -->
+    <!-- 2. MAIN GAMEPLAY SCREENS -->
     <section id="screen-game" class="hidden w-full max-w-7xl px-3 py-3 md:px-6 flex-1 flex-col h-full items-center justify-center gap-4 mt-6">
       
-      <!-- ================= SLIDE A: QUESTION, TIMER & WORD BANK ================= -->
+      <!-- SLIDE A: QUESTION, TIMER & WORD BANK -->
       <div id="slide-question" class="w-full flex-1 flex flex-col justify-between feud-board-frame p-6 md:p-8 relative">
-        
-        <!-- TOP: TIMER SECTION -->
         <div class="w-full flex flex-col items-center justify-center mb-6 z-10">
           <span id="q-badge" class="bg-amber-400 text-purple-950 font-extrabold px-5 py-1.5 rounded-full text-sm md:text-base shadow mb-4">
             QUESTION 1 OF 10
           </span>
           
           <div class="flex flex-col md:flex-row items-center justify-center gap-6 bg-purple-950/80 p-4 rounded-3xl border-2 border-purple-600/50 shadow-lg">
-            
-            <!-- Timer Circle -->
             <div id="timer-circle" class="w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-amber-400 bg-purple-900 flex flex-col items-center justify-center shadow-[0_0_20px_rgba(251,191,36,0.4)] transition-colors">
               <span id="timer-display" class="text-4xl md:text-5xl font-extrabold text-yellow-300 leading-none mt-1">30</span>
               <span class="text-xs text-amber-200 font-bold mt-1">SEC 秒</span>
             </div>
 
-            <!-- Timer Controls -->
             <div class="flex flex-col items-center gap-3">
               <div id="timer-status-banner" class="bg-purple-900/80 border border-purple-500 rounded-xl py-1.5 px-4 text-sm md:text-base font-bold text-amber-200 w-full text-center">
                 Ready! 點擊開始計時 30 秒
@@ -285,7 +276,6 @@
           </div>
         </div>
 
-        <!-- MIDDLE: QUESTION TEXT -->
         <div class="text-center flex-1 flex flex-col items-center justify-center mb-6">
           <h2 id="q-text-en" class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white leading-tight mb-4 drop-shadow-xl max-w-5xl">
             Loading question...
@@ -300,35 +290,30 @@
           </div>
         </div>
 
-        <!-- BOTTOM: GAME SHOW QUIZ OPTIONS (A, B, C, D) -->
         <div class="w-full bg-purple-950/90 border-4 border-dashed border-amber-400 rounded-3xl p-6 md:p-8 text-center shadow-2xl relative mx-auto max-w-6xl mt-4">
           <div class="absolute -top-5 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-amber-400 to-orange-400 text-purple-950 font-extrabold px-6 py-2 rounded-full border-2 border-white shadow-lg text-lg md:text-xl flex items-center gap-2">
             <i class="fa-solid fa-list-ul"></i> Options 提示選項
           </div>
           
-          <!-- Dynamic A,B,C,D Grid -->
           <div id="hint-content" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 text-left">
              <!-- injected here by JS -->
           </div>
         </div>
 
-        <!-- HIDDEN REVEAL BUTTON (Pops up when timer ends) -->
         <div class="mt-6 flex flex-col items-center justify-center min-h-[90px] relative">
           <button id="btn-goto-answers" onclick="showAnswersSlide()" class="hidden btn-game bg-gradient-to-r from-amber-400 via-yellow-300 to-orange-400 hover:from-yellow-300 hover:to-orange-300 text-purple-950 font-extrabold py-5 px-10 rounded-full text-2xl md:text-3xl shadow-[0_0_40px_rgba(251,191,36,0.6)] transition-all duration-300 transform scale-100 items-center justify-center gap-3 w-full max-w-xl mx-auto border-b-8 border-orange-700">
             <i class="fa-solid fa-eye text-3xl"></i> 
             <span>Reveal the Results! 公佈答案</span>
           </button>
           
-          <!-- Teacher shortcut to skip the wait -->
           <button onclick="showAnswersSlide()" class="absolute bottom-[-10px] right-2 text-purple-400 hover:text-amber-300 font-bold text-sm underline opacity-70 hover:opacity-100 transition-opacity">
             ⏭️ Skip to Answers (Teacher)
           </button>
         </div>
       </div>
 
-      <!-- ================= SLIDE B: ANSWERS GRID (FLIP CARDS) ================= -->
+      <!-- SLIDE B: ANSWERS GRID (FLIP CARDS WITH MATCHING SHUFFLED LETTERS) -->
       <div id="slide-answers" class="hidden w-full flex-1 flex flex-col feud-board-frame p-5 md:p-8">
-        
         <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
           <h3 class="text-3xl md:text-4xl font-extrabold text-amber-300 drop-shadow flex items-center gap-3">
             📊 SURVEY SAYS... 民調排行榜
@@ -343,11 +328,10 @@
           </div>
         </div>
 
-        <!-- Pending Points Indicator for Group Awarding -->
         <div class="flex justify-center mb-6">
           <div class="bg-emerald-900/90 border-2 border-emerald-400 text-emerald-200 px-5 py-2 rounded-full text-base md:text-lg font-bold flex items-center gap-2 shadow-lg">
             <i class="fa-solid fa-hand-point-down text-yellow-300 text-xl animate-bounce"></i>
-            <span id="award-prompt-text">Click a revealed answer or tap a Group below to add points! 點擊下方第1~7組加分！</span>
+            <span id="award-prompt-text">Click a revealed answer card to give points to a group!</span>
           </div>
         </div>
 
@@ -356,7 +340,6 @@
           <!-- Populated dynamically via JS -->
         </div>
 
-        <!-- Bottom Prev / Next Question Bar -->
         <div class="flex items-center justify-between mt-8 pt-5 border-t-4 border-purple-800/80">
           <button id="btn-prev-q" onclick="prevQuestion()" class="btn-game bg-purple-800 hover:bg-purple-700 border-purple-950 text-amber-200 font-bold px-6 py-3 rounded-2xl text-lg flex items-center gap-2">
             <i class="fa-solid fa-arrow-left"></i>
@@ -376,7 +359,7 @@
 
     </section>
 
-    <!-- ==================== 3. FINAL PODIUM / WINNERS SCREEN ==================== -->
+    <!-- 3. FINAL PODIUM / WINNERS SCREEN -->
     <section id="screen-podium" class="hidden w-full max-w-5xl feud-board-frame p-6 md:p-8 text-center my-auto">
       <div class="text-5xl mb-2">🏆🎃🎉</div>
       <h2 class="text-3xl md:text-5xl font-extrabold text-amber-300 drop-shadow mb-1">
@@ -386,7 +369,6 @@
         萬聖節大對決・最終排行榜！恭喜所有小朋友！
       </p>
 
-      <!-- Ranked Groups List -->
       <div id="podium-rankings" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 text-left">
         <!-- Populated by JS -->
       </div>
@@ -405,11 +387,9 @@
 
   </main>
 
-  <!-- ================= PERSISTENT SCOREBOARD FOR GROUPS 1 - 7 ================= -->
+  <!-- PERSISTENT SCOREBOARD FOR GROUPS 1 - 7 -->
   <footer id="scoreboard-footer" class="hidden relative z-20 bg-purple-950/95 border-t-4 border-amber-400 px-3 py-2.5 shadow-[0_-8px_25px_rgba(0,0,0,0.6)] backdrop-blur-md w-full">
     <div class="max-w-7xl mx-auto">
-      
-      <!-- Scoreboard Header & Selected Points Badge -->
       <div class="flex flex-wrap items-center justify-between gap-2 mb-2 px-1">
         <div class="flex items-center gap-2">
           <span class="text-amber-300 font-extrabold text-sm md:text-base flex items-center gap-1.5">
@@ -428,14 +408,13 @@
         </div>
       </div>
 
-      <!-- 7 Groups Grid -->
       <div id="scoreboard-grid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
         <!-- Populated by JS for Groups 1 to 7 -->
       </div>
     </div>
   </footer>
 
-  <!-- ================= GIANT RED "X" STRIKE OVERLAY ================= -->
+  <!-- GIANT RED "X" STRIKE OVERLAY -->
   <div id="strike-overlay" onclick="hideStrikeOverlay()" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm cursor-pointer">
     <div class="strike-anim flex flex-col items-center">
       <div class="w-56 h-56 md:w-72 md:h-72 bg-red-600 border-8 border-white rounded-3xl shadow-[0_0_80px_#ef4444] flex items-center justify-center">
@@ -447,11 +426,10 @@
     </div>
   </div>
 
-  <!-- ================= JAVASCRIPT LOGIC & DATA ================= -->
+  <!-- JAVASCRIPT LOGIC & DATA -->
   <script>
-    /********************************************************************
-     * 1. ALL 10 QUESTIONS & SURVEY DATA (English + Traditional Chinese)
-     ********************************************************************/
+    const LETTERS = ["A", "B", "C", "D", "E", "F"];
+
     const QUESTIONS = [
       {
         id: 1,
@@ -574,17 +552,14 @@
       }
     ];
 
-    /********************************************************************
-     * 2. STATE MANAGEMENT
-     ********************************************************************/
     let currentQuestionIndex = 0;
-    let revealedSlots = {}; // tracks { "qIndex-ansIndex": true }
+    let revealedSlots = {};
+    let currentShuffledOptions = []; // Stores { text, answerIndex, letter }
     let timerSeconds = 30;
     let timerInterval = null;
     let isTimerRunning = false;
     let selectedAwardPoints = 1;
 
-    // 7 Groups State
     const groups = [
       { id: 1, name: "Group 1 第1組", score: 0, icon: "🎃" },
       { id: 2, name: "Group 2 第2組", score: 0, icon: "👻" },
@@ -595,9 +570,6 @@
       { id: 7, name: "Group 7 第7組", score: 0, icon: "🧋" }
     ];
 
-    /********************************************************************
-     * 3. WEB AUDIO API SYNTHESIZER
-     ********************************************************************/
     let audioCtx = null;
     let bgmInterval = null;
     let isBgmPlaying = false;
@@ -627,8 +599,8 @@
         osc1.frequency.setValueAtTime(880, now + 0.09); 
         osc2.frequency.setValueAtTime(1174.66, now + 0.09); 
 
-        gain.gain.setValueAtTime(0.35, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.75);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
 
         osc1.connect(gain);
         osc2.connect(gain);
@@ -636,357 +608,276 @@
 
         osc1.start(now);
         osc2.start(now + 0.09);
-        osc1.stop(now + 0.75);
-        osc2.stop(now + 0.75);
-      } catch (e) {}
+        osc1.stop(now + 0.6);
+        osc2.stop(now + 0.6);
+      } catch (e) {
+        console.log(e);
+      }
     }
 
-    function playTickSFX(urgent = false) {
+    function playBuzzerSFX() {
       try {
         const ctx = getAudioCtx();
         const now = ctx.currentTime;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
 
-        osc.type = urgent ? 'square' : 'sine';
-        osc.frequency.setValueAtTime(urgent ? 920 : 600, now);
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(130, now);
+        osc.frequency.setValueAtTime(110, now + 0.15);
 
-        gain.gain.setValueAtTime(urgent ? 0.15 : 0.08, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
 
         osc.connect(gain);
         gain.connect(ctx.destination);
 
         osc.start(now);
-        osc.stop(now + 0.09);
-      } catch (e) {}
-    }
-
-    function playTimesUpSFX() {
-      try {
-        const ctx = getAudioCtx();
-        const now = ctx.currentTime;
-        const freqs = [330, 293.66, 261.63, 196]; 
-        freqs.forEach((f, idx) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(f, now + idx * 0.14);
-          gain.gain.setValueAtTime(0.22, now + idx * 0.14);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.14 + 0.25);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(now + idx * 0.14);
-          osc.stop(now + idx * 0.14 + 0.26);
-        });
-      } catch (e) {}
-    }
-
-    function playStrikeSFX() {
-      try {
-        const ctx = getAudioCtx();
-        const now = ctx.currentTime;
-        [110, 116.5].forEach(freq => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(freq, now);
-          gain.gain.setValueAtTime(0.28, now);
-          gain.gain.exponentialRampToValueAtTime(0.005, now + 0.65);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(now);
-          osc.stop(now + 0.66);
-        });
-      } catch (e) {}
-    }
-
-    function playPointSFX() {
-      try {
-        const ctx = getAudioCtx();
-        const now = ctx.currentTime;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(987.77, now); 
-        osc.frequency.setValueAtTime(1318.51, now + 0.07); 
-        gain.gain.setValueAtTime(0.25, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.36);
-      } catch (e) {}
+        osc.stop(now + 0.5);
+      } catch (e) {
+        console.log(e);
+      }
     }
 
     function playCheerSFX() {
       try {
         const ctx = getAudioCtx();
         const now = ctx.currentTime;
-        const notes = [523.25, 659.25, 783.99, 1046.50, 783.99, 1046.50];
-        const times = [0, 0.12, 0.24, 0.36, 0.52, 0.66];
-        notes.forEach((freq, i) => {
+        [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
           osc.type = 'triangle';
-          osc.frequency.setValueAtTime(freq, now + times[i]);
-          gain.gain.setValueAtTime(0.28, now + times[i]);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + times[i] + 0.28);
+          osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+          gain.gain.setValueAtTime(0.2, now + idx * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.5);
           osc.connect(gain);
           gain.connect(ctx.destination);
-          osc.start(now + times[i]);
-          osc.stop(now + times[i] + 0.3);
+          osc.start(now + idx * 0.08);
+          osc.stop(now + idx * 0.08 + 0.5);
         });
-      } catch (e) {}
-    }
-
-    function toggleBGM() {
-      const btn = document.getElementById('btn-bgm-mini');
-      if (isBgmPlaying) {
-        clearInterval(bgmInterval);
-        isBgmPlaying = false;
-        btn.classList.remove('bg-green-500', 'border-green-400');
-        btn.classList.add('bg-indigo-600', 'border-indigo-400');
-      } else {
-        getAudioCtx();
-        isBgmPlaying = true;
-        btn.classList.remove('bg-indigo-600', 'border-indigo-400');
-        btn.classList.add('bg-green-500', 'border-green-400');
-
-        let step = 0;
-        const melody = [220, 261.63, 329.63, 311.13, 220, 329.63, 293.66, 246.94];
-        bgmInterval = setInterval(() => {
-          if (!isBgmPlaying) return;
-          try {
-            const ctx = getAudioCtx();
-            const now = ctx.currentTime;
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(melody[step % melody.length], now);
-            gain.gain.setValueAtTime(0.05, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start(now);
-            osc.stop(now + 0.24);
-            step++;
-          } catch (e) {}
-        }, 280);
+      } catch (e) {
+        console.log(e);
       }
     }
 
-    /********************************************************************
-     * 4. UI RENDERING & SLIDE FLOW
-     ********************************************************************/
-    function initApp() {
-      renderScoreboard();
-      renderQuestion();
+    function toggleBGM() {
+      if (isBgmPlaying) {
+        stopBGM();
+      } else {
+        startBGM();
+      }
+    }
+
+    function startBGM() {
+      isBgmPlaying = true;
+      document.getElementById('btn-bgm-mini').classList.add('animate-spin');
+      let noteStep = 0;
+      const notes = [220, 261.63, 293.66, 311.13, 293.66, 261.63];
+
+      bgmInterval = setInterval(() => {
+        try {
+          const ctx = getAudioCtx();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(notes[noteStep % notes.length], ctx.currentTime);
+          gain.gain.setValueAtTime(0.05, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.35);
+          noteStep++;
+        } catch(e) {}
+      }, 400);
+    }
+
+    function stopBGM() {
+      isBgmPlaying = false;
+      document.getElementById('btn-bgm-mini').classList.remove('animate-spin');
+      if (bgmInterval) clearInterval(bgmInterval);
     }
 
     function switchScreen(screenName) {
       document.getElementById('screen-cover').classList.add('hidden');
       document.getElementById('screen-game').classList.add('hidden');
-      document.getElementById('screen-game').classList.remove('flex');
       document.getElementById('screen-podium').classList.add('hidden');
-      
-      const scoreboard = document.getElementById('scoreboard-footer');
-      const miniControls = document.getElementById('mini-controls');
 
       if (screenName === 'cover') {
-        pauseTimer();
         document.getElementById('screen-cover').classList.remove('hidden');
-        scoreboard.classList.add('hidden');
-        miniControls.classList.add('hidden');
+        document.getElementById('mini-controls').classList.add('hidden');
+        document.getElementById('scoreboard-footer').classList.add('hidden');
       } else if (screenName === 'game') {
         document.getElementById('screen-game').classList.remove('hidden');
-        document.getElementById('screen-game').classList.add('flex');
-        scoreboard.classList.remove('hidden');
-        miniControls.classList.remove('hidden');
-        renderQuestion();
+        document.getElementById('mini-controls').classList.remove('hidden');
+        document.getElementById('scoreboard-footer').classList.remove('hidden');
+        renderQuestionSlide();
       } else if (screenName === 'podium') {
-        pauseTimer();
         document.getElementById('screen-podium').classList.remove('hidden');
-        scoreboard.classList.remove('hidden');
-        miniControls.classList.remove('hidden');
+        document.getElementById('mini-controls').classList.remove('hidden');
+        document.getElementById('scoreboard-footer').classList.remove('hidden');
         renderPodium();
-        playCheerSFX();
       }
     }
 
     function startGame() {
-      playCheerSFX();
+      currentQuestionIndex = 0;
       switchScreen('game');
     }
 
-    function renderQuestion() {
+    // Helper: Fisher-Yates Shuffle algorithm
+    function shuffleArray(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function renderQuestionSlide() {
       const q = QUESTIONS[currentQuestionIndex];
-      
-      // Ensure Slide A (Question) is visible, Slide B (Answers) is hidden
-      switchBackToQuestion();
 
-      document.getElementById('q-badge').textContent = `QUESTION ${currentQuestionIndex + 1} OF ${QUESTIONS.length} • 第 ${currentQuestionIndex + 1} 題`;
-      document.getElementById('q-text-en').textContent = q.questionEn;
-      document.getElementById('q-text-zh').textContent = q.questionZh;
-      
-      // Randomize the order of options for display
-      const shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
-      
-      // Render A,B,C,D Options Grid
-      const letters = ['A', 'B', 'C', 'D'];
-      const hintContentHtml = shuffledOptions.map((opt, i) => `
-        <div class="bg-purple-900 border-2 border-amber-400/50 rounded-2xl p-4 flex items-center gap-4 shadow-lg transform transition hover:scale-105">
-          <div class="bg-amber-400 text-purple-950 font-extrabold text-2xl md:text-3xl w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center shrink-0 border-2 border-white shadow">
-            ${letters[i]}
-          </div>
-          <div class="text-xl md:text-2xl lg:text-3xl font-bold text-amber-100 leading-tight">
-            ${opt}
-          </div>
-        </div>
-      `).join('');
-      document.getElementById('hint-content').innerHTML = hintContentHtml;
+      document.getElementById('q-badge').innerText = `QUESTION ${currentQuestionIndex + 1} OF ${QUESTIONS.length}`;
+      document.getElementById('q-text-en').innerText = q.questionEn;
+      document.getElementById('q-text-zh').innerText = q.questionZh;
 
-      // Hide the giant "Reveal the Results" button initially
-      const btnReveal = document.getElementById('btn-goto-answers');
-      btnReveal.classList.add('hidden');
-      btnReveal.classList.remove('flex');
-      btnReveal.classList.remove('pulse-attention');
+      // Map options to their original answer indices
+      const optionObjects = q.options.map((optText, origIndex) => ({
+        text: optText,
+        answerIndex: origIndex
+      }));
 
-      // Reset timer
-      resetTimer();
+      // Shuffle options dynamically
+      const shuffled = shuffleArray(optionObjects);
 
-      // Render Answer Flip Cards for Slide B in advance
-      const grid = document.getElementById('answers-grid');
-      grid.innerHTML = q.answers.map((ans, aIdx) => {
-        const key = `${currentQuestionIndex}-${aIdx}`;
-        const isRevealed = !!revealedSlots[key];
-        return `
-          <div id="slot-${aIdx}" class="flip-card ${isRevealed ? 'revealed' : ''}" onclick="handleCardClick(${aIdx})">
-            <div class="flip-card-inner">
-              
-              <!-- FRONT: Locked Family Feud Numbered Slot -->
-              <div class="flip-card-front px-6">
-                <div class="flex items-center gap-4">
-                  <div class="w-14 h-14 rounded-full bg-purple-950 border-4 border-yellow-300 flex items-center justify-center shadow-inner">
-                    <span class="text-3xl font-extrabold text-yellow-300">${aIdx + 1}</span>
-                  </div>
-                  <div class="text-left">
-                    <div class="text-lg md:text-xl font-extrabold text-white drop-shadow">RANK #${aIdx + 1} 熱門答案</div>
-                    <div class="text-xs text-yellow-200 font-bold">Click to reveal 點擊翻開答案</div>
-                  </div>
-                </div>
-              </div>
+      // Assign letters A, B, C, D... to the shuffled list
+      currentShuffledOptions = shuffled.map((item, newIndex) => ({
+        ...item,
+        letter: LETTERS[newIndex] || (newIndex + 1)
+      }));
 
-              <!-- BACK: Revealed Answer + Points -->
-              <div class="flip-card-back">
-                <div class="flex items-center gap-3 pr-2 flex-1 min-w-0">
-                  <div class="text-3xl md:text-4xl shrink-0">${ans.icon || '🎃'}</div>
-                  <div class="text-left min-w-0">
-                    <div class="text-base sm:text-lg md:text-xl font-extrabold text-purple-950 leading-tight break-words">
-                      ${ans.en}
-                    </div>
-                    <div class="text-sm sm:text-base font-bold text-orange-800 leading-tight mt-0.5 break-words">
-                      ${ans.zh}
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Points Box -->
-                <div class="shrink-0 bg-purple-950 text-amber-300 border-2 border-amber-400 rounded-xl px-3 py-2 text-center shadow-md min-w-[74px]">
-                  <div class="text-2xl md:text-3xl font-extrabold leading-none">${ans.points}</div>
-                  <div class="text-[10px] font-bold text-amber-200 uppercase mt-0.5">POINT 分</div>
-                </div>
-              </div>
-            </div>
-          </div>
+      const hintBox = document.getElementById('hint-content');
+      hintBox.innerHTML = '';
+      currentShuffledOptions.forEach((optObj) => {
+        const div = document.createElement('div');
+        div.className = "bg-purple-900/80 border-2 border-purple-500 rounded-2xl p-3 flex items-center gap-3 text-white font-bold text-lg shadow-md hover:border-amber-400 transition";
+        div.innerHTML = `
+          <span class="w-9 h-9 rounded-full bg-amber-400 text-purple-950 font-extrabold flex items-center justify-center text-xl shadow shrink-0">
+            ${optObj.letter}
+          </span>
+          <span class="text-amber-100 text-base md:text-lg leading-snug">${optObj.text}</span>
         `;
-      }).join('');
-      
-      updateRevealAllButtonState();
+        hintBox.appendChild(div);
+      });
+
+      document.getElementById('slide-question').classList.remove('hidden');
+      document.getElementById('slide-answers').classList.add('hidden');
+
+      resetTimer();
+      document.getElementById('btn-goto-answers').classList.add('hidden');
     }
 
     function showAnswersSlide() {
       pauseTimer();
       document.getElementById('slide-question').classList.add('hidden');
-      document.getElementById('slide-question').classList.remove('flex');
       document.getElementById('slide-answers').classList.remove('hidden');
-      document.getElementById('slide-answers').classList.add('flex');
+      renderAnswersGrid();
     }
 
     function switchBackToQuestion() {
       document.getElementById('slide-answers').classList.add('hidden');
-      document.getElementById('slide-answers').classList.remove('flex');
       document.getElementById('slide-question').classList.remove('hidden');
-      document.getElementById('slide-question').classList.add('flex');
     }
 
-    function handleCardClick(ansIndex) {
+    function renderAnswersGrid() {
       const q = QUESTIONS[currentQuestionIndex];
-      const ans = q.answers[ansIndex];
-      const key = `${currentQuestionIndex}-${ansIndex}`;
+      const grid = document.getElementById('answers-grid');
+      grid.innerHTML = '';
 
+      q.answers.forEach((ans, idx) => {
+        const key = `${currentQuestionIndex}-${idx}`;
+        const isRevealed = !!revealedSlots[key];
+
+        // Find the option letter assigned to this answer during shuffle
+        const matchedOpt = currentShuffledOptions.find(item => item.answerIndex === idx);
+        const letter = matchedOpt ? matchedOpt.letter : (LETTERS[idx] || (idx + 1));
+
+        const card = document.createElement('div');
+        card.className = `flip-card w-full ${isRevealed ? 'revealed' : ''}`;
+        card.onclick = () => flipCardSlot(idx);
+
+        card.innerHTML = `
+          <div class="flip-card-inner">
+            <!-- FRONT (LOCKED SLOT) -->
+            <div class="flip-card-front">
+              <div class="w-16 h-16 rounded-full bg-amber-300 border-4 border-amber-500 flex items-center justify-center text-purple-950 font-extrabold text-3xl shadow-inner">
+                ${letter}
+              </div>
+            </div>
+
+            <!-- BACK (REVEALED ANSWER WITH MATCHING LETTER BADGE) -->
+            <div class="flip-card-back flex items-center justify-between">
+              <div class="flex items-center gap-3 overflow-hidden pr-2">
+                <span class="text-3xl md:text-4xl shrink-0">${ans.icon}</span>
+                <div class="flex flex-col text-left">
+                  <span class="font-extrabold text-base md:text-lg text-purple-950 leading-tight">${ans.en}</span>
+                  <span class="font-bold text-xs md:text-sm text-purple-900">${ans.zh}</span>
+                </div>
+              </div>
+
+              <div class="shrink-0 bg-purple-900 text-amber-300 border-2 border-purple-950 rounded-2xl px-3.5 py-1.5 flex flex-col items-center justify-center shadow">
+                <span class="text-xl md:text-2xl font-extrabold leading-none">${letter}</span>
+                <span class="text-[10px] font-bold text-amber-200">OPTION</span>
+              </div>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function flipCardSlot(ansIdx) {
+      const key = `${currentQuestionIndex}-${ansIdx}`;
       if (!revealedSlots[key]) {
         revealedSlots[key] = true;
-        const cardEl = document.getElementById(`slot-${ansIndex}`);
-        if (cardEl) cardEl.classList.add('revealed');
         playDingSFX();
-      } else {
-        playPointSFX();
+        renderAnswersGrid();
       }
-
-      setActiveAwardPoints(ans.points, `Rank #${ansIndex + 1} (${ans.points} pt)`);
-      updateRevealAllButtonState();
+      const ans = QUESTIONS[currentQuestionIndex].answers[ansIdx];
+      setSelectedPoints(ans.points || 1);
     }
 
     function revealAllResults() {
       const q = QUESTIONS[currentQuestionIndex];
-      let anyNew = false;
-      q.answers.forEach((ans, aIdx) => {
-        const key = `${currentQuestionIndex}-${aIdx}`;
+      let newlyRevealed = false;
+      q.answers.forEach((_, idx) => {
+        const key = `${currentQuestionIndex}-${idx}`;
         if (!revealedSlots[key]) {
           revealedSlots[key] = true;
-          anyNew = true;
-          setTimeout(() => {
-            const cardEl = document.getElementById(`slot-${aIdx}`);
-            if (cardEl) cardEl.classList.add('revealed');
-            playDingSFX();
-          }, aIdx * 220);
+          newlyRevealed = true;
         }
       });
+      if (newlyRevealed) playDingSFX();
+      renderAnswersGrid();
+    }
 
-      if (!anyNew) playDingSFX();
-      if (q.answers[0]) {
-        setActiveAwardPoints(q.answers[0].points, `Top Answer (${q.answers[0].points} pt)`);
+    function prevQuestion() {
+      if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        renderQuestionSlide();
       }
-      updateRevealAllButtonState();
     }
 
-    function hideAllResults() {
-      const q = QUESTIONS[currentQuestionIndex];
-      q.answers.forEach((_, aIdx) => {
-        delete revealedSlots[`${currentQuestionIndex}-${aIdx}`];
-        const cardEl = document.getElementById(`slot-${aIdx}`);
-        if (cardEl) cardEl.classList.remove('revealed');
-      });
-      updateRevealAllButtonState();
-    }
-
-    function updateRevealAllButtonState() {
-      const q = QUESTIONS[currentQuestionIndex];
-      const allRevealed = q.answers.every((_, idx) => revealedSlots[`${currentQuestionIndex}-${idx}`]);
-      const btn = document.getElementById('btn-reveal-all');
-      if (allRevealed) {
-        btn.innerHTML = `<i class="fa-solid fa-rotate-left"></i> Hide Cards`;
-        btn.onclick = hideAllResults;
+    function nextQuestion() {
+      if (currentQuestionIndex < QUESTIONS.length - 1) {
+        currentQuestionIndex++;
+        renderQuestionSlide();
       } else {
-        btn.innerHTML = `<i class="fa-solid fa-eye"></i> Flip All Cards`;
-        btn.onclick = revealAllResults;
+        switchScreen('podium');
       }
     }
 
-    /********************************************************************
-     * 5. 30-SECOND TIMER
-     ********************************************************************/
     function toggleTimer() {
       if (isTimerRunning) {
         pauseTimer();
@@ -996,30 +887,28 @@
     }
 
     function startTimer() {
-      if (timerSeconds <= 0) {
-        timerSeconds = 30;
-      }
+      if (isTimerRunning) return;
       isTimerRunning = true;
-      updateTimerUI();
 
+      document.getElementById('timer-btn-label').innerText = 'Pause 暫停';
       document.getElementById('timer-icon').className = 'fa-solid fa-pause';
-      document.getElementById('timer-btn-label').textContent = 'Pause 暫停';
-      document.getElementById('timer-status-banner').innerHTML = '⏳ Kids answering... 小朋友討論搶答中！';
-      document.getElementById('timer-status-banner').className = 'bg-emerald-900/90 border border-emerald-400 rounded-xl py-1.5 px-4 text-sm md:text-base font-bold text-emerald-200 w-full text-center';
+      document.getElementById('timer-status-banner').innerText = '⏱️ Counting down... 計時中！';
 
-      clearInterval(timerInterval);
       timerInterval = setInterval(() => {
         timerSeconds--;
-        updateTimerUI();
+        document.getElementById('timer-display').innerText = timerSeconds;
 
-        if (timerSeconds > 0 && timerSeconds <= 5) {
-          playTickSFX(true);
-        } else if (timerSeconds > 5) {
-          playTickSFX(false);
+        if (timerSeconds <= 5 && timerSeconds > 0) {
+          playBuzzerSFX();
         }
 
         if (timerSeconds <= 0) {
-          handleTimeUp();
+          pauseTimer();
+          document.getElementById('timer-display').innerText = '0';
+          document.getElementById('timer-status-banner').innerText = '⏰ TIME\'S UP! 時間到！';
+          playBuzzerSFX();
+          document.getElementById('btn-goto-answers').classList.remove('hidden');
+          document.getElementById('btn-goto-answers').classList.add('flex');
         }
       }, 1000);
     }
@@ -1027,249 +916,163 @@
     function pauseTimer() {
       isTimerRunning = false;
       clearInterval(timerInterval);
+      document.getElementById('timer-btn-label').innerText = 'Start 開始';
       document.getElementById('timer-icon').className = 'fa-solid fa-play';
-      document.getElementById('timer-btn-label').textContent = 'Start 開始';
     }
 
     function resetTimer() {
       pauseTimer();
       timerSeconds = 30;
-      updateTimerUI();
-      const banner = document.getElementById('timer-status-banner');
-      banner.innerHTML = 'Ready! 點擊開始計時 30 秒';
-      banner.className = 'bg-purple-900/80 border border-purple-500 rounded-xl py-1.5 px-4 text-sm md:text-base font-bold text-amber-200 w-full text-center';
-      
-      const btnReveal = document.getElementById('btn-goto-answers');
-      btnReveal.classList.add('hidden');
-      btnReveal.classList.remove('flex');
-      btnReveal.classList.remove('pulse-attention');
+      document.getElementById('timer-display').innerText = '30';
+      document.getElementById('timer-status-banner').innerText = 'Ready! 點擊開始計時 30 秒';
     }
 
-    function handleTimeUp() {
-      pauseTimer();
-      timerSeconds = 0;
-      updateTimerUI();
-      playTimesUpSFX();
-
-      const banner = document.getElementById('timer-status-banner');
-      banner.innerHTML = '⏰ TIME\'S UP! 時間到！請點選下方公佈答案';
-      banner.className = 'bg-red-700 border-2 border-yellow-300 rounded-xl py-1.5 px-4 text-sm md:text-base font-extrabold text-white animate-bounce w-full text-center';
-
-      // Pops up the Reveal Results button exactly when time is up
-      const btnReveal = document.getElementById('btn-goto-answers');
-      btnReveal.classList.remove('hidden');
-      btnReveal.classList.add('flex');
-      btnReveal.classList.add('pulse-attention');
-    }
-
-    function updateTimerUI() {
-      const display = document.getElementById('timer-display');
-      const circle = document.getElementById('timer-circle');
-
-      display.textContent = timerSeconds;
-      if (timerSeconds <= 5 && timerSeconds > 0) {
-        circle.className = 'w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-red-500 bg-red-950 flex flex-col items-center justify-center shadow-[0_0_25px_#ef4444] animate-pulse';
-        display.className = 'text-4xl md:text-5xl font-extrabold text-red-300 leading-none mt-1';
-      } else if (timerSeconds === 0) {
-        circle.className = 'w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-red-500 bg-red-900 flex flex-col items-center justify-center shadow-[0_0_30px_#ef4444]';
-        display.className = 'text-4xl md:text-5xl font-extrabold text-white leading-none mt-1';
-      } else {
-        circle.className = 'w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-amber-400 bg-purple-900 flex flex-col items-center justify-center shadow-[0_0_20px_rgba(251,191,36,0.4)] transition-colors';
-        display.className = 'text-4xl md:text-5xl font-extrabold text-yellow-300 leading-none mt-1';
-      }
-    }
-
-    /********************************************************************
-     * 6. NAVIGATION, TTS & STRIKE OVERLAY
-     ********************************************************************/
-    function prevQuestion() {
-      if (currentQuestionIndex > 0) {
-        currentQuestionIndex--;
-        renderQuestion();
-      }
-    }
-
-    function nextQuestion() {
-      if (currentQuestionIndex < QUESTIONS.length - 1) {
-        currentQuestionIndex++;
-        renderQuestion();
-      } else {
-        switchScreen('podium');
-      }
-    }
-
-    function speakCurrentQuestion() {
-      if (!('speechSynthesis' in window)) return;
-      window.speechSynthesis.cancel();
-      const q = QUESTIONS[currentQuestionIndex];
-      const utter = new SpeechSynthesisUtterance(q.questionEn);
-      utter.lang = 'en-US';
-      utter.rate = 0.92;
-      utter.pitch = 1.08;
-      window.speechSynthesis.speak(utter);
-    }
-
-    function triggerStrike() {
-      playStrikeSFX();
-      const overlay = document.getElementById('strike-overlay');
-      overlay.classList.remove('hidden');
-      overlay.classList.add('flex');
-      setTimeout(() => {
-        hideStrikeOverlay();
-      }, 1700);
-    }
-
-    function hideStrikeOverlay() {
-      const overlay = document.getElementById('strike-overlay');
-      overlay.classList.add('hidden');
-      overlay.classList.remove('flex');
-    }
-
-    /********************************************************************
-     * 7. GROUPS 1 - 7 SCOREBOARD LOGIC
-     ********************************************************************/
-    function setActiveAwardPoints(pts, labelText) {
+    function setSelectedPoints(pts) {
       selectedAwardPoints = pts;
-      const badge = document.getElementById('selected-points-badge');
-      badge.textContent = `Active Award: +${pts} pt (${labelText})`;
-      const prompt = document.getElementById('award-prompt-text');
-      if (prompt) {
-        prompt.textContent = `Selected +${pts} pt! Click a Group (1-7) below to award points! 點擊下方組別即可加上 +${pts} 分！`;
+      document.getElementById('selected-points-badge').innerText = `Active Award: +${pts} pt! (Click a Group below to award)`;
+    }
+
+    function awardPointsToGroup(groupId) {
+      const g = groups.find(item => item.id === groupId);
+      if (g) {
+        g.score += selectedAwardPoints;
+        playCheerSFX();
+        renderScoreboard();
+      }
+    }
+
+    function adjustScore(groupId, delta) {
+      const g = groups.find(item => item.id === groupId);
+      if (g) {
+        g.score = Math.max(0, g.score + delta);
+        renderScoreboard();
+      }
+    }
+
+    function resetAllScores() {
+      if (confirm('Are you sure you want to reset all scores to 0?')) {
+        groups.forEach(g => g.score = 0);
+        renderScoreboard();
       }
     }
 
     function renderScoreboard() {
-      const container = document.getElementById('scoreboard-grid');
-      container.innerHTML = groups.map((g, idx) => `
-        <div class="bg-gradient-to-b from-purple-900 to-purple-950 border-2 border-amber-400/80 rounded-2xl p-2 flex flex-col justify-between shadow-md hover:border-yellow-300 transition">
-          <div class="flex items-center justify-between gap-1 mb-1">
-            <span class="text-xs md:text-sm font-extrabold text-amber-200 truncate">
-              ${g.icon} Group ${g.id} <span class="text-amber-400">第${g.id}組</span>
-            </span>
+      const grid = document.getElementById('scoreboard-grid');
+      grid.innerHTML = '';
+
+      groups.forEach(g => {
+        const div = document.createElement('div');
+        div.className = "bg-purple-900/90 border-2 border-purple-500 hover:border-amber-400 rounded-2xl p-2 flex flex-col items-center justify-between text-center shadow transition";
+        div.innerHTML = `
+          <div class="flex items-center gap-1 cursor-pointer w-full justify-center" onclick="awardPointsToGroup(${g.id})">
+            <span class="text-lg">${g.icon}</span>
+            <span class="font-extrabold text-xs md:text-sm text-amber-200 truncate">${g.name}</span>
           </div>
-          <div class="flex items-center justify-between gap-1.5 my-0.5">
-            <div id="group-score-${idx}" class="text-2xl md:text-3xl font-extrabold text-white bg-purple-950/90 border border-purple-600 rounded-xl px-2.5 py-0.5 min-w-[60px] text-center shadow-inner">
-              ${g.score}
-            </div>
-            <button onclick="adjustScore(${idx}, selectedAwardPoints)" class="flex-1 btn-game bg-gradient-to-b from-amber-400 to-orange-500 hover:from-yellow-300 hover:to-orange-400 border-orange-700 text-purple-950 font-extrabold text-xs md:text-sm py-1.5 px-2 rounded-xl shadow flex items-center justify-center gap-1" title="Add active survey answer points">
-              <i class="fa-solid fa-plus"></i>
-              <span>Award 加分</span>
+
+          <div class="my-1 cursor-pointer" onclick="awardPointsToGroup(${g.id})" title="Click to add active points">
+            <span class="text-2xl md:text-3xl font-extrabold text-yellow-300 drop-shadow">${g.score}</span>
+            <span class="text-[10px] text-amber-200 block -mt-1">PTS</span>
+          </div>
+
+          <div class="flex items-center gap-1 w-full justify-center">
+            <button onclick="adjustScore(${g.id}, -1)" class="w-6 h-6 rounded-lg bg-purple-950 border border-purple-600 text-purple-300 hover:text-white font-bold flex items-center justify-center text-xs">-</button>
+            <button onclick="awardPointsToGroup(${g.id})" class="flex-1 bg-amber-400 hover:bg-amber-300 text-purple-950 font-extrabold text-xs py-0.5 rounded-lg shadow">
+              +${selectedAwardPoints}
             </button>
+            <button onclick="adjustScore(${g.id}, 1)" class="w-6 h-6 rounded-lg bg-purple-950 border border-purple-600 text-purple-300 hover:text-white font-bold flex items-center justify-center text-xs">+</button>
           </div>
-          <div class="flex items-center justify-between gap-1 mt-1">
-            <button onclick="adjustScore(${idx}, -1)" class="flex-1 bg-purple-800 hover:bg-red-700 text-purple-200 hover:text-white text-[11px] font-bold py-0.5 rounded-lg border border-purple-600 transition">-1</button>
-            <button onclick="adjustScore(${idx}, 1)" class="flex-1 bg-purple-800 hover:bg-emerald-600 text-purple-200 hover:text-white text-[11px] font-bold py-0.5 rounded-lg border border-purple-600 transition">+1</button>
-          </div>
-        </div>
-      `).join('');
+        `;
+        grid.appendChild(div);
+      });
     }
 
-    function adjustScore(groupIdx, delta) {
-      groups[groupIdx].score = Math.max(0, groups[groupIdx].score + delta);
-      playPointSFX();
-      renderScoreboard();
-      const scoreEl = document.getElementById(`group-score-${groupIdx}`);
-      if (scoreEl) {
-        scoreEl.classList.add('scale-125', 'text-yellow-300');
-        setTimeout(() => {
-          scoreEl.classList.remove('scale-125', 'text-yellow-300');
-        }, 250);
+    function triggerStrike() {
+      playBuzzerSFX();
+      document.getElementById('strike-overlay').classList.remove('hidden');
+      document.getElementById('strike-overlay').classList.add('flex');
+    }
+
+    function hideStrikeOverlay() {
+      document.getElementById('strike-overlay').classList.add('hidden');
+      document.getElementById('strike-overlay').classList.remove('flex');
+    }
+
+    function speakCurrentQuestion() {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const q = QUESTIONS[currentQuestionIndex];
+        const utterance = new SpeechSynthesisUtterance(q.questionEn);
+        utterance.lang = 'en-US';
+        utterance.rate = 0.9;
+        window.speechSynthesis.speak(utterance);
       }
-      if (!document.getElementById('screen-podium').classList.contains('hidden')) renderPodium();
-    }
-
-    function resetAllScores() {
-      groups.forEach(g => g.score = 0);
-      renderScoreboard();
-      if (!document.getElementById('screen-podium').classList.contains('hidden')) renderPodium();
     }
 
     function renderPodium() {
       const sorted = [...groups].sort((a, b) => b.score - a.score);
       const container = document.getElementById('podium-rankings');
-      const medals = ['🥇 1st Place 冠軍', '🥈 2nd Place 亞軍', '🥉 3rd Place 季軍'];
-      container.innerHTML = sorted.map((g, i) => {
-        const isTop3 = i < 3;
-        return `
-          <div class="${isTop3 ? 'bg-gradient-to-br from-amber-400/25 to-purple-900 border-2 border-amber-300' : 'bg-purple-950/80 border border-purple-600'} rounded-2xl p-4 flex items-center justify-between shadow-lg">
-            <div class="flex items-center gap-3">
-              <div class="text-3xl">${g.icon}</div>
-              <div>
-                <div class="text-xs font-extrabold ${isTop3 ? 'text-yellow-300' : 'text-purple-300'}">
-                  ${medals[i] || `Rank #${i + 1}`}
-                </div>
-                <div class="text-lg md:text-xl font-extrabold text-white">Group ${g.id} (第${g.id}組)</div>
-              </div>
-            </div>
-            <div class="text-2xl md:text-3xl font-extrabold text-amber-300 bg-purple-950 px-4 py-1.5 rounded-xl border border-amber-400/50">
-              ${g.score} <span class="text-xs">pts</span>
+      container.innerHTML = '';
+
+      sorted.forEach((g, idx) => {
+        let medal = '🏅';
+        if (idx === 0) medal = '🥇';
+        if (idx === 1) medal = '🥈';
+        if (idx === 2) medal = '🥉';
+
+        const card = document.createElement('div');
+        card.className = "bg-purple-900/80 border-2 border-amber-400/60 rounded-2xl p-4 flex items-center justify-between shadow-lg";
+        card.innerHTML = `
+          <div class="flex items-center gap-3">
+            <span class="text-3xl">${medal}</span>
+            <div>
+              <div class="font-extrabold text-lg text-amber-200">${g.name}</div>
+              <div class="text-xs text-purple-300">Rank #${idx + 1}</div>
             </div>
           </div>
+          <div class="text-right">
+            <span class="text-3xl font-extrabold text-yellow-300 drop-shadow">${g.score}</span>
+            <span class="text-xs text-amber-200 block">PTS</span>
+          </div>
         `;
-      }).join('');
+        container.appendChild(card);
+      });
     }
 
-    /********************************************************************
-     * 8. FILE UPLOAD HANDLERS (for dynamically updating during runtime)
-     ********************************************************************/
-    function handleCoverUpload(event) {
-      const file = event.target.files && event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        document.getElementById('cover-photo-img').src = e.target.result;
-      };
-      reader.readAsDataURL(file);
+    function handleCoverUpload(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          document.getElementById('cover-photo-img').src = evt.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
     }
 
-    function handleBgUpload(event) {
-      const file = event.target.files && event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        document.getElementById('app-bg').style.backgroundImage = `url('${e.target.result}')`;
-      };
-      reader.readAsDataURL(file);
+    function handleBgUpload(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          document.getElementById('app-bg').style.backgroundImage = `url('${evt.target.result}')`;
+        };
+        reader.readAsDataURL(file);
+      }
     }
 
-    /********************************************************************
-     * 9. KEYBOARD SHORTCUTS
-     ********************************************************************/
-    window.addEventListener('keydown', (e) => {
-      if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-      const gameVisible = !document.getElementById('screen-game').classList.contains('hidden');
-      if (!gameVisible) return;
-
-      if (e.code === 'Space') {
-        e.preventDefault();
-        toggleTimer();
-      } else if (e.key === 'r' || e.key === 'R') {
-        e.preventDefault();
-        if(!document.getElementById('slide-question').classList.contains('hidden')){
-           showAnswersSlide();
-        } else {
-           revealAllResults();
-        }
-      } else if (e.key === 'x' || e.key === 'X') {
-        e.preventDefault();
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'x' || e.key === 'X') {
         triggerStrike();
-      } else if (e.code === 'ArrowRight') {
-        e.preventDefault();
-        nextQuestion();
-      } else if (e.code === 'ArrowLeft') {
-        e.preventDefault();
-        prevQuestion();
-      } else if (['1', '2', '3', '4'].includes(e.key)) {
-        if(!document.getElementById('slide-answers').classList.contains('hidden')){
-          const idx = parseInt(e.key, 10) - 1;
-          const q = QUESTIONS[currentQuestionIndex];
-          if (q && q.answers[idx]) handleCardClick(idx);
+      }
+      if (e.key === 'r' || e.key === 'R') {
+        if (!document.getElementById('slide-answers').classList.contains('hidden')) {
+          revealAllResults();
         }
       }
     });
 
-    window.onload = initApp;
+    // Initialize
+    renderScoreboard();
   </script>
 </body>
 </html>
-```<FollowUp label="Would you like to change any of the Halloween game questions to another holiday?" query="Yes, let's create a new set of questions around Christmas instead of Halloween."/>
