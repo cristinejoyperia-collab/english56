@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grade 4 Time Adventure!</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Comic Sans MS', 'Bubblegum Sans', 'Chalkboard SE', 'Poppins', sans-serif;
+            user-select: none;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #2b1055;
+        }
+
+        /* Screen Management */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-size: cover;
+            background-position: center;
+            transition: opacity 0.5s ease;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* --- COVER SCREEN --- */
+        #cover-screen {
+            /* Replace 'cover-background.jpg' with your uploaded cover image file name */
+            background-image: url('cover-background.jpg');
+            background-color: #4a0e4e;
+            justify-content: flex-end;
+            padding-bottom: 10vh;
+        }
+
+        .start-btn {
+            background: linear-gradient(135deg, #ff9800, #f44336);
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+            padding: 1.2rem 3.5rem;
+            border: 4px solid #fff;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            transition: transform 0.2s, background 0.2s;
+            animation: pulse 1.5s infinite;
+        }
+
+        .start-btn:hover {
+            transform: scale(1.08);
+            background: linear-gradient(135deg, #ffa726, #e53935);
+        }
+
+        .start-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* --- LESSON / GAME SCREEN --- */
+        #lesson-screen {
+            /* Replace 'lesson-background.jpg' with your uploaded background image file name */
+            background-image: linear-gradient(rgba(255,255,255,0.85), rgba(255,255,255,0.85)), url('lesson-background.jpg');
+            background-color: #e3f2fd;
+            justify-content: space-between;
+            padding: 1vh 2vw;
+        }
+
+        .top-bar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 50;
+        }
+
+        .lesson-title {
+            font-size: 1.8rem;
+            color: #1976d2;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .control-pill {
+            background: #ffffff;
+            border: 3px solid #1976d2;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #1976d2;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: 0.2s;
+        }
+
+        .control-pill:hover {
+            background: #e3f2fd;
+            transform: scale(1.05);
+        }
+
+        /* Full Screen Clock Stage */
+        .stage-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+            width: 100%;
+            position: relative;
+        }
+
+        /* Large Vector Clock Occupying Most of Screen */
+        .clock-wrapper {
+            position: relative;
+            width: min(72vh, 72vw);
+            height: min(72vh, 72vw);
+            background: radial-gradient(circle, #ffffff 60%, #f0f4c3 100%);
+            border: min(1.2vh, 1.2vw) solid #ff7043;
+            border-radius: 50%;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.25), inset 0 0 25px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Clock Tick Marks */
+        .tick {
+            position: absolute;
+            background-color: #555;
+            top: 50%;
+            left: 50%;
+            transform-origin: 0 0;
+        }
+
+        .tick.hour-tick {
+            width: 4px;
+            height: 16px;
+            background-color: #333;
+            margin-left: -2px;
+        }
+
+        .tick.minute-tick {
+            width: 2px;
+            height: 8px;
+            background-color: #888;
+            margin-left: -1px;
+        }
+
+        /* Colorful Upright Clock Numbers */
+        .number {
+            position: absolute;
+            font-size: calc(1.8vh + 1vw);
+            font-weight: 900;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .number:hover {
+            transform: scale(1.25);
+        }
+
+        /* Responsive positioning relative to clock wrapper radius */
+        .num-12 { color: #e91e63; top: 4%; left: calc(50% - 20px); }
+        .num-1  { color: #9c27b0; top: 10%; right: 26%; }
+        .num-2  { color: #673ab7; top: 25%; right: 11%; }
+        .num-3  { color: #3f51b5; top: calc(50% - 20px); right: 4%; }
+        .num-4  { color: #2196f3; bottom: 25%; right: 11%; }
+        .num-5  { color: #00bcd4; bottom: 10%; right: 26%; }
+        .num-6  { color: #009688; bottom: 4% ; left: calc(50% - 20px); }
+        .num-7  { color: #4caf50; bottom: 10%; left: 26%; }
+        .num-8  { color: #8bc34a; bottom: 25%; left: 11%; }
+        .num-9  { color: #e65100; top: calc(50% - 20px); left: 4%; }
+        .num-10 { color: #ff9800; top: 25%; left: 11%; }
+        .num-11 { color: #ff5722; top: 10%; left: 26%; }
+
+        /* Clock Center Pin */
+        .center-pin {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #333;
+            border: 3px solid #ff7043;
+            border-radius: 50%;
+            z-index: 20;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+            top: calc(50% - 10px);
+            left: calc(50% - 10px);
+        }
+
+        /* Draggable Clock Hands */
+        .hand {
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            transform-origin: bottom center;
+            cursor: grab;
+            z-index: 10;
+        }
+
+        .hand:active {
+            cursor: grabbing;
+        }
+
+        /* Red Hour Hand */
+        #hour-hand {
+            width: 8px;
+            height: 32%;
+            background: linear-gradient(to top, #d32f2f, #f44336);
+            margin-left: -4px;
+            border-radius: 6px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+            z-index: 12;
+            transform: rotate(0deg);
+        }
+
+        /* Black Minute Hand */
+        #minute-hand {
+            width: 5px;
+            height: 42%;
+            background: linear-gradient(to top, #212121, #424242);
+            margin-left: -2.5px;
+            border-radius: 4px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+            z-index: 15;
+            transform: rotate(0deg);
+        }
+
+        .hand::after {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: inherit;
+        }
+
+        /* Celebration Animation Container Overlay in Center */
+        .celebration-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            z-index: 100;
+            pointer-events: none;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .celebration-overlay.active {
+            transform: translate(-50%, -50%) scale(1);
+            pointer-events: auto;
+        }
+
+        .celebration-overlay img {
+            width: min(300px, 40vw);
+            height: auto;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
+        }
+
+        /* Control Panel */
+        .action-panel {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 25px;
+            border-radius: 30px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+            margin-bottom: 1vh;
+            z-index: 50;
+        }
+
+        .reveal-btn {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 10px 20px;
+            border: 3px solid #fff;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .reveal-btn:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #e53935, #c62828);
+        }
+
+        .next-btn {
+            background: linear-gradient(135deg, #4caf50, #388e3c);
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 10px 20px;
+            border: 3px solid #fff;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .next-btn:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #66bb6a, #2e7d32);
+        }
+
+        .digital-answer {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2e7d32;
+            display: none;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .digital-answer.show {
+            display: inline-block;
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- COVER SCREEN -->
+    <div id="cover-screen" class="screen active">
+        <button class="start-btn" id="start-btn">Start Discussion</button>
+    </div>
+
+    <!-- MAIN LESSON SCREEN -->
+    <div id="lesson-screen" class="screen">
+        <div class="top-bar">
+            <h2 class="lesson-title">⏰ Tell the Time</h2>
+            <button class="control-pill" id="bgm-toggle">🎵 Music: OFF</button>
+        </div>
+
+        <div class="stage-container">
+            <!-- Full Screen Clock -->
+            <div class="clock-wrapper" id="clock-wrapper">
+                <div class="number num-12">12</div>
+                <div class="number num-1">1</div>
+                <div class="number num-2">2</div>
+                <div class="number num-3">3</div>
+                <div class="number num-4">4</div>
+                <div class="number num-5">5</div>
+                <div class="number num-6">6</div>
+                <div class="number num-7">7</div>
+                <div class="number num-8">8</div>
+                <div class="number num-9">9</div>
+                <div class="number num-10">10</div>
+                <div class="number num-11">11</div>
+
+                <div class="hand" id="hour-hand"></div>
+                <div class="hand" id="minute-hand"></div>
+                <div class="center-pin"></div>
+            </div>
+
+            <!-- Celebration GIF Overlay in Center -->
+            <div class="celebration-overlay" id="celebration-overlay">
+                <!-- Replace 'celebration.gif' with your uploaded animated gif file name -->
+                <img src="celebration.gif" alt="Celebration Animation">
+            </div>
+        </div>
+
+        <!-- Teacher Action Panel -->
+        <div class="action-panel">
+            <button class="reveal-btn" id="reveal-btn">Check Answer</button>
+            <button class="next-btn" id="next-btn">Next Practice ➡️</button>
+            <div class="digital-answer" id="digital-answer">12:00</div>
+        </div>
+    </div>
+
+    <script>
+        // --- WEB AUDIO API SOUND GENERATOR ---
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playClickSound(freq = 587.33) {
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(freq * 1.5, audioCtx.currentTime + 0.15);
+                
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+            } catch (e) {}
+        }
+
+        // --- BACKGROUND MUSIC SYNTHESIZER ---
+        let bgmInterval = null;
+        let isBgmPlaying = false;
+
+        function toggleBgm() {
+            initAudio();
+            const btn = document.getElementById('bgm-toggle');
+            if (isBgmPlaying) {
+                clearInterval(bgmInterval);
+                isBgmPlaying = false;
+                btn.textContent = "🎵 Music: OFF";
+                btn.style.borderColor = "#1976d2";
+                btn.style.color = "#1976d2";
+            } else {
+                isBgmPlaying = true;
+                btn.textContent = "🎵 Music: ON";
+                btn.style.borderColor = "#e91e63";
+                btn.style.color = "#e91e63";
+                
+                const melody = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63, 440.00, 349.23];
+                let noteIndex = 0;
+                
+                bgmInterval = setInterval(() => {
+                    if (!isBgmPlaying) return;
+                    try {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(melody[noteIndex], audioCtx.currentTime);
+                        
+                        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.4);
+                        
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        
+                        osc.start();
+                        osc.stop(audioCtx.currentTime + 0.4);
+                        
+                        noteIndex = (noteIndex + 1) % melody.length;
+                    } catch (e) {}
+                }, 300);
+            }
+        }
+
+        // --- NAVIGATION ---
+        const startBtn = document.getElementById('start-btn');
+        const coverScreen = document.getElementById('cover-screen');
+        const lessonScreen = document.getElementById('lesson-screen');
+        const bgmToggle = document.getElementById('bgm-toggle');
+
+        startBtn.addEventListener('click', () => {
+            playClickSound(880);
+            coverScreen.classList.remove('active');
+            lessonScreen.classList.add('active');
+            if (!isBgmPlaying) toggleBgm();
+        });
+
+        bgmToggle.addEventListener('click', () => {
+            playClickSound(659.25);
+            toggleBgm();
+        });
+
+        // --- TICK MARKS GENERATION ---
+        const clockWrapper = document.getElementById('clock-wrapper');
+        
+        for (let i = 0; i < 60; i++) {
+            const tick = document.createElement('div');
+            const isHourTick = i % 5 === 0;
+            tick.className = isHourTick ? 'tick hour-tick' : 'tick minute-tick';
+            const angle = i * 6;
+            const radius = window.innerHeight * 0.32;
+            const x = radius * Math.sin((angle * Math.PI) / 180);
+            const y = -radius * Math.cos((angle * Math.PI) / 180);
+            
+            tick.style.transform = `translate(${x}px, ${y}px) rotate(${angle}deg)`;
+            clockWrapper.appendChild(tick);
+        }
+
+        // --- INTERACTIVE NUMBER CLICKS ---
+        const numbers = document.querySelectorAll('.number');
+        numbers.forEach((num, index) => {
+            const pitches = [523.25, 277.18, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25, 587.33, 659.25, 698.46];
+            num.addEventListener('click', () => {
+                playClickSound(pitches[index % pitches.length]);
+                const val = parseInt(num.textContent);
+                minuteAngle = (val % 12) * 30;
+                hourAngle = (val % 12) * 30;
+                updateClockDisplay();
+                hideAnswerAndCelebration();
+            });
+        });
+
+        // --- DRAGGABLE CLOCK HANDS ---
+        const hourHand = document.getElementById('hour-hand');
+        const minuteHand = document.getElementById('minute-hand');
+        const digitalAnswer = document.getElementById('digital-answer');
+        const revealBtn = document.getElementById('reveal-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const celebrationOverlay = document.getElementById('celebration-overlay');
+
+        let hourAngle = 0;
+        let minuteAngle = 0;
+        let activeHand = null;
+
+        function getAngleFromEvent(e, center) {
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const radians = Math.atan2(clientY - center.y, clientX - center.x);
+            let degrees = (radians * 180) / Math.PI + 90;
+            if (degrees < 0) degrees += 360;
+            return degrees;
+        }
+
+        function startDragging(handType, e) {
+            e.preventDefault();
+            activeHand = handType;
+            initAudio();
+            hideAnswerAndCelebration();
+        }
+
+        hourHand.addEventListener('mousedown', (e) => startDragging('hour', e));
+        hourHand.addEventListener('touchstart', (e) => startDragging('hour', e));
+
+        minuteHand.addEventListener('mousedown', (e) => startDragging('minute', e));
+        minuteHand.addEventListener('touchstart', (e) => startDragging('minute', e));
+
+        window.addEventListener('mousemove', (e) => handleDrag(e));
+        window.addEventListener('touchmove', (e) => handleDrag(e));
+
+        window.addEventListener('mouseup', stopDragging);
+        window.addEventListener('touchend', stopDragging);
+
+        function handleDrag(e) {
+            if (!activeHand) return;
+            const rect = clockWrapper.getBoundingClientRect();
+            const center = {
+                x: rect.left + rect.width / 2,
+                y: rect.top + rect.height / 2
+            };
+
+            const angle = getAngleFromEvent(e, center);
+
+            if (activeHand === 'minute') {
+                minuteAngle = Math.round(angle / 6) * 6;
+            } else if (activeHand === 'hour') {
+                hourAngle = angle;
+            }
+
+            updateClockDisplay();
+        }
+
+        function stopDragging() {
+            if (activeHand) playClickSound(440);
+            activeHand = null;
+        }
+
+        function hideAnswerAndCelebration() {
+            digitalAnswer.classList.remove('show');
+            celebrationOverlay.classList.remove('active');
+            revealBtn.textContent = "Check Answer";
+        }
+
+        revealBtn.addEventListener('click', () => {
+            playClickSound(783.99);
+            digitalAnswer.classList.add('show');
+            celebrationOverlay.classList.add('active'); // GIF jumps in!
+            revealBtn.textContent = "Answer Revealed!";
+        });
+
+        // Next Practice: Randomize clock hands and hide celebration GIF for the new practice round
+        nextBtn.addEventListener('click', () => {
+            playClickSound(1046.50);
+            const randomHour = Math.floor(Math.random() * 12);
+            const randomMinute = Math.floor(Math.random() * 12) * 5;
+            
+            hourAngle = randomHour * 30 + (randomMinute * 0.5);
+            minuteAngle = randomMinute * 6;
+            
+            updateClockDisplay();
+            hideAnswerAndCelebration(); // GIF disappears here
+        });
+
+        function updateClockDisplay() {
+            minuteAngle = (minuteAngle + 360) % 360;
+            hourAngle = (hourAngle + 360) % 360;
+
+            minuteHand.style.transform = `rotate(${minuteAngle}deg)`;
+            hourHand.style.transform = `rotate(${hourAngle}deg)`;
+
+            let minute = Math.round(minuteAngle / 6) % 60;
+            if (minute === 60) minute = 0;
+
+            let hourDecimal = hourAngle / 30;
+            let hour = Math.floor(hourDecimal) % 12;
+            if (hour === 0) hour = 12;
+
+            digitalAnswer.textContent = `${hour}:${String(minute).padStart(2, '0')}`;
+        }
+
+        updateClockDisplay();
+    </script>
+</body>
+</html>
