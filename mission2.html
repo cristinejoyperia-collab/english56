@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thanksgiving Spelling Game</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * {
+      font-family: 'Comic Sans MS', 'Comic Sans', 'Chalkboard SE', 'Comic Neue', cursive, sans-serif !important;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* Fullscreen Game Viewport */
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    /* Fallback and background container styles */
+    .game-bg {
+      background-image: url('game_background.jpg'), linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #feada6 100%);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* Flash Wrong X Overlay */
+    @keyframes flashX {
+      0% { opacity: 0; transform: scale(0.5); }
+      50% { opacity: 1; transform: scale(1.3); }
+      100% { opacity: 0; transform: scale(1); }
+    }
+
+    .x-overlay-active {
+      animation: flashX 0.6s ease-out forwards;
+    }
+
+    /* Pulse Timer */
+    @keyframes pulseTimer {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); color: #ef4444; }
+    }
+
+    .timer-warning {
+      animation: pulseTimer 0.8s infinite;
+    }
+
+    /* Glassmorphism card utility */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 4px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Start button pulse animation */
+    @keyframes pulseBtn {
+      0%, 100% { transform: scale(1); box-shadow: 0 10px 25px rgba(234, 88, 12, 0.5); }
+      50% { transform: scale(1.05); box-shadow: 0 15px 35px rgba(234, 88, 12, 0.8); }
+    }
+
+    .btn-pulse {
+      animation: pulseBtn 2s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-amber-950 w-screen h-screen overflow-hidden">
+
+  <!-- Main Container Frame (Full Viewport Maximize) -->
+  <div id="game-frame" class="game-bg relative w-vw h-vh flex flex-col justify-between overflow-hidden">
+    
+    <!-- Audio Toggle & Controls Overlay (Top Right Corner) -->
+    <div class="absolute top-4 right-4 z-50 flex gap-2">
+      <button id="music-btn" onclick="toggleMusic()" class="bg-amber-500 hover:bg-amber-600 text-white font-black py-2.5 px-5 rounded-full shadow-2xl border-2 border-white flex items-center gap-2 text-base sm:text-lg transition active:scale-95">
+        <span id="music-icon">🎵</span> <span id="music-text">Music: ON</span>
+      </button>
+    </div>
+
+    <!-- Red "X" Flash Overlay for Incorrect Guess -->
+    <div id="wrong-x-overlay" class="pointer-events-none absolute inset-0 z-40 flex items-center justify-center hidden">
+      <div class="text-red-600 font-extrabold text-[12rem] sm:text-[16rem] drop-shadow-[0_15px_25px_rgba(0,0,0,0.9)] filter">
+        ✖
+      </div>
+    </div>
+
+    <!-- ==================== SCREEN 1: COVER / TITLE SCREEN ==================== -->
+    <div id="screen-cover" class="relative w-full h-full flex flex-col justify-end items-center p-6 sm:p-12 z-10 overflow-hidden">
+      <!-- Fullscreen cover image backdrop display -->
+      <img id="cover-image" src="cover_image.jpg" alt="Thanksgiving Cover" 
+           onerror="this.onerror=null; this.src=getSvgFallback('Thanksgiving Game', '🍁🦃🌽');"
+           class="absolute inset-0 w-full h-full object-cover z-0" />
+
+      <!-- Start Game Button Positioned at Bottom -->
+      <div class="mb-6 sm:mb-10 w-full flex justify-center z-10">
+        <button onclick="startGame()" class="btn-pulse w-11/12 max-w-xl bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-white text-3xl sm:text-5xl font-black py-5 px-10 rounded-full border-4 border-white transform hover:scale-105 active:scale-95 transition-all duration-200 shadow-2xl">
+          🎮 START GAME 🍁
+        </button>
+      </div>
+    </div>
+
+
+    <!-- ==================== SCREEN 2: 5-SECOND PREVIEW SCREEN (MAXIMIZED PICTURE) ==================== -->
+    <div id="screen-preview" class="w-full h-full flex flex-col justify-between items-center p-4 sm:p-8 z-10 hidden">
+      <!-- Preview Header Banner -->
+      <div class="text-center mt-2">
+        <span class="bg-orange-500 text-white text-xl sm:text-3xl font-black px-8 py-3 rounded-full border-4 border-white shadow-xl inline-block">
+          Memorize the Word Image! 🧠
+        </span>
+      </div>
+
+      <!-- Super Sized Target Picture Display -->
+      <div class="my-auto w-full max-w-4xl h-[55vh] sm:h-[62vh] glass-card rounded-3xl p-4 sm:p-6 flex flex-col items-center justify-center relative shadow-2xl">
+        <img id="preview-image" src="" alt="Vocabulary Picture" 
+             class="w-full h-full object-contain rounded-2xl drop-shadow-md" />
+      </div>
+
+      <!-- Countdown Bar & Timer -->
+      <div class="w-full max-w-xl mb-4 sm:mb-8 flex flex-col items-center gap-2">
+        <div class="text-amber-950 font-black text-2xl sm:text-4xl drop-shadow-md">
+          Starting in: <span id="preview-countdown" class="text-orange-600 text-4xl sm:text-5xl">5</span>s
+        </div>
+        <div class="w-full bg-white/80 rounded-full h-6 sm:h-8 border-4 border-amber-500 shadow-inner overflow-hidden p-0.5">
+          <div id="preview-bar" class="bg-gradient-to-r from-yellow-400 to-orange-500 h-full w-full rounded-full transition-all duration-1000 linear"></div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ==================== SCREEN 3: SPELLING GAMEPLAY SCREEN ==================== -->
+    <div id="screen-gameplay" class="w-full h-full flex flex-col justify-between items-center p-3 sm:p-6 z-10 relative hidden">
+      
+      <!-- Top HUD: Lifelines, Word Counter & 30s Timer -->
+      <div class="w-full flex justify-between items-center bg-white/90 backdrop-blur-md px-6 py-3 rounded-2xl border-4 border-amber-400 shadow-xl">
+        <!-- Lifelines (5 Turkey Emojis) -->
+        <div class="flex items-center gap-2">
+          <span class="text-base sm:text-xl font-black text-amber-950 mr-1 hidden sm:inline">Lives:</span>
+          <div id="lifelines-container" class="flex text-2xl sm:text-4xl gap-1">
+            <span>🦃</span><span>🦃</span><span>🦃</span><span>🦃</span><span>🦃</span>
+          </div>
+        </div>
+
+        <!-- Progress Counter -->
+        <div class="font-black text-amber-950 text-base sm:text-2xl">
+          Word <span id="word-current-idx" class="text-orange-600">1</span> / <span id="word-total-count">5</span>
+        </div>
+
+        <!-- 30s Timer -->
+        <div class="flex items-center gap-2 font-black text-xl sm:text-3xl text-orange-600">
+          ⏳ <span id="timer-display">30</span>s
+        </div>
+      </div>
+
+      <!-- Active Game Word Header with Embedded Picture Preview -->
+      <div class="my-2 flex flex-col items-center w-full max-w-2xl">
+        <div class="flex items-center justify-center gap-4 bg-white/85 backdrop-blur-sm px-6 py-2 rounded-2xl border-2 border-amber-300 shadow-md mb-2">
+          <div class="w-20 h-20 sm:w-28 sm:h-28 rounded-xl overflow-hidden border-2 border-amber-500 bg-white flex-shrink-0 shadow-inner">
+            <img id="game-thumbnail-image" src="" alt="Word Thumbnail" class="w-full h-full object-contain" />
+          </div>
+          <button onclick="speakCurrentWord()" class="bg-amber-400 hover:bg-amber-500 text-amber-950 font-black px-4 py-2 sm:px-6 sm:py-3 rounded-full text-base sm:text-xl border-2 border-white flex items-center gap-2 shadow-lg transition active:scale-95">
+            🔊 Hear Word
+          </button>
+        </div>
+
+        <!-- Word Answer Letter Box Slots -->
+        <div id="answer-slots-container" class="flex flex-wrap justify-center gap-2 sm:gap-3 my-1">
+          <!-- Dynamically populated letter slot boxes -->
+        </div>
+      </div>
+
+      <!-- Canvas Area for Dynamic Flying & Bouncing Colorful Bubbles across Maximized Screen -->
+      <div id="canvas-container" class="relative w-full flex-1 rounded-3xl overflow-hidden border-4 border-white/70 bg-white/10 backdrop-blur-xs shadow-2xl">
+        <canvas id="bubble-canvas" class="w-full h-full block cursor-pointer"></canvas>
+      </div>
+
+      <!-- Bottom Tip Bar -->
+      <div class="w-full text-center mt-2">
+        <p class="text-amber-950 font-black text-xs sm:text-base bg-white/80 py-1.5 px-6 rounded-full inline-block shadow-md">
+          Tap the flying colorful bubbles with the correct lowercase letters!
+        </p>
+      </div>
+    </div>
+
+
+    <!-- ==================== SCREEN 4: WIN / GAME OVER SCREEN ==================== -->
+    <div id="screen-end" class="w-full h-full flex flex-col justify-center items-center p-6 z-10 text-center hidden">
+      <div class="glass-card max-w-lg w-full rounded-3xl p-8 sm:p-10 flex flex-col items-center gap-6 shadow-2xl border-4 border-white">
+        <div id="end-emoji" class="text-8xl sm:text-9xl animate-bounce">🏆</div>
+        <h2 id="end-title" class="text-4xl sm:text-5xl font-black text-amber-950">Happy Thanksgiving!</h2>
+        <p id="end-subtitle" class="text-xl sm:text-2xl text-orange-700 font-extrabold">You spelled all vocabulary words correctly!</p>
+        
+        <div class="bg-amber-100/90 p-5 rounded-2xl border-2 border-amber-300 w-full my-2 shadow-inner">
+          <div class="text-amber-900 text-lg font-bold">Final Score</div>
+          <div id="end-score-details" class="text-3xl font-black text-amber-950">5 / 5 Words</div>
+        </div>
+
+        <button onclick="resetGame()" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-2xl py-4 px-8 rounded-full shadow-xl border-4 border-white transform hover:scale-105 active:scale-95 transition">
+          🔄 Play Again
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+  <script>
+    /* ----------------------------------------------------
+       VOCABULARY & GAME CONFIGURATION
+    ---------------------------------------------------- */
+    const VOCABULARY = [
+      { word: "stuffing", img: "stuffing.jpg", fallbackEmoji: "🥘" },
+      { word: "gratitude", img: "gratitude.jpg", fallbackEmoji: "🙏" },
+      { word: "pilgrim", img: "pilgrim.jpg", fallbackEmoji: "🎩" },
+      { word: "thanksgiving", img: "thanksgiving.jpg", fallbackEmoji: "🍁" },
+      { word: "turkey", img: "turkey.jpg", fallbackEmoji: "🦃" }
+    ];
+
+    const BUBBLE_COLORS = [
+      { bg: '#f87171', border: '#dc2626', text: '#ffffff' }, // Red
+      { bg: '#fb923c', border: '#ea580c', text: '#ffffff' }, // Orange
+      { bg: '#facc15', border: '#ca8a04', text: '#78350f' }, // Yellow
+      { bg: '#4ade80', border: '#16a34a', text: '#ffffff' }, // Green
+      { bg: '#38bdf8', border: '#0284c7', text: '#ffffff' }, // Blue
+      { bg: '#c084fc', border: '#9333ea', text: '#ffffff' }, // Purple
+      { bg: '#f472b6', border: '#db2777', text: '#ffffff' }  // Pink
+    ];
+
+    /* ----------------------------------------------------
+       STATE VARIABLES
+    ---------------------------------------------------- */
+    let currentWordIndex = 0;
+    let currentLetterPointer = 0;
+    let remainingLives = 5;
+    let timerInterval = null;
+    let previewInterval = null;
+    let timerSeconds = 30;
+    let isMusicPlaying = false;
+    let isAudioMuted = false;
+
+    // Canvas state for flying bubbles
+    let canvas, ctx;
+    let bubbles = [];
+    let animationFrameId = null;
+    let particles = [];
+
+    /* ----------------------------------------------------
+       WEB AUDIO API SOUND SYNTHESIS
+    ---------------------------------------------------- */
+    let audioCtx = null;
+    let musicLoopTimer = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playSound(type) {
+      if (isAudioMuted) return;
+      initAudio();
+
+      const now = audioCtx.currentTime;
+
+      if (type === 'pop') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(450, now);
+        osc.frequency.exponentialRampToValueAtTime(900, now + 0.09);
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.09);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.09);
+      } 
+      else if (type === 'correct') {
+        const freqs = [523.25, 659.25, 783.99, 1046.50];
+        freqs.forEach((f, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(f, now + i * 0.06);
+          gain.gain.setValueAtTime(0.25, now + i * 0.06);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.22);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + i * 0.06);
+          osc.stop(now + i * 0.06 + 0.22);
+        });
+      } 
+      else if (type === 'wrong') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(160, now);
+        osc.frequency.linearRampToValueAtTime(90, now + 0.35);
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      } 
+      else if (type === 'win') {
+        const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99];
+        notes.forEach((f, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(f, now + i * 0.1);
+          gain.gain.setValueAtTime(0.3, now + i * 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.1 + 0.35);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + i * 0.1);
+          osc.stop(now + i * 0.1 + 0.35);
+        });
+      }
+    }
+
+    function startGameshowMusic() {
+      if (isMusicPlaying || isAudioMuted) return;
+      initAudio();
+      isMusicPlaying = true;
+
+      const playGameshowBeat = () => {
+        if (!isMusicPlaying) return;
+        const now = audioCtx.currentTime;
+        const bassNotes = [130.81, 146.83, 164.81, 174.61];
+        
+        bassNotes.forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.25);
+          gain.gain.setValueAtTime(0.035, now + idx * 0.25);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.25 + 0.2);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + idx * 0.25);
+          osc.stop(now + idx * 0.25 + 0.2);
+        });
+
+        musicLoopTimer = setTimeout(playGameshowBeat, 1000);
+      };
+
+      playGameshowBeat();
+    }
+
+    function stopGameshowMusic() {
+      isMusicPlaying = false;
+      if (musicLoopTimer) clearTimeout(musicLoopTimer);
+    }
+
+    function toggleMusic() {
+      isAudioMuted = !isAudioMuted;
+      const btnText = document.getElementById('music-text');
+      const btnIcon = document.getElementById('music-icon');
+
+      if (isAudioMuted) {
+        stopGameshowMusic();
+        btnText.textContent = "Music: OFF";
+        btnIcon.textContent = "🔇";
+      } else {
+        btnText.textContent = "Music: ON";
+        btnIcon.textContent = "🎵";
+        startGameshowMusic();
+      }
+    }
+
+    function speakCurrentWord() {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const word = VOCABULARY[currentWordIndex].word;
+        const utterance = new SpeechSynthesisUtterance(word);
+        utterance.rate = 0.85;
+        utterance.pitch = 1.1;
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    /* ----------------------------------------------------
+       SVG FALLBACK PLACEHOLDER GENERATOR
+    ---------------------------------------------------- */
+    function getSvgFallback(text, emoji) {
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="600" height="450" viewBox="0 0 600 450">
+          <rect width="600" height="450" fill="#fef3c7" rx="30"/>
+          <circle cx="300" cy="200" r="110" fill="#fde68a" stroke="#f59e0b" stroke-width="8"/>
+          <text x="300" y="225" font-size="110" text-anchor="middle" dominant-baseline="middle">${emoji}</text>
+          <text x="300" y="375" font-size="42" font-family="Comic Sans MS, cursive" font-weight="bold" fill="#78350f" text-anchor="middle">${text}</text>
+        </svg>
+      `;
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    }
+
+    /* ----------------------------------------------------
+       GAME FLOW CONTROL
+    ---------------------------------------------------- */
+    function showScreen(screenId) {
+      ['screen-cover', 'screen-preview', 'screen-gameplay', 'screen-end'].forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+      });
+      document.getElementById(screenId).classList.remove('hidden');
+    }
+
+    function startGame() {
+      initAudio();
+      startGameshowMusic();
+      currentWordIndex = 0;
+      remainingLives = 5;
+      updateLifelinesUI();
+      startRound();
+    }
+
+    function startRound() {
+      if (currentWordIndex >= VOCABULARY.length) {
+        triggerEndScreen(true);
+        return;
+      }
+
+      const item = VOCABULARY[currentWordIndex];
+      const previewImg = document.getElementById('preview-image');
+      const gameThumb = document.getElementById('game-thumbnail-image');
+      
+      const fallbackUrl = getSvgFallback(item.word, item.fallbackEmoji);
+
+      // Set preview images with robust fallbacks
+      previewImg.src = item.img;
+      previewImg.onerror = function() {
+        this.onerror = null;
+        this.src = fallbackUrl;
+      };
+
+      gameThumb.src = item.img;
+      gameThumb.onerror = function() {
+        this.onerror = null;
+        this.src = fallbackUrl;
+      };
+
+      showScreen('screen-preview');
+      speakCurrentWord();
+
+      // 5-Second Countdown Setup
+      let countdown = 5;
+      const countEl = document.getElementById('preview-countdown');
+      const barEl = document.getElementById('preview-bar');
+      countEl.textContent = countdown;
+      barEl.style.width = '100%';
+
+      if (previewInterval) clearInterval(previewInterval);
+
+      previewInterval = setInterval(() => {
+        countdown--;
+        countEl.textContent = countdown;
+        barEl.style.width = (countdown / 5 * 100) + '%';
+
+        if (countdown <= 0) {
+          clearInterval(previewInterval);
+          startSpellingPhase();
+        }
+      }, 1000);
+    }
+
+    function startSpellingPhase() {
+      showScreen('screen-gameplay');
+      const currentWord = VOCABULARY[currentWordIndex].word;
+      currentLetterPointer = 0;
+
+      // Update HUD Index
+      document.getElementById('word-current-idx').textContent = currentWordIndex + 1;
+      document.getElementById('word-total-count').textContent = VOCABULARY.length;
+
+      // Render Empty Slots for Word
+      renderAnswerSlots(currentWord);
+
+      // Start 30s Countdown Timer
+      start30sTimer();
+
+      // Setup Canvas & Flying Bubbles across maximized space
+      setupCanvas();
+      initBubblesForWord(currentWord);
+    }
+
+    function renderAnswerSlots(word) {
+      const container = document.getElementById('answer-slots-container');
+      container.innerHTML = '';
+
+      for (let i = 0; i < word.length; i++) {
+        const slot = document.createElement('div');
+        slot.id = `slot-${i}`;
+        slot.className = 'w-10 h-12 sm:w-16 sm:h-20 bg-white border-4 border-amber-400 rounded-2xl flex items-center justify-center font-black text-2xl sm:text-4xl text-amber-950 shadow-lg transform transition-all duration-300';
+        slot.textContent = '_';
+        container.appendChild(slot);
+      }
+    }
+
+    function start30sTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerSeconds = 30;
+      const timerDisplay = document.getElementById('timer-display');
+      timerDisplay.textContent = timerSeconds;
+      timerDisplay.classList.remove('timer-warning');
+
+      timerInterval = setInterval(() => {
+        timerSeconds--;
+        timerDisplay.textContent = timerSeconds;
+
+        if (timerSeconds <= 5) {
+          timerDisplay.classList.add('timer-warning');
+        }
+
+        if (timerSeconds <= 0) {
+          clearInterval(timerInterval);
+          handleTimeOut();
+        }
+      }, 1000);
+    }
+
+    function handleTimeOut() {
+      playSound('wrong');
+      flashWrongX();
+      loseLife();
+
+      if (remainingLives > 0) {
+        start30sTimer();
+        initBubblesForWord(VOCABULARY[currentWordIndex].word);
+      }
+    }
+
+    function updateLifelinesUI() {
+      const container = document.getElementById('lifelines-container');
+      container.innerHTML = '';
+      for (let i = 0; i < 5; i++) {
+        const span = document.createElement('span');
+        span.className = i < remainingLives ? 'opacity-100 scale-100 transition duration-300' : 'opacity-25 scale-75 grayscale transition duration-300';
+        span.textContent = '🦃';
+        container.appendChild(span);
+      }
+    }
+
+    function loseLife() {
+      remainingLives--;
+      updateLifelinesUI();
+      if (remainingLives <= 0) {
+        if (timerInterval) clearInterval(timerInterval);
+        triggerEndScreen(false);
+      }
+    }
+
+    function flashWrongX() {
+      const overlay = document.getElementById('wrong-x-overlay');
+      overlay.classList.remove('hidden');
+      overlay.classList.add('x-overlay-active');
+      setTimeout(() => {
+        overlay.classList.remove('x-overlay-active');
+        overlay.classList.add('hidden');
+      }, 600);
+    }
+
+    function triggerEndScreen(isWin) {
+      if (timerInterval) clearInterval(timerInterval);
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+      showScreen('screen-end');
+
+      const emoji = document.getElementById('end-emoji');
+      const title = document.getElementById('end-title');
+      const subtitle = document.getElementById('end-subtitle');
+      const score = document.getElementById('end-score-details');
+
+      if (isWin) {
+        playSound('win');
+        emoji.textContent = '🏆';
+        title.textContent = 'Happy Thanksgiving!';
+        subtitle.textContent = 'Awesome job! You are a master speller!';
+        score.textContent = `${VOCABULARY.length} / ${VOCABULARY.length} Words Completed`;
+      } else {
+        playSound('wrong');
+        emoji.textContent = '🦃💥';
+        title.textContent = 'Game Over!';
+        subtitle.textContent = 'You ran out of turkey lifelines!';
+        score.textContent = `${currentWordIndex} / ${VOCABULARY.length} Words Completed`;
+      }
+    }
+
+    function resetGame() {
+      startGame();
+    }
+
+    /* ----------------------------------------------------
+       DYNAMIC FLYING BUBBLES CANVAS ENGINE
+    ---------------------------------------------------- */
+    function setupCanvas() {
+      canvas = document.getElementById('bubble-canvas');
+      const container = document.getElementById('canvas-container');
+      
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientHeight;
+      ctx = canvas.getContext('2d');
+
+      canvas.onclick = handleCanvasClick;
+    }
+
+    function initBubblesForWord(word) {
+      bubbles = [];
+      particles = [];
+      const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+      
+      const targetLetters = word.toLowerCase().split('');
+      const extraCount = Math.max(8, 14 - targetLetters.length);
+      const distractorLetters = [];
+      for (let i = 0; i < extraCount; i++) {
+        const randomChar = alphabet[Math.floor(Math.random() * alphabet.length)];
+        distractorLetters.push(randomChar);
+      }
+
+      const allLetters = [...targetLetters, ...distractorLetters];
+      allLetters.sort(() => Math.random() - 0.5);
+
+      const radius = canvas.width < 640 ? 32 : 44;
+
+      allLetters.forEach((char, index) => {
+        const colorScheme = BUBBLE_COLORS[index % BUBBLE_COLORS.length];
+        const x = radius + Math.random() * (canvas.width - radius * 2);
+        const y = radius + Math.random() * (canvas.height - radius * 2);
+        
+        const speed = 1.5 + Math.random() * 2.2;
+        const angle = Math.random() * Math.PI * 2;
+        const vx = Math.cos(angle) * speed;
+        const vy = Math.sin(angle) * speed;
+
+        bubbles.push({
+          char: char,
+          x: x,
+          y: y,
+          vx: vx,
+          vy: vy,
+          radius: radius,
+          color: colorScheme,
+          pulse: Math.random() * Math.PI,
+          popping: false
+        });
+      });
+
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      animateBubbles();
+    }
+
+    function animateBubbles() {
+      if (!ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      bubbles.forEach(b => {
+        if (b.popping) return;
+
+        b.x += b.vx;
+        b.y += b.vy;
+
+        b.pulse += 0.05;
+        const currentRadius = b.radius + Math.sin(b.pulse) * 3;
+
+        // Bounce off canvas boundaries
+        if (b.x - currentRadius < 0) { b.x = currentRadius; b.vx *= -1; }
+        if (b.x + currentRadius > canvas.width) { b.x = canvas.width - currentRadius; b.vx *= -1; }
+        if (b.y - currentRadius < 0) { b.y = currentRadius; b.vy *= -1; }
+        if (b.y + currentRadius > canvas.height) { b.y = canvas.height - currentRadius; b.vy *= -1; }
+
+        // Draw Bubble Outer Circle
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, currentRadius, 0, Math.PI * 2);
+        ctx.fillStyle = b.color.bg;
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        ctx.shadowBlur = 12;
+        ctx.shadowOffsetY = 6;
+        ctx.fill();
+
+        // Bubble Border
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = b.color.border;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // Glossy highlight shine
+        ctx.beginPath();
+        ctx.arc(b.x - currentRadius * 0.3, b.y - currentRadius * 0.3, currentRadius * 0.28, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+        ctx.fill();
+
+        // Lowercase Letter Text
+        ctx.font = `bold ${Math.round(currentRadius * 1.15)}px 'Comic Sans MS', cursive, sans-serif`;
+        ctx.fillStyle = b.color.text;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(b.char, b.x, b.y + 3);
+      });
+
+      // Update & Draw Pop Particles
+      particles.forEach((p, idx) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha -= 0.04;
+
+        if (p.alpha <= 0) {
+          particles.splice(idx, 1);
+        } else {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${p.rgb}, ${p.alpha})`;
+          ctx.fill();
+        }
+      });
+
+      animationFrameId = requestAnimationFrame(animateBubbles);
+    }
+
+    function createPopParticles(x, y) {
+      for (let i = 0; i < 16; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 2.5 + Math.random() * 5;
+        particles.push({
+          x: x,
+          y: y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          radius: 4 + Math.random() * 5,
+          rgb: '255, 255, 255',
+          alpha: 1
+        });
+      }
+    }
+
+    function handleCanvasClick(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      const currentWord = VOCABULARY[currentWordIndex].word;
+      const expectedLetter = currentWord[currentLetterPointer].toLowerCase();
+
+      for (let i = bubbles.length - 1; i >= 0; i--) {
+        const b = bubbles[i];
+        if (b.popping) continue;
+
+        const dist = Math.hypot(clickX - b.x, clickY - b.y);
+        if (dist <= b.radius + 8) {
+          if (b.char === expectedLetter) {
+            // CORRECT GUESS
+            playSound('pop');
+            playSound('correct');
+            createPopParticles(b.x, b.y);
+
+            const slot = document.getElementById(`slot-${currentLetterPointer}`);
+            slot.textContent = b.char;
+            slot.classList.add('bg-green-300', 'border-green-600', 'scale-110');
+            setTimeout(() => slot.classList.remove('scale-110'), 200);
+
+            bubbles.splice(i, 1);
+            currentLetterPointer++;
+
+            if (currentLetterPointer >= currentWord.length) {
+              clearInterval(timerInterval);
+              setTimeout(() => {
+                currentWordIndex++;
+                startRound();
+              }, 600);
+            }
+          } else {
+            // WRONG GUESS
+            playSound('wrong');
+            flashWrongX();
+            loseLife();
+          }
+          break;
+        }
+      }
+    }
+
+    window.addEventListener('resize', () => {
+      if (canvas && document.getElementById('screen-gameplay').classList.contains('hidden') === false) {
+        setupCanvas();
+        if (VOCABULARY[currentWordIndex]) {
+          initBubblesForWord(VOCABULARY[currentWordIndex].word);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
