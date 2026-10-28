@@ -77,7 +77,7 @@
   <!-- Main Container Frame (Full Viewport Maximize) -->
   <div id="game-frame" class="game-bg relative w-vw h-vh flex flex-col justify-between overflow-hidden">
     
-    <!-- Audio Toggle & Controls Overlay (Top Right Corner) -->
+  <!-- Audio Toggle & Controls Overlay (Top Right Corner) -->
     <div class="absolute top-4 right-4 z-50 flex gap-2">
       <button id="music-btn" onclick="toggleMusic()" class="bg-amber-500 hover:bg-amber-600 text-white font-black py-2.5 px-5 rounded-full shadow-2xl border-2 border-white flex items-center gap-2 text-base sm:text-lg transition active:scale-95">
         <span id="music-icon">🎵</span> <span id="music-text">Music: ON</span>
@@ -213,7 +213,7 @@
   <!-- ==================== JAVASCRIPT LOGIC ==================== -->
   <script>
     /* ----------------------------------------------------
-       VOCABULARY & GAME CONFIGURATION
+        VOCABULARY & GAME CONFIGURATION
     ---------------------------------------------------- */
     const VOCABULARY = [
       { word: "stuffing", img: "stuffing.jpg", fallbackEmoji: "🥘" },
@@ -234,7 +234,7 @@
     ];
 
     /* ----------------------------------------------------
-       STATE VARIABLES
+        STATE VARIABLES
     ---------------------------------------------------- */
     let currentWordIndex = 0;
     let currentLetterPointer = 0;
@@ -252,7 +252,7 @@
     let particles = [];
 
     /* ----------------------------------------------------
-       WEB AUDIO API SOUND SYNTHESIS
+        WEB AUDIO API SOUND SYNTHESIS
     ---------------------------------------------------- */
     let audioCtx = null;
     let musicLoopTimer = null;
@@ -384,8 +384,14 @@
     function speakCurrentWord() {
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
-        const word = VOCABULARY[currentWordIndex].word;
-        const utterance = new SpeechSynthesisUtterance(word);
+        let wordToSpeak = VOCABULARY[currentWordIndex].word;
+        
+        // Fix pronunciation for "stuffing" using a precise phonetic spacing / spelling hint
+        if (wordToSpeak === "stuffing") {
+          wordToSpeak = "stuf fing";
+        }
+
+        const utterance = new SpeechSynthesisUtterance(wordToSpeak);
         utterance.rate = 0.85;
         utterance.pitch = 1.1;
         window.speechSynthesis.speak(utterance);
@@ -393,7 +399,7 @@
     }
 
     /* ----------------------------------------------------
-       SVG FALLBACK PLACEHOLDER GENERATOR
+        SVG FALLBACK PLACEHOLDER GENERATOR
     ---------------------------------------------------- */
     function getSvgFallback(text, emoji) {
       const svg = `
@@ -408,7 +414,7 @@
     }
 
     /* ----------------------------------------------------
-       GAME FLOW CONTROL
+        GAME FLOW CONTROL
     ---------------------------------------------------- */
     function showScreen(screenId) {
       ['screen-cover', 'screen-preview', 'screen-gameplay', 'screen-end'].forEach(id => {
@@ -602,7 +608,7 @@
     }
 
     /* ----------------------------------------------------
-       DYNAMIC FLYING BUBBLES CANVAS ENGINE
+        DYNAMIC FLYING BUBBLES CANVAS ENGINE
     ---------------------------------------------------- */
     function setupCanvas() {
       canvas = document.getElementById('bubble-canvas');
