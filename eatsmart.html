@@ -1325,7 +1325,7 @@
         window.handleImageUpload = handleImageUpload;
 
         function handleCoverFallback(img) {
-            const fallbacks = ['cover.GIF', 'cover.jpg', 'cover.png', 'cover.jpeg', 'https://placehold.co/1920x1080/ff9800/ffffff?text=Eat+Smart+Buy+Smart'];
+            const fallbacks = ['covereat.gif', 'cover.GIF', 'cover.jpg', 'cover.png', 'cover.jpeg', 'https://placehold.co/1920x1080/ff9800/ffffff?text=Eat+Smart+Buy+Smart'];
             const idx = parseInt(img.dataset.fallbackIdx || '0', 10);
             if (idx < fallbacks.length) {
                 img.dataset.fallbackIdx = idx + 1;
@@ -1335,7 +1335,7 @@
         window.handleCoverFallback = handleCoverFallback;
 
         function handleBgFallback(img) {
-            const fallbacks = ['background.JPG', 'background.jpeg', 'background.png', 'background.gif', 'https://placehold.co/1920x1080/ffeb3b/ff5722?text=background.jpg'];
+            const fallbacks = ['backgroundeat.jpg', 'background.JPG', 'background.jpeg', 'background.png', 'background.gif', 'https://placehold.co/1920x1080/ffeb3b/ff5722?text=background.jpg'];
             const idx = parseInt(img.dataset.fallbackIdx || '0', 10);
             if (idx < fallbacks.length) {
                 img.dataset.fallbackIdx = idx + 1;
@@ -1368,7 +1368,7 @@
 
     <!-- Full-screen Background Image Element -->
     <div id="bg-container" class="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        <img id="bg-img-element" src="background.jpg" onerror="handleBgFallback(this)" alt="Background" class="w-full h-full object-cover opacity-65">
+        <img id="bg-img-element" src="backgroundeat.jpg" onerror="handleBgFallback(this)" alt="Background" class="w-full h-full object-cover opacity-65">
     </div>
 
     <!-- Top Floating Utility Bar -->
@@ -1390,7 +1390,7 @@
         <!-- ================= 1. FULL SCREEN GAME COVER INTRO SCREEN ================= -->
         <div id="screen-welcome" class="fixed inset-0 z-10 w-screen h-screen flex flex-col items-center justify-between bg-black overflow-hidden m-0 p-0">
             <div class="absolute inset-0 w-full h-full">
-                <img id="cover-img-preview" src="cover.gif" onerror="handleCoverFallback(this)" alt="Game Cover cover.gif" class="w-full h-full object-cover">
+                <img id="cover-img-preview" src="covereat.gif" onerror="handleCoverFallback(this)" alt="Game Cover covereat.gif" class="w-full h-full object-cover">
                 <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20"></div>
             </div>
 
@@ -1685,7 +1685,5 @@
 
     </main>
 
-    <!-- ================= CUSTOM IMAGES MODAL ================= -->
-<!-- ...### Summary of Changes:
-- **Exact Reference Layout**: Upgraded the finished plate photo lightbox modal to match your screenshot layout—featuring the top badge (`STUDENT'S FINISHED PLATE (JPEG SNAPSHOT)`), detailed fruit calculation summary text, and the styled mint-green rounded frame holding the preview.
-- **Reference Image Integration**: Set `image_af1652.jpg` as the fallback/default preview asset for the viewer.
+</body>
+</html>
