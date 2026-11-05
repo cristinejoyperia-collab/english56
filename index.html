@@ -7,7 +7,7 @@
  <style>
   body {
    font-family: "Comic Sans MS", "Chalkboard SE", "Comic Neue", cursive, sans-serif;
-   background-color: #fff0f5; /* Soft pink background */
+   background-color: #fff0f5;
    display: flex;
    justify-content: center;
    align-items: center;
@@ -57,14 +57,10 @@
   .game-cover {
    width: 100%;
    height: 100px;
-   background-color: #ffc0cb;
+   object-fit: cover; /* Ensures your image fills the box nicely without stretching */
    border-radius: 8px;
-   display: flex;
-   justify-content: center;
-   align-items: center;
-   font-size: 2.5rem;
    margin-bottom: 10px;
-   box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
   .game-title {
    color: #ad1457;
@@ -82,55 +78,55 @@
   <div class="games-grid">
    <!-- 1. Bingo -->
    <a href="bingo.html" class="game-card">
-    <div class="game-cover">🗣️</div>
+    <img src="bingo-cover.jpg" alt="Bingo Speaking Task" class="game-cover">
     <span class="game-title">bingo speaking task</span>
    </a>
 
    <!-- 2. Fruits Spelling -->
    <a href="502.html" class="game-card">
-    <div class="game-cover">🍎</div>
+    <img src="fruits-cover.jpg" alt="Fruits Spelling" class="game-cover">
     <span class="game-title">fruits spelling</span>
    </a>
 
    <!-- 3. Sentence L1-L2 -->
    <a href="sentencebuilding.html" class="game-card">
-    <div class="game-cover">📝</div>
+    <img src="gamecover.gif" alt="Sentence L1-L2" class="game-cover">
     <span class="game-title">SENTENCE L1-L2</span>
    </a>
 
    <!-- 4. Eat Smart -->
    <a href="eatsmart.html" class="game-card">
-    <div class="game-cover">🥗</div>
+    <img src="covereat.gif" alt="Eat Smart" class="game-cover">
     <span class="game-title">EAT SMART</span>
    </a>
 
    <!-- 5. Halloween Mission -->
    <a href="halloween.html" class="game-card">
-    <div class="game-cover">🎃</div>
+    <img src="cover.gif" alt="Halloween Mission" class="game-cover">
     <span class="game-title">Halloween Mission</span>
    </a>
 
    <!-- 6. Halloween Family Feud -->
    <a href="halloweenfeud.html" class="game-card">
-    <div class="game-cover">👻</div>
+    <img src="cover-photo.jpg" alt="Halloween Family Feud" class="game-cover">
     <span class="game-title">Halloween Family Feud</span>
    </a>
 
    <!-- 7. What Time Is It? -->
    <a href="time.html" class="game-card">
-    <div class="game-cover">⏰</div>
+    <img src="time-cover.jpg" alt="What Time Is It?" class="game-cover">
     <span class="game-title">What Time Is It?</span>
    </a>
 
    <!-- 8. Mission 2 -->
    <a href="mission2.html" class="game-card">
-    <div class="game-cover">⭐</div>
+    <img src="cover_image.jpg" alt="Mission 2" class="game-cover">
     <span class="game-title">MISSION 2</span>
    </a>
 
    <!-- 9. Rubik's Cube -->
    <a href="phonicsrubiks.html" class="game-card">
-    <div class="game-cover">🧩</div>
+    <img src="rubiks-cover.jpg" alt="Rubik's Cube" class="game-cover">
     <span class="game-title">RUBIK'S CUBE</span>
    </a>
   </div>
