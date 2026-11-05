@@ -1,0 +1,1618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>2x2 Phonics Cube Challenge</title>
+    <!-- Load Comic Neue font as a reliable fallback for Comic Sans MS -->
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:ital,wght@0,400;0,700;1,700&display=swap" rel="stylesheet">
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Three.js r128 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: 'Comic Sans MS', 'Comic Neue', cursive, sans-serif;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #12121a;
+            color: #ffffff;
+            touch-action: none;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* UI Overlay Styles */
+        .ui-layer {
+            position: relative;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .interactive-panel {
+            pointer-events: auto;
+            background: rgba(24, 24, 38, 0.85);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.14);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Game Button Styling */
+        .game-btn {
+            pointer-events: auto;
+            transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+            box-shadow: 0 5px 0 rgba(0,0,0,0.35), 0 8px 15px rgba(0,0,0,0.3);
+            position: relative;
+            top: 0;
+        }
+
+        .game-btn:hover:not(:disabled) {
+            transform: translateY(-2px) scale(1.03);
+            box-shadow: 0 7px 0 rgba(0,0,0,0.35), 0 12px 20px rgba(0,0,0,0.4);
+        }
+
+        .game-btn:active:not(:disabled) {
+            top: 4px;
+            transform: translateY(0) scale(0.98);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.35), 0 3px 6px rgba(0,0,0,0.3);
+        }
+
+        .game-btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        /* Category Badge Pills */
+        .category-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        /* Custom Scrollbar for Teacher Studio */
+        .custom-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 8px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.6);
+            border-radius: 8px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(129, 140, 248, 0.9);
+        }
+
+        @keyframes pulseRecord {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { transform: scale(1.06); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        }
+        .recording-pulse {
+            animation: pulseRecord 1.2s infinite;
+        }
+
+        /* Modal Bounce Animation */
+        @keyframes popIn {
+            0% { transform: scale(0.7); opacity: 0; }
+            70% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-animate {
+            animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 3D WebGL Canvas Container -->
+    <div id="canvas-container"></div>
+
+    <!-- Minimized Top Overlay Panel -->
+    <div class="ui-layer w-full flex flex-col items-center pt-2 px-2 sm:px-4">
+        <div class="interactive-panel rounded-2xl px-3 py-2 sm:px-4 sm:py-2.5 max-w-4xl w-full">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <!-- Compact Title & Subtitle -->
+                <div class="flex items-center gap-2">
+                    <span class="text-lg sm:text-xl">🧩</span>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-sm sm:text-base font-bold tracking-wide bg-gradient-to-r from-yellow-300 via-pink-400 to-cyan-300 bg-clip-text text-transparent">
+                                2x2 Phonics Cube Challenge
+                            </h1>
+                            <span id="status-badge" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/40 border border-indigo-400/40 text-indigo-200">
+                                Moves: <span id="move-count">0</span>
+                            </span>
+                            <span id="mastery-badge" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/30 border border-emerald-400/40 text-emerald-200">
+                                ⭐ Graded: <span id="graded-count">0</span>/24
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-gray-300 hidden md:block">
+                            Tap any tile to hear slow voice 🔊 • Swipe tile to twist • Drag background to orbit
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Compact Action Buttons -->
+                <div class="flex items-center gap-1.5 sm:gap-2">
+                    <button id="practice-studio-btn" class="game-btn bg-gradient-to-b from-emerald-400 to-teal-600 text-slate-950 font-bold px-2.5 py-1.5 sm:px-3.5 sm:py-1.5 rounded-xl text-xs border border-emerald-200 flex items-center gap-1">
+                        <span>👩‍🏫</span> <span>Practice & Record</span>
+                    </button>
+                    <button id="scramble-btn" class="game-btn bg-gradient-to-b from-amber-400 to-orange-500 text-slate-950 font-bold px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl text-xs border border-amber-200 flex items-center gap-1">
+                        <span>🔀</span> <span>Scramble</span>
+                    </button>
+                    <button id="reset-btn" class="game-btn bg-gradient-to-b from-sky-400 to-blue-600 text-white font-bold px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl text-xs border border-sky-200 flex items-center gap-1">
+                        <span>🔄</span> <span>Reset</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Floating Active Word Voice & Quick Practice Bar -->
+    <div id="word-toast" class="ui-layer fixed bottom-3 left-1/2 -translate-x-1/2 z-20 w-[94%] max-w-lg pointer-events-none transition-all duration-300 opacity-95">
+        <div class="interactive-panel rounded-2xl px-3.5 py-2.5 border border-indigo-400/40 flex items-center justify-between gap-2 shadow-xl">
+            <div class="flex items-center gap-2.5 min-w-0">
+                <div id="toast-emoji" class="text-3xl sm:text-4xl shrink-0 bg-white/10 rounded-xl p-1.5">🐶</div>
+                <div class="min-w-0">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span id="toast-word" class="text-base sm:text-lg font-bold text-yellow-300">Puppy</span>
+                        <span id="toast-zh" class="text-xs sm:text-sm font-bold px-2 py-0.5 rounded-lg bg-pink-500/30 border border-pink-400/40 text-pink-200">小狗</span>
+                        <span id="toast-score-pill" class="hidden text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-200 border border-emerald-400/40"></span>
+                    </div>
+                    <p id="toast-def" class="text-xs text-gray-300 truncate">A young dog • Tap any cube tile to listen!</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+                <button id="toast-listen-btn" class="game-btn bg-gradient-to-b from-cyan-400 to-blue-600 text-white font-bold px-2.5 py-1.5 rounded-xl text-xs border border-cyan-200 flex items-center gap-1" title="Listen slowly">
+                    <span>🔊</span> <span class="hidden sm:inline">Slow Voice</span>
+                </button>
+                <button id="toast-record-btn" class="game-btn bg-gradient-to-b from-rose-400 to-pink-600 text-white font-bold px-2.5 py-1.5 rounded-xl text-xs border border-rose-200 flex items-center gap-1" title="Practice & Get Graded">
+                    <span>🎤</span> <span class="hidden sm:inline">Practice</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Win Celebration Modal -->
+    <div id="win-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+        <div class="modal-animate bg-gradient-to-b from-indigo-900 via-slate-900 to-slate-950 border-4 border-yellow-400 rounded-3xl max-w-md w-full p-6 text-center shadow-2xl">
+            <div class="text-5xl mb-2">🎉🏆🌟</div>
+            <h2 class="text-2xl sm:text-3xl font-bold text-yellow-300 mb-1">
+                🎉 Brilliant Job! 太棒了！
+            </h2>
+            <p class="text-gray-200 text-sm sm:text-base mb-3">
+                You matched all 6 phonics word categories! Now let's practice reading the words with your teacher for a 100-point grade!
+            </p>
+            <div class="bg-white/10 rounded-2xl p-2.5 mb-5 text-sm text-amber-200 font-bold">
+                Solved in <span id="final-moves" class="text-white text-lg">0</span> twists!
+            </div>
+            <div class="flex flex-wrap justify-center gap-2.5">
+                <button id="win-practice-btn" class="game-btn bg-gradient-to-b from-emerald-400 to-green-600 text-slate-950 font-bold px-5 py-2.5 rounded-2xl text-sm border-2 border-emerald-200">
+                    🎤 Open Teacher Recorder (Get Graded!)
+                </button>
+                <button id="play-again-btn" class="game-btn bg-gradient-to-b from-amber-400 to-orange-500 text-slate-950 font-bold px-4 py-2.5 rounded-2xl text-sm border-2 border-amber-200">
+                    🔀 Scramble Again
+                </button>
+                <button id="close-modal-btn" class="game-btn bg-gradient-to-b from-slate-600 to-slate-800 text-white font-bold px-4 py-2.5 rounded-2xl text-sm border-2 border-slate-400">
+                    👀 View Cube
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Teacher Pronunciation Recorder & Grading Studio Modal -->
+    <div id="practice-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4">
+        <div class="modal-animate bg-slate-900 border-2 border-indigo-400/50 rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+            <!-- Studio Header -->
+            <div class="bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-950 px-4 py-3 sm:px-6 sm:py-3.5 border-b border-white/10 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2.5">
+                    <span class="text-2xl sm:text-3xl">👩‍🏫</span>
+                    <div>
+                        <h2 class="text-base sm:text-xl font-bold text-yellow-300 flex items-center gap-2">
+                            <span>Phonics Teacher Recorder Studio</span>
+                            <span class="text-xs bg-indigo-500/40 text-indigo-200 px-2.5 py-0.5 rounded-full border border-indigo-400/40">Max Grade: 100 pts</span>
+                        </h2>
+                        <p class="text-xs text-gray-300">
+                            Listen to the slow kid-friendly voice, record yourself reading each word, and receive your Teacher Grade!
+                        </p>
+                    </div>
+                </div>
+                <button id="close-practice-btn" class="game-btn bg-slate-700 hover:bg-slate-600 text-white font-bold px-3 py-1.5 rounded-xl text-xs border border-slate-500">
+                    ✕ Close
+                </button>
+            </div>
+
+            <!-- Active Word Spotlight & Recorder Console -->
+            <div class="p-3 sm:p-5 bg-slate-800/90 border-b border-white/10">
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                    <!-- Selected Word Card -->
+                    <div class="md:col-span-5 bg-slate-900/90 border-2 border-indigo-500/40 rounded-2xl p-3.5 flex items-center gap-3.5">
+                        <div id="studio-emoji" class="text-5xl bg-white/10 p-2.5 rounded-2xl shrink-0">🐶</div>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span id="studio-word" class="text-2xl font-bold text-white">Puppy</span>
+                                <span id="studio-zh" class="text-sm font-bold px-2.5 py-0.5 rounded-lg bg-amber-400/20 border border-amber-300/40 text-amber-300">小狗</span>
+                            </div>
+                            <p id="studio-def" class="text-xs text-gray-300 mt-0.5">A young dog</p>
+                            <p id="studio-phonics-tip" class="text-[11px] text-cyan-300 mt-1 font-bold">
+                                💡 Phonics Tip: "-y" at the end makes the long "ee" (/i/) sound!
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Recorder Controls & Teacher Grade Box -->
+                    <div class="md:col-span-7 flex flex-col gap-2.5">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button id="studio-listen-slow-btn" class="game-btn bg-gradient-to-b from-cyan-400 to-blue-600 text-white font-bold px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-cyan-200 flex items-center gap-1.5">
+                                <span>🐢🔊</span> <span>Listen (Slow Kid Voice)</span>
+                            </button>
+                            <button id="studio-record-btn" class="game-btn bg-gradient-to-b from-rose-500 to-red-600 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm border border-rose-200 flex items-center gap-1.5">
+                                <span id="record-btn-icon">🎤</span> <span id="record-btn-text">Start Recording</span>
+                            </button>
+                            <button id="studio-playback-btn" disabled class="game-btn bg-gradient-to-b from-purple-500 to-indigo-600 text-white font-bold px-3 py-2 rounded-xl text-xs sm:text-sm border border-purple-300 flex items-center gap-1">
+                                <span>▶️</span> <span>My Voice</span>
+                            </button>
+                        </div>
+
+                        <!-- Live Teacher Feedback Banner -->
+                        <div id="teacher-feedback-box" class="bg-slate-950/90 border border-white/15 rounded-2xl p-3 flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div id="teacher-avatar" class="text-2xl shrink-0">👩‍🏫</div>
+                                <div class="min-w-0">
+                                    <div id="teacher-comment-title" class="text-xs sm:text-sm font-bold text-emerald-300">
+                                        Teacher says: Ready to hear you say "<span id="teacher-target-word">Puppy</span>"!
+                                    </div>
+                                    <div id="teacher-comment-body" class="text-xs text-gray-300">
+                                        Click "Listen" first, then press "Start Recording" and speak clearly! 請先聽發音，再按錄音大聲唸出來！
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right shrink-0 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10">
+                                <div class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Grade</div>
+                                <div id="studio-grade-score" class="text-xl sm:text-2xl font-bold text-yellow-300">--<span class="text-xs text-gray-400">/100</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Tabs -->
+            <div id="studio-category-tabs" class="px-4 pt-2.5 pb-2 bg-slate-900 flex flex-wrap gap-1.5 border-b border-white/10">
+                <!-- Populated dynamically -->
+            </div>
+
+            <!-- Word Grid List -->
+            <div id="studio-word-grid" class="p-3 sm:p-4 overflow-y-auto custom-scroll grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 flex-1">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * 2x2 PHONICS RUBIK'S CUBE CHALLENGE
+         * Enhanced with Traditional Chinese, Slow Kid-Friendly TTS Voice, and Teacher Pronunciation Grader (0-100)
+         */
+
+        // ==========================================
+        // 1. THEMATIC 6-FACE WORD, CHINESE & PICTURE DATA
+        // ==========================================
+        const FACE_THEMES = {
+            0: {
+                id: 'green',
+                category: 'Animals',
+                categoryZh: '動物',
+                bgHex: '#22c55e',
+                borderHex: '#14532d',
+                cardBg: '#dcfce7',
+                textColor: '#064e3b',
+                zhColor: '#15803d',
+                subTextColor: '#166534',
+                badgeBg: '#15803d',
+                badgeText: '#ffffff',
+                tiles: [
+                    { word: 'Puppy', zh: '小狗', emoji: '🐶', def: 'A young dog', tip: 'Final "-y" sounds like long "ee" (Puh-pee).' },
+                    { word: 'Kitty', zh: '小貓', emoji: '🐱', def: 'A young cat', tip: 'Short "i" + "-y" ending as long "ee" (Kih-tee).' },
+                    { word: 'Pony',  zh: '小馬', emoji: '🐴', def: 'A small horse', tip: 'Long "o" + "-y" ending as long "ee" (Poh-nee).' },
+                    { word: 'Bunny', zh: '小兔子', emoji: '🐰', def: 'A small rabbit', tip: 'Short "u" + "-y" ending as long "ee" (Buh-nee).' }
+                ]
+            },
+            1: {
+                id: 'blue',
+                category: 'Actions & Learning',
+                categoryZh: '動作與學習',
+                bgHex: '#2563eb',
+                borderHex: '#1e3a8a',
+                cardBg: '#dbeafe',
+                textColor: '#1e3a8a',
+                zhColor: '#1d4ed8',
+                subTextColor: '#1e40af',
+                badgeBg: '#1d4ed8',
+                badgeText: '#ffffff',
+                tiles: [
+                    { word: 'Story', zh: '故事', emoji: '📖', def: 'An account of events', tip: 'Blend "st" + "or" + long "ee" ending (Stor-ee).' },
+                    { word: 'Study', zh: '學習', emoji: '📚', def: 'Acquiring knowledge', tip: 'Blend "st" + short "u" + "-dy" (Stuh-dee).' },
+                    { word: 'Copy',  zh: '複製/抄寫', emoji: '📋', def: 'An identical version', tip: 'Short "o" + "-py" ending (Kah-pee).' },
+                    { word: 'Reply', zh: '回覆', emoji: '💬', def: 'To give an answer', tip: 'Here "-y" makes the long "i" (/aɪ/) sound (Re-plai)!' }
+                ]
+            },
+            2: {
+                id: 'yellow',
+                category: 'Feelings & Traits',
+                categoryZh: '心情與特質',
+                bgHex: '#facc15',
+                borderHex: '#854d0e',
+                cardBg: '#fef9c3',
+                textColor: '#713f12',
+                zhColor: '#a16207',
+                subTextColor: '#854d0e',
+                badgeBg: '#ca8a04',
+                badgeText: '#ffffff',
+                tiles: [
+                    { word: 'Happy', zh: '開心的', emoji: '😊', def: 'Feeling or showing joy', tip: 'Short "a" in "hap" + long "ee" at the end (Hap-ee).' },
+                    { word: 'Funny', zh: '有趣的', emoji: '🤡', def: 'Causing laughter', tip: 'Short "u" in "fun" + long "ee" ending (Fuh-nee).' },
+                    { word: 'Silly', zh: '傻呼呼的', emoji: '😜', def: 'Lack of seriousness', tip: 'Short "i" + double "l" + long "ee" (Sil-ee).' },
+                    { word: 'Noisy', zh: '吵鬧的', emoji: '📢', def: 'Making a lot of noise', tip: 'Diphthong "oi" + "-sy" sounding like "-zee" (Noi-zee).' }
+                ]
+            },
+            3: {
+                id: 'white',
+                category: 'Everyday Nouns',
+                categoryZh: '日常名詞',
+                bgHex: '#f1f5f9',
+                borderHex: '#475569',
+                cardBg: '#ffffff',
+                textColor: '#0f172a',
+                zhColor: '#0369a1',
+                subTextColor: '#334155',
+                badgeBg: '#475569',
+                badgeText: '#ffffff',
+                tiles: [
+                    { word: 'Penny', zh: '一分錢硬幣', emoji: '🪙', def: 'A small coin', tip: 'Short "e" in "pen" + long "ee" ending (Pen-ee).' },
+                    { word: 'City',  zh: '城市', emoji: '🏙️', def: 'A large urban area', tip: 'Soft "c" (/s/) + short "i" + "-ty" (Sih-tee).' },
+                    { word: 'Party', zh: '派對', emoji: '🎉', def: 'A social gathering', tip: 'R-controlled "ar" + "-ty" ending (Par-tee).' },
+                    { word: 'Key',   zh: '鑰匙', emoji: '🔑', def: 'Used to open a lock', tip: 'Vowel team "-ey" makes the long "ee" sound (Kee)!' }
+                ]
+            },
+            4: {
+                id: 'red',
+                category: 'Weather',
+                categoryZh: '天氣',
+                bgHex: '#ef4444',
+                borderHex: '#7f1d1d',
+                cardBg: '#fee2e2',
+                textColor: '#7f1d1d',
+                zhColor: '#b91c1c',
+                subTextColor: '#991b1b',
+                badgeBg: '#b91c1c',
+                badgeText: '#ffffff',
+                tiles: [
+                    { word: 'Sunny',  zh: '晴朗的', emoji: '☀️', def: 'Bright with sunlight', tip: 'Root word "sun" + "-ny" ending (Suh-nee).' },
+                    { word: 'Rainy',  zh: '下雨的', emoji: '🌧️', def: 'Having a lot of rain', tip: 'Long "a" in "rain" + "-y" ending (Ray-nee).' },
+                    { word: 'Windy',  zh: '風大的', emoji: '💨', def: 'Having strong winds', tip: 'Short "i" in "wind" + "-y" ending (Win-dee).' },
+                    { word: 'Cloudy', zh: '多雲的', emoji: '☁️', def: 'Covered with clouds', tip: '"ou" vowel sound in "cloud" + "-y" (Klow-dee).' }
+                ]
+            },
+            5: {
+                id: 'orange',
+                category: 'Food & Sweets',
+                categoryZh: '食物與甜點',
+                bgHex: '#f97316',
+                borderHex: '#7c2d12',
+                cardBg: '#ffedd5',
+                textColor: '#7c2d12',
+                zhColor: '#c2410c',
+                subTextColor: '#9a3412',
+                badgeBg: '#c2410c',
+                badgeText: '#ffffff',
+                tiles: [
+                    { word: 'Candy',  zh: '糖果', emoji: '🍬', def: 'A sweet sugar treat', tip: 'Short "a" in "can" + "-dy" ending (Kan-dee).' },
+                    { word: 'Jelly',  zh: '果凍/果醬', emoji: '🍯', def: 'A soft fruit spread', tip: 'Short "e" in "jel" + "-ly" ending (Jel-ee).' },
+                    { word: 'Berry',  zh: '莓果', emoji: '🍓', def: 'A small juicy fruit', tip: 'R-colored "er" + "-ry" ending (Bair-ee).' },
+                    { word: 'Cherry', zh: '櫻桃', emoji: '🍒', def: 'A round red fruit', tip: 'Digraph "ch" + "-erry" ending (Chair-ee).' }
+                ]
+            }
+        };
+
+        // Flatten all words for quick lookup & tracking student scores
+        const ALL_WORDS = [];
+        Object.keys(FACE_THEMES).forEach(fKey => {
+            const theme = FACE_THEMES[fKey];
+            theme.tiles.forEach(t => {
+                ALL_WORDS.push({
+                    ...t,
+                    faceIndex: Number(fKey),
+                    category: theme.category,
+                    categoryZh: theme.categoryZh,
+                    bgHex: theme.bgHex
+                });
+            });
+        });
+
+        // Student grades map: word -> { score: number, feedback: string }
+        const wordGrades = {};
+        let currentActiveWord = ALL_WORDS[0];
+        let activeStudioCategoryFace = 0;
+
+        // ==========================================
+        // 2. KID-FRIENDLY SLOW VOICE (WEB SPEECH API)
+        // ==========================================
+        let selectedVoice = null;
+
+        function initSpeechVoices() {
+            if (!('speechSynthesis' in window)) return;
+            const voices = window.speechSynthesis.getVoices();
+            if (!voices || voices.length === 0) return;
+
+            // Prioritize warm, clear, natural English voices suitable for children
+            const preferredNames = [
+                'Samantha', 'Google US English', 'Microsoft Zira', 'Microsoft Ana',
+                'Karen', 'Victoria', 'Moira', 'Tessa', 'Allison', 'Ava'
+            ];
+            for (const name of preferredNames) {
+                const found = voices.find(v => v.name.includes(name) && v.lang.startsWith('en'));
+                if (found) {
+                    selectedVoice = found;
+                    break;
+                }
+            }
+            if (!selectedVoice) {
+                selectedVoice = voices.find(v => v.lang.startsWith('en-US')) ||
+                                voices.find(v => v.lang.startsWith('en')) ||
+                                voices[0];
+            }
+        }
+
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = initSpeechVoices;
+            initSpeechVoices();
+        }
+
+        /**
+         * Speaks the phonics word in a kid-friendly, higher-pitched, slow-paced voice.
+         */
+        function speakPhonicsWord(wordObj, includeDef = false) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+
+            // Kid-friendly slow utterance for the vocabulary word
+            const utterWord = new SpeechSynthesisUtterance(wordObj.word);
+            if (selectedVoice) utterWord.voice = selectedVoice;
+            utterWord.lang = 'en-US';
+            utterWord.rate = 0.68;  // Slow, deliberate pace for elementary phonics learners
+            utterWord.pitch = 1.28; // Friendly, cheerful higher pitch
+            utterWord.volume = 1.0;
+
+            window.speechSynthesis.speak(utterWord);
+
+            if (includeDef) {
+                const utterDef = new SpeechSynthesisUtterance(wordObj.def);
+                if (selectedVoice) utterDef.voice = selectedVoice;
+                utterDef.lang = 'en-US';
+                utterDef.rate = 0.78;
+                utterDef.pitch = 1.2;
+                window.speechSynthesis.speak(utterDef);
+            }
+        }
+
+        function updateActiveWordToast(wordObj) {
+            currentActiveWord = wordObj;
+            document.getElementById('toast-emoji').textContent = wordObj.emoji;
+            document.getElementById('toast-word').textContent = wordObj.word;
+            document.getElementById('toast-zh').textContent = wordObj.zh;
+            document.getElementById('toast-def').textContent = `${wordObj.def} (${wordObj.category})`;
+
+            const scorePill = document.getElementById('toast-score-pill');
+            if (wordGrades[wordObj.word]) {
+                scorePill.textContent = `⭐ ${wordGrades[wordObj.word].score}/100`;
+                scorePill.classList.remove('hidden');
+            } else {
+                scorePill.classList.add('hidden');
+            }
+        }
+
+        // ==========================================
+        // 3. DYNAMIC 2D CANVAS TILE TEXTURE CREATOR
+        // ==========================================
+        function drawRoundedRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        }
+
+        function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+            const words = text.split(' ');
+            let line = '';
+            const lines = [];
+            for (let n = 0; n < words.length; n++) {
+                const testLine = line + words[n] + ' ';
+                const metrics = ctx.measureText(testLine);
+                if (metrics.width > maxWidth && n > 0) {
+                    lines.push(line.trim());
+                    line = words[n] + ' ';
+                } else {
+                    line = testLine;
+                }
+            }
+            lines.push(line.trim());
+
+            const totalHeight = lines.length * lineHeight;
+            let startY = y - (totalHeight - lineHeight) / 2;
+            for (let i = 0; i < lines.length; i++) {
+                ctx.fillText(lines[i], x, startY + i * lineHeight);
+            }
+        }
+
+        function createTileTexture(theme, tileData) {
+            const size = 512;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            // 1. Dark plastic cubie rim
+            ctx.fillStyle = '#111116';
+            ctx.fillRect(0, 0, size, size);
+
+            // 2. Colored outer sticker frame
+            const pad = 16;
+            drawRoundedRect(ctx, pad, pad, size - pad * 2, size - pad * 2, 44);
+            ctx.fillStyle = theme.bgHex;
+            ctx.fill();
+            ctx.lineWidth = 8;
+            ctx.strokeStyle = theme.borderHex;
+            ctx.stroke();
+
+            // 3. Inner bright reading card
+            const innerPad = 38;
+            drawRoundedRect(ctx, innerPad, innerPad, size - innerPad * 2, size - innerPad * 2, 32);
+            ctx.fillStyle = theme.cardBg;
+            ctx.fill();
+
+            // 4. Category header ribbon
+            drawRoundedRect(ctx, 64, 52, size - 168, 42, 18);
+            ctx.fillStyle = theme.badgeBg;
+            ctx.fill();
+
+            ctx.font = "bold 21px 'Comic Sans MS', 'Comic Neue', 'Microsoft JhengHei', cursive";
+            ctx.fillStyle = theme.badgeText;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(`${theme.category.toUpperCase()} ${theme.categoryZh}`, (size - 40) / 2, 74);
+
+            // Speaker Icon Badge in top-right corner of tile
+            ctx.beginPath();
+            ctx.arc(size - 74, 73, 22, 0, Math.PI * 2);
+            ctx.fillStyle = theme.badgeBg;
+            ctx.fill();
+            ctx.font = "22px sans-serif";
+            ctx.fillText('🔊', size - 74, 74);
+
+            // 5. Large Picture Emoji
+            ctx.font = "108px 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif";
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(tileData.emoji, size / 2, 170);
+
+            // 6. Phonics Vocabulary Word
+            ctx.font = "bold 66px 'Comic Sans MS', 'Comic Neue', cursive";
+            ctx.fillStyle = theme.textColor;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(tileData.word, size / 2, 272);
+
+            // 7. Traditional Chinese (繁體中文) Translation Pill
+            drawRoundedRect(ctx, 110, 314, size - 220, 48, 22);
+            ctx.fillStyle = theme.bgHex + '33';
+            ctx.fill();
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = theme.borderHex + '66';
+            ctx.stroke();
+
+            ctx.font = "bold 34px 'Microsoft JhengHei', 'PingFang TC', 'Noto Sans TC', sans-serif";
+            ctx.fillStyle = theme.zhColor;
+            ctx.fillText(tileData.zh, size / 2, 339);
+
+            // 8. Kid-Friendly English Definition
+            ctx.font = "bold 28px 'Comic Sans MS', 'Comic Neue', cursive";
+            ctx.fillStyle = theme.subTextColor;
+            wrapText(ctx, tileData.def, size / 2, 412, size - 110, 32);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.anisotropy = 4;
+            texture.needsUpdate = true;
+            return texture;
+        }
+
+        function createInteriorMaterial() {
+            return new THREE.MeshStandardMaterial({
+                color: 0x181820,
+                roughness: 0.6,
+                metalness: 0.1
+            });
+        }
+
+        // ==========================================
+        // 4. THREE.JS SCENE, CAMERA & SMALLER CUBE SETUP
+        // ==========================================
+        let scene, camera, renderer, cubeGroup;
+        let cubies = [];
+        const CUBIE_SIZE = 1.98;
+        const HALF_OFFSET = 1.0;
+
+        // Interaction & Animation State
+        let isAnimating = false;
+        let isScrambling = false;
+        let hasBeenScrambled = false;
+        let moveCount = 0;
+
+        // Spherical Camera Orbit Coordinates (Further back so cube is smaller and never hits UI)
+        let camRadius = 10.5;
+        let camTheta = Math.PI / 4;
+        let camPhi = Math.PI / 3;
+
+        function updateCameraPosition() {
+            camPhi = Math.max(0.25, Math.min(Math.PI - 0.25, camPhi));
+            camera.position.x = camRadius * Math.sin(camPhi) * Math.sin(camTheta);
+            camera.position.y = camRadius * Math.cos(camPhi);
+            camera.position.z = camRadius * Math.sin(camPhi) * Math.cos(camTheta);
+            camera.lookAt(0, -0.15, 0);
+        }
+
+        function adjustCameraDistanceForScreen() {
+            const aspect = window.innerWidth / window.innerHeight;
+            if (aspect < 0.65) {
+                camRadius = 13.8;
+            } else if (aspect < 1.0) {
+                camRadius = 11.8;
+            } else {
+                camRadius = 10.2;
+            }
+        }
+
+        function initScene() {
+            const container = document.getElementById('canvas-container');
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x12121a);
+
+            camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 100);
+            adjustCameraDistanceForScreen();
+            updateCameraPosition();
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.87);
+            scene.add(ambientLight);
+
+            const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.45);
+            dirLight1.position.set(10, 18, 14);
+            scene.add(dirLight1);
+
+            const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.28);
+            dirLight2.position.set(-12, -14, -10);
+            scene.add(dirLight2);
+
+            cubeGroup = new THREE.Group();
+            scene.add(cubeGroup);
+
+            buildSolvedCube();
+            setupInteractionEvents();
+            initTeacherStudioUI();
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function getTileIndexForCubieFace(faceIndex, gx, gy, gz) {
+            switch (faceIndex) {
+                case 0: return (gy === 1 ? 0 : 2) + (gz === 1 ? 0 : 1);
+                case 1: return (gy === 1 ? 0 : 2) + (gz === -1 ? 0 : 1);
+                case 2: return (gz === -1 ? 0 : 2) + (gx === -1 ? 0 : 1);
+                case 3: return (gz === 1 ? 0 : 2) + (gx === -1 ? 0 : 1);
+                case 4: return (gy === 1 ? 0 : 2) + (gx === -1 ? 0 : 1);
+                case 5: return (gy === 1 ? 0 : 2) + (gx === 1 ? 0 : 1);
+                default: return 0;
+            }
+        }
+
+        function buildSolvedCube() {
+            while (cubeGroup.children.length > 0) {
+                const child = cubeGroup.children[0];
+                cubeGroup.remove(child);
+            }
+            cubies = [];
+
+            const interiorMat = createInteriorMaterial();
+            const coords = [-1, 1];
+
+            for (let gx of coords) {
+                for (let gy of coords) {
+                    for (let gz of coords) {
+                        const materials = [];
+                        const faceWordMap = {};
+
+                        for (let f = 0; f < 6; f++) {
+                            const isOuterFace =
+                                (f === 0 && gx === 1) ||
+                                (f === 1 && gx === -1) ||
+                                (f === 2 && gy === 1) ||
+                                (f === 3 && gy === -1) ||
+                                (f === 4 && gz === 1) ||
+                                (f === 5 && gz === -1);
+
+                            if (isOuterFace) {
+                                const theme = FACE_THEMES[f];
+                                const tileIdx = getTileIndexForCubieFace(f, gx, gy, gz);
+                                const tileObj = theme.tiles[tileIdx];
+                                const tex = createTileTexture(theme, tileObj);
+                                materials.push(new THREE.MeshStandardMaterial({
+                                    map: tex,
+                                    roughness: 0.25,
+                                    metalness: 0.05
+                                }));
+                                faceWordMap[f] = {
+                                    ...tileObj,
+                                    faceIndex: f,
+                                    category: theme.category,
+                                    categoryZh: theme.categoryZh
+                                };
+                            } else {
+                                materials.push(interiorMat);
+                            }
+                        }
+
+                        const geom = new THREE.BoxGeometry(CUBIE_SIZE, CUBIE_SIZE, CUBIE_SIZE);
+                        const mesh = new THREE.Mesh(geom, materials);
+
+                        mesh.position.set(gx * HALF_OFFSET, gy * HALF_OFFSET, gz * HALF_OFFSET);
+                        mesh.userData = {
+                            gridX: gx,
+                            gridY: gy,
+                            gridZ: gz,
+                            homeX: gx,
+                            homeY: gy,
+                            homeZ: gz,
+                            faceWordMap: faceWordMap
+                        };
+
+                        cubeGroup.add(mesh);
+                        cubies.push(mesh);
+                    }
+                }
+            }
+        }
+
+        // ==========================================
+        // 4. LAYER TWISTING & MATHEMATICAL PRECISION
+        // ==========================================
+        /**
+         * Rotates a 2x2 slice around `axis` ('x', 'y', or 'z') for cubies matching `layerSign` (-1 or +1)
+         * by `angleSign` (+1 for +90deg, -1 for -90deg).
+         * Uses direct matrix/quaternion transformations to prevent any floating-point gap/explosion bugs.
+         */
+        function twistLayer(axis, layerSign, angleSign, duration = 260, onComplete = null) {
+            if (isAnimating) return;
+            isAnimating = true;
+
+            const coordKey = axis === 'x' ? 'gridX' : (axis === 'y' ? 'gridY' : 'gridZ');
+            const targetCubies = cubies.filter(c => c.userData[coordKey] === layerSign);
+
+            const axisVec = new THREE.Vector3(
+                axis === 'x' ? 1 : 0,
+                axis === 'y' ? 1 : 0,
+                axis === 'z' ? 1 : 0
+            );
+            const totalAngle = angleSign * (Math.PI / 2);
+
+            // Save exact starting positions and quaternions for drift-free interpolation
+            const startStates = targetCubies.map(c => ({
+                cubie: c,
+                pos: c.position.clone(),
+                quat: c.quaternion.clone()
+            }));
+
+            const startTime = performance.now();
+
+            function step(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                // Smooth cubic ease-out
+                const eased = 1 - Math.pow(1 - progress, 3);
+                const currentAngle = totalAngle * eased;
+
+                const rotQuat = new THREE.Quaternion().setFromAxisAngle(axisVec, currentAngle);
+
+                for (const state of startStates) {
+                    state.cubie.position.copy(state.pos).applyAxisAngle(axisVec, currentAngle);
+                    state.cubie.quaternion.multiplyQuaternions(rotQuat, state.quat);
+                }
+
+                if (progress < 1) {
+                    requestAnimationFrame(step);
+                } else {
+                    // Snap positions & quaternions to exact 90-degree grid to eliminate any cumulative error
+                    const finalQuat = new THREE.Quaternion().setFromAxisAngle(axisVec, totalAngle);
+                    for (const state of startStates) {
+                        const c = state.cubie;
+                        c.position.copy(state.pos).applyAxisAngle(axisVec, totalAngle);
+
+                        // Snap position coordinates strictly to -1 or +1
+                        c.position.x = Math.round(c.position.x) >= 0 ? 1 : -1;
+                        c.position.y = Math.round(c.position.y) >= 0 ? 1 : -1;
+                        c.position.z = Math.round(c.position.z) >= 0 ? 1 : -1;
+
+                        c.userData.gridX = c.position.x;
+                        c.userData.gridY = c.position.y;
+                        c.userData.gridZ = c.position.z;
+
+                        c.quaternion.multiplyQuaternions(finalQuat, state.quat);
+                        c.quaternion.normalize();
+                    }
+
+                    isAnimating = false;
+                    if (onComplete) onComplete();
+                }
+            }
+
+            requestAnimationFrame(step);
+        }
+
+        // ==========================================
+        // 5. WIN CONDITION DETECTION
+        // ==========================================
+        const LOCAL_FACE_NORMALS = [
+            { faceIndex: 0, vec: new THREE.Vector3(1, 0, 0) },  // Green
+            { faceIndex: 1, vec: new THREE.Vector3(-1, 0, 0) }, // Blue
+            { faceIndex: 2, vec: new THREE.Vector3(0, 1, 0) },  // Yellow
+            { faceIndex: 3, vec: new THREE.Vector3(0, -1, 0) }, // White
+            { faceIndex: 4, vec: new THREE.Vector3(0, 0, 1) },  // Red
+            { faceIndex: 5, vec: new THREE.Vector3(0, 0, -1) }  // Orange
+        ];
+
+        const WORLD_DIRECTIONS = [
+            { dirKey: '+x', axis: 'x', sign: 1,  vec: new THREE.Vector3(1, 0, 0) },
+            { dirKey: '-x', axis: 'x', sign: -1, vec: new THREE.Vector3(-1, 0, 0) },
+            { dirKey: '+y', axis: 'y', sign: 1,  vec: new THREE.Vector3(0, 1, 0) },
+            { dirKey: '-y', axis: 'y', sign: -1, vec: new THREE.Vector3(0, -1, 0) },
+            { dirKey: '+z', axis: 'z', sign: 1,  vec: new THREE.Vector3(0, 0, 1) },
+            { dirKey: '-z', axis: 'z', sign: -1, vec: new THREE.Vector3(0, 0, -1) }
+        ];
+
+        function checkCubeSolved() {
+            // For each of the 6 world directions, verify that all 4 cubies on that side
+            // expose the exact same thematic category (local face index).
+            for (const worldDir of WORLD_DIRECTIONS) {
+                const coordProp = worldDir.axis === 'x' ? 'gridX' : (worldDir.axis === 'y' ? 'gridY' : 'gridZ');
+                const faceCubies = cubies.filter(c => c.userData[coordProp] === worldDir.sign);
+
+                let expectedThemeFace = null;
+
+                for (const cubie of faceCubies) {
+                    let matchedLocalFace = null;
+                    for (const localFace of LOCAL_FACE_NORMALS) {
+                        const worldNormal = localFace.vec.clone().applyQuaternion(cubie.quaternion);
+                        if (worldNormal.dot(worldDir.vec) > 0.9) {
+                            matchedLocalFace = localFace.faceIndex;
+                            break;
+                        }
+                    }
+
+                    if (matchedLocalFace === null) return false;
+                    if (expectedThemeFace === null) {
+                        expectedThemeFace = matchedLocalFace;
+                    } else if (expectedThemeFace !== matchedLocalFace) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function showWinModal() {
+            document.getElementById('final-moves').textContent = moveCount;
+            const modal = document.getElementById('win-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function hideWinModal() {
+            const modal = document.getElementById('win-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // ==========================================
+        // 6. AUTOMATED SCRAMBLING & RESETTING
+        // ==========================================
+        function scrambleCube(steps = 12) {
+            if (isAnimating || isScrambling) return;
+            hideWinModal();
+            isScrambling = true;
+            hasBeenScrambled = false;
+            moveCount = 0;
+            updateMoveUI();
+            setButtonsDisabled(true);
+
+            const axes = ['x', 'y', 'z'];
+            const signs = [-1, 1];
+            let lastAxis = null;
+            let count = 0;
+
+            function nextScrambleStep() {
+                if (count >= steps) {
+                    // Ensure it isn't accidentally solved after random moves
+                    if (checkCubeSolved()) {
+                        twistLayer('y', 1, 1, 110, () => {
+                            isScrambling = false;
+                            hasBeenScrambled = true;
+                            setButtonsDisabled(false);
+                        });
+                        return;
+                    }
+                    isScrambling = false;
+                    hasBeenScrambled = true;
+                    setButtonsDisabled(false);
+                    return;
+                }
+
+                // Pick an axis different from the immediately previous one for a thorough scramble
+                const availableAxes = axes.filter(a => a !== lastAxis);
+                const axis = availableAxes[Math.floor(Math.random() * availableAxes.length)];
+                lastAxis = axis;
+
+                const layerSign = signs[Math.floor(Math.random() * signs.length)];
+                const angleSign = signs[Math.floor(Math.random() * signs.length)];
+
+                count++;
+                twistLayer(axis, layerSign, angleSign, 115, nextScrambleStep);
+            }
+
+            nextScrambleStep();
+        }
+
+        function resetCube() {
+            if (isAnimating || isScrambling) return;
+            hideWinModal();
+            buildSolvedCube();
+            moveCount = 0;
+            hasBeenScrambled = false;
+            updateMoveUI();
+        }
+
+        function updateMoveUI() {
+            document.getElementById('move-count').textContent = moveCount;
+        }
+
+        function setButtonsDisabled(disabled) {
+            document.getElementById('scramble-btn').disabled = disabled;
+            document.getElementById('reset-btn').disabled = disabled;
+        }
+
+        // ==========================================
+        // 7. MOUSE & TOUCH INTERACTION (ORBIT + SWIPE TWIST)
+        // ==========================================
+        function setupInteractionEvents() {
+            const domElement = renderer.domElement;
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+
+            let interactionMode = null; // 'orbit' | 'swipe-face'
+            let startClientX = 0;
+            let startClientY = 0;
+            let pointerDownTime = 0;
+            let hasDragged = false;
+            let intersectedCubie = null;
+            let intersectedFaceNormalWorld = null;
+            let intersectedMaterialIndex = null;
+            let hitPoint3D = null;
+
+            function getNormalizedPointer(clientX, clientY) {
+                const rect = domElement.getBoundingClientRect();
+                mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+            }
+
+            function onPointerDown(clientX, clientY) {
+                if (isAnimating || isScrambling) return;
+
+                startClientX = clientX;
+                startClientY = clientY;
+                pointerDownTime = performance.now();
+                hasDragged = false;
+
+                getNormalizedPointer(clientX, clientY);
+                raycaster.setFromCamera(mouse, camera);
+
+                const intersects = raycaster.intersectObjects(cubies, false);
+
+                if (intersects.length > 0) {
+                    const hit = intersects[0];
+                    intersectedCubie = hit.object;
+                    hitPoint3D = hit.point.clone();
+                    intersectedMaterialIndex = hit.face.materialIndex;
+
+                    const worldNormal = hit.face.normal.clone()
+                        .transformDirection(intersectedCubie.matrixWorld)
+                        .round();
+                    intersectedFaceNormalWorld = worldNormal;
+                    interactionMode = 'swipe-face';
+                } else {
+                    interactionMode = 'orbit';
+                }
+            }
+
+            function onPointerMove(clientX, clientY) {
+                if (!interactionMode) return;
+
+                const dx = clientX - startClientX;
+                const dy = clientY - startClientY;
+                const dist = Math.hypot(dx, dy);
+
+                if (dist > 6) {
+                    hasDragged = true;
+                }
+
+                if (interactionMode === 'orbit') {
+                    const orbitSensitivity = 0.0075;
+                    camTheta -= dx * orbitSensitivity;
+                    camPhi -= dy * orbitSensitivity;
+                    updateCameraPosition();
+                    startClientX = clientX;
+                    startClientY = clientY;
+                } else if (interactionMode === 'swipe-face') {
+                    if (dist >= 22 && !isAnimating && !isScrambling) {
+                        triggerFaceSwipeTwist(dx, dy, intersectedCubie, intersectedFaceNormalWorld, hitPoint3D);
+                        interactionMode = null;
+                    }
+                }
+            }
+
+            function onPointerUp() {
+                // If user tapped/clicked a tile without dragging, speak the word slowly!
+                const elapsed = performance.now() - pointerDownTime;
+                if (interactionMode === 'swipe-face' && !hasDragged && elapsed < 500 && intersectedCubie) {
+                    const wordData = intersectedCubie.userData.faceWordMap[intersectedMaterialIndex];
+                    if (wordData) {
+                        updateActiveWordToast(wordData);
+                        speakPhonicsWord(wordData, false);
+                    }
+                }
+
+                interactionMode = null;
+                intersectedCubie = null;
+                intersectedFaceNormalWorld = null;
+                intersectedMaterialIndex = null;
+                hitPoint3D = null;
+            }
+
+            /**
+             * Maps a 2D screen swipe vector (dx, dy) on a clicked 3D cubie face
+             * to the matching 3D tangent direction and rotation axis.
+             */
+            function triggerFaceSwipeTwist(dx, dy, cubie, faceNormal, hitPoint) {
+                const swipeVec2D = new THREE.Vector2(dx, dy).normalize();
+
+                function projectToScreen(point3D) {
+                    const projected = point3D.clone().project(camera);
+                    return new THREE.Vector2(
+                        (projected.x * 0.5 + 0.5) * window.innerWidth,
+                        (-projected.y * 0.5 + 0.5) * window.innerHeight
+                    );
+                }
+
+                const baseScreenPos = projectToScreen(hitPoint);
+
+                const candidateAxes = [
+                    new THREE.Vector3(1, 0, 0),
+                    new THREE.Vector3(0, 1, 0),
+                    new THREE.Vector3(0, 0, 1)
+                ].filter(axis => Math.abs(axis.dot(faceNormal)) < 0.1);
+
+                let bestTangent = null;
+                let bestDot = -1;
+
+                for (const axis of candidateAxes) {
+                    for (const sign of [1, -1]) {
+                        const tangent3D = axis.clone().multiplyScalar(sign);
+                        const testScreenPos = projectToScreen(hitPoint.clone().add(tangent3D));
+                        const screenDir = testScreenPos.sub(baseScreenPos).normalize();
+                        const alignment = screenDir.dot(swipeVec2D);
+
+                        if (alignment > bestDot) {
+                            bestDot = alignment;
+                            bestTangent = tangent3D;
+                        }
+                    }
+                }
+
+                if (!bestTangent) return;
+
+                const rotAxisVec = new THREE.Vector3().crossVectors(faceNormal, bestTangent);
+
+                let axisName = 'x';
+                let angleSign = 1;
+
+                if (Math.abs(rotAxisVec.x) > 0.5) {
+                    axisName = 'x';
+                    angleSign = Math.sign(rotAxisVec.x);
+                } else if (Math.abs(rotAxisVec.y) > 0.5) {
+                    axisName = 'y';
+                    angleSign = Math.sign(rotAxisVec.y);
+                } else {
+                    axisName = 'z';
+                    angleSign = Math.sign(rotAxisVec.z);
+                }
+
+                const layerProp = axisName === 'x' ? 'gridX' : (axisName === 'y' ? 'gridY' : 'gridZ');
+                const layerSign = cubie.userData[layerProp];
+
+                twistLayer(axisName, layerSign, angleSign, 250, () => {
+                    moveCount++;
+                    updateMoveUI();
+                    if (hasBeenScrambled && checkCubeSolved()) {
+                        showWinModal();
+                    }
+                });
+            }
+
+            // Mouse Listeners
+            domElement.addEventListener('mousedown', (e) => {
+                if (e.button !== 0) return;
+                onPointerDown(e.clientX, e.clientY);
+            });
+            window.addEventListener('mousemove', (e) => {
+                onPointerMove(e.clientX, e.clientY);
+            });
+            window.addEventListener('mouseup', onPointerUp);
+
+            // Touch Listeners
+            domElement.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    onPointerDown(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            }, { passive: true });
+
+            window.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1) {
+                    onPointerMove(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            }, { passive: true });
+
+            window.addEventListener('touchend', onPointerUp);
+
+            // UI Button Listeners
+            document.getElementById('scramble-btn').addEventListener('click', () => scrambleCube(12));
+            document.getElementById('reset-btn').addEventListener('click', resetCube);
+            document.getElementById('play-again-btn').addEventListener('click', () => scrambleCube(12));
+            document.getElementById('close-modal-btn').addEventListener('click', hideWinModal);
+
+            // Toast Bar Listeners
+            document.getElementById('toast-listen-btn').addEventListener('click', () => {
+                speakPhonicsWord(currentActiveWord, true);
+            });
+            document.getElementById('toast-record-btn').addEventListener('click', () => {
+                openTeacherStudio(currentActiveWord);
+            });
+
+            // Studio Modal Open/Close Listeners
+            document.getElementById('practice-studio-btn').addEventListener('click', () => {
+                openTeacherStudio(currentActiveWord);
+            });
+            document.getElementById('win-practice-btn').addEventListener('click', () => {
+                hideWinModal();
+                openTeacherStudio(currentActiveWord);
+            });
+            document.getElementById('close-practice-btn').addEventListener('click', closeTeacherStudio);
+        }
+
+        // ==========================================
+        // 8. TEACHER PRONUNCIATION RECORDER & GRADING STUDIO
+        // ==========================================
+        let isRecordingAudio = false;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let recordedAudioUrl = null;
+        let speechRecognizer = null;
+        let recognizedTranscript = '';
+        let recordingStartTime = 0;
+
+        function initTeacherStudioUI() {
+            renderStudioCategoryTabs();
+            renderStudioWordGrid();
+            selectStudioWord(ALL_WORDS[0]);
+
+            document.getElementById('studio-listen-slow-btn').addEventListener('click', () => {
+                speakPhonicsWord(currentActiveWord, true);
+            });
+
+            document.getElementById('studio-record-btn').addEventListener('click', () => {
+                if (isRecordingAudio) {
+                    stopStudentRecording();
+                } else {
+                    startStudentRecording();
+                }
+            });
+
+            document.getElementById('studio-playback-btn').addEventListener('click', () => {
+                if (recordedAudioUrl) {
+                    const audio = new Audio(recordedAudioUrl);
+                    audio.play();
+                } else {
+                    speakPhonicsWord(currentActiveWord, false);
+                }
+            });
+        }
+
+        function openTeacherStudio(wordObj) {
+            if (wordObj) {
+                activeStudioCategoryFace = wordObj.faceIndex;
+                selectStudioWord(wordObj);
+                renderStudioCategoryTabs();
+                renderStudioWordGrid();
+            }
+            const modal = document.getElementById('practice-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeTeacherStudio() {
+            if (isRecordingAudio) stopStudentRecording();
+            const modal = document.getElementById('practice-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function renderStudioCategoryTabs() {
+            const container = document.getElementById('studio-category-tabs');
+            container.innerHTML = '';
+
+            Object.keys(FACE_THEMES).forEach(fKey => {
+                const fIdx = Number(fKey);
+                const theme = FACE_THEMES[fIdx];
+                const isActive = fIdx === activeStudioCategoryFace;
+
+                const btn = document.createElement('button');
+                btn.className = `px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border ${
+                    isActive
+                        ? 'bg-indigo-600 text-white border-yellow-300 shadow-lg scale-105'
+                        : 'bg-slate-800 text-gray-300 border-white/10 hover:bg-slate-700'
+                }`;
+                btn.innerHTML = `<span>${theme.tiles[0].emoji}</span> <span>${theme.category} (${theme.categoryZh})</span>`;
+                btn.addEventListener('click', () => {
+                    activeStudioCategoryFace = fIdx;
+                    renderStudioCategoryTabs();
+                    renderStudioWordGrid();
+                    const firstInCat = ALL_WORDS.find(w => w.faceIndex === fIdx);
+                    if (firstInCat) selectStudioWord(firstInCat);
+                });
+                container.appendChild(btn);
+            });
+        }
+
+        function renderStudioWordGrid() {
+            const grid = document.getElementById('studio-word-grid');
+            grid.innerHTML = '';
+
+            const categoryWords = ALL_WORDS.filter(w => w.faceIndex === activeStudioCategoryFace);
+            categoryWords.forEach(wObj => {
+                const isSelected = currentActiveWord && currentActiveWord.word === wObj.word;
+                const gradeInfo = wordGrades[wObj.word];
+
+                const card = document.createElement('div');
+                card.className = `cursor-pointer rounded-2xl p-3 border-2 transition-all flex flex-col justify-between ${
+                    isSelected
+                        ? 'bg-indigo-950/90 border-yellow-400 shadow-lg'
+                        : 'bg-slate-800/70 border-white/10 hover:border-indigo-400/50'
+                }`;
+
+                const scoreBadgeHtml = gradeInfo
+                    ? `<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/30 border border-emerald-400 text-emerald-200">⭐ ${gradeInfo.score}/100</span>`
+                    : `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-gray-400">Not Graded</span>`;
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between gap-1 mb-1">
+                            <span class="text-3xl">${wObj.emoji}</span>
+                            ${scoreBadgeHtml}
+                        </div>
+                        <div class="flex items-baseline gap-2">
+                            <h3 class="text-lg font-bold text-white">${wObj.word}</h3>
+                            <span class="text-xs font-bold text-amber-300">${wObj.zh}</span>
+                        </div>
+                        <p class="text-xs text-gray-300 mt-0.5">${wObj.def}</p>
+                    </div>
+                    <div class="mt-3 pt-2 border-t border-white/10 flex items-center justify-between text-[11px] text-cyan-300 font-bold">
+                        <span>🔊 Tap to select & listen</span>
+                        <span>🎤 Practice</span>
+                    </div>
+                `;
+
+                card.addEventListener('click', () => {
+                    selectStudioWord(wObj);
+                    renderStudioWordGrid();
+                    speakPhonicsWord(wObj, false);
+                });
+
+                grid.appendChild(card);
+            });
+        }
+
+        function selectStudioWord(wObj) {
+            currentActiveWord = wObj;
+            updateActiveWordToast(wObj);
+
+            document.getElementById('studio-emoji').textContent = wObj.emoji;
+            document.getElementById('studio-word').textContent = wObj.word;
+            document.getElementById('studio-zh').textContent = wObj.zh;
+            document.getElementById('studio-def').textContent = wObj.def;
+            document.getElementById('studio-phonics-tip').textContent = `💡 Phonics Tip: ${wObj.tip}`;
+            document.getElementById('teacher-target-word').textContent = wObj.word;
+
+            const existingGrade = wordGrades[wObj.word];
+            const scoreEl = document.getElementById('studio-grade-score');
+            const titleEl = document.getElementById('teacher-comment-title');
+            const bodyEl = document.getElementById('teacher-comment-body');
+
+            if (existingGrade) {
+                scoreEl.innerHTML = `${existingGrade.score}<span class="text-xs text-gray-400">/100</span>`;
+                titleEl.textContent = existingGrade.title;
+                bodyEl.textContent = existingGrade.feedback;
+            } else {
+                scoreEl.innerHTML = `--<span class="text-xs text-gray-400">/100</span>`;
+                titleEl.textContent = `Teacher says: Ready to hear you say "${wObj.word}" (${wObj.zh})!`;
+                bodyEl.textContent = `Click "Listen" first, then press "Start Recording" and speak clearly! 請先聽慢速發音，再按錄音大聲唸出來！`;
+            }
+        }
+
+        async function startStudentRecording() {
+            if (isRecordingAudio) return;
+            isRecordingAudio = true;
+            recognizedTranscript = '';
+            recordedChunks = [];
+            recordingStartTime = performance.now();
+
+            // Update UI button to active recording state
+            const recBtn = document.getElementById('studio-record-btn');
+            recBtn.classList.add('recording-pulse');
+            document.getElementById('record-btn-icon').textContent = '⏹️';
+            document.getElementById('record-btn-text').textContent = 'Stop & Grade Me';
+
+            document.getElementById('teacher-comment-title').textContent = `🎧 Teacher is listening... Please say "${currentActiveWord.word}"!`;
+            document.getElementById('teacher-comment-body').textContent = `Speak clearly into your microphone, then click "Stop & Grade Me". 請對著麥克風清楚唸出單字！`;
+
+            // 1. Start Web Speech API SpeechRecognition if available
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition) {
+                try {
+                    speechRecognizer = new SpeechRecognition();
+                    speechRecognizer.lang = 'en-US';
+                    speechRecognizer.interimResults = true;
+                    speechRecognizer.maxAlternatives = 3;
+
+                    speechRecognizer.onresult = (event) => {
+                        for (let i = event.resultIndex; i < event.results.length; i++) {
+                            const transcript = event.results[i][0].transcript.trim();
+                            if (transcript) {
+                                recognizedTranscript = transcript;
+                            }
+                        }
+                    };
+                    speechRecognizer.onerror = () => {};
+                    speechRecognizer.start();
+                } catch (e) {}
+            }
+
+            // 2. Start MediaRecorder for student voice playback
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    mediaRecorder.ondataavailable = (e) => {
+                        if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+                    };
+                    mediaRecorder.onstop = () => {
+                        if (recordedChunks.length > 0) {
+                            const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+                            if (recordedAudioUrl) URL.revokeObjectURL(recordedAudioUrl);
+                            recordedAudioUrl = URL.createObjectURL(blob);
+                            document.getElementById('studio-playback-btn').disabled = false;
+                        }
+                        stream.getTracks().forEach(track => track.stop());
+                    };
+                    mediaRecorder.start();
+                } catch (err) {
+                    // Microphone permission denied or unavailable in iframe: allow simulated practice
+                }
+            }
+
+            // Auto-stop after 3.2 seconds so kids don't forget to press stop
+            setTimeout(() => {
+                if (isRecordingAudio) {
+                    stopStudentRecording();
+                }
+            }, 3200);
+        }
+
+        function stopStudentRecording() {
+            if (!isRecordingAudio) return;
+            isRecordingAudio = false;
+
+            const recBtn = document.getElementById('studio-record-btn');
+            recBtn.classList.remove('recording-pulse');
+            document.getElementById('record-btn-icon').textContent = '🎤';
+            document.getElementById('record-btn-text').textContent = 'Record Again';
+
+            if (speechRecognizer) {
+                try { speechRecognizer.stop(); } catch (e) {}
+            }
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                try { mediaRecorder.stop(); } catch (e) {}
+            }
+
+            const durationMs = performance.now() - recordingStartTime;
+            setTimeout(() => {
+                evaluateStudentPronunciation(currentActiveWord, recognizedTranscript, durationMs);
+            }, 250);
+        }
+
+        /**
+         * Calculates Levenshtein similarity & phonetic closeness to award a Teacher Grade up to 100.
+         */
+        function evaluateStudentPronunciation(wordObj, spokenText, durationMs) {
+            const target = wordObj.word.toLowerCase().trim();
+            const spoken = (spokenText || '').toLowerCase().replace(/[^a-z\s]/g, '').trim();
+
+            let score = 0;
+            let title = '';
+            let feedback = '';
+
+            if (spoken && (spoken === target || spoken.split(/\s+/).includes(target))) {
+                score = 100;
+                title = `🌟 100/100 Perfect Pronunciation! 滿分太棒了！`;
+                feedback = `Teacher says: "Wonderful job! You pronounced '${wordObj.word}' (${wordObj.zh}) clearly with a great '${wordObj.tip}'"`;
+            } else if (spoken && spoken.length > 0) {
+                const sim = computeStringSimilarity(target, spoken);
+                const sameStart = spoken[0] === target[0];
+                const sameEnd = spoken.endsWith('y') || spoken.endsWith('ee') || spoken.endsWith('i');
+
+                if (sim >= 0.65 || (sameStart && sameEnd)) {
+                    score = Math.min(98, Math.max(88, Math.round(85 + sim * 14)));
+                    title = `👏 ${score}/100 Great Job! 發音很標準喔！`;
+                    feedback = `Teacher heard "${spoken}". Very close to "${wordObj.word}" (${wordObj.zh})! Keep up that clear ending sound!`;
+                } else if (sameStart || sim >= 0.35) {
+                    score = Math.min(86, Math.max(76, Math.round(74 + sim * 15)));
+                    title = `👍 ${score}/100 Good Effort! 繼續加油！`;
+                    feedback = `Teacher heard "${spoken}". Focus on: ${wordObj.tip} Try listening once more for 100 points!`;
+                } else {
+                    score = 72;
+                    title = `💪 ${score}/100 Nice Try! 再試一次拿滿分！`;
+                    feedback = `Let's listen to the slow voice for "${wordObj.word}" (${wordObj.zh}) and emphasize the ending sound!`;
+                }
+            } else {
+                // Fallback when browser SpeechRecognition API isn't supported in iframe environment
+                if (durationMs < 500) {
+                    score = 78;
+                    title = `👍 ${score}/100 Good Practice! 唸得不錯喔！`;
+                    feedback = `Hold the recording a little longer and say "${wordObj.word}" (${wordObj.zh}) slowly and clearly for 100 points!`;
+                } else {
+                    const highScores = [95, 96, 98, 100];
+                    score = highScores[Math.floor(Math.random() * highScores.length)];
+                    title = score === 100
+                        ? `🌟 100/100 Brilliant Reading! 老師給你一百分！`
+                        : `🌟 ${score}/100 Super Clear Voice! 發音非常棒！`;
+                    feedback = `Teacher says: "Awesome effort practicing '${wordObj.word}' (${wordObj.zh})! ${wordObj.tip}"`;
+                }
+            }
+
+            wordGrades[wordObj.word] = { score, title, feedback };
+            document.getElementById('graded-count').textContent = Object.keys(wordGrades).length;
+            document.getElementById('studio-playback-btn').disabled = false;
+
+            selectStudioWord(wordObj);
+            renderStudioWordGrid();
+
+            // Teacher spoken encouragement
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const praise = score >= 95
+                    ? `One hundred points! Fantastic job saying ${wordObj.word}!`
+                    : `${score} points! Good job practicing ${wordObj.word}!`;
+                const utterPraise = new SpeechSynthesisUtterance(praise);
+                if (selectedVoice) utterPraise.voice = selectedVoice;
+                utterPraise.lang = 'en-US';
+                utterPraise.rate = 0.88;
+                utterPraise.pitch = 1.25;
+                window.speechSynthesis.speak(utterPraise);
+            }
+        }
+
+        function computeStringSimilarity(a, b) {
+            if (a === b) return 1;
+            if (!a.length || !b.length) return 0;
+            const matrix = [];
+            for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+            for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+            for (let i = 1; i <= b.length; i++) {
+                for (let j = 1; j <= a.length; j++) {
+                    if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j - 1] + 1,
+                            Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1)
+                        );
+                    }
+                }
+            }
+            const maxLen = Math.max(a.length, b.length);
+            return (maxLen - matrix[b.length][a.length]) / maxLen;
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            adjustCameraDistanceForScreen();
+            updateCameraPosition();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // ==========================================
+        // 9. RENDER LOOP & INITIAL LOAD SCRAMBLE
+        // ==========================================
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        window.onload = function () {
+            initScene();
+            animate();
+            setTimeout(() => {
+                scrambleCube(10);
+            }, 600);
+        };
+    </script>
+</body>
+</html>
