@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChungShan Market</title>
+<style>
+  * {
+    box-sizing: border-box;
+    font-family: 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif;
+    user-select: none;
+  }
+  body {
+    margin: 0;
+    padding: 0;
+    background: url('background_market.jpg') no-repeat center center fixed;
+    background-size: cover;
+    background-color: #fffae6;
+    overflow-x: hidden;
+  }
+  /* Floating BGM Music Control Button */
+  #bgm-toggle-btn {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    z-index: 9999;
+    padding: 10px 18px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #fff;
+    background: #ff3366;
+    border: 3px solid #fff;
+    border-radius: 25px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  }
+  .screen {
+    display: none;
+    min-height: 100vh;
+    width: 100vw;
+    padding: 20px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.82);
+  }
+  .active {
+    display: flex;
+  }
+  /* Screen 1: Blank cover with Start Shopping button */
+  #screen-cover {
+    background: url('coverphoto_market.jpg') no-repeat center center;
+    background-size: cover;
+    background-color: #ffd166;
+    justify-content: flex-end;
+    padding-bottom: 60px;
+  }
+  /* Animated Colorful Title */
+  .animated-title {
+    font-size: 3.5rem;
+    font-weight: bold;
+    text-align: center;
+    background: linear-gradient(90deg, #ff3366, #ff9933, #33cc66, #3399ff, #9933ff);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: rainbow 4s ease infinite, bounce 2s infinite;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.15);
+    margin: 5px 0 15px 0;
+  }
+  @keyframes rainbow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  /* Rolling slot effect */
+  .rolling-box {
+    display: inline-block;
+    padding: 15px 35px;
+    border: 5px solid #ff9933;
+    border-radius: 25px;
+    background: #fff9e6;
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.15);
+    margin: 15px 0;
+    min-width: 280px;
+    transition: transform 0.1s;
+  }
+  .rolling-active {
+    animation: shake 0.15s infinite;
+    border-color: #ff3366;
+    background: #ffe6f0;
+  }
+  @keyframes shake {
+    0% { transform: translateY(-4px) scale(1.03); }
+    50% { transform: translateY(4px) scale(0.98); }
+    100% { transform: translateY(-4px) scale(1.03); }
+  }
+  .btn {
+    padding: 14px 32px;
+    font-size: 1.7rem;
+    font-weight: bold;
+    color: #fff;
+    background: linear-gradient(180deg, #ff7eb3, #ff4d88);
+    border: 4px solid #fff;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+    transition: transform 0.2s, background 0.2s;
+    margin: 10px;
+  }
+  .btn:hover:not(:disabled) {
+    transform: scale(1.07);
+    background: linear-gradient(180deg, #ff4d88, #e6005c);
+  }
+  .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .btn-green {
+    background: linear-gradient(180deg, #4cd964, #2ac845);
+  }
+  .btn-blue {
+    background: linear-gradient(180deg, #5ac8fa, #007aff);
+  }
+  .btn-orange {
+    background: linear-gradient(180deg, #ffb347, #ff8c00);
+  }
+  .card-box {
+    background: #fff;
+    border: 5px dashed #ff9933;
+    border-radius: 25px;
+    padding: 25px;
+    max-width: 1000px;
+    width: 95%;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  }
+  input[type="text"] {
+    font-size: 1.5rem;
+    padding: 10px 15px;
+    border-radius: 15px;
+    border: 3px solid #3399ff;
+    margin: 8px;
+    text-align: center;
+    width: 240px;
+  }
+  /* 15 Mystery Carts Grid */
+  .carts-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 15px;
+    width: 100%;
+    padding: 10px;
+  }
+  @media (max-width: 768px) {
+    .carts-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  .cart-item {
+    background: #fff9e6;
+    border: 4px solid #ffcc00;
+    border-radius: 20px;
+    padding: 15px 10px;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .cart-item:hover {
+    transform: scale(1.08);
+    border-color: #ff3366;
+    background: #ffe6f0;
+  }
+  .cart-item img.cart-pic {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+  }
+  /* Full-Screen Money Reveal */
+  .money-showcase {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 18px;
+    margin: 25px 0;
+    padding: 20px;
+    background: #f0fff4;
+    border: 4px solid #2ac845;
+    border-radius: 20px;
+    min-height: 180px;
+  }
+  .money-showcase img {
+    height: 120px;
+    max-width: 240px;
+    object-fit: contain;
+    border: 3px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    background: #fff;
+    padding: 4px;
+    animation: popIn 0.4s ease;
+  }
+  @keyframes popIn {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  /* Market Layout */
+  .market-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    width: 98%;
+    max-width: 1350px;
+    justify-content: center;
+    align-items: flex-start;
+  }
+  .items-grid {
+    flex: 1.8;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    min-width: 340px;
+  }
+  .shop-item {
+    background: #fff;
+    border: 4px solid #33cc66;
+    border-radius: 20px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+  }
+  .shop-item img {
+    width: 185px;
+    height: 185px;
+    object-fit: cover;
+    border-radius: 15px;
+    border: 3px solid #eee;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .shop-item img:hover {
+    transform: scale(1.06);
+    border-color: #ff9933;
+  }
+  .qty-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 10px;
+  }
+  .qty-btn {
+    width: 50px;
+    height: 50px;
+    font-size: 1.9rem;
+    font-weight: bold;
+    border-radius: 50%;
+    border: none;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  }
+  .qty-btn:active { transform: scale(0.92); }
+  .qty-minus { background: #ff4d4d; }
+  .qty-plus { background: #33cc66; }
+
+  /* Side Auto-Computation & Calculator */
+  .calc-sidebar {
+    flex: 1.2;
+    min-width: 340px;
+    background: #fff;
+    border: 5px solid #3399ff;
+    border-radius: 25px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+  }
+  .live-computation-box {
+    background: #fff9e6;
+    border: 3px dashed #ff9933;
+    border-radius: 15px;
+    padding: 12px;
+    text-align: left;
+    margin-bottom: 15px;
+    font-size: 1.15rem;
+  }
+  .computation-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid #ffe0b3;
+  }
+  .calc-display {
+    width: 100%;
+    min-height: 58px;
+    background: #1e293b;
+    color: #4ade80;
+    border: 3px solid #3399ff;
+    border-radius: 12px;
+    font-size: 1.45rem;
+    font-family: monospace, sans-serif;
+    font-weight: bold;
+    text-align: right;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    word-break: break-all;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  .calc-keys {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .calc-key {
+    padding: 10px;
+    font-size: 1.3rem;
+    font-weight: bold;
+    background: #f0f4f8;
+    border: 2px solid #cbd5e1;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  .calc-key:hover { background: #e2e8f0; }
+
+  /* On-Screen Keyboard */
+  .keyboard {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    max-width: 650px;
+    margin: 15px auto;
+  }
+  .key-btn {
+    padding: 10px 16px;
+    font-size: 1.3rem;
+    font-weight: bold;
+    background: #ffeb99;
+    border: 2px solid #ff9900;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  .key-btn:hover { background: #ffd633; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    font-size: 1.4rem;
+  }
+  th, td {
+    border: 2px solid #ff9933;
+    padding: 10px;
+    text-align: center;
+  }
+  th { background: #ffcc66; }
+</style>
+</head>
+<body>
+
+<!-- BGM Audio Element -->
+<audio id="bgm-audio" src="pxmart.mp3" loop preload="auto"></audio>
+
+<!-- Floating BGM Toggle Button -->
+<button id="bgm-toggle-btn" onclick="toggleBgm()">🎵 BGM: OFF</button>
+
+<!-- SCREEN 1: BLANK COVER WITH START BUTTON -->
+<div id="screen-cover" class="screen active">
+  <button class="btn" onclick="startGame()">Start Shopping</button>
+</div>
+
+<!-- SCREEN 2: RANDOM SELLER WITH ROLLING EFFECT -->
+<div id="screen-seller" class="screen">
+  <div id="seller-header" class="animated-title">Welcome to ChungShan Market!</div>
+  <div class="card-box">
+    <h2 style="color:#ff3366; margin-top:0;">Enter the Sellers' Names:</h2>
+    <div>
+      <label style="font-size:1.3rem; font-weight:bold;">Seller 1 (Fruit & Eggs):</label>
+      <input type="text" id="seller1-input" value="Cristine">
+    </div>
+    <div>
+      <label style="font-size:1.3rem; font-weight:bold;">Seller 2 (Snacks & Burgers):</label>
+      <input type="text" id="seller2-input" value="Erica">
+    </div>
+
+    <div id="seller-roller-box" class="rolling-box" style="font-size:2.4rem; font-weight:bold; color:#ff3366;">
+      ❓ Who is the seller? ❓
+    </div>
+    <br>
+    <button id="btn-spin-seller" class="btn btn-blue" onclick="pickRandomSeller()">🎲 Spin Seller Randomizer!</button>
+
+    <div id="chosen-seller-box" style="display:none; margin-top:10px;">
+      <button class="btn btn-green" onclick="goToScreen('screen-cart')">Choose A Shopping Cart 🛒</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 3: CHOOSE ONE OF 15 MYSTERY SHOPPING CARTS (AMOUNTS HIDDEN) -->
+<div id="screen-cart" class="screen">
+  <div class="animated-title market-title-banner">Market</div>
+  <div class="card-box">
+    <h2 style="color:#ff3366; margin-top:0;">Pick a Mystery Shopping Cart! (1 - 15)</h2>
+    <p style="font-size:1.3rem; color:#555; margin-top:-10px;">Click any cart to reveal your budget!</p>
+    <div id="carts-grid" class="carts-grid"></div>
+  </div>
+</div>
+
+<!-- SCREEN 4: WHOLE SCREEN FOR SELECTED CART MONEY PICTURES -->
+<div id="screen-cart-reveal" class="screen">
+  <div class="animated-title market-title-banner">Market</div>
+  <div class="card-box">
+    <h2 id="reveal-cart-title" style="font-size:2.6rem; color:#ff3366; margin:5px 0;">Shopping Cart</h2>
+    <h1 id="reveal-cart-num" style="font-size:3.4rem; color:#2ac845; margin:5px 0;">NT$ 0</h1>
+    <h3 id="reveal-cart-word" style="font-size:1.9rem; color:#3399ff; margin:5px 0;">(Zero NT Dollars)</h3>
+
+    <!-- Large Money Photos Container -->
+    <div id="reveal-money-imgs" class="money-showcase"></div>
+
+    <div>
+      <button class="btn btn-orange" onclick="goToScreen('screen-cart')">🔙 Pick Another Cart</button>
+      <button class="btn btn-green" onclick="goToScreen('screen-subject')">Choose the Subject 🎲</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 5: CHOOSE THE SUBJECT WITH ROLLING EFFECT -->
+<div id="screen-subject" class="screen">
+  <div class="animated-title market-title-banner">Market</div>
+  <div class="card-box">
+    <h2 style="color:#3399ff; font-size:2.2rem; margin-top:0;">Sentence Pattern Subject</h2>
+    <div id="subject-roller-box" class="rolling-box" style="font-size:4.5rem; font-weight:bold; color:#ff3366;">
+      ?
+    </div>
+    <br>
+    <button id="btn-spin-subject" class="btn btn-blue" onclick="pickRandomSubject()">🎲 Spin Subject (I, We, They)</button>
+    <div id="go-market-btn-wrap" style="display:none; margin-top:15px;">
+      <p id="sentence-preview" style="font-size:1.8rem; font-weight:bold; color:#2ac845; margin:10px 0;"></p>
+      <button class="btn btn-green" onclick="setupMarketScreen()">Go to the Market 🏪</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 6: THE MARKET + AUTOMATIC SIDE COMPUTATION & CALCULATOR -->
+<div id="screen-market" class="screen">
+  <div class="animated-title market-title-banner">Market</div>
+  <div style="font-size:1.6rem; font-weight:bold; background:#fff; padding:10px 28px; border-radius:30px; border:4px solid #ff9933; margin-bottom:15px;">
+    Subject: <span id="market-subject-label" style="color:#ff3366;"></span> &nbsp;|&nbsp;
+    Budget: <span id="market-budget-label" style="color:#2ac845;"></span>
+  </div>
+  <div class="market-container">
+    <!-- Market Items -->
+    <div id="market-items-grid" class="items-grid"></div>
+
+    <!-- Side Auto-Computation & Calculator -->
+    <div class="calc-sidebar">
+      <h2 style="margin:0 0 10px 0; color:#ff3366;">🧮 Live Computation</h2>
+
+      <!-- Auto Computation Screen -->
+      <div id="calc-screen" class="calc-display">Click an item to buy!</div>
+
+      <!-- Detailed Step-by-Step Receipt Breakdown -->
+      <div class="live-computation-box">
+        <div style="font-weight:bold; color:#3399ff; margin-bottom:6px; font-size:1.25rem;">📋 Sentence Pattern Breakdown:</div>
+        <div id="live-breakdown-list" style="min-height:70px; color:#333;">
+          No items clicked yet.
+        </div>
+        <hr style="border:1px solid #ffcc66; margin:10px 0;">
+        <div style="font-size:1.25rem;"><strong>Starting Budget:</strong> NT$ <span id="auto-budget">0</span></div>
+        <div style="font-size:1.25rem; color:#e6005c;"><strong>Total Spent (-):</strong> NT$ <span id="auto-spent">0</span></div>
+        <div style="font-size:1.45rem; color:#2ac845; font-weight:bold; margin-top:4px;">
+          <strong>Money Left (=):</strong> NT$ <span id="auto-left">0</span>
+        </div>
+        <div id="auto-equation" style="margin-top:6px; font-weight:bold; color:#ff6600; background:#fff; padding:6px; border-radius:8px; text-align:center;">
+          NT$ 0 - NT$ 0 = NT$ 0
+        </div>
+      </div>
+
+      <!-- Manual Calculator Pad for extra student practice -->
+      <div class="calc-keys">
+        <button class="calc-key" onclick="calcInput('7')">7</button>
+        <button class="calc-key" onclick="calcInput('8')">8</button>
+        <button class="calc-key" onclick="calcInput('9')">9</button>
+        <button class="calc-key" onclick="calcInput('+')">+</button>
+        <button class="calc-key" onclick="calcInput('4')">4</button>
+        <button class="calc-key" onclick="calcInput('5')">5</button>
+        <button class="calc-key" onclick="calcInput('6')">6</button>
+        <button class="calc-key" onclick="calcInput('-')">-</button>
+        <button class="calc-key" onclick="calcInput('1')">1</button>
+        <button class="calc-key" onclick="calcInput('2')">2</button>
+        <button class="calc-key" onclick="calcInput('3')">3</button>
+        <button class="calc-key" onclick="calcClear()">C</button>
+        <button class="calc-key" onclick="calcInput('0')" style="grid-column: span 2;">0</button>
+        <button class="calc-key" onclick="calcResult()" style="grid-column: span 2; background:#4cd964; color:#fff;">=</button>
+      </div>
+    </div>
+  </div>
+  <button class="btn btn-green" onclick="showCartSummary()">Show the Cart 🛍️</button>
+</div>
+
+<!-- SCREEN 7: SHOW THE CART, REMAINING MONEY & LEADERBOARD -->
+<div id="screen-checkout" class="screen">
+  <div class="animated-title market-title-banner">Market</div>
+  <div class="card-box">
+    <h2 style="color:#ff3366; margin-top:0;">🛒 Your Shopping Cart Summary</h2>
+    <div id="order-summary-list" style="font-size:1.5rem; margin:10px 0;"></div>
+    <h3 id="summary-money-left" style="font-size:2.2rem; color:#2ac845; margin:10px 0;"></h3>
+
+    <div id="name-entry-section">
+      <h3 style="color:#3399ff;">Type Your Name for the Leaderboard:</h3>
+      <input type="text" id="player-name-input" readonly placeholder="Use keyboard below">
+      <div id="onscreen-keyboard" class="keyboard"></div>
+      <button class="btn btn-green" onclick="saveToLeaderboard()">Save Score 🏆</button>
+    </div>
+
+    <div id="leaderboard-section" style="margin-top:20px;">
+      <h2 style="color:#ff9900;">🏆 Leaderboard (Highest Money Remaining)</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Student Name</th>
+            <th>Market</th>
+            <th>Money Remaining</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboard-body"></tbody>
+      </table>
+      <button class="btn btn-blue" onclick="playAgain()">Play Again 🔄</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // --- SOUND EFFECTS SYNTHESIZER ---
+  let audioCtx = null;
+
+  function playTone(freq, duration, type = 'triangle') {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.14, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  }
+
+  function sfxClick() { playTone(540, 0.1, 'sine'); }
+  function sfxTick() { playTone(700 + Math.random() * 250, 0.06, 'square'); }
+  function sfxSuccess() {
+    playTone(523, 0.12);
+    setTimeout(() => playTone(659, 0.12), 120);
+    setTimeout(() => playTone(784, 0.15), 240);
+    setTimeout(() => playTone(1046, 0.3), 360);
+  }
+
+  // --- AUDIO FILE BACKGROUND MUSIC PLAYER (pxmart.mp3) ---
+  let bgmPlaying = false;
+
+  function startBgm() {
+    const bgmAudio = document.getElementById('bgm-audio');
+    if (!bgmPlaying) {
+      bgmAudio.play().then(() => {
+        bgmPlaying = true;
+        document.getElementById('bgm-toggle-btn').textContent = "🎵 BGM: ON";
+      }).catch(e => {
+        console.log("Audio playback waiting for user interaction:", e);
+      });
+    }
+  }
+
+  function toggleBgm() {
+    const bgmAudio = document.getElementById('bgm-audio');
+    if (bgmPlaying) {
+      bgmAudio.pause();
+      bgmPlaying = false;
+      document.getElementById('bgm-toggle-btn').textContent = "🔇 BGM: OFF";
+    } else {
+      startBgm();
+    }
+  }
+
+  // --- GAME DATA ---
+  const marketsData = {
+    1: [
+      { id: 'eggs', displayName: 'egg/s (15NTD)', singular: 'egg', plural: 'eggs', price: 15, word: 'Fifteen NT Dollars', img: 'eggs.jpg' },
+      { id: 'oranges', displayName: 'orange/s (20NTD)', singular: 'orange', plural: 'oranges', price: 20, word: 'Twenty NT Dollars', img: 'oranges.jpg' },
+      { id: 'strawberries', displayName: 'strawberri/es (100NTD)', singular: 'strawberry', plural: 'strawberries', price: 100, word: 'One Hundred NT Dollars', img: 'strawberries.jpg' },
+      { id: 'watermelons', displayName: 'watermelon/s (80NTD)', singular: 'watermelon', plural: 'watermelons', price: 80, word: 'Eighty NT Dollars', img: 'watermelons.jpg' }
+    ],
+    2: [
+      { id: 'cookies', displayName: 'cooki/es (45NTD)', singular: 'cookie', plural: 'cookies', price: 45, word: 'Forty-five NT Dollars', img: 'cookies.jpg' },
+      { id: 'hamburgers', displayName: 'hamburger/s (60NTD)', singular: 'hamburger', plural: 'hamburgers', price: 60, word: 'Sixty NT Dollars', img: 'hamburgers.jpg' },
+      { id: 'sandwiches', displayName: 'sandwich/es (40NTD)', singular: 'sandwich', plural: 'sandwiches', price: 40, word: 'Forty NT Dollars', img: 'sandwiches.jpg' },
+      { id: 'hotdogs', displayName: 'hotdog/s (35NTD)', singular: 'hotdog', plural: 'hotdogs', price: 35, word: 'Thirty-five NT Dollars', img: 'hotdogs.jpg' }
+    ]
+  };
+
+  const cartsData = [
+    { id: 1, amount: 720, word: 'Seven hundred twenty NT Dollars', money: ['money_500.jpg', 'money_20.jpg'] },
+    { id: 2, amount: 180, word: 'One hundred eighty NT Dollars', money: ['money_100.jpg', 'money_50.jpg', 'money_20.jpg', 'money_10.jpg'] },
+    { id: 3, amount: 870, word: 'Eight hundred seventy NT Dollars', money: ['money_500.jpg', 'money_50.jpg', 'money_20.jpg'] },
+    { id: 4, amount: 310, word: 'Three hundred ten NT Dollars', money: ['money_100.jpg', 'money_100.jpg', 'money_100.jpg', 'money_10.jpg'] },
+    { id: 5, amount: 530, word: 'Five hundred thirty NT Dollars', money: ['money_500.jpg', 'money_20.jpg', 'money_10.jpg'] },
+    { id: 6, amount: 1000, word: 'One thousand NT Dollars', money: ['money_1000.jpg'] },
+    { id: 7, amount: 460, word: 'Four hundred sixty NT Dollars', money: ['money_100.jpg', 'money_100.jpg', 'money_100.jpg', 'money_100.jpg', 'money_50.jpg', 'money_10.jpg'] },
+    { id: 8, amount: 230, word: 'Two hundred thirty NT Dollars', money: ['money_100.jpg', 'money_100.jpg', 'money_20.jpg', 'money_10.jpg'] },
+    { id: 9, amount: 640, word: 'Six hundred forty NT Dollars', money: ['money_500.jpg', 'money_100.jpg', 'money_20.jpg', 'money_20.jpg'] },
+    { id: 10, amount: 150, word: 'One hundred fifty NT Dollars', money: ['money_100.jpg', 'money_50.jpg'] },
+    { id: 11, amount: 830, word: 'Eight hundred thirty NT Dollars', money: ['money_500.jpg', 'money_20.jpg', 'money_10.jpg'] },
+    { id: 12, amount: 390, word: 'Three hundred ninety NT Dollars', money: ['money_100.jpg', 'money_100.jpg', 'money_100.jpg', 'money_50.jpg', 'money_20.jpg', 'money_20.jpg'] },
+    { id: 13, amount: 560, word: 'Five hundred sixty NT Dollars', money: ['money_500.jpg', 'money_50.jpg', 'money_10.jpg'] },
+    { id: 14, amount: 940, word: 'Nine hundred forty NT Dollars', money: ['money_500.jpg', 'money_20.jpg', 'money_20.jpg'] },
+    { id: 15, amount: 420, word: 'Four hundred twenty NT Dollars', money: ['money_100.jpg', 'money_100.jpg', 'money_100.jpg', 'money_100.jpg', 'money_20.jpg'] }
+  ];
+
+  let selectedMarketIndex = 1;
+  let currentMarketName = "ChungShan Market";
+  let selectedBudget = 0;
+  let selectedBudgetWord = "";
+  let selectedSubject = "I";
+  let currentCartQuantities = {};
+  let leaderboard = [];
+
+  function getGrammarName(item, qty) {
+    return qty === 1 ? item.singular : item.plural;
+  }
+
+  function goToScreen(screenId) {
+    sfxClick();
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+    document.querySelectorAll('.market-title-banner').forEach(el => {
+      el.textContent = currentMarketName;
+    });
+  }
+
+  function startGame() {
+    startBgm();
+    sfxSuccess();
+    goToScreen('screen-seller');
+    renderCartsGrid();
+    renderKeyboard();
+  }
+
+  // --- ROLLING EFFECT FOR SELLER RANDOMIZER ---
+  function pickRandomSeller() {
+    const s1 = document.getElementById('seller1-input').value.trim() || 'Cristine';
+    const s2 = document.getElementById('seller2-input').value.trim() || 'Erica';
+    const rollerBox = document.getElementById('seller-roller-box');
+    const spinBtn = document.getElementById('btn-spin-seller');
+    const nextBox = document.getElementById('chosen-seller-box');
+
+    spinBtn.disabled = true;
+    nextBox.style.display = 'none';
+    rollerBox.classList.add('rolling-active');
+
+    let ticks = 0;
+    const totalTicks = 22;
+    const interval = setInterval(() => {
+      sfxTick();
+      const tempIdx = (ticks % 2 === 0) ? 1 : 2;
+      const tempName = tempIdx === 1 ? s1 : s2;
+      rollerBox.textContent = `🎰 ${tempName}'s Market`;
+      ticks++;
+
+      if (ticks >= totalTicks) {
+        clearInterval(interval);
+        rollerBox.classList.remove('rolling-active');
+        selectedMarketIndex = Math.random() < 0.5 ? 1 : 2;
+        const chosenName = selectedMarketIndex === 1 ? s1 : s2;
+        currentMarketName = `${chosenName}'s Market`;
+
+        document.getElementById('seller-header').textContent = currentMarketName;
+        rollerBox.textContent = `🎉 ${currentMarketName}! (Market ${selectedMarketIndex})`;
+        sfxSuccess();
+        spinBtn.disabled = false;
+        nextBox.style.display = 'block';
+      }
+    }, 90);
+  }
+
+  // --- RENDER 15 MYSTERY CARTS (AMOUNT HIDDEN) ---
+  function renderCartsGrid() {
+    const grid = document.getElementById('carts-grid');
+    grid.innerHTML = '';
+    cartsData.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'cart-item';
+      div.innerHTML = `
+        <img src="shopping_cart.jpg" alt="Cart" class="cart-pic" onerror="this.src='https://via.placeholder.com/80?text=Cart'">
+        <div style="font-weight:bold; font-size:1.4rem; color:#ff3366; margin-top:6px;">Cart ${c.id}</div>
+        <div style="font-size:1rem; color:#888;">Click to Open!</div>
+      `;
+      div.onclick = () => openCartRevealScreen(c);
+      grid.appendChild(div);
+    });
+  }
+
+  // --- OPEN WHOLE SCREEN FOR SELECTED CART & MONEY ---
+  function openCartRevealScreen(cartObj) {
+    sfxSuccess();
+    selectedBudget = cartObj.amount;
+    selectedBudgetWord = cartObj.word;
+
+    document.getElementById('reveal-cart-title').textContent = `🛒 Shopping Cart #${cartObj.id}`;
+    document.getElementById('reveal-cart-num').textContent = `NT$ ${cartObj.amount.toLocaleString()}`;
+    document.getElementById('reveal-cart-word').textContent = `(${cartObj.word})`;
+
+    const imgWrap = document.getElementById('reveal-money-imgs');
+    imgWrap.innerHTML = '';
+    cartObj.money.forEach(file => {
+      const img = document.createElement('img');
+      img.src = file;
+      img.alt = file;
+      img.onerror = function() {
+        this.src = 'https://via.placeholder.com/160x95?text=' + file.replace('.jpg','');
+      };
+      imgWrap.appendChild(img);
+    });
+
+    goToScreen('screen-cart-reveal');
+  }
+
+  // --- ROLLING EFFECT FOR SUBJECT RANDOMIZER (I, WE, THEY) ---
+  function pickRandomSubject() {
+    const subjects = ['I', 'We', 'They'];
+    const rollerBox = document.getElementById('subject-roller-box');
+    const spinBtn = document.getElementById('btn-spin-subject');
+    const nextWrap = document.getElementById('go-market-btn-wrap');
+
+    spinBtn.disabled = true;
+    nextWrap.style.display = 'none';
+    rollerBox.classList.add('rolling-active');
+
+    let ticks = 0;
+    const totalTicks = 24;
+    const interval = setInterval(() => {
+      sfxTick();
+      rollerBox.textContent = subjects[ticks % subjects.length];
+      ticks++;
+
+      if (ticks >= totalTicks) {
+        clearInterval(interval);
+        rollerBox.classList.remove('rolling-active');
+        selectedSubject = subjects[Math.floor(Math.random() * subjects.length)];
+        rollerBox.textContent = selectedSubject;
+        document.getElementById('sentence-preview').textContent = `Sentence Pattern: "${selectedSubject} need..."`;
+        sfxSuccess();
+        spinBtn.disabled = false;
+        nextWrap.style.display = 'block';
+      }
+    }, 85);
+  }
+
+  // --- MARKET SCREEN & AUTOMATIC SIDE COMPUTATION ---
+  function setupMarketScreen() {
+    currentCartQuantities = {};
+    const items = marketsData[selectedMarketIndex];
+    items.forEach(item => currentCartQuantities[item.id] = 0);
+
+    document.getElementById('market-subject-label').textContent = selectedSubject;
+    document.getElementById('market-budget-label').textContent = `NT$ ${selectedBudget} (${selectedBudgetWord})`;
+    document.getElementById('auto-budget').textContent = selectedBudget;
+
+    const grid = document.getElementById('market-items-grid');
+    grid.innerHTML = '';
+    items.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'shop-item';
+      card.innerHTML = `
+        <img src="${item.img}" alt="${item.displayName}" onclick="changeQty('${item.id}', 1)" onerror="this.src='https://via.placeholder.com/185?text=${item.singular}'">
+        <h3 style="margin:8px 0 4px 0; font-size:1.6rem; color:#ff3366;">${item.displayName}</h3>
+        <div style="font-size:1.35rem; font-weight:bold; color:#2ac845;">NT$ ${item.price}</div>
+        <div style="font-size:1rem; color:#555;">(${item.word})</div>
+        <div class="qty-controls">
+          <button class="qty-btn qty-minus" onclick="changeQty('${item.id}', -1)">-</button>
+          <span id="qty-${item.id}" style="font-size:1.9rem; font-weight:bold; min-width:38px;">0</span>
+          <button class="qty-btn qty-plus" onclick="changeQty('${item.id}', 1)">+</button>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+
+    updateAutoTotals(null);
+    goToScreen('screen-market');
+  }
+
+  function changeQty(itemId, delta) {
+    sfxClick();
+    const items = marketsData[selectedMarketIndex];
+    const itemObj = items.find(i => i.id === itemId);
+    const newQty = (currentCartQuantities[itemId] || 0) + delta;
+    if (newQty < 0) return;
+
+    const currentSpent = getSpentTotal();
+    if (delta > 0 && currentSpent + itemObj.price > selectedBudget) {
+      alert("Oops! Not enough money in your shopping cart budget!");
+      return;
+    }
+    currentCartQuantities[itemId] = newQty;
+    document.getElementById(`qty-${itemId}`).textContent = newQty;
+    updateAutoTotals(itemObj);
+  }
+
+  function getSpentTotal() {
+    const items = marketsData[selectedMarketIndex];
+    return items.reduce((sum, item) => sum + (currentCartQuantities[item.id] * item.price), 0);
+  }
+
+  function updateAutoTotals(lastClickedItem) {
+    const items = marketsData[selectedMarketIndex];
+    const spent = getSpentTotal();
+    const left = selectedBudget - spent;
+
+    document.getElementById('auto-spent').textContent = spent;
+    document.getElementById('auto-left').textContent = left;
+    document.getElementById('auto-equation').textContent = `NT$ ${selectedBudget} - NT$ ${spent} = NT$ ${left} left`;
+
+    const breakdownEl = document.getElementById('live-breakdown-list');
+    const boughtItems = items.filter(i => currentCartQuantities[i.id] > 0);
+
+    if (boughtItems.length === 0) {
+      breakdownEl.innerHTML = 'No items clicked yet.';
+      document.getElementById('calc-screen').textContent = '0';
+      calcExp = '';
+    } else {
+      breakdownEl.innerHTML = boughtItems.map(i => {
+        const qty = currentCartQuantities[i.id];
+        const sub = qty * i.price;
+        const noun = getGrammarName(i, qty);
+        return `<div class="computation-line">
+                  <span><strong>${selectedSubject} need ${qty} ${noun}</strong></span>
+                  <strong>= NT$ ${sub}</strong>
+                </div>`;
+      }).join('');
+
+      if (lastClickedItem) {
+        const q = currentCartQuantities[lastClickedItem.id];
+        const itemSub = q * lastClickedItem.price;
+        document.getElementById('calc-screen').textContent = `${q} × ${lastClickedItem.price} = ${itemSub} | Total: ${spent}`;
+        calcExp = String(spent);
+      }
+    }
+  }
+
+  // --- MANUAL CALCULATOR BUTTONS ---
+  let calcExp = "";
+  function calcInput(val) {
+    sfxClick();
+    calcExp += val;
+    document.getElementById('calc-screen').textContent = calcExp;
+  }
+  function calcClear() {
+    sfxClick();
+    calcExp = "";
+    document.getElementById('calc-screen').textContent = "0";
+  }
+  function calcResult() {
+    sfxSuccess();
+    try {
+      calcExp = String(Function('"use strict";return (' + calcExp + ')')());
+      document.getElementById('calc-screen').textContent = calcExp;
+    } catch {
+      document.getElementById('calc-screen').textContent = "Error";
+      calcExp = "";
+    }
+  }
+
+  // --- CHECKOUT & LEADERBOARD ---
+  function showCartSummary() {
+    sfxSuccess();
+    const items = marketsData[selectedMarketIndex];
+    const listEl = document.getElementById('order-summary-list');
+    const bought = items.filter(i => currentCartQuantities[i.id] > 0);
+
+    if (bought.length === 0) {
+      listEl.innerHTML = `<p>${selectedSubject} didn't buy anything yet!</p>`;
+    } else {
+      const itemStrings = bought.map(i => {
+        const qty = currentCartQuantities[i.id];
+        const noun = getGrammarName(i, qty);
+        return `${qty} ${noun}`;
+      });
+
+      let sentenceStr = "";
+      if (itemStrings.length === 1) {
+        sentenceStr = `${selectedSubject} need ${itemStrings[0]}.`;
+      } else if (itemStrings.length === 2) {
+        sentenceStr = `${selectedSubject} need ${itemStrings[0]} and ${itemStrings[1]}.`;
+      } else {
+        const lastItem = itemStrings.pop();
+        sentenceStr = `${selectedSubject} need ${itemStrings.join(', ')}, and ${lastItem}.`;
+      }
+
+      listEl.innerHTML = `<p style="font-size:1.8rem; color:#ff3366; font-weight:bold;">"${sentenceStr}"</p>`;
+    }
+
+    const remaining = selectedBudget - getSpentTotal();
+    document.getElementById('summary-money-left').textContent = `💰 Money Left: NT$ ${remaining}`;
+    document.getElementById('player-name-input').value = "";
+    document.getElementById('name-entry-section').style.display = 'block';
+    goToScreen('screen-checkout');
+  }
+
+  function renderKeyboard() {
+    const kb = document.getElementById('onscreen-keyboard');
+    const keys = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('');
+    kb.innerHTML = '';
+    keys.forEach(k => {
+      const btn = document.createElement('button');
+      btn.className = 'key-btn';
+      btn.textContent = k;
+      btn.onclick = () => {
+        sfxClick();
+        document.getElementById('player-name-input').value += k;
+      };
+      kb.appendChild(btn);
+    });
+    const spaceBtn = document.createElement('button');
+    spaceBtn.className = 'key-btn';
+    spaceBtn.textContent = 'SPACE';
+    spaceBtn.onclick = () => {
+      sfxClick();
+      document.getElementById('player-name-input').value += ' ';
+    };
+    kb.appendChild(spaceBtn);
+
+    const backBtn = document.createElement('button');
+    backBtn.className = 'key-btn';
+    backBtn.textContent = '⌫';
+    backBtn.onclick = () => {
+      sfxClick();
+      const input = document.getElementById('player-name-input');
+      input.value = input.value.slice(0, -1);
+    };
+    kb.appendChild(backBtn);
+  }
+
+  function saveToLeaderboard() {
+    const name = document.getElementById('player-name-input').value.trim() || 'Student';
+    const remaining = selectedBudget - getSpentTotal();
+
+    leaderboard.push({
+      name: name,
+      market: currentMarketName,
+      remaining: remaining
+    });
+
+    leaderboard.sort((a, b) => b.remaining - a.remaining);
+    renderLeaderboardTable();
+    document.getElementById('name-entry-section').style.display = 'none';
+    sfxSuccess();
+  }
+
+  function renderLeaderboardTable() {
+    const tbody = document.getElementById('leaderboard-body');
+    tbody.innerHTML = '';
+    leaderboard.forEach((entry, idx) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>#${idx + 1}</td>
+        <td>${entry.name}</td>
+        <td>${entry.market}</td>
+        <td style="color:#2ac845; font-weight:bold;">NT$ ${entry.remaining}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function playAgain() {
+    goToScreen('screen-cover');
+  }
+</script>
+</body>
+</html>
