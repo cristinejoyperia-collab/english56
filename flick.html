@@ -1,0 +1,2217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Flick the Letters - Supermarket Showdown</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Comic Sans MS', 'Comic Sans', 'Chalkboard SE', cursive, sans-serif;
+      background-color: #fef9c3;
+      touch-action: none;
+    }
+
+    /* Custom Scrollbar for name lists & modals */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 9999px;
+    }
+
+    /* Playful 3D Game Buttons */
+    .btn-game {
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 8px 0 rgba(0,0,0,0.28), 0 12px 20px rgba(0,0,0,0.2);
+      transform: translateY(0);
+    }
+    .btn-game:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 0 rgba(0,0,0,0.28), 0 15px 24px rgba(0,0,0,0.25);
+    }
+    .btn-game:active:not(:disabled) {
+      transform: translateY(6px);
+      box-shadow: 0 2px 0 rgba(0,0,0,0.28), 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .btn-game:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    /* Supermarket Awning Stripes */
+    .awning-fresh {
+      background: repeating-linear-gradient(
+        90deg,
+        #16a34a,
+        #16a34a 40px,
+        #dcfce7 40px,
+        #dcfce7 80px
+      );
+    }
+    .awning-snack {
+      background: repeating-linear-gradient(
+        90deg,
+        #ea580c,
+        #ea580c 40px,
+        #ffedd5 40px,
+        #ffedd5 80px
+      );
+    }
+
+    /* Big X Pop Animation */
+    @keyframes popShake {
+      0% { transform: scale(0.2) rotate(-15deg); opacity: 0; }
+      40% { transform: scale(1.15) rotate(8deg); opacity: 1; }
+      60% { transform: scale(0.95) rotate(-6deg); opacity: 1; }
+      80% { transform: scale(1.05) rotate(3deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg); opacity: 0; }
+    }
+    .animate-big-x {
+      animation: popShake 0.85s ease-out forwards;
+    }
+
+    /* Correct Check Pop Animation */
+    @keyframes popBounce {
+      0% { transform: scale(0.3); opacity: 0; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(1); opacity: 0; }
+    }
+    .animate-correct-pop {
+      animation: popBounce 0.65s ease-out forwards;
+    }
+
+    /* Pulse glow for active word slot */
+    @keyframes slotPulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.7); }
+      50% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(250, 204, 21, 0); }
+    }
+    .slot-active {
+      animation: slotPulse 1.2s infinite;
+    }
+
+    /* Floating animation for cover button */
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+    .float-btn {
+      animation: floatSlow 2.4s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="relative w-screen h-screen overflow-hidden select-none">
+
+  <!-- ===================================================================== -->
+  <!-- GLOBAL BACKGROUND IMAGE LAYER (bg_flick.jpg)                          -->
+  <!-- ===================================================================== -->
+  <img id="globalBgImage" src="bg_flick.jpg" alt=""
+    class="absolute inset-0 w-full h-full object-cover pointer-events-none z-0 opacity-90"
+    onerror="handleGlobalBgError(this)" />
+
+  <!-- ===================================================================== -->
+  <!-- SCREEN 1: BLANK COVER PAGE (Uses coverphoto_flick.gif + Start Button) -->
+  <!-- ===================================================================== -->
+  <section id="screenCover" class="relative z-10 w-full h-full flex flex-col items-center justify-end pb-14 bg-amber-100 bg-center bg-cover bg-no-repeat">
+    <!-- Background Image Layer (Uses coverphoto_flick.gif with fallbacks) -->
+    <img id="coverBgImage" src="coverphoto_flick.gif" alt=""
+      class="absolute inset-0 w-full h-full object-cover pointer-events-none"
+      onerror="handleCoverError(this)" />
+
+    <!-- Subtle bottom gradient so button stands out on any cover art -->
+    <div class="relative z-10 flex flex-col items-center gap-3">
+      <button onclick="startShoppingFromCover()"
+        class="btn-game float-btn px-12 py-5 rounded-full bg-gradient-to-b from-lime-400 via-green-500 to-emerald-600 text-white text-3xl md:text-5xl font-extrabold tracking-wide border-4 border-white flex items-center gap-4">
+        <i class="fa-solid fa-cart-shopping drop-shadow"></i>
+        <span class="drop-shadow-[0_3px_2px_rgba(0,0,0,0.4)]">Start Shopping</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- PERSISTENT TOP SCOREBOARD & HEADER (Shown on Randomizer, Preview, Game)-->
+  <!-- ===================================================================== -->
+  <header id="globalHeader" class="hidden fixed top-0 left-0 right-0 h-20 z-40 bg-slate-900/95 border-b-4 border-amber-400 px-2 md:px-5 flex items-center justify-between text-white shadow-xl">
+    <!-- Left: Team Fresh Score -->
+    <div class="flex items-center gap-2 md:gap-3 bg-emerald-800/80 border-2 border-emerald-400 rounded-2xl px-2.5 py-1.5 min-w-[145px] md:min-w-[225px]">
+      <div class="w-9 h-9 md:w-11 md:h-11 rounded-xl bg-emerald-500 flex items-center justify-center text-lg md:text-2xl shadow-inner">
+        🥬
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="text-[11px] md:text-xs font-bold text-emerald-200 uppercase tracking-wider truncate">Team Fresh</div>
+        <div id="headerFreshPlayer" class="text-[11px] text-emerald-100 truncate">Waiting for spinner...</div>
+      </div>
+      <div class="flex items-center gap-1">
+        <button onclick="adjustScore('fresh', -1)" title="Subtract Point" class="w-6 h-6 rounded bg-emerald-950/70 hover:bg-emerald-900 text-xs flex items-center justify-center">-</button>
+        <span id="scoreFresh" class="text-xl md:text-3xl font-black text-lime-300 px-1">0</span>
+        <button onclick="adjustScore('fresh', 1)" title="Add Point" class="w-6 h-6 rounded bg-emerald-950/70 hover:bg-emerald-900 text-xs flex items-center justify-center">+</button>
+      </div>
+    </div>
+
+    <!-- Center: Item Selector, 90s Timer, Pause & End Game Controls -->
+    <div class="flex items-center gap-1.5 md:gap-3">
+      <!-- Item Picker Pill -->
+      <div class="flex items-center gap-1.5 bg-slate-800 border-2 border-slate-600 rounded-2xl px-2.5 py-1.5">
+        <span class="text-amber-300 font-bold text-xs whitespace-nowrap hidden sm:inline">
+          <i class="fa-solid fa-basket-shopping mr-1"></i>Item:
+        </span>
+        <select id="itemSelectDropdown" onchange="selectItemIndex(this.value)"
+          class="bg-slate-900 text-white font-bold text-xs md:text-sm rounded-lg px-2 py-1 border border-slate-600 focus:outline-none focus:border-amber-400">
+        </select>
+      </div>
+
+      <!-- Current Item Mini Thumbnail during Active Match -->
+      <div id="headerItemThumbWrap" class="hidden items-center gap-2 bg-white/10 border-2 border-amber-300 rounded-2xl px-2 py-1">
+        <img id="headerItemThumb" src="" alt="Item" class="w-10 h-10 rounded-lg object-contain bg-white p-0.5" />
+      </div>
+
+      <!-- 90-Second Match Timer -->
+      <div id="headerTimerBox" class="hidden items-center gap-1.5 bg-rose-600 border-4 border-white rounded-2xl px-3 py-1 shadow-lg">
+        <i class="fa-solid fa-stopwatch text-lg md:text-xl text-amber-200 animate-pulse"></i>
+        <span id="gameTimerDisplay" class="text-xl md:text-3xl font-black tracking-wider text-white">90s</span>
+      </div>
+
+      <!-- Pause Button (Visible during active match) -->
+      <button id="btnPauseGame" onclick="togglePauseGame()" title="Pause Match"
+        class="hidden items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs md:text-sm border-2 border-white shadow-md transition">
+        <i id="pauseBtnIcon" class="fa-solid fa-pause"></i>
+        <span id="pauseBtnText" class="hidden lg:inline">Pause</span>
+      </button>
+
+      <!-- End Game Button (Always accessible on header) -->
+      <button id="btnEndGame" onclick="triggerEndGame()" title="End Game & Show Final Winner"
+        class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs md:text-sm border-2 border-white shadow-md transition">
+        <i class="fa-solid fa-flag-checkered"></i>
+        <span class="hidden md:inline">End Game</span>
+      </button>
+    </div>
+
+    <!-- Right: Team Snack Score -->
+    <div class="flex items-center gap-2 md:gap-3 bg-orange-800/80 border-2 border-orange-400 rounded-2xl px-2.5 py-1.5 min-w-[145px] md:min-w-[225px]">
+      <div class="flex items-center gap-1">
+        <button onclick="adjustScore('snack', -1)" title="Subtract Point" class="w-6 h-6 rounded bg-orange-950/70 hover:bg-orange-900 text-xs flex items-center justify-center">-</button>
+        <span id="scoreSnack" class="text-xl md:text-3xl font-black text-amber-300 px-1">0</span>
+        <button onclick="adjustScore('snack', 1)" title="Add Point" class="w-6 h-6 rounded bg-orange-950/70 hover:bg-orange-900 text-xs flex items-center justify-center">+</button>
+      </div>
+      <div class="flex-1 min-w-0 text-right">
+        <div class="text-[11px] md:text-xs font-bold text-orange-200 uppercase tracking-wider truncate">Team Snack</div>
+        <div id="headerSnackPlayer" class="text-[11px] text-orange-100 truncate">Waiting for spinner...</div>
+      </div>
+      <div class="w-9 h-9 md:w-11 md:h-11 rounded-xl bg-orange-500 flex items-center justify-center text-lg md:text-2xl shadow-inner">
+        🍪
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- SCREEN 2: SPLIT-SCREEN TEAM NAME RANDOMIZER                           -->
+  <!-- ===================================================================== -->
+  <section id="screenRandomizer" class="hidden relative z-10 pt-20 w-full h-full flex flex-col bg-transparent">
+    <!-- Split Screen Columns -->
+    <div class="flex-1 grid grid-cols-2 w-full h-full overflow-hidden">
+
+      <!-- LEFT SIDE: TEAM FRESH -->
+      <div class="relative flex flex-col items-center justify-between p-4 md:p-6 bg-emerald-100/80 backdrop-blur-[2px] border-r-4 border-dashed border-emerald-500 overflow-y-auto">
+        <div class="w-full h-4 awning-fresh rounded-full shadow-sm mb-2"></div>
+
+        <!-- Team Header -->
+        <div class="text-center">
+          <span class="inline-block px-4 py-1 rounded-full bg-emerald-600 text-white text-sm md:text-base font-bold shadow">
+            🥗 AISLE 1 • TEAM FRESH
+          </span>
+          <h2 class="text-2xl md:text-4xl font-black text-emerald-900 mt-1 drop-shadow-sm">Fresh Shoppers</h2>
+        </div>
+
+        <!-- Slot Machine / Selected Player Display -->
+        <div class="w-full max-w-md my-2 bg-white/95 rounded-3xl border-4 border-emerald-500 shadow-xl p-4 text-center relative overflow-hidden">
+          <div class="text-xs font-bold uppercase tracking-widest text-emerald-600 mb-1">Chosen Shopper</div>
+          <div id="slotFreshDisplay" class="h-16 md:h-20 flex items-center justify-center bg-emerald-50 rounded-2xl border-2 border-emerald-200 text-2xl md:text-4xl font-black text-emerald-900 px-3 truncate">
+            ???
+          </div>
+        </div>
+
+        <!-- Editable Roster Box -->
+        <div class="w-full max-w-md flex-1 flex flex-col min-h-[150px] bg-white/90 rounded-2xl border-2 border-emerald-400 p-3 shadow-md">
+          <div class="flex items-center justify-between mb-1.5">
+            <label for="rosterFreshInput" class="text-xs md:text-sm font-bold text-emerald-900 flex items-center gap-1.5">
+              <i class="fa-solid fa-users text-emerald-600"></i>
+              Remaining Names (<span id="countFreshNames">0</span>)
+            </label>
+            <button onclick="restoreRoster('fresh')" class="text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 transition">
+              <i class="fa-solid fa-rotate-left mr-1"></i>Restore Class List
+            </button>
+          </div>
+          <textarea id="rosterFreshInput" oninput="syncRosterFromTextarea('fresh')"
+            placeholder="Type or paste student names here (one per line)..."
+            class="w-full flex-1 rounded-xl border-2 border-emerald-200 p-2.5 text-sm md:text-base font-bold text-slate-800 focus:outline-none focus:border-emerald-500 resize-none leading-snug"></textarea>
+          <p class="text-[11px] text-emerald-800 mt-1 font-semibold">
+            * Editable for any class! Picked names are automatically removed from the active list.
+          </p>
+        </div>
+      </div>
+
+      <!-- RIGHT SIDE: TEAM SNACK -->
+      <div class="relative flex flex-col items-center justify-between p-4 md:p-6 bg-orange-100/80 backdrop-blur-[2px] overflow-y-auto">
+        <div class="w-full h-4 awning-snack rounded-full shadow-sm mb-2"></div>
+
+        <!-- Team Header -->
+        <div class="text-center">
+          <span class="inline-block px-4 py-1 rounded-full bg-orange-600 text-white text-sm md:text-base font-bold shadow">
+            🥨 AISLE 2 • TEAM SNACK
+          </span>
+          <h2 class="text-2xl md:text-4xl font-black text-orange-900 mt-1 drop-shadow-sm">Snack Shoppers</h2>
+        </div>
+
+        <!-- Slot Machine / Selected Player Display -->
+        <div class="w-full max-w-md my-2 bg-white/95 rounded-3xl border-4 border-orange-500 shadow-xl p-4 text-center relative overflow-hidden">
+          <div class="text-xs font-bold uppercase tracking-widest text-orange-600 mb-1">Chosen Shopper</div>
+          <div id="slotSnackDisplay" class="h-16 md:h-20 flex items-center justify-center bg-orange-50 rounded-2xl border-2 border-orange-200 text-2xl md:text-4xl font-black text-orange-900 px-3 truncate">
+            ???
+          </div>
+        </div>
+
+        <!-- Editable Roster Box -->
+        <div class="w-full max-w-md flex-1 flex flex-col min-h-[150px] bg-white/90 rounded-2xl border-2 border-orange-400 p-3 shadow-md">
+          <div class="flex items-center justify-between mb-1.5">
+            <label for="rosterSnackInput" class="text-xs md:text-sm font-bold text-orange-900 flex items-center gap-1.5">
+              <i class="fa-solid fa-users text-orange-600"></i>
+              Remaining Names (<span id="countSnackNames">0</span>)
+            </label>
+            <button onclick="restoreRoster('snack')" class="text-xs font-bold px-2.5 py-1 rounded-lg bg-orange-100 hover:bg-orange-200 text-orange-800 transition">
+              <i class="fa-solid fa-rotate-left mr-1"></i>Restore Class List
+            </button>
+          </div>
+          <textarea id="rosterSnackInput" oninput="syncRosterFromTextarea('snack')"
+            placeholder="Type or paste student names here (one per line)..."
+            class="w-full flex-1 rounded-xl border-2 border-orange-200 p-2.5 text-sm md:text-base font-bold text-slate-800 focus:outline-none focus:border-orange-500 resize-none leading-snug"></textarea>
+          <p class="text-[11px] text-orange-800 mt-1 font-semibold">
+            * Editable for any class! Picked names are automatically removed from the active list.
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Center Action Bar for Randomizer -->
+    <div class="w-full bg-slate-900/95 border-t-4 border-amber-400 py-3 px-4 flex flex-wrap items-center justify-center gap-4 z-20">
+      <button onclick="goToCover()" class="px-4 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-sm flex items-center gap-2">
+        <i class="fa-solid fa-house"></i> Cover
+      </button>
+
+      <!-- Initial Spin Button -->
+      <button id="btnSpinPlayers" onclick="spinRandomizer(false)"
+        class="btn-game px-8 py-3.5 rounded-2xl bg-gradient-to-b from-amber-300 via-amber-400 to-orange-500 text-slate-950 font-black text-xl md:text-2xl border-2 border-white flex items-center gap-3">
+        <i class="fa-solid fa-dice text-2xl"></i>
+        <span>Spin Shoppers!</span>
+      </button>
+
+      <!-- Post-Spin Controls: Start Match or Respin -->
+      <div id="postSpinButtons" class="hidden items-center gap-4">
+        <button id="btnStartMatch" onclick="startFiveSecPreview()"
+          class="btn-game px-8 py-3.5 rounded-2xl bg-gradient-to-b from-lime-400 via-emerald-500 to-green-600 text-white font-black text-xl md:text-2xl border-2 border-white flex items-center gap-3">
+          <i class="fa-solid fa-play"></i>
+          <span>Start Match</span>
+        </button>
+
+        <button id="btnRespin" onclick="spinRandomizer(true)"
+          class="btn-game px-6 py-3.5 rounded-2xl bg-gradient-to-b from-amber-400 to-orange-500 text-slate-950 font-black text-lg md:text-xl border-2 border-white flex items-center gap-2">
+          <i class="fa-solid fa-arrows-rotate"></i>
+          <span>Respin</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- SCREEN 3: 5-SECOND ITEM PREVIEW SCREEN                                -->
+  <!-- ===================================================================== -->
+  <section id="screenPreview" class="hidden relative z-10 pt-20 w-full h-full flex flex-col items-center justify-center bg-slate-950/65 backdrop-blur-sm text-white p-6">
+    <!-- Decorative Radial Card -->
+    <div class="max-w-3xl w-full bg-slate-900/85 backdrop-blur-md border-4 border-amber-300 rounded-3xl p-6 md:p-8 flex flex-col items-center text-center shadow-2xl">
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-400 text-slate-950 font-black text-sm md:text-base uppercase tracking-wider mb-3">
+        <i class="fa-solid fa-eye"></i> Memorize the Item!
+      </div>
+
+      <h2 id="previewRoundTitle" class="text-2xl md:text-4xl font-black text-amber-200 mb-4">
+        Item #1 — Get Ready to Flick!
+      </h2>
+
+      <!-- Picture Frame -->
+      <div class="relative w-72 h-72 md:w-96 md:h-80 bg-white rounded-3xl border-8 border-amber-400 shadow-2xl flex items-center justify-center p-4 overflow-hidden">
+        <img id="previewItemImage" src="" alt="Mystery Grocery Item" class="w-full h-full object-contain" />
+      </div>
+
+      <!-- 5-Second Countdown Ring/Pill -->
+      <div class="mt-6 flex flex-col items-center">
+        <div class="text-sm uppercase tracking-widest text-amber-200 font-bold mb-1">Starting Game In</div>
+        <div id="previewCountdownNum" class="w-20 h-20 rounded-full bg-gradient-to-b from-rose-500 to-red-700 border-4 border-white flex items-center justify-center text-4xl font-black shadow-xl">
+          5
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- SCREEN 4: SPLIT-SCREEN MAIN GAME (FLICK THE LETTERS)                  -->
+  <!-- ===================================================================== -->
+  <section id="screenGame" class="hidden relative z-10 pt-20 w-full h-full overflow-hidden">
+    <div class="w-full h-full grid grid-cols-2 relative">
+
+      <!-- =============================================================== -->
+      <!-- LEFT ARENA: TEAM FRESH                                          -->
+      <!-- =============================================================== -->
+      <div id="arenaFresh" class="relative w-full h-full bg-emerald-950/20 border-r-4 border-slate-900 overflow-hidden flex flex-col justify-between">
+        <!-- Top Awning & Team Banner -->
+        <div>
+          <div class="w-full h-3 awning-fresh"></div>
+          <div class="flex items-center justify-between px-4 py-1.5 bg-emerald-700/95 text-white shadow">
+            <span class="font-black text-sm md:text-lg tracking-wide">🥬 TEAM FRESH</span>
+            <span id="arenaFreshPlayerName" class="font-bold text-xs md:text-base bg-emerald-900 px-3 py-0.5 rounded-full text-lime-200">Player 1</span>
+          </div>
+
+          <!-- Word Progress Letter Slots (strictly lowercase) -->
+          <div id="slotsFresh" class="flex flex-wrap items-center justify-center gap-1.5 md:gap-2 px-3 py-2.5 min-h-[60px] bg-white/85 backdrop-blur-sm border-b-2 border-emerald-400 shadow-sm">
+          </div>
+        </div>
+
+        <!-- Interactive Canvas for Moving Paper Bag & Flying Lowercase Comic Sans Letters -->
+        <div class="relative flex-1 w-full h-full overflow-hidden">
+          <canvas id="canvasFresh" class="w-full h-full block"></canvas>
+
+          <!-- Giant Red X Overlay on Wrong Letter -->
+          <div id="wrongOverlayFresh" class="hidden pointer-events-none absolute inset-0 flex flex-col items-center justify-center bg-rose-600/40 z-30">
+            <div class="text-[150px] md:text-[210px] font-black text-red-600 drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] leading-none">
+              ✖
+            </div>
+            <div class="px-6 py-2 rounded-full bg-red-600 text-white font-black text-2xl md:text-3xl border-4 border-white shadow-2xl">
+              WRONG LETTER!
+            </div>
+          </div>
+
+          <!-- Correct Hit Mini Celebration Overlay -->
+          <div id="correctOverlayFresh" class="hidden pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 z-20">
+            <div class="px-5 py-1.5 rounded-full bg-lime-500 text-white font-black text-xl border-2 border-white shadow-lg">
+              ★ nice flick! ★
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =============================================================== -->
+      <!-- RIGHT ARENA: TEAM SNACK                                         -->
+      <!-- =============================================================== -->
+      <div id="arenaSnack" class="relative w-full h-full bg-orange-950/20 overflow-hidden flex flex-col justify-between">
+        <!-- Top Awning & Team Banner -->
+        <div>
+          <div class="w-full h-3 awning-snack"></div>
+          <div class="flex items-center justify-between px-4 py-1.5 bg-orange-600/95 text-white shadow">
+            <span class="font-black text-sm md:text-lg tracking-wide">🍪 TEAM SNACK</span>
+            <span id="arenaSnackPlayerName" class="font-bold text-xs md:text-base bg-orange-900 px-3 py-0.5 rounded-full text-amber-200">Player 2</span>
+          </div>
+
+          <!-- Word Progress Letter Slots (strictly lowercase) -->
+          <div id="slotsSnack" class="flex flex-wrap items-center justify-center gap-1.5 md:gap-2 px-3 py-2.5 min-h-[60px] bg-white/85 backdrop-blur-sm border-b-2 border-orange-400 shadow-sm">
+          </div>
+        </div>
+
+        <!-- Interactive Canvas for Moving Paper Bag & Flying Lowercase Comic Sans Letters -->
+        <div class="relative flex-1 w-full h-full overflow-hidden">
+          <canvas id="canvasSnack" class="w-full h-full block"></canvas>
+
+          <!-- Giant Red X Overlay on Wrong Letter -->
+          <div id="wrongOverlaySnack" class="hidden pointer-events-none absolute inset-0 flex flex-col items-center justify-center bg-rose-600/40 z-30">
+            <div class="text-[150px] md:text-[210px] font-black text-red-600 drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] leading-none">
+              ✖
+            </div>
+            <div class="px-6 py-2 rounded-full bg-red-600 text-white font-black text-2xl md:text-3xl border-4 border-white shadow-2xl">
+              WRONG LETTER!
+            </div>
+          </div>
+
+          <!-- Correct Hit Mini Celebration Overlay -->
+          <div id="correctOverlaySnack" class="hidden pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 z-20">
+            <div class="px-5 py-1.5 rounded-full bg-amber-500 text-white font-black text-xl border-2 border-white shadow-lg">
+              ★ nice flick! ★
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Floating Teacher Emergency Return Button (Bottom-Left) -->
+    <button onclick="returnToRandomizerAfterRound()"
+      class="fixed bottom-3 left-3 z-40 px-4 py-2 rounded-full bg-slate-900/90 hover:bg-slate-900 text-white text-xs md:text-sm font-bold border-2 border-amber-400 shadow-lg flex items-center gap-2">
+      <i class="fa-solid fa-users-gear text-amber-300"></i>
+      <span>Back to Name Randomizer</span>
+    </button>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- PAUSE GAME MODAL OVERLAY                                              -->
+  <!-- ===================================================================== -->
+  <div id="modalPause" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white rounded-3xl border-8 border-amber-400 shadow-2xl p-6 md:p-8 text-center flex flex-col items-center">
+      <div class="w-20 h-20 rounded-full bg-amber-100 border-4 border-amber-400 flex items-center justify-center text-4xl text-amber-600 mb-3 shadow-inner">
+        <i class="fa-solid fa-pause"></i>
+      </div>
+      <h2 class="text-3xl md:text-4xl font-black text-slate-900 mb-1">Game Paused</h2>
+      <p class="text-sm md:text-base font-bold text-slate-600 mb-6">
+        The 90-second timer and flying letters are frozen.
+      </p>
+
+      <div class="w-full flex flex-col gap-3">
+        <button onclick="togglePauseGame()"
+          class="btn-game w-full py-3.5 rounded-2xl bg-gradient-to-b from-lime-400 via-emerald-500 to-green-600 text-white font-black text-xl border-2 border-white flex items-center justify-center gap-3">
+          <i class="fa-solid fa-play"></i>
+          <span>Resume Match</span>
+        </button>
+
+        <button onclick="skipFromPauseToRandomizer()"
+          class="btn-game w-full py-3 rounded-2xl bg-gradient-to-b from-amber-300 to-orange-500 text-slate-950 font-black text-lg border-2 border-white flex items-center justify-center gap-2">
+          <i class="fa-solid fa-dice"></i>
+          <span>Skip to Name Randomizer</span>
+        </button>
+
+        <button onclick="triggerEndGame()"
+          class="btn-game w-full py-3 rounded-2xl bg-gradient-to-b from-rose-500 to-red-700 text-white font-black text-lg border-2 border-white flex items-center justify-center gap-2">
+          <i class="fa-solid fa-flag-checkered"></i>
+          <span>End Game & Show Winner</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- END GAME / FINAL WINNER CELEBRATION MODAL                             -->
+  <!-- ===================================================================== -->
+  <div id="modalEndGame" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="max-w-2xl w-full bg-white rounded-3xl border-8 border-amber-400 shadow-2xl p-6 md:p-8 text-center flex flex-col items-center">
+      <div id="endGameTrophyIcon" class="text-6xl md:text-7xl mb-2">🏆🎉</div>
+      <div class="px-4 py-1 rounded-full bg-amber-100 text-amber-800 font-black text-xs md:text-sm uppercase tracking-widest mb-2">
+        Supermarket Showdown Complete!
+      </div>
+      <h2 id="endGameWinnerTitle" class="text-3xl md:text-5xl font-black text-slate-900 mb-2">
+        Team Fresh Wins!
+      </h2>
+      <p id="endGameSubtitle" class="text-base md:text-lg font-bold text-slate-600 mb-6">
+        What an amazing shopping spree!
+      </p>
+
+      <!-- Final Score Comparison Cards -->
+      <div class="w-full grid grid-cols-2 gap-4 mb-6">
+        <div class="bg-emerald-50 border-4 border-emerald-400 rounded-2xl p-4 flex flex-col items-center shadow">
+          <div class="text-3xl mb-1">🥬</div>
+          <div class="text-sm md:text-base font-black text-emerald-800 uppercase">Team Fresh</div>
+          <div id="finalScoreFresh" class="text-4xl md:text-6xl font-black text-emerald-600 mt-1">0</div>
+          <div class="text-xs font-bold text-emerald-700">Points</div>
+        </div>
+
+        <div class="bg-orange-50 border-4 border-orange-400 rounded-2xl p-4 flex flex-col items-center shadow">
+          <div class="text-3xl mb-1">🍪</div>
+          <div class="text-sm md:text-base font-black text-orange-800 uppercase">Team Snack</div>
+          <div id="finalScoreSnack" class="text-4xl md:text-6xl font-black text-orange-600 mt-1">0</div>
+          <div class="text-xs font-bold text-orange-700">Points</div>
+        </div>
+      </div>
+
+      <div class="w-full flex flex-col sm:flex-row gap-3">
+        <button onclick="resetAndPlayAgain()"
+          class="btn-game flex-1 py-4 rounded-2xl bg-gradient-to-b from-lime-400 via-emerald-500 to-green-600 text-white font-black text-xl border-2 border-white flex items-center justify-center gap-2">
+          <i class="fa-solid fa-rotate-right"></i>
+          <span>Play Again (Reset Scores)</span>
+        </button>
+
+        <button onclick="closeEndGameAndReturnToRandomizer()"
+          class="btn-game flex-1 py-4 rounded-2xl bg-gradient-to-b from-amber-300 via-amber-400 to-orange-500 text-slate-950 font-black text-lg border-2 border-white flex items-center justify-center gap-2">
+          <i class="fa-solid fa-dice"></i>
+          <span>Keep Playing</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- ROUND OVER CELEBRATION MODAL (Returns to Name Randomizer!)            -->
+  <!-- ===================================================================== -->
+  <div id="modalRoundResult" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="max-w-xl w-full bg-white rounded-3xl border-8 border-amber-400 shadow-2xl p-6 md:p-8 text-center flex flex-col items-center">
+      <div id="resultBadgeIcon" class="text-6xl mb-2">🏆</div>
+      <h2 id="resultHeadline" class="text-3xl md:text-5xl font-black text-slate-900 mb-2">
+        Team Fresh Wins!
+      </h2>
+      <p id="resultSubtext" class="text-base md:text-xl font-bold text-slate-600 mb-4">
+        Spelled the item correctly!
+      </p>
+
+      <!-- Completed Word Showcase (strictly lowercase) -->
+      <div class="w-full bg-amber-50 border-4 border-amber-300 rounded-2xl p-4 mb-6 flex items-center justify-center gap-4">
+        <img id="resultItemImage" src="" alt="Item" class="w-20 h-20 object-contain rounded-xl bg-white border-2 border-amber-200 p-1" />
+        <div class="text-left">
+          <div class="text-xs font-bold uppercase tracking-wider text-amber-700">Answer</div>
+          <div id="resultWordSpelling" class="text-3xl md:text-4xl font-black text-slate-900 tracking-wider lowercase">
+            hot dogs
+          </div>
+        </div>
+      </div>
+
+      <button onclick="returnToRandomizerAfterRound()"
+        class="btn-game w-full py-4 rounded-2xl bg-gradient-to-b from-lime-400 via-emerald-500 to-green-600 text-white font-black text-xl md:text-2xl border-2 border-white flex items-center justify-center gap-3">
+        <i class="fa-solid fa-dice"></i>
+        <span>Return to Name Randomizer</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- CUSTOM PHOTO UPLOADER & FILENAME REFERENCE MODAL                      -->
+  <!-- ===================================================================== -->
+  <div id="modalAssets" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="max-w-4xl w-full max-h-[90vh] bg-white rounded-3xl border-4 border-indigo-500 shadow-2xl flex flex-col overflow-hidden">
+      <!-- Modal Header -->
+      <div class="bg-indigo-600 text-white px-6 py-4 flex items-center justify-between">
+        <div>
+          <h3 class="text-xl md:text-2xl font-black flex items-center gap-2">
+            <i class="fa-solid fa-folder-open"></i> Custom Game Photos & File Names
+          </h3>
+          <p class="text-xs md:text-sm text-indigo-100">
+            Put your images in the same folder with these exact filenames, OR upload them right here in the browser!
+          </p>
+        </div>
+        <button onclick="closeAssetModal()" class="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-xl">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 overflow-y-auto space-y-4 flex-1">
+        <!-- Quick Batch Upload Box -->
+        <div class="bg-indigo-50 border-2 border-dashed border-indigo-400 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <div class="font-black text-indigo-950 text-base">Quick Multi-File Upload</div>
+            <div class="text-xs text-indigo-700">
+              Select multiple files at once! If their filenames match (e.g., <code>coverphoto_flick.gif</code>, <code>bg_flick.jpg</code>, <code>flick_paperbag.jpg</code>, or <code>flick_item01_hotdogs.jpg</code>), they'll auto-assign immediately.
+            </div>
+          </div>
+          <label class="cursor-pointer px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm whitespace-nowrap shadow">
+            <i class="fa-solid fa-cloud-arrow-up mr-1.5"></i> Select Files...
+            <input type="file" accept="image/*,.gif" multiple class="hidden" onchange="handleBatchFileUpload(event)" />
+          </label>
+        </div>
+
+        <!-- Individual Slots List -->
+        <div id="assetSlotsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <!-- Populated dynamically by JS -->
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="bg-slate-100 px-6 py-3 border-t flex items-center justify-between">
+        <span class="text-xs text-slate-600 font-bold">
+          Tip: Built-in illustrations automatically appear if a photo isn't uploaded yet.
+        </span>
+        <button onclick="closeAssetModal()" class="px-6 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm">
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- GAME LOGIC & INTERACTIVE MULTI-TOUCH PHYSICS ENGINE                   -->
+  <!-- ===================================================================== -->
+  <script>
+    /*************************************************************************
+     * 1. GAME ITEMS & ASSET FILE NAMES (14 Exact Supermarket Items + Cover + BG + Bag)
+     * Distinct file names:
+     * - Cover Page (GIF format): `coverphoto_flick.gif`
+     * - Game-Wide Background Photo: `bg_flick.jpg`
+     * - Moving Paper Bag: `flick_paperbag.jpg`
+     * - 14 Items: `flick_item01_hotdogs.jpg` ... `flick_item14_eggs.jpg`
+     * - Each item has exactly TWO lowercase distractor letters (`distractors`)
+     *************************************************************************/
+    const COVER_FILENAME = 'coverphoto_flick.gif';
+    const BG_FILENAME = 'bg_flick.jpg';
+    const PAPERBAG_FILENAME = 'flick_paperbag.jpg';
+
+    const GAME_ITEMS = [
+      { id: 1,  word: 'hot dogs',     distractors: ['a', 'w'], file: 'flick_item01_hotdogs.jpg',      emoji: '🌭🌭',   bg: '#fee2e2' },
+      { id: 2,  word: 'strawberry',   distractors: ['o', 'n'], file: 'flick_item02_strawberry.jpg',   emoji: '🍓',     bg: '#fce7f3' },
+      { id: 3,  word: 'oranges',      distractors: ['u', 'l'], file: 'flick_item03_oranges.jpg',      emoji: '🍊🍊🍊', bg: '#ffedd5' },
+      { id: 4,  word: 'sandwich',     distractors: ['e', 'r'], file: 'flick_item04_sandwich.jpg',     emoji: '🥪',     bg: '#fef3c7' },
+      { id: 5,  word: 'hamburgers',   distractors: ['o', 't'], file: 'flick_item05_hamburgers.jpg',   emoji: '🍔🍔',   bg: '#ffedd5' },
+      { id: 6,  word: 'watermelon',   distractors: ['s', 'i'], file: 'flick_item06_watermelon.jpg',   emoji: '🍉',     bg: '#dcfce7' },
+      { id: 7,  word: 'egg',          distractors: ['a', 's'], file: 'flick_item07_egg.jpg',          emoji: '🥚',     bg: '#fef9c3' },
+      { id: 8,  word: 'cookie',       distractors: ['a', 's'], file: 'flick_item08_cookie.jpg',       emoji: '🍪',     bg: '#fef3c7' },
+      { id: 9,  word: 'strawberries', distractors: ['y', 'o'], file: 'flick_item09_strawberries.jpg', emoji: '🍓🍓🍓', bg: '#fce7f3' },
+      { id: 10, word: 'sandwiches',   distractors: ['o', 'r'], file: 'flick_item10_sandwiches.jpg',   emoji: '🥪🥪',   bg: '#fef3c7' },
+      { id: 11, word: 'cookies',      distractors: ['a', 'r'], file: 'flick_item11_cookies.jpg',      emoji: '🍪🍪🍪', bg: '#fef3c7' },
+      { id: 12, word: 'hot dog',      distractors: ['s', 'a'], file: 'flick_item12_hotdog.jpg',       emoji: '🌭',     bg: '#fee2e2' },
+      { id: 13, word: 'hamburger',    distractors: ['s', 'o'], file: 'flick_item13_hamburger.jpg',    emoji: '🍔',     bg: '#ffedd5' },
+      { id: 14, word: 'eggs',         distractors: ['a', 'o'], file: 'flick_item14_eggs.jpg',         emoji: '🥚🥚🥚', bg: '#fef9c3' }
+    ];
+
+    // Custom uploaded Blob URLs (if teacher uploads directly in browser)
+    const customImageOverrides = {};
+
+    // Preloaded HTMLImageElements for Canvas rendering (Paper bag)
+    const paperBagImg = new Image();
+    let paperBagLoaded = false;
+    paperBagImg.onload = () => { paperBagLoaded = true; };
+    paperBagImg.onerror = () => {
+      if (!paperBagImg.dataset.triedJpeg) {
+        paperBagImg.dataset.triedJpeg = 'true';
+        paperBagImg.src = 'flick_paperbag.jpeg';
+      }
+    };
+    paperBagImg.src = PAPERBAG_FILENAME;
+
+    // Fallback SVG generator for items & paper bag when external JPEGs aren't placed in folder yet
+    function createFallbackItemDataURI(item) {
+      const countLabel = item.word.endsWith('s') && item.word !== 'watermelon' ? 'plural (many)' : 'singular (one)';
+      const badgeColor = countLabel.startsWith('plural') ? '#7c3aed' : '#0284c7';
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="500" height="420" viewBox="0 0 500 420">
+        <rect width="500" height="420" rx="36" fill="${item.bg}"/>
+        <circle cx="250" cy="195" r="135" fill="#ffffff" opacity="0.85"/>
+        <text x="250" y="225" font-size="115" text-anchor="middle" font-family="Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji, sans-serif">${item.emoji}</text>
+        <rect x="110" y="340" width="280" height="44" rx="22" fill="${badgeColor}"/>
+        <text x="250" y="369" font-size="22" font-weight="bold" fill="#ffffff" text-anchor="middle" font-family="Comic Sans MS, sans-serif">${countLabel}</text>
+      </svg>`;
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    }
+
+    function createCoverFallbackSVG() {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+        <defs>
+          <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#fef08a"/>
+            <stop offset="50%" stop-color="#fed7aa"/>
+            <stop offset="100%" stop-color="#bbf7d0"/>
+          </linearGradient>
+        </defs>
+        <rect width="1600" height="900" fill="url(#sky)"/>
+        <g>
+          ${Array.from({length: 20}, (_, i) => `<rect x="${i*80}" y="0" width="80" height="70" fill="${i%2===0 ? '#ef4444' : '#ffffff'}"/>`).join('')}
+        </g>
+        <circle cx="260" cy="450" r="170" fill="#ffffff" opacity="0.6"/>
+        <text x="260" y="490" font-size="130" text-anchor="middle">🛒</text>
+        <circle cx="1340" cy="450" r="170" fill="#ffffff" opacity="0.6"/>
+        <text x="1340" y="490" font-size="130" text-anchor="middle">🛍️</text>
+        <text x="800" y="360" font-size="110" text-anchor="middle">🍓 🍔 🍉 🍪 🌭 🍊 🥪 🥚</text>
+      </svg>`;
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    }
+
+    function createGlobalBgFallbackSVG() {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+        <defs>
+          <linearGradient id="storeBg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#ecfccb"/>
+            <stop offset="50%" stop-color="#fef9c3"/>
+            <stop offset="100%" stop-color="#ffedd5"/>
+          </linearGradient>
+        </defs>
+        <rect width="1600" height="900" fill="url(#storeBg)"/>
+        <!-- Supermarket shelves silhouette -->
+        <rect x="0" y="220" width="1600" height="18" fill="#cbd5e1" opacity="0.45"/>
+        <rect x="0" y="450" width="1600" height="18" fill="#cbd5e1" opacity="0.45"/>
+        <rect x="0" y="680" width="1600" height="18" fill="#cbd5e1" opacity="0.45"/>
+      </svg>`;
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    }
+
+    function handleCoverError(imgEl) {
+      if (!imgEl.dataset.triedUpperGif) {
+        imgEl.dataset.triedUpperGif = '1';
+        imgEl.src = 'coverphoto_flick.GIF';
+      } else if (!imgEl.dataset.triedJpg) {
+        imgEl.dataset.triedJpg = '1';
+        imgEl.src = 'coverphoto_flick.jpg';
+      } else if (!imgEl.dataset.triedJpeg) {
+        imgEl.dataset.triedJpeg = '1';
+        imgEl.src = 'coverphoto_flick.jpeg';
+      } else if (!imgEl.dataset.triedPng) {
+        imgEl.dataset.triedPng = '1';
+        imgEl.src = 'coverphoto_flick.png';
+      } else {
+        imgEl.src = createCoverFallbackSVG();
+      }
+    }
+
+    function handleGlobalBgError(imgEl) {
+      if (!imgEl.dataset.triedJpeg) {
+        imgEl.dataset.triedJpeg = '1';
+        imgEl.src = 'bg_flick.jpeg';
+      } else if (!imgEl.dataset.triedPng) {
+        imgEl.dataset.triedPng = '1';
+        imgEl.src = 'bg_flick.png';
+      } else {
+        imgEl.src = createGlobalBgFallbackSVG();
+      }
+    }
+
+    function getItemImageSrc(item) {
+      if (customImageOverrides[item.file]) {
+        return customImageOverrides[item.file];
+      }
+      return item.file;
+    }
+
+    function setImgWithFallback(imgEl, item) {
+      imgEl.dataset.fallbackStage = '0';
+      imgEl.onerror = function () {
+        const stage = parseInt(this.dataset.fallbackStage || '0', 10);
+        if (stage === 0) {
+          this.dataset.fallbackStage = '1';
+          this.src = item.file.replace('.jpg', '.jpeg');
+        } else if (stage === 1) {
+          this.dataset.fallbackStage = '2';
+          this.src = item.file.replace('.jpg', '.png');
+        } else {
+          this.onerror = null;
+          this.src = createFallbackItemDataURI(item);
+        }
+      };
+      imgEl.src = getItemImageSrc(item);
+    }
+
+    /*************************************************************************
+     * 2. SYNTHESIZED SOUND EFFECTS & GAME SHOW BACKGROUND MUSIC (Web Audio API)
+     *************************************************************************/
+    let audioCtx = null;
+    let isMuted = false;
+    let isBgMusicOn = true;
+    let bgMusicInterval = null;
+    let bgMusicStep = 0;
+
+    // Upbeat television game-show melody loop (in C major / G mixolydian feel)
+    const GAME_SHOW_MELODY = [
+      { note: 523.25, bass: 130.81, dur: 0.16 }, // C5
+      { note: 659.25, bass: 196.00, dur: 0.16 }, // E5
+      { note: 783.99, bass: 130.81, dur: 0.16 }, // G5
+      { note: 659.25, bass: 196.00, dur: 0.16 }, // E5
+      { note: 880.00, bass: 146.83, dur: 0.22 }, // A5
+      { note: 783.99, bass: 196.00, dur: 0.18 }, // G5
+      { note: 659.25, bass: 130.81, dur: 0.16 }, // E5
+      { note: 587.33, bass: 196.00, dur: 0.18 }, // D5
+      { note: 523.25, bass: 130.81, dur: 0.16 }, // C5
+      { note: 659.25, bass: 164.81, dur: 0.16 }, // E5
+      { note: 783.99, bass: 196.00, dur: 0.16 }, // G5
+      { note: 1046.50, bass: 130.81, dur: 0.26 }, // C6
+      { note: 987.77, bass: 146.83, dur: 0.16 }, // B5
+      { note: 880.00, bass: 164.81, dur: 0.16 }, // A5
+      { note: 783.99, bass: 196.00, dur: 0.24 }, // G5
+      { note: 0,      bass: 130.81, dur: 0.15 }  // Bounce rest
+    ];
+
+    function getAudioCtx() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          audioCtx = new AudioContextClass();
+        }
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function startGameShowMusic() {
+      if (bgMusicInterval) return;
+      getAudioCtx();
+      bgMusicInterval = setInterval(() => {
+        if (isMuted || !isBgMusicOn || isGamePaused) return;
+        const ctx = getAudioCtx();
+        if (!ctx) return;
+
+        const now = ctx.currentTime;
+        const step = GAME_SHOW_MELODY[bgMusicStep % GAME_SHOW_MELODY.length];
+        bgMusicStep++;
+
+        // Play bouncy game-show bass note
+        if (step.bass > 0) {
+          const bassOsc = ctx.createOscillator();
+          const bassGain = ctx.createGain();
+          bassOsc.type = 'triangle';
+          bassOsc.frequency.setValueAtTime(step.bass, now);
+          bassGain.gain.setValueAtTime(0.055, now);
+          bassGain.gain.exponentialRampToValueAtTime(0.001, now + 0.19);
+          bassOsc.connect(bassGain);
+          bassGain.connect(ctx.destination);
+          bassOsc.start(now);
+          bassOsc.stop(now + 0.2);
+        }
+
+        // Play bright game-show lead note
+        if (step.note > 0) {
+          const leadOsc = ctx.createOscillator();
+          const leadGain = ctx.createGain();
+          leadOsc.type = 'sine';
+          leadOsc.frequency.setValueAtTime(step.note, now);
+          leadGain.gain.setValueAtTime(0.045, now);
+          leadGain.gain.exponentialRampToValueAtTime(0.001, now + step.dur);
+          leadOsc.connect(leadGain);
+          leadGain.connect(ctx.destination);
+          leadOsc.start(now);
+          leadOsc.stop(now + step.dur + 0.02);
+        }
+      }, 220);
+    }
+
+    function toggleBgMusic() {
+      isBgMusicOn = !isBgMusicOn;
+      const musicIcon = document.getElementById('musicIcon');
+      const musicLabel = document.getElementById('musicLabel');
+      if (isBgMusicOn) {
+        if (musicIcon) musicIcon.className = 'fa-solid fa-music text-amber-500';
+        if (musicLabel) musicLabel.textContent = 'Game Show BGM: ON';
+        startGameShowMusic();
+      } else {
+        if (musicIcon) musicIcon.className = 'fa-solid fa-music text-slate-400';
+        if (musicLabel) musicLabel.textContent = 'Game Show BGM: OFF';
+      }
+    }
+
+    function toggleMute() {
+      isMuted = !isMuted;
+      const icon = document.getElementById('soundIcon');
+      if (isMuted) {
+        if (icon) icon.className = 'fa-solid fa-volume-xmark text-rose-600';
+      } else {
+        if (icon) icon.className = 'fa-solid fa-volume-high text-emerald-600';
+        playSound('pop');
+      }
+    }
+
+    function playSound(type) {
+      if (isMuted) return;
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+
+      const now = ctx.currentTime;
+
+      if (type === 'tick') {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(620, now);
+        osc.frequency.exponentialRampToValueAtTime(280, now + 0.045);
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.05);
+      } else if (type === 'flick') {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(240, now);
+        osc.frequency.exponentialRampToValueAtTime(580, now + 0.12);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.13);
+      } else if (type === 'correct') {
+        const notes = [523.25, 659.25, 783.99, 1046.5];
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.055);
+          gain.gain.setValueAtTime(0.24, now + idx * 0.055);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.055 + 0.28);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + idx * 0.055);
+          osc.stop(now + idx * 0.055 + 0.3);
+        });
+      } else if (type === 'wrong') {
+        [150, 112].forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.18);
+          osc.frequency.linearRampToValueAtTime(freq - 25, now + idx * 0.18 + 0.25);
+          gain.gain.setValueAtTime(0.28, now + idx * 0.18);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.18 + 0.28);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + idx * 0.18);
+          osc.stop(now + idx * 0.18 + 0.29);
+        });
+      } else if (type === 'win') {
+        const melody = [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5];
+        const times  = [0,      0.11,   0.22,   0.33,   0.50,   0.64];
+        const durs   = [0.1,    0.1,    0.1,    0.15,   0.12,   0.45];
+        melody.forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(freq, now + times[i]);
+          gain.gain.setValueAtTime(0.18, now + times[i]);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + times[i] + durs[i]);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + times[i]);
+          osc.stop(now + times[i] + durs[i] + 0.02);
+        });
+      } else if (type === 'pop') {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.09);
+      }
+    }
+
+    /*************************************************************************
+     * 3. STATE MANAGEMENT: TEAMS, ROSTERS, SCORES, ROUNDS, PAUSE & END GAME
+     *************************************************************************/
+    const DEFAULT_FRESH_ROSTER = [
+      'Leo', 'Mia', 'Noah', 'Emma', 'Lucas', 'Olivia', 'Ethan', 'Ava', 'Mason', 'Sophia'
+    ];
+    const DEFAULT_SNACK_ROSTER = [
+      'Liam', 'Chloe', 'Jack', 'Zoe', 'Henry', 'Lily', 'Owen', 'Ella', 'Caleb', 'Grace'
+    ];
+
+    let savedClassFresh = [...DEFAULT_FRESH_ROSTER];
+    let savedClassSnack = [...DEFAULT_SNACK_ROSTER];
+
+    let activeRosterFresh = [...DEFAULT_FRESH_ROSTER];
+    let activeRosterSnack = [...DEFAULT_SNACK_ROSTER];
+
+    let currentShopperFresh = '';
+    let currentShopperSnack = '';
+
+    let scoreFresh = 0;
+    let scoreSnack = 0;
+
+    let currentItemIndex = 0; // 0 to 13 (14 items)
+    let isSpinning = false;
+    let previewTimerInterval = null;
+    let matchTimerInterval = null;
+    let matchTimeLeft = 90;
+    let isMatchActive = false;
+    let isGamePaused = false;
+
+    function initItemDropdown() {
+      const sel = document.getElementById('itemSelectDropdown');
+      sel.innerHTML = '';
+      GAME_ITEMS.forEach((item, idx) => {
+        const opt = document.createElement('option');
+        opt.value = idx;
+        opt.textContent = `#${item.id}`;
+        sel.appendChild(opt);
+      });
+      sel.value = currentItemIndex;
+    }
+
+    function selectItemIndex(val) {
+      currentItemIndex = parseInt(val, 10) || 0;
+      document.getElementById('itemSelectDropdown').value = currentItemIndex;
+    }
+
+    function adjustScore(team, delta) {
+      if (team === 'fresh') {
+        scoreFresh = Math.max(0, scoreFresh + delta);
+        document.getElementById('scoreFresh').textContent = scoreFresh;
+      } else {
+        scoreSnack = Math.max(0, scoreSnack + delta);
+        document.getElementById('scoreSnack').textContent = scoreSnack;
+      }
+      playSound('pop');
+    }
+
+    function startShoppingFromCover() {
+      startGameShowMusic();
+      goToRandomizer();
+    }
+
+    // PAUSE & RESUME LOGIC
+    function togglePauseGame() {
+      if (!isMatchActive) return;
+      isGamePaused = !isGamePaused;
+      playSound('pop');
+
+      const pauseModal = document.getElementById('modalPause');
+      const pauseIcon = document.getElementById('pauseBtnIcon');
+      const pauseText = document.getElementById('pauseBtnText');
+
+      if (isGamePaused) {
+        pauseModal.classList.remove('hidden');
+        pauseIcon.className = 'fa-solid fa-play';
+        pauseText.textContent = 'Resume';
+      } else {
+        pauseModal.classList.add('hidden');
+        pauseIcon.className = 'fa-solid fa-pause';
+        pauseText.textContent = 'Pause';
+      }
+    }
+
+    function skipFromPauseToRandomizer() {
+      isGamePaused = false;
+      document.getElementById('modalPause').classList.add('hidden');
+      returnToRandomizerAfterRound();
+    }
+
+    // END GAME LOGIC
+    function triggerEndGame() {
+      isGamePaused = false;
+      isMatchActive = false;
+      stopAllTimers();
+      document.getElementById('modalPause').classList.add('hidden');
+      document.getElementById('modalRoundResult').classList.add('hidden');
+
+      playSound('win');
+
+      document.getElementById('finalScoreFresh').textContent = scoreFresh;
+      document.getElementById('finalScoreSnack').textContent = scoreSnack;
+
+      const titleEl = document.getElementById('endGameWinnerTitle');
+      const subEl = document.getElementById('endGameSubtitle');
+      const trophyEl = document.getElementById('endGameTrophyIcon');
+
+      if (scoreFresh > scoreSnack) {
+        trophyEl.textContent = '🥬🏆🎉';
+        titleEl.textContent = 'Team Fresh Wins the Game!';
+        titleEl.className = 'text-3xl md:text-5xl font-black text-emerald-700 mb-2';
+        subEl.textContent = `Team Fresh dominated the aisles with ${scoreFresh} points!`;
+      } else if (scoreSnack > scoreFresh) {
+        trophyEl.textContent = '🍪🏆🎉';
+        titleEl.textContent = 'Team Snack Wins the Game!';
+        titleEl.className = 'text-3xl md:text-5xl font-black text-orange-600 mb-2';
+        subEl.textContent = `Team Snack conquered the supermarket with ${scoreSnack} points!`;
+      } else {
+        trophyEl.textContent = '🤝🏆🎉';
+        titleEl.textContent = "It's a Supermarket Tie!";
+        titleEl.className = 'text-3xl md:text-5xl font-black text-indigo-700 mb-2';
+        subEl.textContent = `Both Team Fresh and Team Snack scored ${scoreFresh} points!`;
+      }
+
+      document.getElementById('modalEndGame').classList.remove('hidden');
+    }
+
+    function resetAndPlayAgain() {
+      scoreFresh = 0;
+      scoreSnack = 0;
+      currentItemIndex = 0;
+      document.getElementById('scoreFresh').textContent = '0';
+      document.getElementById('scoreSnack').textContent = '0';
+      document.getElementById('itemSelectDropdown').value = 0;
+      document.getElementById('modalEndGame').classList.add('hidden');
+      goToRandomizer();
+    }
+
+    function closeEndGameAndReturnToRandomizer() {
+      document.getElementById('modalEndGame').classList.add('hidden');
+      goToRandomizer();
+    }
+
+    /*************************************************************************
+     * 4. EDITABLE ROSTERS & NAME RANDOMIZER LOGIC
+     *************************************************************************/
+    function renderRosterTextareas() {
+      const freshArea = document.getElementById('rosterFreshInput');
+      const snackArea = document.getElementById('rosterSnackInput');
+      freshArea.value = activeRosterFresh.join('\n');
+      snackArea.value = activeRosterSnack.join('\n');
+      document.getElementById('countFreshNames').textContent = activeRosterFresh.length;
+      document.getElementById('countSnackNames').textContent = activeRosterSnack.length;
+    }
+
+    function syncRosterFromTextarea(team) {
+      if (team === 'fresh') {
+        const raw = document.getElementById('rosterFreshInput').value;
+        activeRosterFresh = raw.split('\n').map(s => s.trim()).filter(Boolean);
+        savedClassFresh = [...activeRosterFresh];
+        document.getElementById('countFreshNames').textContent = activeRosterFresh.length;
+      } else {
+        const raw = document.getElementById('rosterSnackInput').value;
+        activeRosterSnack = raw.split('\n').map(s => s.trim()).filter(Boolean);
+        savedClassSnack = [...activeRosterSnack];
+        document.getElementById('countSnackNames').textContent = activeRosterSnack.length;
+      }
+    }
+
+    function restoreRoster(team) {
+      if (team === 'fresh') {
+        activeRosterFresh = savedClassFresh.length > 0 ? [...savedClassFresh] : [...DEFAULT_FRESH_ROSTER];
+      } else {
+        activeRosterSnack = savedClassSnack.length > 0 ? [...savedClassSnack] : [...DEFAULT_SNACK_ROSTER];
+      }
+      renderRosterTextareas();
+      playSound('pop');
+    }
+
+    function spinRandomizer(isRespin) {
+      if (isSpinning) return;
+      startGameShowMusic();
+
+      const rawFresh = document.getElementById('rosterFreshInput').value.split('\n').map(s => s.trim()).filter(Boolean);
+      const rawSnack = document.getElementById('rosterSnackInput').value.split('\n').map(s => s.trim()).filter(Boolean);
+      activeRosterFresh = rawFresh;
+      activeRosterSnack = rawSnack;
+
+      if (activeRosterFresh.length === 0) {
+        activeRosterFresh = savedClassFresh.length > 0 ? [...savedClassFresh] : ['Fresh Player'];
+      }
+      if (activeRosterSnack.length === 0) {
+        activeRosterSnack = savedClassSnack.length > 0 ? [...savedClassSnack] : ['Snack Player'];
+      }
+
+      isSpinning = true;
+      document.getElementById('btnSpinPlayers').classList.add('hidden');
+      document.getElementById('postSpinButtons').classList.add('hidden');
+
+      const slotFresh = document.getElementById('slotFreshDisplay');
+      const slotSnack = document.getElementById('slotSnackDisplay');
+
+      let ticks = 0;
+      const totalTicks = 20;
+
+      const spinTimer = setInterval(() => {
+        ticks++;
+        playSound('tick');
+
+        const tempFresh = activeRosterFresh[Math.floor(Math.random() * activeRosterFresh.length)];
+        const tempSnack = activeRosterSnack[Math.floor(Math.random() * activeRosterSnack.length)];
+
+        slotFresh.textContent = tempFresh;
+        slotSnack.textContent = tempSnack;
+
+        if (ticks >= totalTicks) {
+          clearInterval(spinTimer);
+
+          const pickedFreshIdx = Math.floor(Math.random() * activeRosterFresh.length);
+          const pickedSnackIdx = Math.floor(Math.random() * activeRosterSnack.length);
+
+          currentShopperFresh = activeRosterFresh[pickedFreshIdx];
+          currentShopperSnack = activeRosterSnack[pickedSnackIdx];
+
+          // Remove chosen names from the active roster list
+          activeRosterFresh.splice(pickedFreshIdx, 1);
+          activeRosterSnack.splice(pickedSnackIdx, 1);
+
+          slotFresh.textContent = currentShopperFresh;
+          slotSnack.textContent = currentShopperSnack;
+          document.getElementById('headerFreshPlayer').textContent = `Shopper: ${currentShopperFresh}`;
+          document.getElementById('headerSnackPlayer').textContent = `Shopper: ${currentShopperSnack}`;
+          renderRosterTextareas();
+
+          playSound('correct');
+          isSpinning = false;
+
+          const postBtns = document.getElementById('postSpinButtons');
+          postBtns.classList.remove('hidden');
+          postBtns.classList.add('flex');
+        }
+      }, 75);
+    }
+
+    /*************************************************************************
+     * 5. SCREEN NAVIGATION & 5-SECOND ITEM PREVIEW
+     *************************************************************************/
+    function showOnlyScreen(screenId) {
+      ['screenCover', 'screenRandomizer', 'screenPreview', 'screenGame'].forEach(id => {
+        const el = document.getElementById(id);
+        if (id === screenId) {
+          el.classList.remove('hidden');
+        } else {
+          el.classList.add('hidden');
+        }
+      });
+
+      const header = document.getElementById('globalHeader');
+      if (screenId === 'screenCover') {
+        header.classList.add('hidden');
+      } else {
+        header.classList.remove('hidden');
+      }
+    }
+
+    function goToCover() {
+      stopAllTimers();
+      isMatchActive = false;
+      isGamePaused = false;
+      showOnlyScreen('screenCover');
+    }
+
+    function goToRandomizer() {
+      stopAllTimers();
+      isMatchActive = false;
+      isGamePaused = false;
+      playSound('pop');
+
+      // Hide game-specific header widgets
+      document.getElementById('headerTimerBox').classList.add('hidden');
+      document.getElementById('headerTimerBox').classList.remove('flex');
+      document.getElementById('headerItemThumbWrap').classList.add('hidden');
+      document.getElementById('headerItemThumbWrap').classList.remove('flex');
+      document.getElementById('btnPauseGame').classList.add('hidden');
+      document.getElementById('btnPauseGame').classList.remove('flex');
+
+      // Reset slot display for new spin
+      document.getElementById('slotFreshDisplay').textContent = '???';
+      document.getElementById('slotSnackDisplay').textContent = '???';
+      document.getElementById('btnSpinPlayers').classList.remove('hidden');
+      document.getElementById('postSpinButtons').classList.add('hidden');
+      document.getElementById('postSpinButtons').classList.remove('flex');
+
+      renderRosterTextareas();
+      showOnlyScreen('screenRandomizer');
+    }
+
+    function startFiveSecPreview() {
+      stopAllTimers();
+      playSound('pop');
+
+      const currentItem = GAME_ITEMS[currentItemIndex];
+      document.getElementById('previewRoundTitle').textContent = `Item #${currentItem.id} — Look Closely!`;
+
+      const previewImg = document.getElementById('previewItemImage');
+      setImgWithFallback(previewImg, currentItem);
+
+      let secondsLeft = 5;
+      const countEl = document.getElementById('previewCountdownNum');
+      countEl.textContent = secondsLeft;
+
+      showOnlyScreen('screenPreview');
+
+      previewTimerInterval = setInterval(() => {
+        secondsLeft--;
+        if (secondsLeft > 0) {
+          countEl.textContent = secondsLeft;
+          playSound('tick');
+        } else {
+          clearInterval(previewTimerInterval);
+          previewTimerInterval = null;
+          startMainFlickGame();
+        }
+      }, 1000);
+    }
+
+    function stopAllTimers() {
+      if (previewTimerInterval) {
+        clearInterval(previewTimerInterval);
+        previewTimerInterval = null;
+      }
+      if (matchTimerInterval) {
+        clearInterval(matchTimerInterval);
+        matchTimerInterval = null;
+      }
+    }
+
+    /*************************************************************************
+     * 6. MAIN GAME ENGINE: SPLIT-SCREEN FLICK THE LOWERCASE FLYING LETTERS
+     * - Strictly small/lowercase Comic Sans letters (`a-z`)
+     * - Spawns the item's letters + ONLY TWO (2) distractor letters
+     *   (e.g., 'hot dogs' -> h, o, t, d, o, g, s + distractors 'a' and 'w')
+     * - Moving paper bag target at top
+     * - Simultaneous multi-touch & mouse flick physics
+     *************************************************************************/
+    const COMIC_COLORS = [
+      { bg: '#ef4444', border: '#991b1b', text: '#ffffff' }, // Red
+      { bg: '#f97316', border: '#9a3412', text: '#ffffff' }, // Orange
+      { bg: '#eab308', border: '#854d0e', text: '#ffffff' }, // Gold
+      { bg: '#22c55e', border: '#166534', text: '#ffffff' }, // Green
+      { bg: '#06b6d4', border: '#155e75', text: '#ffffff' }, // Cyan
+      { bg: '#3b82f6', border: '#1e40af', text: '#ffffff' }, // Blue
+      { bg: '#a855f7', border: '#6b21a8', text: '#ffffff' }, // Purple
+      { bg: '#ec4899', border: '#9d174d', text: '#ffffff' }  // Pink
+    ];
+
+    class TeamFlickArena {
+      constructor(teamKey, canvasId, slotsContainerId, wrongOverlayId, correctOverlayId) {
+        this.teamKey = teamKey; // 'fresh' or 'snack'
+        this.canvas = document.getElementById(canvasId);
+        this.ctx = this.canvas.getContext('2d');
+        this.slotsContainer = document.getElementById(slotsContainerId);
+        this.wrongOverlay = document.getElementById(wrongOverlayId);
+        this.correctOverlay = document.getElementById(correctOverlayId);
+
+        this.targetWord = '';
+        this.targetChars = []; // Lowercase characters excluding spaces
+        this.distractorChars = []; // Exactly 2 lowercase distractor letters
+        this.currentCharIndex = 0;
+
+        this.letters = []; // Floating/flying lowercase letter tiles
+        this.activePointers = new Map(); // pointerId -> { tile, history: [{x,y,t}] }
+
+        // Moving Paper Bag state
+        this.bag = {
+          x: 200,
+          y: 105,
+          width: 135,
+          height: 145,
+          phase: teamKey === 'fresh' ? 0 : Math.PI,
+          speed: 0.032,
+          scalePulse: 1
+        };
+
+        this.wrongTimeout = null;
+        this.correctTimeout = null;
+
+        this.bindEvents();
+      }
+
+      resizeCanvas() {
+        const rect = this.canvas.parentElement.getBoundingClientRect();
+        this.canvas.width = Math.max(300, rect.width);
+        this.canvas.height = Math.max(300, rect.height);
+
+        this.bag.width = Math.min(145, Math.max(105, this.canvas.width * 0.25));
+        this.bag.height = this.bag.width * 1.08;
+        this.bag.y = Math.max(85, this.canvas.height * 0.21);
+
+        const radius = Math.min(31, Math.max(24, Math.floor(this.canvas.width / 15)));
+        this.letters.forEach(tile => { tile.radius = radius; });
+      }
+
+      setupWord(wordStr, distractors = []) {
+        // Strictly lowercase letters
+        this.targetWord = wordStr.toLowerCase();
+        this.targetChars = this.targetWord.split('').filter(ch => ch !== ' ');
+
+        // Use the item's two distractors (or fallback to 2 non-word letters if not provided)
+        if (Array.isArray(distractors) && distractors.length >= 2) {
+          this.distractorChars = distractors.slice(0, 2).map(ch => String(ch).toLowerCase());
+        } else {
+          const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('').filter(ch => !this.targetChars.includes(ch));
+          this.distractorChars = [
+            alphabet[Math.floor(Math.random() * alphabet.length)] || 'a',
+            alphabet[Math.floor(Math.random() * alphabet.length)] || 'w'
+          ];
+        }
+
+        this.currentCharIndex = 0;
+        this.activePointers.clear();
+
+        this.resizeCanvas();
+        this.renderWordSlots();
+        this.spawnFloatingAndFlyingLetters();
+      }
+
+      renderWordSlots() {
+        this.slotsContainer.innerHTML = '';
+        let nonSpaceCounter = 0;
+
+        for (let i = 0; i < this.targetWord.length; i++) {
+          const ch = this.targetWord[i].toLowerCase();
+          if (ch === ' ') {
+            const spacer = document.createElement('div');
+            spacer.className = 'w-4 md:w-6 h-10 flex items-center justify-center font-black text-slate-400';
+            spacer.textContent = '•';
+            this.slotsContainer.appendChild(spacer);
+            continue;
+          }
+
+          const slotEl = document.createElement('div');
+          const isFilled = nonSpaceCounter < this.currentCharIndex;
+          const isNext = nonSpaceCounter === this.currentCharIndex;
+
+          let baseClasses = 'w-9 h-10 md:w-11 md:h-12 rounded-xl flex items-center justify-center text-xl md:text-2xl font-black lowercase transition-all ';
+          if (isFilled) {
+            baseClasses += this.teamKey === 'fresh'
+              ? 'bg-emerald-500 text-white border-2 border-emerald-700 shadow'
+              : 'bg-orange-500 text-white border-2 border-orange-700 shadow';
+            // Strictly lowercase in word slot
+            slotEl.textContent = ch.toLowerCase();
+          } else if (isNext) {
+            baseClasses += 'bg-amber-100 text-amber-600 border-4 border-amber-400 slot-active';
+            slotEl.textContent = '?';
+          } else {
+            baseClasses += 'bg-slate-100 text-slate-300 border-2 border-dashed border-slate-300';
+            slotEl.textContent = '';
+          }
+
+          slotEl.className = baseClasses;
+          this.slotsContainer.appendChild(slotEl);
+          nonSpaceCounter++;
+        }
+      }
+
+      spawnFloatingAndFlyingLetters() {
+        // Pool contains the exact word letters + ONLY the 2 distractor letters
+        // Example for 'hot dogs': ['h','o','t','d','o','g','s'] + ['a','w']
+        const pool = [...this.targetChars, ...this.distractorChars];
+
+        // Thorough Fisher-Yates shuffle
+        for (let pass = 0; pass < 3; pass++) {
+          for (let i = pool.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [pool[i], pool[j]] = [pool[j], pool[i]];
+          }
+        }
+
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+        const radius = Math.min(31, Math.max(24, Math.floor(w / 15)));
+
+        const zoneTop = h * 0.46;
+        const zoneBottom = h - radius - 20;
+
+        this.letters = pool.map((char, idx) => {
+          const palette = COMIC_COLORS[idx % COMIC_COLORS.length];
+          const lowercaseChar = char.toLowerCase();
+
+          // Random floating velocity so letters drift and fly in/out of screen
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 1.0 + Math.random() * 1.35;
+
+          return {
+            id: idx,
+            char: lowercaseChar,     // Strictly lowercase display
+            rawChar: lowercaseChar,  // Strictly lowercase match check
+            x: radius + Math.random() * Math.max(100, w - radius * 2),
+            y: zoneTop + Math.random() * Math.max(80, zoneBottom - zoneTop),
+            driftVx: Math.cos(angle) * speed,
+            driftVy: Math.sin(angle) * (speed * 0.75),
+            vx: 0,
+            vy: 0,
+            radius: radius,
+            color: palette,
+            state: 'floating', // 'floating' | 'dragged' | 'flying' | 'collected'
+            floatPhase: Math.random() * Math.PI * 2,
+            rotation: (Math.random() - 0.5) * 0.25,
+            rotSpeed: (Math.random() - 0.5) * 0.012
+          };
+        });
+      }
+
+      // Respawns a letter flying in from a random left, right, or bottom edge of the screen
+      respawnTileFromScreenEdge(tile) {
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+        const zoneTop = h * 0.47;
+        const zoneBottom = h - tile.radius - 18;
+
+        const edgeChoice = Math.random();
+        const speed = 1.2 + Math.random() * 1.4;
+
+        if (edgeChoice < 0.42) {
+          // Fly in from LEFT edge
+          tile.x = -tile.radius * 1.4;
+          tile.y = zoneTop + Math.random() * Math.max(60, zoneBottom - zoneTop);
+          tile.driftVx = speed;
+          tile.driftVy = (Math.random() - 0.5) * 1.1;
+        } else if (edgeChoice < 0.84) {
+          // Fly in from RIGHT edge
+          tile.x = w + tile.radius * 1.4;
+          tile.y = zoneTop + Math.random() * Math.max(60, zoneBottom - zoneTop);
+          tile.driftVx = -speed;
+          tile.driftVy = (Math.random() - 0.5) * 1.1;
+        } else {
+          // Fly in from BOTTOM edge
+          tile.x = tile.radius + Math.random() * Math.max(80, w - tile.radius * 2);
+          tile.y = h + tile.radius * 1.4;
+          tile.driftVx = (Math.random() - 0.5) * 1.4;
+          tile.driftVy = -speed * 0.9;
+        }
+
+        tile.vx = 0;
+        tile.vy = 0;
+        tile.state = 'floating';
+      }
+
+      bindEvents() {
+        this.canvas.addEventListener('pointerdown', (e) => this.onPointerDown(e));
+        this.canvas.addEventListener('pointermove', (e) => this.onPointerMove(e));
+        this.canvas.addEventListener('pointerup', (e) => this.onPointerUp(e));
+        this.canvas.addEventListener('pointercancel', (e) => this.onPointerUp(e));
+      }
+
+      getCanvasCoords(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        return {
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top
+        };
+      }
+
+      onPointerDown(e) {
+        if (!isMatchActive || isGamePaused) return;
+        const pt = this.getCanvasCoords(e);
+
+        // Find topmost floating letter under finger/cursor
+        for (let i = this.letters.length - 1; i >= 0; i--) {
+          const tile = this.letters[i];
+          if (tile.state !== 'floating') continue;
+
+          const dist = Math.hypot(pt.x - tile.x, pt.y - tile.y);
+          if (dist <= tile.radius * 1.4) {
+            this.canvas.setPointerCapture(e.pointerId);
+            tile.state = 'dragged';
+            tile.vx = 0;
+            tile.vy = 0;
+            tile.x = pt.x;
+            tile.y = pt.y;
+
+            this.activePointers.set(e.pointerId, {
+              tile,
+              history: [{ x: pt.x, y: pt.y, t: performance.now() }]
+            });
+            playSound('pop');
+            break;
+          }
+        }
+      }
+
+      onPointerMove(e) {
+        if (!this.activePointers.has(e.pointerId)) return;
+        if (isGamePaused) return;
+        const data = this.activePointers.get(e.pointerId);
+        const pt = this.getCanvasCoords(e);
+        const now = performance.now();
+
+        data.tile.x = pt.x;
+        data.tile.y = pt.y;
+
+        data.history.push({ x: pt.x, y: pt.y, t: now });
+        while (data.history.length > 2 && now - data.history[0].t > 120) {
+          data.history.shift();
+        }
+      }
+
+      onPointerUp(e) {
+        if (!this.activePointers.has(e.pointerId)) return;
+        const data = this.activePointers.get(e.pointerId);
+        this.activePointers.delete(e.pointerId);
+
+        const tile = data.tile;
+        if (isGamePaused) {
+          tile.state = 'floating';
+          return;
+        }
+
+        const history = data.history;
+        const first = history[0];
+        const last = history[history.length - 1];
+        const dt = Math.max(16, last.t - first.t);
+
+        let vx = ((last.x - first.x) / dt) * 17;
+        let vy = ((last.y - first.y) / dt) * 17;
+
+        const speed = Math.hypot(vx, vy);
+
+        // Direct drop onto bag or flicked with velocity
+        const distToBag = Math.hypot(tile.x - this.bag.x, tile.y - this.bag.y);
+        if (distToBag < this.bag.width * 0.65) {
+          this.evaluateBagHit(tile);
+          return;
+        }
+
+        if (speed > 2.0) {
+          const maxSpeed = 24;
+          if (speed > maxSpeed) {
+            vx = (vx / speed) * maxSpeed;
+            vy = (vy / speed) * maxSpeed;
+          }
+          tile.vx = vx;
+          tile.vy = vy;
+          tile.state = 'flying';
+          playSound('flick');
+        } else {
+          // Resume floating from current release point
+          tile.state = 'floating';
+        }
+      }
+
+      evaluateBagHit(tile) {
+        const expectedChar = this.targetChars[this.currentCharIndex];
+
+        if (tile.rawChar === expectedChar) {
+          // CORRECT LOWERCASE LETTER HIT!
+          tile.state = 'collected';
+          this.bag.scalePulse = 1.28;
+          this.currentCharIndex++;
+          playSound('correct');
+          this.renderWordSlots();
+          this.triggerCorrectFeedback();
+
+          if (this.currentCharIndex >= this.targetChars.length) {
+            handleTeamCompletedWord(this.teamKey);
+          }
+        } else {
+          // WRONG LETTER HIT! Show big X + buzz sound and respawn letter flying in from edge
+          playSound('wrong');
+          this.triggerWrongFeedback();
+          this.respawnTileFromScreenEdge(tile);
+        }
+      }
+
+      triggerWrongFeedback() {
+        if (this.wrongTimeout) clearTimeout(this.wrongTimeout);
+        this.wrongOverlay.classList.remove('hidden', 'animate-big-x');
+        void this.wrongOverlay.offsetWidth;
+        this.wrongOverlay.classList.add('animate-big-x');
+
+        this.wrongTimeout = setTimeout(() => {
+          this.wrongOverlay.classList.add('hidden');
+        }, 850);
+      }
+
+      triggerCorrectFeedback() {
+        if (this.correctTimeout) clearTimeout(this.correctTimeout);
+        this.correctOverlay.classList.remove('hidden', 'animate-correct-pop');
+        void this.correctOverlay.offsetWidth;
+        this.correctOverlay.classList.add('animate-correct-pop');
+
+        this.correctTimeout = setTimeout(() => {
+          this.correctOverlay.classList.add('hidden');
+        }, 650);
+      }
+
+      updateAndDraw() {
+        const ctx = this.ctx;
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+
+        ctx.clearRect(0, 0, w, h);
+
+        // 1. Update Paper Bag Small Movements (when not paused)
+        if (!isGamePaused) {
+          this.bag.phase += this.bag.speed;
+        }
+        const maxSwingX = Math.max(40, (w - this.bag.width) * 0.36);
+        this.bag.x = w / 2 + Math.sin(this.bag.phase) * maxSwingX;
+        const bobY = Math.cos(this.bag.phase * 2) * 8;
+        const currentBagY = this.bag.y + bobY;
+
+        if (!isGamePaused && this.bag.scalePulse > 1) {
+          this.bag.scalePulse = Math.max(1, this.bag.scalePulse - 0.025);
+        }
+
+        // Draw Aiming Zone Divider Line
+        ctx.save();
+        ctx.setLineDash([10, 10]);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(20, h * 0.42);
+        ctx.lineTo(w - 20, h * 0.42);
+        ctx.stroke();
+
+        ctx.font = "bold 13px 'Comic Sans MS', cursive, sans-serif";
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+        ctx.shadowBlur = 4;
+        ctx.textAlign = 'center';
+        ctx.fillText('▲ catch & flick flying lowercase letters into the bag ▲', w / 2, h * 0.42 - 8);
+        ctx.restore();
+
+        // 2. Draw Moving Paper Bag
+        this.drawPaperBag(ctx, this.bag.x, currentBagY, this.bag.width * this.bag.scalePulse, this.bag.height * this.bag.scalePulse);
+
+        // 3. Draw aiming trajectory line for actively dragged letters
+        this.activePointers.forEach(({ tile }) => {
+          ctx.save();
+          ctx.beginPath();
+          ctx.setLineDash([6, 6]);
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+          ctx.lineWidth = 4;
+          ctx.moveTo(tile.x, tile.y);
+          ctx.lineTo(this.bag.x, currentBagY);
+          ctx.stroke();
+          ctx.restore();
+        });
+
+        // 4. Update & Draw Floating / Flying Lowercase Letters
+        const zoneTop = h * 0.45;
+        const expectedChar = this.targetChars[this.currentCharIndex];
+        let visibleExpectedCount = 0;
+
+        for (let i = 0; i < this.letters.length; i++) {
+          const tile = this.letters[i];
+          if (tile.state === 'collected') continue;
+
+          if (!isGamePaused) {
+            if (tile.state === 'floating') {
+              tile.floatPhase += 0.045;
+              tile.rotation += tile.rotSpeed;
+
+              // Continuous drift + sinusoidal wave so letters float & fly across the screen
+              tile.x += tile.driftVx;
+              tile.y += tile.driftVy + Math.sin(tile.floatPhase) * 0.55;
+
+              // Gently keep floating letters below the bag target zone unless flicked
+              if (tile.y < zoneTop && tile.driftVy < 0) {
+                tile.driftVy = Math.abs(tile.driftVy);
+              }
+
+              // When a floating letter flies out of the screen bounds, respawn it flying in from another edge!
+              const offMargin = tile.radius * 2.1;
+              if (
+                tile.x < -offMargin ||
+                tile.x > w + offMargin ||
+                tile.y > h + offMargin
+              ) {
+                this.respawnTileFromScreenEdge(tile);
+              }
+            } else if (tile.state === 'flying') {
+              // Player flicked this letter!
+              tile.x += tile.vx;
+              tile.y += tile.vy;
+              tile.rotation += 0.08;
+
+              // Check collision with Moving Paper Bag
+              const hitBoxW = this.bag.width * 0.52;
+              const hitBoxH = this.bag.height * 0.52;
+              if (
+                Math.abs(tile.x - this.bag.x) < hitBoxW + tile.radius * 0.4 &&
+                Math.abs(tile.y - currentBagY) < hitBoxH + tile.radius * 0.4
+              ) {
+                this.evaluateBagHit(tile);
+                continue;
+              }
+
+              // If flicked letter misses and flies out of screen, it flies back in from an edge
+              if (
+                tile.x < -tile.radius * 1.5 ||
+                tile.x > w + tile.radius * 1.5 ||
+                tile.y < -tile.radius * 1.5 ||
+                tile.y > h + tile.radius * 1.5
+              ) {
+                this.respawnTileFromScreenEdge(tile);
+              }
+            }
+          }
+
+          // Track if the currently needed letter is visibly inside the arena
+          if (
+            tile.rawChar === expectedChar &&
+            tile.x > tile.radius &&
+            tile.x < w - tile.radius &&
+            tile.y > zoneTop &&
+            tile.y < h - tile.radius
+          ) {
+            visibleExpectedCount++;
+          }
+
+          this.drawComicLetterTile(ctx, tile);
+        }
+
+        // Guarantee playability: if all copies of the currently needed letter happen to be near the edge, steer one toward the center
+        if (!isGamePaused && visibleExpectedCount === 0 && expectedChar) {
+          const candidate = this.letters.find(t => t.state === 'floating' && t.rawChar === expectedChar);
+          if (candidate) {
+            const targetX = w * 0.5;
+            const targetY = h * 0.72;
+            const angle = Math.atan2(targetY - candidate.y, targetX - candidate.x);
+            candidate.driftVx = Math.cos(angle) * 2.1;
+            candidate.driftVy = Math.sin(angle) * 2.1;
+          }
+        }
+      }
+
+      drawPaperBag(ctx, cx, cy, bw, bh) {
+        ctx.save();
+        ctx.translate(cx, cy);
+
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.28)';
+        ctx.shadowBlur = 14;
+        ctx.shadowOffsetY = 6;
+
+        if (paperBagLoaded && paperBagImg.complete && paperBagImg.naturalWidth > 0) {
+          ctx.fillStyle = '#ffffff';
+          this.roundRect(ctx, -bw / 2 - 4, -bh / 2 - 4, bw + 8, bh + 8, 16);
+          ctx.fill();
+          ctx.drawImage(paperBagImg, -bw / 2, -bh / 2, bw, bh);
+        } else {
+          ctx.fillStyle = '#78350f';
+          ctx.beginPath();
+          ctx.ellipse(0, -bh * 0.38, bw * 0.44, bh * 0.08, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          const grad = ctx.createLinearGradient(-bw / 2, -bh / 2, bw / 2, bh / 2);
+          grad.addColorStop(0, '#d97706');
+          grad.addColorStop(0.5, '#b45309');
+          grad.addColorStop(1, '#92400e');
+          ctx.fillStyle = grad;
+
+          ctx.beginPath();
+          ctx.moveTo(-bw * 0.44, -bh * 0.38);
+          ctx.lineTo(bw * 0.44, -bh * 0.38);
+          ctx.lineTo(bw * 0.48, bh * 0.46);
+          ctx.quadraticCurveTo(0, bh * 0.52, -bw * 0.48, bh * 0.46);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.strokeStyle = 'rgba(120, 53, 15, 0.45)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(-bw * 0.28, -bh * 0.35);
+          ctx.lineTo(-bw * 0.31, bh * 0.45);
+          ctx.moveTo(bw * 0.28, -bh * 0.35);
+          ctx.lineTo(bw * 0.31, bh * 0.45);
+          ctx.stroke();
+
+          ctx.fillStyle = '#fef3c7';
+          ctx.beginPath();
+          ctx.arc(0, bh * 0.06, bw * 0.24, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.font = `${Math.floor(bw * 0.26)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(this.teamKey === 'fresh' ? '🥬' : '🍪', 0, bh * 0.07);
+        }
+
+        ctx.restore();
+      }
+
+      drawComicLetterTile(ctx, tile) {
+        ctx.save();
+        ctx.translate(tile.x, tile.y);
+        if (tile.state === 'dragged') {
+          ctx.scale(1.2, 1.2);
+        } else {
+          ctx.rotate(tile.rotation);
+        }
+
+        // Tile 3D shadow
+        ctx.beginPath();
+        ctx.arc(0, 5, tile.radius, 0, Math.PI * 2);
+        ctx.fillStyle = tile.color.border;
+        ctx.fill();
+
+        // Vibrant colorful body
+        ctx.beginPath();
+        ctx.arc(0, 0, tile.radius, 0, Math.PI * 2);
+        ctx.fillStyle = tile.color.bg;
+        ctx.fill();
+        ctx.lineWidth = 3.5;
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+
+        // Top glossy highlight
+        ctx.beginPath();
+        ctx.arc(-tile.radius * 0.28, -tile.radius * 0.28, tile.radius * 0.25, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.32)';
+        ctx.fill();
+
+        // Strictly Lowercase Comic Sans Letter Text
+        const fontSize = Math.floor(tile.radius * 1.25);
+        ctx.font = `900 ${fontSize}px "Comic Sans MS", "Comic Sans", "Chalkboard SE", cursive, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        const displayChar = tile.char.toLowerCase();
+
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.38)';
+        ctx.strokeText(displayChar, 0, 1);
+
+        ctx.fillStyle = tile.color.text;
+        ctx.fillText(displayChar, 0, 1);
+
+        ctx.restore();
+      }
+
+      roundRect(ctx, x, y, width, height, radius) {
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+      }
+    }
+
+    let arenaFreshInstance = null;
+    let arenaSnackInstance = null;
+    let animationFrameId = null;
+
+    function startMainFlickGame() {
+      stopAllTimers();
+      isGamePaused = false;
+      document.getElementById('modalPause').classList.add('hidden');
+      showOnlyScreen('screenGame');
+
+      const currentItem = GAME_ITEMS[currentItemIndex];
+
+      // Show 90-second timer, item thumbnail, and Pause button in top bar
+      const timerBox = document.getElementById('headerTimerBox');
+      timerBox.classList.remove('hidden');
+      timerBox.classList.add('flex');
+
+      const thumbWrap = document.getElementById('headerItemThumbWrap');
+      thumbWrap.classList.remove('hidden');
+      thumbWrap.classList.add('flex');
+      setImgWithFallback(document.getElementById('headerItemThumb'), currentItem);
+
+      const pauseBtn = document.getElementById('btnPauseGame');
+      pauseBtn.classList.remove('hidden');
+      pauseBtn.classList.add('flex');
+      document.getElementById('pauseBtnIcon').className = 'fa-solid fa-pause';
+      document.getElementById('pauseBtnText').textContent = 'Pause';
+
+      // Set player names on each side of the split screen
+      document.getElementById('arenaFreshPlayerName').textContent = currentShopperFresh || 'Fresh Shopper';
+      document.getElementById('arenaSnackPlayerName').textContent = currentShopperSnack || 'Snack Shopper';
+
+      // Initialize both split-screen arenas
+      if (!arenaFreshInstance) {
+        arenaFreshInstance = new TeamFlickArena('fresh', 'canvasFresh', 'slotsFresh', 'wrongOverlayFresh', 'correctOverlayFresh');
+      }
+      if (!arenaSnackInstance) {
+        arenaSnackInstance = new TeamFlickArena('snack', 'canvasSnack', 'slotsSnack', 'wrongOverlaySnack', 'correctOverlaySnack');
+      }
+
+      isMatchActive = true;
+      arenaFreshInstance.setupWord(currentItem.word, currentItem.distractors);
+      arenaSnackInstance.setupWord(currentItem.word, currentItem.distractors);
+
+      // Start 90-second countdown timer (pauses cleanly when isGamePaused is true)
+      matchTimeLeft = 90;
+      const timerDisp = document.getElementById('gameTimerDisplay');
+      timerDisp.textContent = `${matchTimeLeft}s`;
+
+      matchTimerInterval = setInterval(() => {
+        if (!isMatchActive || isGamePaused) return;
+        matchTimeLeft--;
+        timerDisp.textContent = `${matchTimeLeft}s`;
+
+        if (matchTimeLeft <= 10 && matchTimeLeft > 0) {
+          playSound('tick');
+        }
+
+        if (matchTimeLeft <= 0) {
+          clearInterval(matchTimerInterval);
+          matchTimerInterval = null;
+          handleTimeOutRound();
+        }
+      }, 1000);
+
+      playSound('pop');
+    }
+
+    function gameLoop() {
+      if (isMatchActive && arenaFreshInstance && arenaSnackInstance) {
+        arenaFreshInstance.updateAndDraw();
+        arenaSnackInstance.updateAndDraw();
+      }
+      animationFrameId = requestAnimationFrame(gameLoop);
+    }
+
+    function handleTeamCompletedWord(winningTeam) {
+      if (!isMatchActive) return;
+      isMatchActive = false;
+      isGamePaused = false;
+      stopAllTimers();
+      playSound('win');
+
+      const currentItem = GAME_ITEMS[currentItemIndex];
+
+      if (winningTeam === 'fresh') {
+        scoreFresh++;
+        document.getElementById('scoreFresh').textContent = scoreFresh;
+        document.getElementById('resultBadgeIcon').textContent = '🥬🏆';
+        document.getElementById('resultHeadline').textContent = 'Team Fresh Wins the Round!';
+        document.getElementById('resultHeadline').className = 'text-3xl md:text-5xl font-black text-emerald-700 mb-2';
+        document.getElementById('resultSubtext').textContent = `${currentShopperFresh || 'Team Fresh'} flicked all the lowercase letters into the paper bag first! (+1 Point)`;
+      } else {
+        scoreSnack++;
+        document.getElementById('scoreSnack').textContent = scoreSnack;
+        document.getElementById('resultBadgeIcon').textContent = '🍪🏆';
+        document.getElementById('resultHeadline').textContent = 'Team Snack Wins the Round!';
+        document.getElementById('resultHeadline').className = 'text-3xl md:text-5xl font-black text-orange-600 mb-2';
+        document.getElementById('resultSubtext').textContent = `${currentShopperSnack || 'Team Snack'} flicked all the lowercase letters into the paper bag first! (+1 Point)`;
+      }
+
+      showRoundResultModal(currentItem);
+    }
+
+    function handleTimeOutRound() {
+      if (!isMatchActive) return;
+      isMatchActive = false;
+      isGamePaused = false;
+      stopAllTimers();
+      playSound('wrong');
+
+      const currentItem = GAME_ITEMS[currentItemIndex];
+      document.getElementById('resultBadgeIcon').textContent = '⏰';
+      document.getElementById('resultHeadline').textContent = "Time's Up!";
+      document.getElementById('resultHeadline').className = 'text-3xl md:text-5xl font-black text-rose-600 mb-2';
+      document.getElementById('resultSubtext').textContent = '90 seconds elapsed! Let’s see the lowercase spelling and spin new shoppers.';
+
+      showRoundResultModal(currentItem);
+    }
+
+    function showRoundResultModal(item) {
+      setImgWithFallback(document.getElementById('resultItemImage'), item);
+      // Strictly lowercase spelling display
+      document.getElementById('resultWordSpelling').textContent = item.word.toLowerCase();
+      document.getElementById('modalRoundResult').classList.remove('hidden');
+    }
+
+    // After each item, do NOT proceed directly to the next question.
+    // Return to the Name Randomizer and queue the next item!
+    function returnToRandomizerAfterRound() {
+      document.getElementById('modalRoundResult').classList.add('hidden');
+      document.getElementById('modalPause').classList.add('hidden');
+      stopAllTimers();
+      isMatchActive = false;
+      isGamePaused = false;
+
+      currentItemIndex = (currentItemIndex + 1) % GAME_ITEMS.length;
+      document.getElementById('itemSelectDropdown').value = currentItemIndex;
+
+      goToRandomizer();
+    }
+
+    /*************************************************************************
+     * 7. CUSTOM PHOTO UPLOADER MODAL (Supports `coverphoto_flick.gif`, `bg_flick.jpg`, etc.)
+     *************************************************************************/
+    function buildAssetModalList() {
+      const grid = document.getElementById('assetSlotsGrid');
+      grid.innerHTML = '';
+
+      const allSlots = [
+        { label: 'Cover Page Animated GIF', file: COVER_FILENAME, type: 'cover', accept: 'image/gif,image/*' },
+        { label: 'Entire Game Background Photo', file: BG_FILENAME, type: 'bg', accept: 'image/jpeg,image/*' },
+        { label: 'Moving Paper Bag Photo (JPEG)', file: PAPERBAG_FILENAME, type: 'bag', accept: 'image/jpeg,image/*' },
+        ...GAME_ITEMS.map(it => ({
+          label: `Item #${it.id}: "${it.word}"`,
+          file: it.file,
+          type: 'item',
+          itemId: it.id,
+          accept: 'image/*'
+        }))
+      ];
+
+      allSlots.forEach(slot => {
+        const isUploaded = Boolean(customImageOverrides[slot.file]);
+        const card = document.createElement('div');
+        card.className = 'flex items-center justify-between gap-2 p-3 rounded-2xl border-2 ' +
+          (isUploaded ? 'bg-emerald-50 border-emerald-400' : 'bg-slate-50 border-slate-200');
+
+        card.innerHTML = `
+          <div class="min-w-0 flex-1">
+            <div class="font-black text-slate-800 text-sm truncate">${slot.label}</div>
+            <div class="text-xs font-mono text-indigo-700 truncate">${slot.file}</div>
+          </div>
+          <label class="cursor-pointer px-3 py-1.5 rounded-xl ${isUploaded ? 'bg-emerald-600 text-white' : 'bg-white border-2 border-slate-300 text-slate-700 hover:bg-slate-100'} text-xs font-bold whitespace-nowrap">
+            ${isUploaded ? '✓ Loaded' : (slot.type === 'cover' ? 'Choose GIF' : 'Choose Photo')}
+            <input type="file" accept="${slot.accept}" class="hidden" onchange="handleSingleAssetUpload(event, '${slot.file}', '${slot.type}')" />
+          </label>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function openAssetModal() {
+      buildAssetModalList();
+      document.getElementById('modalAssets').classList.remove('hidden');
+    }
+
+    function closeAssetModal() {
+      document.getElementById('modalAssets').classList.add('hidden');
+    }
+
+    function applyCustomAssetFile(fileKey, blobUrl, type) {
+      customImageOverrides[fileKey] = blobUrl;
+
+      if (type === 'cover' || fileKey.startsWith('coverphoto_flick')) {
+        const coverImg = document.getElementById('coverBgImage');
+        if (coverImg) {
+          coverImg.onerror = null;
+          coverImg.src = blobUrl;
+        }
+      } else if (type === 'bg' || fileKey.startsWith('bg_flick')) {
+        const globalBg = document.getElementById('globalBgImage');
+        if (globalBg) {
+          globalBg.onerror = null;
+          globalBg.src = blobUrl;
+        }
+      } else if (type === 'bag' || fileKey.startsWith('flick_paperbag')) {
+        paperBagImg.src = blobUrl;
+        paperBagLoaded = true;
+      }
+    }
+
+    function handleSingleAssetUpload(event, targetFilename, type) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const blobUrl = URL.createObjectURL(file);
+      applyCustomAssetFile(targetFilename, blobUrl, type);
+      buildAssetModalList();
+      playSound('correct');
+    }
+
+    function handleBatchFileUpload(event) {
+      const files = Array.from(event.target.files || []);
+      if (files.length === 0) return;
+
+      files.forEach(file => {
+        const lower = file.name.toLowerCase();
+        const blobUrl = URL.createObjectURL(file);
+
+        if (lower.includes('coverphoto_flick')) {
+          applyCustomAssetFile(COVER_FILENAME, blobUrl, 'cover');
+        } else if (lower.includes('bg_flick')) {
+          applyCustomAssetFile(BG_FILENAME, blobUrl, 'bg');
+        } else if (lower.includes('paperbag')) {
+          applyCustomAssetFile(PAPERBAG_FILENAME, blobUrl, 'bag');
+        } else {
+          GAME_ITEMS.forEach(item => {
+            const baseNoExt = item.file.replace('.jpg', '').toLowerCase();
+            if (lower.includes(baseNoExt)) {
+              applyCustomAssetFile(item.file, blobUrl, 'item');
+            }
+          });
+        }
+      });
+
+      buildAssetModalList();
+      playSound('correct');
+    }
+
+    /*************************************************************************
+     * 8. WINDOW ONLOAD & RESPONSIVE RESIZE HANDLERS
+     *************************************************************************/
+    window.addEventListener('resize', () => {
+      if (arenaFreshInstance) arenaFreshInstance.resizeCanvas();
+      if (arenaSnackInstance) arenaSnackInstance.resizeCanvas();
+    });
+
+    window.onload = function () {
+      initItemDropdown();
+      renderRosterTextareas();
+      gameLoop();
+    };
+  </script>
+</body>
+</html>
