@@ -7,12 +7,11 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     * {
-      font-family: 'Comic Sans MS', 'Comic Sans', 'Chalkboard SE', 'Comic Neue', cursive, sans-serif !important;
+      font-family: 'Comic Sans MS', 'Comic Sans', 'Chalkboard SE', 'Comic Neue', 'Microsoft JhengHei', cursive, sans-serif !important;
       user-select: none;
       -webkit-user-select: none;
     }
 
-    /* Fullscreen Game Viewport */
     html, body {
       width: 100vw;
       height: 100vh;
@@ -21,7 +20,6 @@
       overflow: hidden;
     }
 
-    /* Fallback and background container styles */
     .game-bg {
       background-image: url('game_background.jpg'), linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #feada6 100%);
       background-size: cover;
@@ -31,7 +29,6 @@
       height: 100vh;
     }
 
-    /* Flash Wrong X Overlay */
     @keyframes flashX {
       0% { opacity: 0; transform: scale(0.5); }
       50% { opacity: 1; transform: scale(1.3); }
@@ -42,7 +39,6 @@
       animation: flashX 0.6s ease-out forwards;
     }
 
-    /* Pulse Timer */
     @keyframes pulseTimer {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.15); color: #ef4444; }
@@ -52,16 +48,14 @@
       animation: pulseTimer 0.8s infinite;
     }
 
-    /* Glassmorphism card utility */
     .glass-card {
-      background: rgba(255, 255, 255, 0.92);
+      background: rgba(255, 255, 255, 0.94);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      border: 4px solid rgba(255, 255, 255, 0.8);
+      border: 4px solid rgba(255, 255, 255, 0.85);
       box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
     }
 
-    /* Start button pulse animation */
     @keyframes pulseBtn {
       0%, 100% { transform: scale(1); box-shadow: 0 10px 25px rgba(234, 88, 12, 0.5); }
       50% { transform: scale(1.05); box-shadow: 0 15px 35px rgba(234, 88, 12, 0.8); }
@@ -70,117 +64,119 @@
     .btn-pulse {
       animation: pulseBtn 2s infinite ease-in-out;
     }
+
+    /* Animated Turkey Keyframes */
+    @keyframes turkeyDance {
+      0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+      25% { transform: translateY(-10px) rotate(-6deg) scale(1.05); }
+      50% { transform: translateY(0) rotate(0deg) scale(1); }
+      75% { transform: translateY(-10px) rotate(6deg) scale(1.05); }
+    }
+
+    @keyframes featherSpread {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+
+    .turkey-animate {
+      animation: turkeyDance 1.6s infinite ease-in-out;
+    }
+
+    .feathers-animate {
+      transform-origin: 100px 115px;
+      animation: featherSpread 1.6s infinite ease-in-out;
+    }
   </style>
 </head>
 <body class="bg-amber-950 w-screen h-screen overflow-hidden">
 
-  <!-- Main Container Frame (Full Viewport Maximize) -->
-  <div id="game-frame" class="game-bg relative w-vw h-vh flex flex-col justify-between overflow-hidden">
+  <div id="game-frame" class="game-bg relative w-screen h-screen flex flex-col justify-between overflow-hidden">
     
-  <!-- Audio Toggle & Controls Overlay (Top Right Corner) -->
+    <!-- Audio Toggle -->
     <div class="absolute top-4 right-4 z-50 flex gap-2">
       <button id="music-btn" onclick="toggleMusic()" class="bg-amber-500 hover:bg-amber-600 text-white font-black py-2.5 px-5 rounded-full shadow-2xl border-2 border-white flex items-center gap-2 text-base sm:text-lg transition active:scale-95">
-        <span id="music-icon">🎵</span> <span id="music-text">Music: ON</span>
+        <span id="music-icon">&#127925;</span> <span id="music-text">Music: ON</span>
       </button>
     </div>
 
-    <!-- Red "X" Flash Overlay for Incorrect Guess -->
+    <!-- Red X Overlay -->
     <div id="wrong-x-overlay" class="pointer-events-none absolute inset-0 z-40 flex items-center justify-center hidden">
-      <div class="text-red-600 font-extrabold text-[12rem] sm:text-[16rem] drop-shadow-[0_15px_25px_rgba(0,0,0,0.9)] filter">
-        ✖
+      <div class="text-red-600 font-extrabold text-[12rem] sm:text-[16rem] drop-shadow-[0_15px_25px_rgba(0,0,0,0.9)]">
+        &#10006;
       </div>
     </div>
 
-    <!-- ==================== SCREEN 1: COVER / TITLE SCREEN ==================== -->
+    <!-- SCREEN 1: COVER -->
     <div id="screen-cover" class="relative w-full h-full flex flex-col justify-end items-center p-6 sm:p-12 z-10 overflow-hidden">
-      <!-- Fullscreen cover image backdrop display -->
       <img id="cover-image" src="cover_image.jpg" alt="Thanksgiving Cover" 
            onerror="this.onerror=null; this.src=getSvgFallback('Thanksgiving Game', '🍁🦃🌽');"
            class="absolute inset-0 w-full h-full object-cover z-0" />
 
-      <!-- Start Game Button Positioned at Bottom -->
       <div class="mb-6 sm:mb-10 w-full flex justify-center z-10">
         <button onclick="startGame()" class="btn-pulse w-11/12 max-w-xl bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-white text-3xl sm:text-5xl font-black py-5 px-10 rounded-full border-4 border-white transform hover:scale-105 active:scale-95 transition-all duration-200 shadow-2xl">
-          🎮 START GAME 🍁
+          &#127918; START GAME &#127809;
         </button>
       </div>
     </div>
 
-
-    <!-- ==================== SCREEN 2: 5-SECOND PREVIEW SCREEN (MAXIMIZED PICTURE) ==================== -->
+    <!-- SCREEN 2: 5-SECOND PREVIEW -->
     <div id="screen-preview" class="w-full h-full flex flex-col justify-between items-center p-4 sm:p-8 z-10 hidden">
-      <!-- Preview Header Banner -->
       <div class="text-center mt-2">
         <span class="bg-orange-500 text-white text-xl sm:text-3xl font-black px-8 py-3 rounded-full border-4 border-white shadow-xl inline-block">
-          Memorize the Word Image! 🧠
+          Memorize the Word Image! &#129504;
         </span>
       </div>
 
-      <!-- Super Sized Target Picture Display -->
       <div class="my-auto w-full max-w-4xl h-[55vh] sm:h-[62vh] glass-card rounded-3xl p-4 sm:p-6 flex flex-col items-center justify-center relative shadow-2xl">
-        <img id="preview-image" src="" alt="Vocabulary Picture" 
-             class="w-full h-full object-contain rounded-2xl drop-shadow-md" />
+        <img id="preview-image" src="" alt="Vocabulary Picture" class="w-full h-full object-contain rounded-2xl drop-shadow-md" />
       </div>
 
-      <!-- Countdown Bar & Timer -->
       <div class="w-full max-w-xl mb-4 sm:mb-8 flex flex-col items-center gap-2">
         <div class="text-amber-950 font-black text-2xl sm:text-4xl drop-shadow-md">
           Starting in: <span id="preview-countdown" class="text-orange-600 text-4xl sm:text-5xl">5</span>s
         </div>
         <div class="w-full bg-white/80 rounded-full h-6 sm:h-8 border-4 border-amber-500 shadow-inner overflow-hidden p-0.5">
-          <div id="preview-bar" class="bg-gradient-to-r from-yellow-400 to-orange-500 h-full w-full rounded-full transition-all duration-1000 linear"></div>
+          <div id="preview-bar" class="bg-gradient-to-r from-yellow-400 to-orange-500 h-full w-full rounded-full transition-all duration-1000 ease-linear"></div>
         </div>
       </div>
     </div>
 
-
-    <!-- ==================== SCREEN 3: SPELLING GAMEPLAY SCREEN ==================== -->
+    <!-- SCREEN 3: GAMEPLAY -->
     <div id="screen-gameplay" class="w-full h-full flex flex-col justify-between items-center p-3 sm:p-6 z-10 relative hidden">
-      
-      <!-- Top HUD: Lifelines, Word Counter & 30s Timer -->
       <div class="w-full flex justify-between items-center bg-white/90 backdrop-blur-md px-6 py-3 rounded-2xl border-4 border-amber-400 shadow-xl">
-        <!-- Lifelines (5 Turkey Emojis) -->
         <div class="flex items-center gap-2">
           <span class="text-base sm:text-xl font-black text-amber-950 mr-1 hidden sm:inline">Lives:</span>
           <div id="lifelines-container" class="flex text-2xl sm:text-4xl gap-1">
-            <span>🦃</span><span>🦃</span><span>🦃</span><span>🦃</span><span>🦃</span>
+            <span>&#129411;</span><span>&#129411;</span><span>&#129411;</span><span>&#129411;</span><span>&#129411;</span>
           </div>
         </div>
 
-        <!-- Progress Counter -->
         <div class="font-black text-amber-950 text-base sm:text-2xl">
           Word <span id="word-current-idx" class="text-orange-600">1</span> / <span id="word-total-count">5</span>
         </div>
 
-        <!-- 30s Timer -->
         <div class="flex items-center gap-2 font-black text-xl sm:text-3xl text-orange-600">
-          ⏳ <span id="timer-display">30</span>s
+          &#9203; <span id="timer-display">30</span>s
         </div>
       </div>
 
-      <!-- Active Game Word Header with Embedded Picture Preview -->
       <div class="my-2 flex flex-col items-center w-full max-w-2xl">
         <div class="flex items-center justify-center gap-4 bg-white/85 backdrop-blur-sm px-6 py-2 rounded-2xl border-2 border-amber-300 shadow-md mb-2">
           <div class="w-20 h-20 sm:w-28 sm:h-28 rounded-xl overflow-hidden border-2 border-amber-500 bg-white flex-shrink-0 shadow-inner">
             <img id="game-thumbnail-image" src="" alt="Word Thumbnail" class="w-full h-full object-contain" />
           </div>
           <button onclick="speakCurrentWord()" class="bg-amber-400 hover:bg-amber-500 text-amber-950 font-black px-4 py-2 sm:px-6 sm:py-3 rounded-full text-base sm:text-xl border-2 border-white flex items-center gap-2 shadow-lg transition active:scale-95">
-            🔊 Hear Word
+            &#128266; Hear Word
           </button>
         </div>
 
-        <!-- Word Answer Letter Box Slots -->
-        <div id="answer-slots-container" class="flex flex-wrap justify-center gap-2 sm:gap-3 my-1">
-          <!-- Dynamically populated letter slot boxes -->
-        </div>
+        <div id="answer-slots-container" class="flex flex-wrap justify-center gap-2 sm:gap-3 my-1"></div>
       </div>
 
-      <!-- Canvas Area for Dynamic Flying & Bouncing Colorful Bubbles across Maximized Screen -->
-      <div id="canvas-container" class="relative w-full flex-1 rounded-3xl overflow-hidden border-4 border-white/70 bg-white/10 backdrop-blur-xs shadow-2xl">
+      <div id="canvas-container" class="relative w-full flex-1 rounded-3xl overflow-hidden border-4 border-white/70 bg-white/10 backdrop-blur-sm shadow-2xl">
         <canvas id="bubble-canvas" class="w-full h-full block cursor-pointer"></canvas>
       </div>
 
-      <!-- Bottom Tip Bar -->
       <div class="w-full text-center mt-2">
         <p class="text-amber-950 font-black text-xs sm:text-base bg-white/80 py-1.5 px-6 rounded-full inline-block shadow-md">
           Tap the flying colorful bubbles with the correct lowercase letters!
@@ -188,33 +184,83 @@
       </div>
     </div>
 
-
-    <!-- ==================== SCREEN 4: WIN / GAME OVER SCREEN ==================== -->
-    <div id="screen-end" class="w-full h-full flex flex-col justify-center items-center p-6 z-10 text-center hidden">
-      <div class="glass-card max-w-lg w-full rounded-3xl p-8 sm:p-10 flex flex-col items-center gap-6 shadow-2xl border-4 border-white">
-        <div id="end-emoji" class="text-8xl sm:text-9xl animate-bounce">🏆</div>
-        <h2 id="end-title" class="text-4xl sm:text-5xl font-black text-amber-950">Happy Thanksgiving!</h2>
-        <p id="end-subtitle" class="text-xl sm:text-2xl text-orange-700 font-extrabold">You spelled all vocabulary words correctly!</p>
+    <!-- SCREEN 4: END SCREEN -->
+    <div id="screen-end" class="w-full h-full flex flex-col justify-center items-center p-4 sm:p-6 z-10 text-center hidden overflow-y-auto">
+      <div class="glass-card max-w-2xl w-full rounded-3xl p-6 sm:p-8 flex flex-col items-center gap-4 shadow-2xl border-4 border-white my-auto">
         
-        <div class="bg-amber-100/90 p-5 rounded-2xl border-2 border-amber-300 w-full my-2 shadow-inner">
-          <div class="text-amber-900 text-lg font-bold">Final Score</div>
-          <div id="end-score-details" class="text-3xl font-black text-amber-950">5 / 5 Words</div>
+        <!-- Animated Picture of Turkey (Shown on Win) -->
+        <div id="win-turkey-graphic" class="turkey-animate w-36 h-36 sm:w-44 sm:h-44 flex items-center justify-center">
+          <svg viewBox="0 0 200 200" class="w-full h-full drop-shadow-xl">
+            <!-- Tail Feathers -->
+            <g class="feathers-animate">
+              <ellipse cx="100" cy="65" rx="18" ry="52" fill="#ef4444" stroke="#78350f" stroke-width="4" transform="rotate(-50 100 115)" />
+              <ellipse cx="100" cy="65" rx="18" ry="52" fill="#f97316" stroke="#78350f" stroke-width="4" transform="rotate(-25 100 115)" />
+              <ellipse cx="100" cy="65" rx="18" ry="52" fill="#eab308" stroke="#78350f" stroke-width="4" />
+              <ellipse cx="100" cy="65" rx="18" ry="52" fill="#f97316" stroke="#78350f" stroke-width="4" transform="rotate(25 100 115)" />
+              <ellipse cx="100" cy="65" rx="18" ry="52" fill="#ef4444" stroke="#78350f" stroke-width="4" transform="rotate(50 100 115)" />
+            </g>
+            <!-- Feet -->
+            <path d="M80 165 L70 182 M80 165 L80 184 M80 165 L90 182" stroke="#f59e0b" stroke-width="5" stroke-linecap="round" />
+            <path d="M120 165 L110 182 M120 165 L120 184 M120 165 L130 182" stroke="#f59e0b" stroke-width="5" stroke-linecap="round" />
+            <!-- Body -->
+            <circle cx="100" cy="125" r="42" fill="#92400e" stroke="#451a03" stroke-width="4" />
+            <ellipse cx="100" cy="132" rx="26" ry="28" fill="#b45309" />
+            <!-- Wings -->
+            <ellipse cx="62" cy="125" rx="12" ry="24" fill="#78350f" stroke="#451a03" stroke-width="3" transform="rotate(15 62 125)" />
+            <ellipse cx="138" cy="125" rx="12" ry="24" fill="#78350f" stroke="#451a03" stroke-width="3" transform="rotate(-15 138 125)" />
+            <!-- Head -->
+            <circle cx="100" cy="82" r="26" fill="#b45309" stroke="#451a03" stroke-width="4" />
+            <!-- Pilgrim Hat -->
+            <rect x="70" y="52" width="60" height="8" rx="4" fill="#1f2937" stroke="#000" stroke-width="2" />
+            <path d="M80 52 L85 26 L115 26 L120 52 Z" fill="#1f2937" stroke="#000" stroke-width="2" />
+            <rect x="82" y="43" width="36" height="6" fill="#f59e0b" />
+            <!-- Eyes -->
+            <circle cx="90" cy="78" r="5" fill="#ffffff" />
+            <circle cx="90" cy="78" r="2.5" fill="#000000" />
+            <circle cx="110" cy="78" r="5" fill="#ffffff" />
+            <circle cx="110" cy="78" r="2.5" fill="#000000" />
+            <!-- Wattle (Red Gobble) -->
+            <path d="M104 88 C112 88, 114 104, 105 104 C99 104, 102 92, 104 88 Z" fill="#dc2626" />
+            <!-- Beak -->
+            <polygon points="93,85 107,85 100,97" fill="#facc15" stroke="#ca8a04" stroke-width="2" />
+          </svg>
         </div>
 
-        <button onclick="resetGame()" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-2xl py-4 px-8 rounded-full shadow-xl border-4 border-white transform hover:scale-105 active:scale-95 transition">
-          🔄 Play Again
+        <!-- Fallback Emoji for Game Over -->
+        <div id="end-emoji" class="text-7xl sm:text-8xl animate-bounce hidden">&#129411;&#128165;</div>
+
+        <h2 id="end-title" class="text-3xl sm:text-5xl font-black text-amber-950">Victory!</h2>
+        
+        <!-- Clue Box (Shown on Win) -->
+        <div id="win-clue-box" class="bg-orange-50 border-4 border-orange-400 rounded-2xl p-4 sm:p-5 w-full shadow-md space-y-3">
+          <p class="text-lg sm:text-2xl text-amber-950 font-black leading-snug">
+            Now, it's time to find <span class="text-orange-600 underline">Ariel, the Third Turkey</span>! You can find her in the English classroom corridor. Good luck!
+          </p>
+          <hr class="border-t-2 border-orange-200 w-3/4 mx-auto" />
+          <p class="text-base sm:text-xl text-orange-800 font-bold leading-snug">
+            挑戰成功！現在，是時候去尋找<span class="text-red-600">第三隻火雞 Ariel</span> 了！你可以在英語教室外的走廊找到她。祝你好運！
+          </p>
+        </div>
+
+        <!-- Subtitle (Shown on Game Over) -->
+        <p id="end-subtitle" class="text-xl sm:text-2xl text-orange-700 font-extrabold hidden">
+          You ran out of turkey lifelines!
+        </p>
+        
+        <div class="bg-amber-100/90 py-3 px-5 rounded-2xl border-2 border-amber-300 w-full shadow-inner">
+          <div class="text-amber-900 text-sm sm:text-base font-bold">Final Score / 最終得分</div>
+          <div id="end-score-details" class="text-2xl sm:text-3xl font-black text-amber-950">5 / 5 Words</div>
+        </div>
+
+        <button onclick="resetGame()" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-xl sm:text-2xl py-3.5 px-8 rounded-full shadow-xl border-4 border-white transform hover:scale-105 active:scale-95 transition">
+          &#128260; Play Again / 再玩一次
         </button>
       </div>
     </div>
 
   </div>
 
-
-  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
   <script>
-    /* ----------------------------------------------------
-        VOCABULARY & GAME CONFIGURATION
-    ---------------------------------------------------- */
     const VOCABULARY = [
       { word: "stuffing", img: "stuffing.jpg", audio: "stuffing.mp3", fallbackEmoji: "🥘" },
       { word: "gratitude", img: "gratitude.jpg", audio: "gratitude.mp3", fallbackEmoji: "🙏" },
@@ -224,18 +270,15 @@
     ];
 
     const BUBBLE_COLORS = [
-      { bg: '#f87171', border: '#dc2626', text: '#ffffff' }, // Red
-      { bg: '#fb923c', border: '#ea580c', text: '#ffffff' }, // Orange
-      { bg: '#facc15', border: '#ca8a04', text: '#78350f' }, // Yellow
-      { bg: '#4ade80', border: '#16a34a', text: '#ffffff' }, // Green
-      { bg: '#38bdf8', border: '#0284c7', text: '#ffffff' }, // Blue
-      { bg: '#c084fc', border: '#9333ea', text: '#ffffff' }, // Purple
-      { bg: '#f472b6', border: '#db2777', text: '#ffffff' }  // Pink
+      { bg: '#f87171', border: '#dc2626', text: '#ffffff' },
+      { bg: '#fb923c', border: '#ea580c', text: '#ffffff' },
+      { bg: '#facc15', border: '#ca8a04', text: '#78350f' },
+      { bg: '#4ade80', border: '#16a34a', text: '#ffffff' },
+      { bg: '#38bdf8', border: '#0284c7', text: '#ffffff' },
+      { bg: '#c084fc', border: '#9333ea', text: '#ffffff' },
+      { bg: '#f472b6', border: '#db2777', text: '#ffffff' }
     ];
 
-    /* ----------------------------------------------------
-        STATE VARIABLES
-    ---------------------------------------------------- */
     let currentWordIndex = 0;
     let currentLetterPointer = 0;
     let remainingLives = 5;
@@ -246,17 +289,22 @@
     let isAudioMuted = false;
     let currentWordAudio = null;
 
-    // Canvas state for flying bubbles
     let canvas, ctx;
     let bubbles = [];
     let animationFrameId = null;
     let particles = [];
 
-    /* ----------------------------------------------------
-        WEB AUDIO API SOUND SYNTHESIS & MP3 PLAYER
-    ---------------------------------------------------- */
     let audioCtx = null;
     let musicLoopTimer = null;
+
+    // Preload MP3 files
+    const preloadedAudio = {};
+    VOCABULARY.forEach(item => {
+      const audio = new Audio();
+      audio.src = item.audio;
+      audio.preload = 'auto';
+      preloadedAudio[item.word] = audio;
+    });
 
     function initAudio() {
       if (!audioCtx) {
@@ -286,8 +334,7 @@
         gain.connect(audioCtx.destination);
         osc.start(now);
         osc.stop(now + 0.09);
-      } 
-      else if (type === 'correct') {
+      } else if (type === 'correct') {
         const freqs = [523.25, 659.25, 783.99, 1046.50];
         freqs.forEach((f, i) => {
           const osc = audioCtx.createOscillator();
@@ -301,8 +348,7 @@
           osc.start(now + i * 0.06);
           osc.stop(now + i * 0.06 + 0.22);
         });
-      } 
-      else if (type === 'wrong') {
+      } else if (type === 'wrong') {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = 'sawtooth';
@@ -314,8 +360,7 @@
         gain.connect(audioCtx.destination);
         osc.start(now);
         osc.stop(now + 0.35);
-      } 
-      else if (type === 'win') {
+      } else if (type === 'win') {
         const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99];
         notes.forEach((f, i) => {
           const osc = audioCtx.createOscillator();
@@ -386,36 +431,28 @@
       const item = VOCABULARY[currentWordIndex];
       if (!item || !item.audio) return;
 
-      // Stop previous audio if still playing
       if (currentWordAudio) {
         currentWordAudio.pause();
         currentWordAudio.currentTime = 0;
       }
 
-      currentWordAudio = new Audio(item.audio);
+      currentWordAudio = preloadedAudio[item.word] || new Audio(item.audio);
+      currentWordAudio.currentTime = 0;
       currentWordAudio.play().catch(err => {
-        console.warn("Could not play audio file: " + item.audio, err);
+        console.warn("Audio file not found or blocked: " + item.audio, err);
       });
     }
 
-    /* ----------------------------------------------------
-        SVG FALLBACK PLACEHOLDER GENERATOR
-    ---------------------------------------------------- */
     function getSvgFallback(text, emoji) {
-      const svg = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="600" height="450" viewBox="0 0 600 450">
-          <rect width="600" height="450" fill="#fef3c7" rx="30"/>
-          <circle cx="300" cy="200" r="110" fill="#fde68a" stroke="#f59e0b" stroke-width="8"/>
-          <text x="300" y="225" font-size="110" text-anchor="middle" dominant-baseline="middle">${emoji}</text>
-          <text x="300" y="375" font-size="42" font-family="Comic Sans MS, cursive" font-weight="bold" fill="#78350f" text-anchor="middle">${text}</text>
-        </svg>
-      `;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="450" viewBox="0 0 600 450">
+        <rect width="600" height="450" fill="#fef3c7" rx="30"/>
+        <circle cx="300" cy="200" r="110" fill="#fde68a" stroke="#f59e0b" stroke-width="8"/>
+        <text x="300" y="225" font-size="110" text-anchor="middle" dominant-baseline="middle">${emoji}</text>
+        <text x="300" y="375" font-size="42" font-family="Comic Sans MS, cursive" font-weight="bold" fill="#78350f" text-anchor="middle">${text}</text>
+      </svg>`;
       return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
     }
 
-    /* ----------------------------------------------------
-        GAME FLOW CONTROL
-    ---------------------------------------------------- */
     function showScreen(screenId) {
       ['screen-cover', 'screen-preview', 'screen-gameplay', 'screen-end'].forEach(id => {
         document.getElementById(id).classList.add('hidden');
@@ -441,10 +478,8 @@
       const item = VOCABULARY[currentWordIndex];
       const previewImg = document.getElementById('preview-image');
       const gameThumb = document.getElementById('game-thumbnail-image');
-      
       const fallbackUrl = getSvgFallback(item.word, item.fallbackEmoji);
 
-      // Set preview images with robust fallbacks
       previewImg.src = item.img;
       previewImg.onerror = function() {
         this.onerror = null;
@@ -460,7 +495,6 @@
       showScreen('screen-preview');
       speakCurrentWord();
 
-      // 5-Second Countdown Setup
       let countdown = 5;
       const countEl = document.getElementById('preview-countdown');
       const barEl = document.getElementById('preview-bar');
@@ -486,17 +520,11 @@
       const currentWord = VOCABULARY[currentWordIndex].word;
       currentLetterPointer = 0;
 
-      // Update HUD Index
       document.getElementById('word-current-idx').textContent = currentWordIndex + 1;
       document.getElementById('word-total-count').textContent = VOCABULARY.length;
 
-      // Render Empty Slots for Word
       renderAnswerSlots(currentWord);
-
-      // Start 30s Countdown Timer
       start30sTimer();
-
-      // Setup Canvas & Flying Bubbles across maximized space
       setupCanvas();
       initBubblesForWord(currentWord);
     }
@@ -583,6 +611,8 @@
 
       showScreen('screen-end');
 
+      const winTurkey = document.getElementById('win-turkey-graphic');
+      const winClueBox = document.getElementById('win-clue-box');
       const emoji = document.getElementById('end-emoji');
       const title = document.getElementById('end-title');
       const subtitle = document.getElementById('end-subtitle');
@@ -590,15 +620,23 @@
 
       if (isWin) {
         playSound('win');
-        emoji.textContent = '🏆';
-        title.textContent = 'Happy Thanksgiving!';
-        subtitle.textContent = 'Awesome job! You are a master speller!';
+        winTurkey.classList.remove('hidden');
+        winClueBox.classList.remove('hidden');
+        emoji.classList.add('hidden');
+        subtitle.classList.add('hidden');
+
+        title.textContent = 'Victory! 挑戰成功！';
         score.textContent = `${VOCABULARY.length} / ${VOCABULARY.length} Words Completed`;
       } else {
         playSound('wrong');
+        winTurkey.classList.add('hidden');
+        winClueBox.classList.add('hidden');
+        emoji.classList.remove('hidden');
+        subtitle.classList.remove('hidden');
+
         emoji.textContent = '🦃💥';
-        title.textContent = 'Game Over!';
-        subtitle.textContent = 'You ran out of turkey lifelines!';
+        title.textContent = 'Game Over! 遊戲結束';
+        subtitle.textContent = 'You ran out of turkey lifelines! 火雞生命值用完了，再試一次吧！';
         score.textContent = `${currentWordIndex} / ${VOCABULARY.length} Words Completed`;
       }
     }
@@ -607,17 +645,12 @@
       startGame();
     }
 
-    /* ----------------------------------------------------
-        DYNAMIC FLYING BUBBLES CANVAS ENGINE
-    ---------------------------------------------------- */
     function setupCanvas() {
       canvas = document.getElementById('bubble-canvas');
       const container = document.getElementById('canvas-container');
-      
       canvas.width = container.clientWidth;
       canvas.height = container.clientHeight;
       ctx = canvas.getContext('2d');
-
       canvas.onclick = handleCanvasClick;
     }
 
@@ -646,15 +679,13 @@
         
         const speed = 1.5 + Math.random() * 2.2;
         const angle = Math.random() * Math.PI * 2;
-        const vx = Math.cos(angle) * speed;
-        const vy = Math.sin(angle) * speed;
 
         bubbles.push({
           char: char,
           x: x,
           y: y,
-          vx: vx,
-          vy: vy,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
           radius: radius,
           color: colorScheme,
           pulse: Math.random() * Math.PI,
@@ -675,17 +706,14 @@
 
         b.x += b.vx;
         b.y += b.vy;
-
         b.pulse += 0.05;
         const currentRadius = b.radius + Math.sin(b.pulse) * 3;
 
-        // Bounce off canvas boundaries
         if (b.x - currentRadius < 0) { b.x = currentRadius; b.vx *= -1; }
         if (b.x + currentRadius > canvas.width) { b.x = canvas.width - currentRadius; b.vx *= -1; }
         if (b.y - currentRadius < 0) { b.y = currentRadius; b.vy *= -1; }
         if (b.y + currentRadius > canvas.height) { b.y = canvas.height - currentRadius; b.vy *= -1; }
 
-        // Draw Bubble Outer Circle
         ctx.beginPath();
         ctx.arc(b.x, b.y, currentRadius, 0, Math.PI * 2);
         ctx.fillStyle = b.color.bg;
@@ -694,19 +722,16 @@
         ctx.shadowOffsetY = 6;
         ctx.fill();
 
-        // Bubble Border
         ctx.lineWidth = 4;
         ctx.strokeStyle = b.color.border;
         ctx.stroke();
         ctx.shadowBlur = 0;
 
-        // Glossy highlight shine
         ctx.beginPath();
         ctx.arc(b.x - currentRadius * 0.3, b.y - currentRadius * 0.3, currentRadius * 0.28, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
         ctx.fill();
 
-        // Lowercase Letter Text
         ctx.font = `bold ${Math.round(currentRadius * 1.15)}px 'Comic Sans MS', cursive, sans-serif`;
         ctx.fillStyle = b.color.text;
         ctx.textAlign = 'center';
@@ -714,7 +739,6 @@
         ctx.fillText(b.char, b.x, b.y + 3);
       });
 
-      // Update & Draw Pop Particles
       particles.forEach((p, idx) => {
         p.x += p.vx;
         p.y += p.vy;
@@ -764,7 +788,6 @@
         const dist = Math.hypot(clickX - b.x, clickY - b.y);
         if (dist <= b.radius + 8) {
           if (b.char === expectedLetter) {
-            // CORRECT GUESS
             playSound('pop');
             playSound('correct');
             createPopParticles(b.x, b.y);
@@ -785,7 +808,6 @@
               }, 600);
             }
           } else {
-            // WRONG GUESS
             playSound('wrong');
             flashWrongX();
             loseLife();
@@ -796,7 +818,7 @@
     }
 
     window.addEventListener('resize', () => {
-      if (canvas && document.getElementById('screen-gameplay').classList.contains('hidden') === false) {
+      if (canvas && !document.getElementById('screen-gameplay').classList.contains('hidden')) {
         setupCanvas();
         if (VOCABULARY[currentWordIndex]) {
           initBubblesForWord(VOCABULARY[currentWordIndex].word);
