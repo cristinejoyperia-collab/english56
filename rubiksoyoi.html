@@ -86,19 +86,7 @@
             cursor: not-allowed;
         }
 
-        /* Category Badge Pills */
-        .category-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 2px 8px;
-            border-radius: 999px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
-
-        /* Custom Scrollbar for Teacher Studio */
+        /* Custom Scrollbar for Modals */
         .custom-scroll::-webkit-scrollbar {
             width: 8px;
         }
@@ -139,7 +127,7 @@
     <!-- 3D WebGL Canvas Container -->
     <div id="canvas-container"></div>
 
-    <!-- Minimized Top Overlay Panel -->
+    <!-- Minimized Top Overlay Panel (Reset Button Removed) -->
     <div class="ui-layer w-full flex flex-col items-center pt-2 px-2 sm:px-4">
         <div class="interactive-panel rounded-2xl px-3 py-2 sm:px-4 sm:py-2.5 max-w-4xl w-full">
             <div class="flex flex-wrap items-center justify-between gap-2">
@@ -147,9 +135,9 @@
                 <div class="flex items-center gap-2">
                     <span class="text-lg sm:text-xl">🧩</span>
                     <div>
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 flex-wrap">
                             <h1 class="text-sm sm:text-base font-bold tracking-wide bg-gradient-to-r from-yellow-300 via-pink-400 to-cyan-300 bg-clip-text text-transparent">
-                                2x2 Phonics Cube: "oi" & "oy" Words
+                                "oi" & "oy" Phonics Cube
                             </h1>
                             <span id="status-badge" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/40 border border-indigo-400/40 text-indigo-200">
                                 Moves: <span id="move-count">0</span>
@@ -159,21 +147,21 @@
                             </span>
                         </div>
                         <p class="text-[11px] text-gray-300 hidden md:block">
-                            Tap any tile to hear slow voice 🔊 • Swipe tile to twist • Drag background to orbit
+                            Tap any tile to hear slow voice 🔊 • Swipe tile to twist • Solve cube for your 6-Word Teacher Test!
                         </p>
                     </div>
                 </div>
 
-                <!-- Compact Action Buttons -->
+                <!-- Compact Action Buttons (No Reset Option) -->
                 <div class="flex items-center gap-1.5 sm:gap-2">
+                    <button id="open-test-btn" class="game-btn bg-gradient-to-b from-purple-400 to-indigo-600 text-white font-bold px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl text-xs border border-purple-200 flex items-center gap-1" title="Take the 3 oi + 3 oy Teacher Exam">
+                        <span>🏆</span> <span>6-Word Test</span>
+                    </button>
                     <button id="practice-studio-btn" class="game-btn bg-gradient-to-b from-emerald-400 to-teal-600 text-slate-950 font-bold px-2.5 py-1.5 sm:px-3.5 sm:py-1.5 rounded-xl text-xs border border-emerald-200 flex items-center gap-1">
-                        <span>👩‍🏫</span> <span>Practice & Record</span>
+                        <span>👩‍🏫</span> <span>All 24 Words</span>
                     </button>
                     <button id="scramble-btn" class="game-btn bg-gradient-to-b from-amber-400 to-orange-500 text-slate-950 font-bold px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl text-xs border border-amber-200 flex items-center gap-1">
                         <span>🔀</span> <span>Scramble</span>
-                    </button>
-                    <button id="reset-btn" class="game-btn bg-gradient-to-b from-sky-400 to-blue-600 text-white font-bold px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl text-xs border border-sky-200 flex items-center gap-1">
-                        <span>🔄</span> <span>Reset</span>
                     </button>
                 </div>
             </div>
@@ -205,34 +193,142 @@
         </div>
     </div>
 
-    <!-- Win Celebration Modal -->
-    <div id="win-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-sm p-4">
-        <div class="modal-animate bg-gradient-to-b from-indigo-900 via-slate-900 to-slate-950 border-4 border-yellow-400 rounded-3xl max-w-md w-full p-6 text-center shadow-2xl">
-            <div class="text-5xl mb-2">🎉🏆🌟</div>
-            <h2 class="text-2xl sm:text-3xl font-bold text-yellow-300 mb-1">
-                🎉 Brilliant Job! 太棒了！
-            </h2>
-            <p class="text-gray-200 text-sm sm:text-base mb-3">
-                You matched all 6 "oi" and "oy" phonics word categories! Now let's practice reading the words with your teacher for a 100-point grade!
-            </p>
-            <div class="bg-white/10 rounded-2xl p-2.5 mb-5 text-sm text-amber-200 font-bold">
-                Solved in <span id="final-moves" class="text-white text-lg">0</span> twists!
+    <!-- ==========================================
+         POST-SOLVE 6-WORD TEACHER PRONUNCIATION CHALLENGE
+         (3 "oi" Words + 3 "oy" Words with Voice Recorder & Teacher Grading)
+         ========================================== -->
+    <div id="win-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/85 backdrop-blur-md p-2 sm:p-4">
+        <div class="modal-animate bg-gradient-to-b from-indigo-950 via-slate-900 to-slate-950 border-4 border-yellow-400 rounded-3xl max-w-4xl w-full max-h-[94vh] flex flex-col shadow-2xl overflow-hidden">
+            
+            <!-- Modal Header -->
+            <div class="px-4 py-3 sm:px-6 sm:py-3.5 bg-slate-900/90 border-b border-white/10 flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2.5">
+                    <span class="text-2xl sm:text-3xl">🎉👩‍🏫</span>
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h2 class="text-base sm:text-xl font-bold text-yellow-300">
+                                Cube Solved! 6-Word Teacher Pronunciation Challenge
+                            </h2>
+                            <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-400/20 border border-amber-300/40 text-amber-200">
+                                Solved in <span id="final-moves">0</span> twists
+                            </span>
+                        </div>
+                        <p class="text-xs text-gray-300">
+                            Read these <strong>3 "oi" words</strong> and <strong>3 "oy" words</strong> aloud! Your teacher will listen and grade your pronunciation (0–100 pts).
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="bg-emerald-500/20 border border-emerald-400/40 px-3 py-1 rounded-xl text-xs font-bold text-emerald-200">
+                        Graded: <span id="win-completed-count">0</span>/6 • Avg: <span id="win-avg-score">--</span>
+                    </div>
+                    <button id="close-modal-btn" class="game-btn bg-slate-700 hover:bg-slate-600 text-white font-bold px-3 py-1.5 rounded-xl text-xs border border-slate-500">
+                        ✕ Close
+                    </button>
+                </div>
             </div>
-            <div class="flex flex-wrap justify-center gap-2.5">
-                <button id="win-practice-btn" class="game-btn bg-gradient-to-b from-emerald-400 to-green-600 text-slate-950 font-bold px-5 py-2.5 rounded-2xl text-sm border-2 border-emerald-200">
-                    🎤 Open Teacher Recorder (Get Graded!)
+
+            <!-- Active Word Teacher Recording Console -->
+            <div class="p-3 sm:p-4 bg-slate-800/90 border-b border-white/10">
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5 items-center">
+                    <!-- Selected Word Spotlight -->
+                    <div class="md:col-span-5 bg-slate-900/95 border-2 border-yellow-400/60 rounded-2xl p-3 flex items-center gap-3">
+                        <div id="win-active-emoji" class="text-4xl sm:text-5xl bg-white/10 p-2.5 rounded-2xl shrink-0">🪙</div>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span id="win-active-word" class="text-xl sm:text-2xl font-bold text-white">Coin</span>
+                                <span id="win-active-zh" class="text-xs sm:text-sm font-bold px-2 py-0.5 rounded-lg bg-amber-400/20 border border-amber-300/40 text-amber-300">硬幣</span>
+                                <span id="win-active-pattern" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/30 text-cyan-200 border border-cyan-400/40">oi word</span>
+                            </div>
+                            <p id="win-active-def" class="text-xs text-gray-300 mt-0.5">Round metal money</p>
+                            <p id="win-active-tip" class="text-[11px] text-cyan-300 mt-1 font-bold">
+                                💡 Tip: "oi" in the middle makes the /ɔɪ/ sound!
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Teacher Controls & Live Score Box -->
+                    <div class="md:col-span-7 flex flex-col gap-2">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button id="win-listen-btn" class="game-btn bg-gradient-to-b from-cyan-400 to-blue-600 text-white font-bold px-3.5 py-2 rounded-xl text-xs sm:text-sm border border-cyan-200 flex items-center gap-1.5">
+                                <span>🐢🔊</span> <span>1. Listen Slow</span>
+                            </button>
+                            <button id="win-record-btn" class="game-btn bg-gradient-to-b from-rose-500 to-red-600 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm border border-rose-200 flex items-center gap-1.5">
+                                <span id="win-rec-icon">🎤</span> <span id="win-rec-text">2. Record My Voice</span>
+                            </button>
+                            <button id="win-playback-btn" disabled class="game-btn bg-gradient-to-b from-purple-500 to-indigo-600 text-white font-bold px-3 py-2 rounded-xl text-xs sm:text-sm border border-purple-300 flex items-center gap-1">
+                                <span>▶️</span> <span>Hear Myself</span>
+                            </button>
+                        </div>
+
+                        <!-- Teacher Feedback Box -->
+                        <div class="bg-slate-950/90 border border-white/15 rounded-2xl p-2.5 sm:p-3 flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="text-2xl shrink-0">👩‍🏫</div>
+                                <div class="min-w-0">
+                                    <div id="win-teacher-title" class="text-xs sm:text-sm font-bold text-emerald-300">
+                                        Teacher says: Let's read "<span id="win-target-word">Coin</span>"!
+                                    </div>
+                                    <div id="win-teacher-body" class="text-xs text-gray-300">
+                                        Click a word card below, press "Record My Voice", and say it clearly! 請選下方單字並按下錄音大聲唸出來！
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right shrink-0 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10">
+                                <div class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Teacher Grade</div>
+                                <div id="win-grade-score" class="text-xl sm:text-2xl font-bold text-yellow-300">--<span class="text-xs text-gray-400">/100</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6-Word Grid: 3 "oi" Words + 3 "oy" Words -->
+            <div class="p-3 sm:p-4 overflow-y-auto custom-scroll flex-1">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- 3 "OI" Words Column -->
+                    <div class="bg-slate-900/70 border border-cyan-500/30 rounded-2xl p-3">
+                        <div class="flex items-center justify-between mb-2.5 pb-1.5 border-b border-white/10">
+                            <span class="text-xs sm:text-sm font-bold text-cyan-300 flex items-center gap-1.5">
+                                <span>📘</span> <span>3 Words with "oi" (通常在字中)</span>
+                            </span>
+                            <span class="text-[11px] bg-cyan-500/20 text-cyan-200 px-2 py-0.5 rounded-full font-bold">/ɔɪ/ Sound</span>
+                        </div>
+                        <div id="win-oi-list" class="flex flex-col gap-2">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- 3 "OY" Words Column -->
+                    <div class="bg-slate-900/70 border border-pink-500/30 rounded-2xl p-3">
+                        <div class="flex items-center justify-between mb-2.5 pb-1.5 border-b border-white/10">
+                            <span class="text-xs sm:text-sm font-bold text-pink-300 flex items-center gap-1.5">
+                                <span>📕</span> <span>3 Words with "oy" (通常在字尾)</span>
+                            </span>
+                            <span class="text-[11px] bg-pink-500/20 text-pink-200 px-2 py-0.5 rounded-full font-bold">/ɔɪ/ Sound</span>
+                        </div>
+                        <div id="win-oy-list" class="flex flex-col gap-2">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-4 py-2.5 sm:px-6 bg-slate-900/95 border-t border-white/10 flex flex-wrap items-center justify-between gap-2">
+                <button id="win-new-words-btn" class="game-btn bg-gradient-to-b from-indigo-500 to-purple-600 text-white font-bold px-3.5 py-2 rounded-xl text-xs border border-indigo-300 flex items-center gap-1">
+                    <span>🎲</span> <span>Pick 6 New Words (3 oi + 3 oy)</span>
                 </button>
-                <button id="play-again-btn" class="game-btn bg-gradient-to-b from-amber-400 to-orange-500 text-slate-950 font-bold px-4 py-2.5 rounded-2xl text-sm border-2 border-amber-200">
-                    🔀 Scramble Again
-                </button>
-                <button id="close-modal-btn" class="game-btn bg-gradient-to-b from-slate-600 to-slate-800 text-white font-bold px-4 py-2.5 rounded-2xl text-sm border-2 border-slate-400">
-                    👀 View Cube
-                </button>
+                <div class="flex items-center gap-2">
+                    <button id="play-again-btn" class="game-btn bg-gradient-to-b from-amber-400 to-orange-500 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs border border-amber-200">
+                        🔀 Scramble Cube & Play Again
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Teacher Pronunciation Recorder & Grading Studio Modal -->
+    <!-- All 24 Words Teacher Pronunciation Recorder Studio Modal -->
     <div id="practice-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4">
         <div class="modal-animate bg-slate-900 border-2 border-indigo-400/50 rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
             <!-- Studio Header -->
@@ -241,11 +337,11 @@
                     <span class="text-2xl sm:text-3xl">👩‍🏫</span>
                     <div>
                         <h2 class="text-base sm:text-xl font-bold text-yellow-300 flex items-center gap-2">
-                            <span>Phonics Teacher Recorder Studio (oi & oy)</span>
+                            <span>All 24 "oi" & "oy" Words Studio</span>
                             <span class="text-xs bg-indigo-500/40 text-indigo-200 px-2.5 py-0.5 rounded-full border border-indigo-400/40">Max Grade: 100 pts</span>
                         </h2>
                         <p class="text-xs text-gray-300">
-                            Listen to the slow kid-friendly voice, record yourself reading each "oi" or "oy" word, and receive your Teacher Grade!
+                            Listen to the slow kid-friendly voice, record yourself reading each word, and receive your Teacher Grade!
                         </p>
                     </div>
                 </div>
@@ -267,7 +363,7 @@
                             </div>
                             <p id="studio-def" class="text-xs text-gray-300 mt-0.5">Round metal money</p>
                             <p id="studio-phonics-tip" class="text-[11px] text-cyan-300 mt-1 font-bold">
-                                💡 Phonics Tip: "oi" in the middle makes the /ɔɪ/ sound (Koyn)!
+                                💡 Phonics Tip: "oi" in the middle makes the /ɔɪ/ sound!
                             </p>
                         </div>
                     </div>
@@ -322,18 +418,19 @@
 
     <script>
         /**
-         * 2x2 PHONICS RUBIK'S CUBE CHALLENGE (OI & OY DIPHTHONGS)
-         * Enhanced with Traditional Chinese, Slow Kid-Friendly TTS Voice, and Teacher Pronunciation Grader (0-100)
+         * 2x2 PHONICS RUBIK'S CUBE CHALLENGE ("oi" and "oy" Diphthong Edition)
+         * - No Reset Button
+         * - Automatic 6-Word Teacher Pronunciation Challenge (3 "oi" + 3 "oy" words) upon solving the cube
          */
 
         // ==========================================
-        // 1. THEMATIC 6-FACE WORD, CHINESE & PICTURE DATA (24 'oi' & 'oy' WORDS)
+        // 1. THEMATIC 6-FACE "OI" & "OY" WORD DATA (24 WORDS)
         // ==========================================
         const FACE_THEMES = {
             0: {
                 id: 'green',
                 category: '-oil & -oin Words',
-                categoryZh: '日常與自然',
+                categoryZh: '日常與自然 (oi)',
                 bgHex: '#22c55e',
                 borderHex: '#14532d',
                 cardBg: '#dcfce7',
@@ -343,16 +440,16 @@
                 badgeBg: '#15803d',
                 badgeText: '#ffffff',
                 tiles: [
-                    { word: 'Coin', zh: '硬幣', emoji: '🪙', def: 'Round metal money', tip: 'Hard "c" (/k/) + "oi" (/ɔɪ/) + "n" (Koyn).' },
-                    { word: 'Boil', zh: '煮沸/沸騰', emoji: '🍲', def: 'Hot bubbling water', tip: '"b" + "oi" (/ɔɪ/) + "l" at the end (Boyl).' },
-                    { word: 'Soil', zh: '土壤/泥土', emoji: '🌱', def: 'Earth where plants grow', tip: '"s" + "oi" (/ɔɪ/) + "l" sound (Soyl).' },
-                    { word: 'Foil', zh: '錫箔紙', emoji: '✨', def: 'Thin shiny metal sheet', tip: '"f" + "oi" (/ɔɪ/) + "l" sound (Foyl).' }
+                    { word: 'Coin', zh: '硬幣', emoji: '🪙', def: 'Round metal money', tip: 'Hard "c" (/k/) + "oi" (/ɔɪ/) + "n" (Koin).' },
+                    { word: 'Boil', zh: '煮沸/沸騰', emoji: '🍲', def: 'Hot bubbling water', tip: '"b" + "oi" (/ɔɪ/) + "l" (Boy-ul).' },
+                    { word: 'Soil', zh: '土壤/泥土', emoji: '🌱', def: 'Earth where plants grow', tip: '"s" + "oi" (/ɔɪ/) + "l" (Soy-ul).' },
+                    { word: 'Foil', zh: '錫箔紙', emoji: '✨', def: 'Shiny thin metal sheet', tip: '"f" + "oi" (/ɔɪ/) + "l" (Foy-ul).' }
                 ]
             },
             1: {
                 id: 'blue',
                 category: '-oin, -oint & -oice',
-                categoryZh: '聲音與動作',
+                categoryZh: '聲音與動作 (oi)',
                 bgHex: '#2563eb',
                 borderHex: '#1e3a8a',
                 cardBg: '#dbeafe',
@@ -362,16 +459,16 @@
                 badgeBg: '#1d4ed8',
                 badgeText: '#ffffff',
                 tiles: [
-                    { word: 'Join',  zh: '加入/連接', emoji: '🤝', def: 'To come together', tip: '"j" + "oi" (/ɔɪ/) + "n" ending (Joyn).' },
-                    { word: 'Point', zh: '指向/尖端', emoji: '👉', def: 'Show with your finger', tip: '"p" + "oi" (/ɔɪ/) + "-nt" blend (Poynt).' },
-                    { word: 'Voice', zh: '嗓音/聲音', emoji: '🗣️', def: 'Sound when you speak', tip: '"v" + "oi" (/ɔɪ/) + soft "ce" (/s/) (Voys).' },
-                    { word: 'Noise', zh: '噪音/聲響', emoji: '📢', def: 'A loud sound', tip: '"n" + "oi" (/ɔɪ/) + "-se" sounding like /z/ (Noyz).' }
+                    { word: 'Join',  zh: '加入/連接', emoji: '🤝', def: 'To connect or come together', tip: '"j" + "oi" (/ɔɪ/) + "n" (Joy-n).' },
+                    { word: 'Point', zh: '指向/尖端', emoji: '👉', def: 'To show with your finger', tip: '"p" + "oi" (/ɔɪ/) + "-nt" blend (Poy-nt).' },
+                    { word: 'Voice', zh: '嗓音/聲音', emoji: '🗣️', def: 'Sound made when speaking', tip: '"v" + "oi" (/ɔɪ/) + soft "-ce" (/s/) (Voy-s).' },
+                    { word: 'Noise', zh: '噪音/聲響', emoji: '📢', def: 'A loud orُサウンド', tip: '"n" + "oi" (/ɔɪ/) + "-se" sounding like /z/ (Noy-z).' }
                 ]
             },
             2: {
                 id: 'yellow',
                 category: 'More -oi- Words',
-                categoryZh: '選擇與狀態',
+                categoryZh: '選擇與狀態 (oi)',
                 bgHex: '#facc15',
                 borderHex: '#854d0e',
                 cardBg: '#fef9c3',
@@ -381,9 +478,9 @@
                 badgeBg: '#ca8a04',
                 badgeText: '#ffffff',
                 tiles: [
-                    { word: 'Choice', zh: '選擇', emoji: '✅', def: 'Picking between things', tip: 'Digraph "ch" + "oi" (/ɔɪ/) + soft "ce" (/s/) (Choys).' },
-                    { word: 'Spoil',  zh: '寵壞/變質', emoji: '🍌', def: 'To go bad or ruin', tip: 'Blend "sp" + "oi" (/ɔɪ/) + "l" (Spoyl).' },
-                    { word: 'Moist',  zh: '潮濕的', emoji: '💧', def: 'Slightly wet or damp', tip: '"m" + "oi" (/ɔɪ/) + "-st" blend (Moyst).' },
+                    { word: 'Choice', zh: '選擇', emoji: '✅', def: 'Picking between things', tip: 'Digraph "ch" + "oi" (/ɔɪ/) + soft "-ce" (/s/) (Choy-s).' },
+                    { word: 'Spoil',  zh: '寵壞/變質', emoji: '🍌', def: 'When food goes bad', tip: 'Blend "sp" + "oi" (/ɔɪ/) + "l" (Spoy-ul).' },
+                    { word: 'Moist',  zh: '潮濕的', emoji: '💧', def: 'Slightly wet or damp', tip: '"m" + "oi" (/ɔɪ/) + "-st" blend (Moy-st).' },
                     { word: 'Avoid',  zh: '避開/避免', emoji: '🚧', def: 'To stay away from', tip: '"uh" + "v" + "oi" (/ɔɪ/) + "d" (Uh-voyd).' }
                 ]
             },
@@ -400,16 +497,16 @@
                 badgeBg: '#475569',
                 badgeText: '#ffffff',
                 tiles: [
-                    { word: 'Boy', zh: '男孩', emoji: '👦', def: 'A male child', tip: '"b" + "-oy" at the end makes /ɔɪ/ (Boy).' },
-                    { word: 'Toy', zh: '玩具', emoji: '🧸', def: 'An object to play with', tip: '"t" + "-oy" at the end makes /ɔɪ/ (Toy).' },
-                    { word: 'Joy', zh: '喜悅/歡樂', emoji: '😊', def: 'Great happiness', tip: '"j" + "-oy" at the end makes /ɔɪ/ (Joy).' },
-                    { word: 'Soy', zh: '大豆/醬油', emoji: '🫘', def: 'A nutritious bean', tip: '"s" + "-oy" at the end makes /ɔɪ/ (Soy).' }
+                    { word: 'Boy', zh: '男孩', emoji: '👦', def: 'A male child', tip: '"b" + "-oy" at the end makes the /ɔɪ/ sound (Boy).' },
+                    { word: 'Toy', zh: '玩具', emoji: '🧸', def: 'An object to play with', tip: '"t" + "-oy" at the end makes the /ɔɪ/ sound (Toy).' },
+                    { word: 'Joy', zh: '喜悅/歡樂', emoji: '😊', def: 'A feeling of great happiness', tip: '"j" + "-oy" at the end makes the /ɔɪ/ sound (Joy).' },
+                    { word: 'Soy', zh: '大豆/醬油', emoji: '🫘', def: 'A bean used for soy sauce', tip: '"s" + "-oy" at the end makes the /ɔɪ/ sound (Soy).' }
                 ]
             },
             4: {
                 id: 'red',
                 category: '-oy Blends & People',
-                categoryZh: '人物與特質',
+                categoryZh: '人物與特質 (oy)',
                 bgHex: '#ef4444',
                 borderHex: '#7f1d1d',
                 cardBg: '#fee2e2',
@@ -419,10 +516,10 @@
                 badgeBg: '#b91c1c',
                 badgeText: '#ffffff',
                 tiles: [
-                    { word: 'Coy',    zh: '害羞的', emoji: '🙈', def: 'Shy or modest', tip: 'Hard "c" (/k/) + "-oy" ending (Koy).' },
-                    { word: 'Ploy',   zh: '計謀/策略', emoji: '🎯', def: 'A clever plan or trick', tip: 'Blend "pl" + "-oy" ending (Ploy).' },
-                    { word: 'Enjoy',  zh: '享受/喜愛', emoji: '🎉', def: 'Take pleasure in', tip: '2 syllables: "en" + "joy" (/ɔɪ/) (En-joy).' },
-                    { word: 'Cowboy', zh: '牛仔', emoji: '🤠', def: 'Ranch horse rider', tip: 'Compound word: "cow" + "boy" (Kow-boy).' }
+                    { word: 'Coy',    zh: '害羞/靦腆的', emoji: '🙈', def: 'Sweetly shy or modest', tip: 'Hard "c" (/k/) + "-oy" ending (Koy).' },
+                    { word: 'Ploy',   zh: '計謀/策略', emoji: '🎯', def: 'A clever trick or plan', tip: 'Blend "pl" + "-oy" ending (Ploy).' },
+                    { word: 'Enjoy',  zh: '享受/喜愛', emoji: '🎉', def: 'To take pleasure in', tip: '"en" + "j" + "-oy" ending (En-joy).' },
+                    { word: 'Cowboy', zh: '牛仔', emoji: '🤠', def: 'A horse rider on a ranch', tip: 'Compound word: "Cow" + "boy" (Kow-boy).' }
                 ]
             },
             5: {
@@ -438,22 +535,27 @@
                 badgeBg: '#c2410c',
                 badgeText: '#ffffff',
                 tiles: [
-                    { word: 'Annoy',  zh: '惹惱/煩擾', emoji: '😠', def: 'To bother someone', tip: '2 syllables: "uh" + "noy" (/ɔɪ/) (Uh-noy).' },
-                    { word: 'Employ', zh: '僱用/使用', emoji: '💼', def: 'To give a job to', tip: '2 syllables: "em" + "ploy" (/ɔɪ/) (Em-ploy).' },
-                    { word: 'Decoy',  zh: '誘餌', emoji: '🦆', def: 'A fake model lure', tip: '2 syllables: "dee" + "coy" (/ɔɪ/) (Dee-koy).' },
-                    { word: 'Joyful', zh: '快樂的', emoji: '🌟', def: 'Full of happiness', tip: 'Root "joy" (/ɔɪ/) + suffix "-ful" (Joy-ful).' }
+                    { word: 'Annoy',  zh: '惹惱/煩擾', emoji: '😠', def: 'To make someone a little angry', tip: '"uh" + "n" + "-oy" at the end (Uh-noy).' },
+                    { word: 'Employ', zh: '僱用/使用', emoji: '💼', def: 'To give someone a job', tip: '"em" + blend "pl" + "-oy" (Em-ploy).' },
+                    { word: 'Decoy',  zh: '誘餌', emoji: '🦆', def: 'A fake model used as a lure', tip: '"dee" + "k" + "-oy" ending (Dee-koy).' },
+                    { word: 'Joyful', zh: '快樂的', emoji: '🌟', def: 'Full of happiness and joy', tip: 'Root word "Joy" + suffix "-ful" (Joy-ful).' }
                 ]
             }
         };
 
-        // Flatten all words for quick lookup & tracking student scores
+        // Fix typo in Noise definition cleanly
+        FACE_THEMES[1].tiles[3].def = 'A loud or unpleasant sound';
+
+        // Flatten all 24 words and tag whether they are 'oi' or 'oy'
         const ALL_WORDS = [];
         Object.keys(FACE_THEMES).forEach(fKey => {
             const theme = FACE_THEMES[fKey];
+            const fNum = Number(fKey);
             theme.tiles.forEach(t => {
                 ALL_WORDS.push({
                     ...t,
-                    faceIndex: Number(fKey),
+                    faceIndex: fNum,
+                    pattern: fNum < 3 ? 'oi' : 'oy',
                     category: theme.category,
                     categoryZh: theme.categoryZh,
                     bgHex: theme.bgHex
@@ -461,10 +563,18 @@
             });
         });
 
-        // Student grades map: word -> { score: number, feedback: string }
+        const OI_WORDS = ALL_WORDS.filter(w => w.pattern === 'oi');
+        const OY_WORDS = ALL_WORDS.filter(w => w.pattern === 'oy');
+
+        // Student grades map: word -> { score: number, title: string, feedback: string }
         const wordGrades = {};
         let currentActiveWord = ALL_WORDS[0];
         let activeStudioCategoryFace = 0;
+
+        // 6-Word Post-Solve Challenge State (3 oi + 3 oy)
+        let challengeOiWords = [];
+        let challengeOyWords = [];
+        let currentChallengeWord = null;
 
         // ==========================================
         // 2. KID-FRIENDLY SLOW VOICE (WEB SPEECH API)
@@ -476,7 +586,6 @@
             const voices = window.speechSynthesis.getVoices();
             if (!voices || voices.length === 0) return;
 
-            // Prioritize warm, clear, natural English voices suitable for children
             const preferredNames = [
                 'Samantha', 'Google US English', 'Microsoft Zira', 'Microsoft Ana',
                 'Karen', 'Victoria', 'Moira', 'Tessa', 'Allison', 'Ava'
@@ -500,19 +609,15 @@
             initSpeechVoices();
         }
 
-        /**
-         * Speaks the phonics word in a kid-friendly, higher-pitched, slow-paced voice.
-         */
         function speakPhonicsWord(wordObj, includeDef = false) {
-            if (!('speechSynthesis' in window)) return;
+            if (!('speechSynthesis' in window) || !wordObj) return;
             window.speechSynthesis.cancel();
 
-            // Kid-friendly slow utterance for the vocabulary word
             const utterWord = new SpeechSynthesisUtterance(wordObj.word);
             if (selectedVoice) utterWord.voice = selectedVoice;
             utterWord.lang = 'en-US';
-            utterWord.rate = 0.68;  // Slow, deliberate pace for elementary phonics learners
-            utterWord.pitch = 1.28; // Friendly, cheerful higher pitch
+            utterWord.rate = 0.68;
+            utterWord.pitch = 1.28;
             utterWord.volume = 1.0;
 
             window.speechSynthesis.speak(utterWord);
@@ -673,7 +778,7 @@
         }
 
         // ==========================================
-        // 4. THREE.JS SCENE, CAMERA & SMALLER CUBE SETUP
+        // 4. THREE.JS SCENE, CAMERA & CUBE SETUP
         // ==========================================
         let scene, camera, renderer, cubeGroup;
         let cubies = [];
@@ -686,7 +791,7 @@
         let hasBeenScrambled = false;
         let moveCount = 0;
 
-        // Spherical Camera Orbit Coordinates (Further back so cube is smaller and never hits UI)
+        // Spherical Camera Orbit Coordinates
         let camRadius = 10.5;
         let camTheta = Math.PI / 4;
         let camPhi = Math.PI / 3;
@@ -742,6 +847,7 @@
             buildSolvedCube();
             setupInteractionEvents();
             initTeacherStudioUI();
+            initWinChallengeUI();
             window.addEventListener('resize', onWindowResize);
         }
 
@@ -795,6 +901,7 @@
                                 faceWordMap[f] = {
                                     ...tileObj,
                                     faceIndex: f,
+                                    pattern: f < 3 ? 'oi' : 'oy',
                                     category: theme.category,
                                     categoryZh: theme.categoryZh
                                 };
@@ -825,13 +932,8 @@
         }
 
         // ==========================================
-        // 4. LAYER TWISTING & MATHEMATICAL PRECISION
+        // 5. LAYER TWISTING & MATHEMATICAL PRECISION
         // ==========================================
-        /**
-         * Rotates a 2x2 slice around `axis` ('x', 'y', or 'z') for cubies matching `layerSign` (-1 or +1)
-         * by `angleSign` (+1 for +90deg, -1 for -90deg).
-         * Uses direct matrix/quaternion transformations to prevent any floating-point gap/explosion bugs.
-         */
         function twistLayer(axis, layerSign, angleSign, duration = 260, onComplete = null) {
             if (isAnimating) return;
             isAnimating = true;
@@ -846,7 +948,6 @@
             );
             const totalAngle = angleSign * (Math.PI / 2);
 
-            // Save exact starting positions and quaternions for drift-free interpolation
             const startStates = targetCubies.map(c => ({
                 cubie: c,
                 pos: c.position.clone(),
@@ -858,7 +959,6 @@
             function step(now) {
                 const elapsed = now - startTime;
                 const progress = Math.min(elapsed / duration, 1);
-                // Smooth cubic ease-out
                 const eased = 1 - Math.pow(1 - progress, 3);
                 const currentAngle = totalAngle * eased;
 
@@ -872,13 +972,11 @@
                 if (progress < 1) {
                     requestAnimationFrame(step);
                 } else {
-                    // Snap positions & quaternions to exact 90-degree grid to eliminate any cumulative error
                     const finalQuat = new THREE.Quaternion().setFromAxisAngle(axisVec, totalAngle);
                     for (const state of startStates) {
                         const c = state.cubie;
                         c.position.copy(state.pos).applyAxisAngle(axisVec, totalAngle);
 
-                        // Snap position coordinates strictly to -1 or +1
                         c.position.x = Math.round(c.position.x) >= 0 ? 1 : -1;
                         c.position.y = Math.round(c.position.y) >= 0 ? 1 : -1;
                         c.position.z = Math.round(c.position.z) >= 0 ? 1 : -1;
@@ -900,15 +998,15 @@
         }
 
         // ==========================================
-        // 5. WIN CONDITION DETECTION
+        // 6. WIN CONDITION & 6-WORD CHALLENGE MODAL (3 OI + 3 OY)
         // ==========================================
         const LOCAL_FACE_NORMALS = [
-            { faceIndex: 0, vec: new THREE.Vector3(1, 0, 0) },  // Green
-            { faceIndex: 1, vec: new THREE.Vector3(-1, 0, 0) }, // Blue
-            { faceIndex: 2, vec: new THREE.Vector3(0, 1, 0) },  // Yellow
-            { faceIndex: 3, vec: new THREE.Vector3(0, -1, 0) }, // White
-            { faceIndex: 4, vec: new THREE.Vector3(0, 0, 1) },  // Red
-            { faceIndex: 5, vec: new THREE.Vector3(0, 0, -1) }  // Orange
+            { faceIndex: 0, vec: new THREE.Vector3(1, 0, 0) },
+            { faceIndex: 1, vec: new THREE.Vector3(-1, 0, 0) },
+            { faceIndex: 2, vec: new THREE.Vector3(0, 1, 0) },
+            { faceIndex: 3, vec: new THREE.Vector3(0, -1, 0) },
+            { faceIndex: 4, vec: new THREE.Vector3(0, 0, 1) },
+            { faceIndex: 5, vec: new THREE.Vector3(0, 0, -1) }
         ];
 
         const WORLD_DIRECTIONS = [
@@ -921,8 +1019,6 @@
         ];
 
         function checkCubeSolved() {
-            // For each of the 6 world directions, verify that all 4 cubies on that side
-            // expose the exact same thematic category (local face index).
             for (const worldDir of WORLD_DIRECTIONS) {
                 const coordProp = worldDir.axis === 'x' ? 'gridX' : (worldDir.axis === 'y' ? 'gridY' : 'gridZ');
                 const faceCubies = cubies.filter(c => c.userData[coordProp] === worldDir.sign);
@@ -950,21 +1046,162 @@
             return true;
         }
 
+        function pickRandomSubset(arr, count) {
+            const copy = [...arr];
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy.slice(0, count);
+        }
+
+        function generateSixChallengeWords() {
+            challengeOiWords = pickRandomSubset(OI_WORDS, 3);
+            challengeOyWords = pickRandomSubset(OY_WORDS, 3);
+            selectChallengeWord(challengeOiWords[0]);
+            renderWinChallengeLists();
+        }
+
         function showWinModal() {
             document.getElementById('final-moves').textContent = moveCount;
+            generateSixChallengeWords();
             const modal = document.getElementById('win-modal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
         }
 
         function hideWinModal() {
+            if (isRecordingAudio) stopStudentRecording();
             const modal = document.getElementById('win-modal');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
         }
 
+        function initWinChallengeUI() {
+            document.getElementById('win-listen-btn').addEventListener('click', () => {
+                if (currentChallengeWord) speakPhonicsWord(currentChallengeWord, true);
+            });
+
+            document.getElementById('win-record-btn').addEventListener('click', () => {
+                if (isRecordingAudio) {
+                    stopStudentRecording();
+                } else {
+                    startStudentRecording('win');
+                }
+            });
+
+            document.getElementById('win-playback-btn').addEventListener('click', () => {
+                if (recordedAudioUrl) {
+                    const audio = new Audio(recordedAudioUrl);
+                    audio.play();
+                } else if (currentChallengeWord) {
+                    speakPhonicsWord(currentChallengeWord, false);
+                }
+            });
+
+            document.getElementById('win-new-words-btn').addEventListener('click', () => {
+                generateSixChallengeWords();
+            });
+        }
+
+        function selectChallengeWord(wObj) {
+            if (!wObj) return;
+            currentChallengeWord = wObj;
+            currentActiveWord = wObj;
+            updateActiveWordToast(wObj);
+
+            document.getElementById('win-active-emoji').textContent = wObj.emoji;
+            document.getElementById('win-active-word').textContent = wObj.word;
+            document.getElementById('win-active-zh').textContent = wObj.zh;
+            document.getElementById('win-active-pattern').textContent = wObj.pattern === 'oi' ? '"oi" Word' : '"oy" Word';
+            document.getElementById('win-active-def').textContent = wObj.def;
+            document.getElementById('win-active-tip').textContent = `💡 Phonics Tip: ${wObj.tip}`;
+            document.getElementById('win-target-word').textContent = wObj.word;
+
+            const existingGrade = wordGrades[wObj.word];
+            const scoreEl = document.getElementById('win-grade-score');
+            const titleEl = document.getElementById('win-teacher-title');
+            const bodyEl = document.getElementById('win-teacher-body');
+
+            if (existingGrade) {
+                scoreEl.innerHTML = `${existingGrade.score}<span class="text-xs text-gray-400">/100</span>`;
+                titleEl.textContent = existingGrade.title;
+                bodyEl.textContent = existingGrade.feedback;
+            } else {
+                scoreEl.innerHTML = `--<span class="text-xs text-gray-400">/100</span>`;
+                titleEl.textContent = `Teacher says: Ready to hear you say "${wObj.word}" (${wObj.zh})!`;
+                bodyEl.textContent = `Press "1. Listen Slow" first, then click "2. Record My Voice" and speak clearly!`;
+            }
+
+            renderWinChallengeLists();
+        }
+
+        function renderWinChallengeLists() {
+            const oiContainer = document.getElementById('win-oi-list');
+            const oyContainer = document.getElementById('win-oy-list');
+            if (!oiContainer || !oyContainer) return;
+
+            oiContainer.innerHTML = '';
+            oyContainer.innerHTML = '';
+
+            function createWordRow(wObj) {
+                const isSelected = currentChallengeWord && currentChallengeWord.word === wObj.word;
+                const grade = wordGrades[wObj.word];
+
+                const row = document.createElement('div');
+                row.className = `cursor-pointer rounded-xl p-2.5 border-2 transition-all flex items-center justify-between gap-2 ${
+                    isSelected
+                        ? 'bg-indigo-950 border-yellow-400 shadow-md scale-[1.01]'
+                        : 'bg-slate-800/80 border-white/10 hover:border-indigo-400/50'
+                }`;
+
+                const badgeHtml = grade
+                    ? `<span class="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/30 border border-emerald-400 text-emerald-200">⭐ ${grade.score}/100</span>`
+                    : `<span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-rose-500/20 border border-rose-400/30 text-rose-200">🎤 Tap to Record</span>`;
+
+                row.innerHTML = `
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <span class="text-2xl sm:text-3xl bg-white/10 p-1.5 rounded-xl shrink-0">${wObj.emoji}</span>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-base sm:text-lg font-bold text-white">${wObj.word}</span>
+                                <span class="text-xs font-bold text-amber-300">${wObj.zh}</span>
+                            </div>
+                            <p class="text-[11px] text-gray-300 truncate">${wObj.def}</p>
+                        </div>
+                    </div>
+                    <div class="shrink-0">
+                        ${badgeHtml}
+                    </div>
+                `;
+
+                row.addEventListener('click', () => {
+                    selectChallengeWord(wObj);
+                    speakPhonicsWord(wObj, false);
+                });
+
+                return row;
+            }
+
+            challengeOiWords.forEach(w => oiContainer.appendChild(createWordRow(w)));
+            challengeOyWords.forEach(w => oyContainer.appendChild(createWordRow(w)));
+
+            // Update 6-word progress & average score
+            const sixWords = [...challengeOiWords, ...challengeOyWords];
+            const gradedSix = sixWords.filter(w => wordGrades[w.word]);
+            document.getElementById('win-completed-count').textContent = gradedSix.length;
+
+            if (gradedSix.length > 0) {
+                const sum = gradedSix.reduce((acc, w) => acc + wordGrades[w.word].score, 0);
+                const avg = Math.round(sum / gradedSix.length);
+                document.getElementById('win-avg-score').textContent = `${avg}/100`;
+            } else {
+                document.getElementById('win-avg-score').textContent = '--';
+            }
+        }
+
         // ==========================================
-        // 6. AUTOMATED SCRAMBLING & RESETTING
+        // 7. AUTOMATED SCRAMBLING (NO RESET OPTION)
         // ==========================================
         function scrambleCube(steps = 12) {
             if (isAnimating || isScrambling) return;
@@ -982,7 +1219,6 @@
 
             function nextScrambleStep() {
                 if (count >= steps) {
-                    // Ensure it isn't accidentally solved after random moves
                     if (checkCubeSolved()) {
                         twistLayer('y', 1, 1, 110, () => {
                             isScrambling = false;
@@ -997,7 +1233,6 @@
                     return;
                 }
 
-                // Pick an axis different from the immediately previous one for a thorough scramble
                 const availableAxes = axes.filter(a => a !== lastAxis);
                 const axis = availableAxes[Math.floor(Math.random() * availableAxes.length)];
                 lastAxis = axis;
@@ -1012,33 +1247,23 @@
             nextScrambleStep();
         }
 
-        function resetCube() {
-            if (isAnimating || isScrambling) return;
-            hideWinModal();
-            buildSolvedCube();
-            moveCount = 0;
-            hasBeenScrambled = false;
-            updateMoveUI();
-        }
-
         function updateMoveUI() {
             document.getElementById('move-count').textContent = moveCount;
         }
 
         function setButtonsDisabled(disabled) {
             document.getElementById('scramble-btn').disabled = disabled;
-            document.getElementById('reset-btn').disabled = disabled;
         }
 
         // ==========================================
-        // 7. MOUSE & TOUCH INTERACTION (ORBIT + SWIPE TWIST)
+        // 8. MOUSE & TOUCH INTERACTION (ORBIT + SWIPE TWIST)
         // ==========================================
         function setupInteractionEvents() {
             const domElement = renderer.domElement;
             const raycaster = new THREE.Raycaster();
             const mouse = new THREE.Vector2();
 
-            let interactionMode = null; // 'orbit' | 'swipe-face'
+            let interactionMode = null;
             let startClientX = 0;
             let startClientY = 0;
             let pointerDownTime = 0;
@@ -1110,7 +1335,6 @@
             }
 
             function onPointerUp() {
-                // If user tapped/clicked a tile without dragging, speak the word slowly!
                 const elapsed = performance.now() - pointerDownTime;
                 if (interactionMode === 'swipe-face' && !hasDragged && elapsed < 500 && intersectedCubie) {
                     const wordData = intersectedCubie.userData.faceWordMap[intersectedMaterialIndex];
@@ -1127,10 +1351,6 @@
                 hitPoint3D = null;
             }
 
-            /**
-             * Maps a 2D screen swipe vector (dx, dy) on a clicked 3D cubie face
-             * to the matching 3D tangent direction and rotation axis.
-             */
             function triggerFaceSwipeTwist(dx, dy, cubie, faceNormal, hitPoint) {
                 const swipeVec2D = new THREE.Vector2(dx, dy).normalize();
 
@@ -1224,9 +1444,9 @@
 
             // UI Button Listeners
             document.getElementById('scramble-btn').addEventListener('click', () => scrambleCube(12));
-            document.getElementById('reset-btn').addEventListener('click', resetCube);
             document.getElementById('play-again-btn').addEventListener('click', () => scrambleCube(12));
             document.getElementById('close-modal-btn').addEventListener('click', hideWinModal);
+            document.getElementById('open-test-btn').addEventListener('click', () => showWinModal());
 
             // Toast Bar Listeners
             document.getElementById('toast-listen-btn').addEventListener('click', () => {
@@ -1240,17 +1460,14 @@
             document.getElementById('practice-studio-btn').addEventListener('click', () => {
                 openTeacherStudio(currentActiveWord);
             });
-            document.getElementById('win-practice-btn').addEventListener('click', () => {
-                hideWinModal();
-                openTeacherStudio(currentActiveWord);
-            });
             document.getElementById('close-practice-btn').addEventListener('click', closeTeacherStudio);
         }
 
         // ==========================================
-        // 8. TEACHER PRONUNCIATION RECORDER & GRADING STUDIO
+        // 9. TEACHER PRONUNCIATION RECORDER & GRADING ENGINE
         // ==========================================
         let isRecordingAudio = false;
+        let activeRecordingContext = 'studio'; // 'studio' | 'win'
         let mediaRecorder = null;
         let recordedChunks = [];
         let recordedAudioUrl = null;
@@ -1271,7 +1488,7 @@
                 if (isRecordingAudio) {
                     stopStudentRecording();
                 } else {
-                    startStudentRecording();
+                    startStudentRecording('studio');
                 }
             });
 
@@ -1406,21 +1623,31 @@
             }
         }
 
-        async function startStudentRecording() {
+        async function startStudentRecording(context = 'studio') {
             if (isRecordingAudio) return;
             isRecordingAudio = true;
+            activeRecordingContext = context;
             recognizedTranscript = '';
             recordedChunks = [];
             recordingStartTime = performance.now();
 
-            // Update UI button to active recording state
-            const recBtn = document.getElementById('studio-record-btn');
-            recBtn.classList.add('recording-pulse');
-            document.getElementById('record-btn-icon').textContent = '⏹️';
-            document.getElementById('record-btn-text').textContent = 'Stop & Grade Me';
+            const targetWordObj = context === 'win' ? (currentChallengeWord || currentActiveWord) : currentActiveWord;
 
-            document.getElementById('teacher-comment-title').textContent = `🎧 Teacher is listening... Please say "${currentActiveWord.word}"!`;
-            document.getElementById('teacher-comment-body').textContent = `Speak clearly into your microphone, then click "Stop & Grade Me". 請對著麥克風清楚唸出單字！`;
+            if (context === 'win') {
+                const recBtn = document.getElementById('win-record-btn');
+                recBtn.classList.add('recording-pulse');
+                document.getElementById('win-rec-icon').textContent = '⏹️';
+                document.getElementById('win-rec-text').textContent = 'Stop & Grade Me';
+                document.getElementById('win-teacher-title').textContent = `🎧 Teacher is listening... Please say "${targetWordObj.word}"!`;
+                document.getElementById('win-teacher-body').textContent = `Speak clearly into your microphone, then click "Stop & Grade Me". 請對著麥克風清楚唸出單字！`;
+            } else {
+                const recBtn = document.getElementById('studio-record-btn');
+                recBtn.classList.add('recording-pulse');
+                document.getElementById('record-btn-icon').textContent = '⏹️';
+                document.getElementById('record-btn-text').textContent = 'Stop & Grade Me';
+                document.getElementById('teacher-comment-title').textContent = `🎧 Teacher is listening... Please say "${targetWordObj.word}"!`;
+                document.getElementById('teacher-comment-body').textContent = `Speak clearly into your microphone, then click "Stop & Grade Me". 請對著麥克風清楚唸出單字！`;
+            }
 
             // 1. Start Web Speech API SpeechRecognition if available
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1458,16 +1685,15 @@
                             if (recordedAudioUrl) URL.revokeObjectURL(recordedAudioUrl);
                             recordedAudioUrl = URL.createObjectURL(blob);
                             document.getElementById('studio-playback-btn').disabled = false;
+                            document.getElementById('win-playback-btn').disabled = false;
                         }
                         stream.getTracks().forEach(track => track.stop());
                     };
                     mediaRecorder.start();
-                } catch (err) {
-                    // Microphone permission denied or unavailable in iframe: allow simulated practice
-                }
+                } catch (err) {}
             }
 
-            // Auto-stop after 3.2 seconds so kids don't forget to press stop
+            // Auto-stop after 3.2 seconds
             setTimeout(() => {
                 if (isRecordingAudio) {
                     stopStudentRecording();
@@ -1479,10 +1705,15 @@
             if (!isRecordingAudio) return;
             isRecordingAudio = false;
 
-            const recBtn = document.getElementById('studio-record-btn');
-            recBtn.classList.remove('recording-pulse');
+            const recBtnStudio = document.getElementById('studio-record-btn');
+            recBtnStudio.classList.remove('recording-pulse');
             document.getElementById('record-btn-icon').textContent = '🎤';
             document.getElementById('record-btn-text').textContent = 'Record Again';
+
+            const recBtnWin = document.getElementById('win-record-btn');
+            recBtnWin.classList.remove('recording-pulse');
+            document.getElementById('win-rec-icon').textContent = '🎤';
+            document.getElementById('win-rec-text').textContent = '2. Record Again';
 
             if (speechRecognizer) {
                 try { speechRecognizer.stop(); } catch (e) {}
@@ -1492,14 +1723,13 @@
             }
 
             const durationMs = performance.now() - recordingStartTime;
+            const targetWordObj = activeRecordingContext === 'win' ? (currentChallengeWord || currentActiveWord) : currentActiveWord;
+
             setTimeout(() => {
-                evaluateStudentPronunciation(currentActiveWord, recognizedTranscript, durationMs);
+                evaluateStudentPronunciation(targetWordObj, recognizedTranscript, durationMs);
             }, 250);
         }
 
-        /**
-         * Calculates Levenshtein similarity & phonetic closeness to award a Teacher Grade up to 100.
-         */
         function evaluateStudentPronunciation(wordObj, spokenText, durationMs) {
             const target = wordObj.word.toLowerCase().trim();
             const spoken = (spokenText || '').toLowerCase().replace(/[^a-z\s]/g, '').trim();
@@ -1520,18 +1750,17 @@
                 if (sim >= 0.65 || (sameStart && hasDiphthong)) {
                     score = Math.min(98, Math.max(88, Math.round(85 + sim * 14)));
                     title = `👏 ${score}/100 Great Job! 發音很標準喔！`;
-                    feedback = `Teacher heard "${spoken}". Very close to "${wordObj.word}" (${wordObj.zh})! Keep up that clear /ɔɪ/ sound!`;
-                } else if (sameStart || hasDiphthong || sim >= 0.35) {
+                    feedback = `Teacher heard "${spoken}". Very close to "${wordObj.word}" (${wordObj.zh})! Great /ɔɪ/ vowel sound!`;
+                } else if (sameStart || sim >= 0.35) {
                     score = Math.min(86, Math.max(76, Math.round(74 + sim * 15)));
                     title = `👍 ${score}/100 Good Effort! 繼續加油！`;
                     feedback = `Teacher heard "${spoken}". Focus on: ${wordObj.tip} Try listening once more for 100 points!`;
                 } else {
                     score = 72;
                     title = `💪 ${score}/100 Nice Try! 再試一次拿滿分！`;
-                    feedback = `Let's listen to the slow voice for "${wordObj.word}" (${wordObj.zh}) and emphasize the "oi/oy" sound!`;
+                    feedback = `Let's listen to the slow voice for "${wordObj.word}" (${wordObj.zh}) and blend the /ɔɪ/ sound!`;
                 }
             } else {
-                // Fallback when browser SpeechRecognition API isn't supported in iframe environment
                 if (durationMs < 500) {
                     score = 78;
                     title = `👍 ${score}/100 Good Practice! 唸得不錯喔！`;
@@ -1549,11 +1778,15 @@
             wordGrades[wordObj.word] = { score, title, feedback };
             document.getElementById('graded-count').textContent = Object.keys(wordGrades).length;
             document.getElementById('studio-playback-btn').disabled = false;
+            document.getElementById('win-playback-btn').disabled = false;
 
-            selectStudioWord(wordObj);
-            renderStudioWordGrid();
+            if (activeRecordingContext === 'win') {
+                selectChallengeWord(wordObj);
+            } else {
+                selectStudioWord(wordObj);
+                renderStudioWordGrid();
+            }
 
-            // Teacher spoken encouragement
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
                 const praise = score >= 95
@@ -1599,7 +1832,7 @@
         }
 
         // ==========================================
-        // 9. RENDER LOOP & INITIAL LOAD SCRAMBLE
+        // 10. RENDER LOOP & INITIAL LOAD SCRAMBLE
         // ==========================================
         function animate() {
             requestAnimationFrame(animate);
