@@ -216,11 +216,11 @@
         VOCABULARY & GAME CONFIGURATION
     ---------------------------------------------------- */
     const VOCABULARY = [
-      { word: "stuffing", img: "stuffing.jpg", fallbackEmoji: "🥘" },
-      { word: "gratitude", img: "gratitude.jpg", fallbackEmoji: "🙏" },
-      { word: "pilgrim", img: "pilgrim.jpg", fallbackEmoji: "🎩" },
-      { word: "thanksgiving", img: "thanksgiving.jpg", fallbackEmoji: "🍁" },
-      { word: "turkey", img: "turkey.jpg", fallbackEmoji: "🦃" }
+      { word: "stuffing", img: "stuffing.jpg", audio: "stuffing.mp3", fallbackEmoji: "🥘" },
+      { word: "gratitude", img: "gratitude.jpg", audio: "gratitude.mp3", fallbackEmoji: "🙏" },
+      { word: "pilgrim", img: "pilgrim.jpg", audio: "pilgrim.mp3", fallbackEmoji: "🎩" },
+      { word: "thanksgiving", img: "thanksgiving.jpg", audio: "thanksgiving.mp3", fallbackEmoji: "🍁" },
+      { word: "turkey", img: "turkey.jpg", audio: "turkey.mp3", fallbackEmoji: "🦃" }
     ];
 
     const BUBBLE_COLORS = [
@@ -244,6 +244,7 @@
     let timerSeconds = 30;
     let isMusicPlaying = false;
     let isAudioMuted = false;
+    let currentWordAudio = null;
 
     // Canvas state for flying bubbles
     let canvas, ctx;
@@ -252,7 +253,7 @@
     let particles = [];
 
     /* ----------------------------------------------------
-        WEB AUDIO API SOUND SYNTHESIS
+        WEB AUDIO API SOUND SYNTHESIS & MP3 PLAYER
     ---------------------------------------------------- */
     let audioCtx = null;
     let musicLoopTimer = null;
@@ -382,20 +383,19 @@
     }
 
     function speakCurrentWord() {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        let wordToSpeak = VOCABULARY[currentWordIndex].word;
-        
-        // Fix pronunciation for "stuffing" using a precise phonetic spacing / spelling hint
-        if (wordToSpeak === "stuffing") {
-          wordToSpeak = "stuf fing";
-        }
+      const item = VOCABULARY[currentWordIndex];
+      if (!item || !item.audio) return;
 
-        const utterance = new SpeechSynthesisUtterance(wordToSpeak);
-        utterance.rate = 0.85;
-        utterance.pitch = 1.1;
-        window.speechSynthesis.speak(utterance);
+      // Stop previous audio if still playing
+      if (currentWordAudio) {
+        currentWordAudio.pause();
+        currentWordAudio.currentTime = 0;
       }
+
+      currentWordAudio = new Audio(item.audio);
+      currentWordAudio.play().catch(err => {
+        console.warn("Could not play audio file: " + item.audio, err);
+      });
     }
 
     /* ----------------------------------------------------
