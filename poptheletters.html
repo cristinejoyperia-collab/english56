@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thanksgiving Spelling Game</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * {
+      font-family: 'Comic Sans MS', 'Comic Sans', 'Chalkboard SE', 'Comic Neue', 'Microsoft JhengHei', cursive, sans-serif !important;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .game-bg {
+      background-image: url('game_background.jpg'), linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #feada6 100%);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    @keyframes flashX {
+      0% { opacity: 0; transform: scale(0.5); }
+      50% { opacity: 1; transform: scale(1.3); }
+      100% { opacity: 0; transform: scale(1); }
+    }
+
+    .x-overlay-active {
+      animation: flashX 0.6s ease-out forwards;
+    }
+
+    @keyframes pulseTimer {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); color: #ef4444; }
+    }
+
+    .timer-warning {
+      animation: pulseTimer 0.8s infinite;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 4px solid rgba(255, 255, 255, 0.85);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+    }
+
+    @keyframes pulseBtn {
+      0%, 100% { transform: scale(1); box-shadow: 0 10px 25px rgba(234, 88, 12, 0.5); }
+      50% { transform: scale(1.05); box-shadow: 0 15px 35px rgba(234, 88, 12, 0.8); }
+    }
+
+    .btn-pulse {
+      animation: pulseBtn 2s infinite ease-in-out;
+    }
+
+    /* Animated Turkey Keyframes */
+    @keyframes turkeyDance {
+      0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+      25% { transform: translateY(-10px) rotate(-6deg) scale(1.05); }
+      50% { transform: translateY(0) rotate(0deg) scale(1); }
+      75% { transform: translateY(-10px) rotate(6deg) scale(1.05); }
+    }
+
+    @keyframes featherSpread {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+
+    .turkey-animate {
+      animation: turkeyDance 1.6s infinite ease-in-out;
+    }
+
+    .feathers-animate {
+      transform-origin: 100px 115px;
+      animation: featherSpread 1.6s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-amber-950 w-screen h-screen overflow-hidden">
+
+  <div id="game-frame" class="game-bg relative w-screen h-screen flex flex-col justify-between overflow-hidden">
+    
+    <!-- Audio Toggle -->
+    <div class="absolute top-4 right-4 z-50 flex gap-2">
+      <button id="music-btn" onclick="toggleMusic()" class="bg-amber-500 hover:bg-amber-600 text-white font-black py-2.5 px-5 rounded-full shadow-2xl border-2 border-white flex items-center gap-2 text-base sm:text-lg transition active:scale-95">
+        <span id="music-icon">&#127925;</span> <span id="music-text">Music: ON</span>
+      </button>
+    </div>
+
+    <!-- Red X Overlay -->
+    <div id="wrong-x-overlay" class="pointer-events-none absolute inset-0 z-40 flex items-center justify-center hidden">
+      <div class="text-red-600 font-extrabold text-[12rem] sm:text-[16rem] drop-shadow-[0_15px_25px_rgba(0,0,0,0.9)]">
+        &#10006;
+      </div>
+    </div>
+
+    <!-- SCREEN 1: COVER -->
+    <div id="screen-cover" class="relative w-full h-full flex flex-col justify-end items-center p-6 sm:p-12 z-10 overflow-hidden">
+      <img id="cover-image" src="cover_image.jpg" alt="Thanksgiving Cover" 
+           onerror="this.onerror=null; this.src=getSvgFallback('Thanksgiving Game', '🍁🦃🌽');"
+           class="absolute inset-0 w-full h-full object-cover z-0" />
+
+      <div class="mb-6 sm:mb-10 w-full flex justify-center z-10">
+        <button onclick="startGame()" class="btn-pulse w-11/12 max-w-xl bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-white text-3xl sm:text-5xl font-black py-5 px-10 rounded-full border-4 border-white transform hover:scale-105 active:scale-95 transition-all duration-200 shadow-2xl">
+          &#127918; START GAME &#127809;
+        </button>
+      </div>
+    </div>
+
+    <!-- SCREEN 2: 5-SECOND PREVIEW -->
+    <div id="screen-preview" class="w-full h-full flex flex-col justify-between items-center p-4 sm:p-8 z-10 hidden">
+      <div class="text-center mt-2">
+        <span class="bg-orange-500 text-white text-xl sm:text-3xl font-black px-8 py-3 rounded-full border-4 border-white shadow-xl inline-block">
+          Memorize the Word Image! &#129504;
+        </span>
+      </div>
+
+      <div class="my-auto w-full max-w-4xl h-[55vh] sm:h-[62vh] glass-card rounded-3xl p-4 sm:p-6 flex flex-col items-center justify-center relative shadow-2xl">
+        <img id="preview-image" src="" alt="Vocabulary Picture" class="w-full h-full object-contain rounded-2xl drop-shadow-md" />
+      </div>
+
+      <div class="w-full max-w-xl mb-4 sm:mb-8 flex flex-col items-center gap-2">
+        <div class="text-amber-950 font-black text-2xl sm:text-4xl drop-shadow-md">
+          Starting in: <span id="preview-countdown" class="text-orange-600 text-4xl sm:text-5xl">5</span>s
+        </div>
+        <div class="w-full bg-white/80 rounded-full h-6 sm:h-8 border-4 border-amber-500 shadow-inner overflow-hidden p-0.5">
+          <div id="preview-bar" class="bg-gradient-to-r from-yellow-400 to-orange-500 h-full w-full rounded-full transition-all duration-1000 ease-linear"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN 3: GAMEPLAY -->
+    <div id="screen-gameplay" class="w-full h-full flex flex-col justify-between items-center p-3 sm:p-6 z-10 relative hidden">
+      <div class="w-full flex justify-between items-center bg-white/90 backdrop-blur-md px-6 py-3 rounded-2xl border-4 border-amber-400 shadow-xl">
+        <div class="flex items-center gap-2">
+          <span class="text-base sm:text-xl font-black text-amber-950 mr-1 hidden sm:inline">Lives:</span>
+          <div id="lifelines-container" class="flex text-2xl sm:text-4xl gap-1">
+            <span>&#129411;</span><span>&#129411;</span><span>&#129411;</span><span>&#129411;</span><span>&#129411;</span>
+          </div>
+        </div>
+
+        <div class="font-black text-amber-950 text-base sm:text-2xl">
+          Word <span id="word-current-idx" class="text-orange-600">1</span> / <span id="word-total-count">5</span>
+        </div>
+
+        <div class="flex items-center gap-2 font-black text-xl sm:text-3xl text-orange-600">
+          &#9203; <span id="timer-display">30</span>s
+        </div>
+      </div>
+
+      <div class="my-2 flex flex-col items-center w-full max-w-2xl">
+        <div class="flex items-center justify-center gap-4 bg-white/85 backdrop-blur-sm px-6 py-2 rounded-2xl border-2 border-amber-300 shadow-md mb-2">
+          <div class="w-20 h-20 sm:w-28 sm:h-28 rounded-xl overflow-hidden border-2 border-amber-500 bg-white flex-shrink-0 shadow-inner">
+            <img id="game-thumbnail-image" src="" alt="Word Thumbnail" class="w-full h-full object-contain" />
+          </div>
+          <button onclick="speakCurrentWord()" class="bg-amber-400 hover:bg-amber-500 text-amber-950 font-black px-4 py-2 sm:px-6 sm:py-3 rounded-full text-base sm:text-xl border-2 border-white flex items-center gap-2 shadow-lg transition active:scale-95">
+            &#128266; Hear Word
+          </button>
+        </div>
+
+        <div id="answer-slots-container" class="flex flex-wrap justify-center gap-2 sm:gap-3 my-1"></div>
+      </div>
+
+      <div id="canvas-container" class="relative w-full flex-1 rounded-3xl overflow-hidden border-4 border-white/70 bg-white/10 backdrop-blur-sm shadow-2xl">
+        <canvas id="bubble-canvas" class="w-full h-full block cursor-pointer"></canvas>
+      </div>
+
+      <div class="w-full text-center mt-2">
+        <p class="text-amber-950 font-black text-xs sm:text-base bg-white/80 py-1.5 px-6 rounded-full inline-block shadow-md">
+          Tap the flying colorful bubbles with the correct lowercase letters!
+        </p>
+      </div>
+    </div>
+
+    <!-- SCREEN 4: END SCREEN -->
+    <div id="screen-end" class="w-full h-full flex flex-col justify-center items-center p-4 sm:p-6 z-10 text-center hidden overflow-y-auto">
+      <div class="glass-card max-w-2xl w-full rounded-3xl p-5 sm:p-7 flex flex-col items-center gap-3 shadow-2xl border-4 border-white my-auto">
+        
+        <!-- Animated Picture of Turkey (Shown on Win) -->
+        <div id="win-turkey-graphic" class="turkey-animate w-28 h-28 sm:w-36 sm:h-36 flex items-center justify-center">
+          <svg viewBox="0 0 200 200" class="w-full h-full drop-shadow-xl">
+            <!-- Tail Feathers -->
+            <g class="feathers-animate">
+              <ellipse cx="100" cy="65" rx="18" ry="52" fill="#ef4444" stroke="#78350f" stroke-width="4" transform="rotate(-50 100 115)" />
+              <ellipse cx="100" cy="65" rx="18" ry="52" fill="#f97316" stroke="#78350f" stroke-width="4" transform="rotate(-25 100 115)" />
+              <ellipse cx="100" cy="65" rx="18" ry="52" fill="#eab308" stroke="#78350f" stroke-width="4" />
+              <ellipse cx="100" cy="65" rx="18" ry="52" fill="#f97316" stroke="#78350f" stroke-width="4" transform="rotate(25 100 115)" />
+              <ellipse cx="100" cy="65" rx="18" ry="52" fill="#ef4444" stroke="#78350f" stroke-width="4" transform="rotate(50 100 115)" />
+            </g>
+            <!-- Feet -->
+            <path d="M80 165 L70 182 M80 165 L80 184 M80 165 L90 182" stroke="#f59e0b" stroke-width="5" stroke-linecap="round" />
+            <path d="M120 165 L110 182 M120 165 L120 184 M120 165 L130 182" stroke="#f59e0b" stroke-width="5" stroke-linecap="round" />
+            <!-- Body -->
+            <circle cx="100" cy="125" r="42" fill="#92400e" stroke="#451a03" stroke-width="4" />
+            <ellipse cx="100" cy="132" rx="26" ry="28" fill="#b45309" />
+            <!-- Wings -->
+            <ellipse cx="62" cy="125" rx="12" ry="24" fill="#78350f" stroke="#451a03" stroke-width="3" transform="rotate(15 62 125)" />
+            <ellipse cx="138" cy="125" rx="12" ry="24" fill="#78350f" stroke="#451a03" stroke-width="3" transform="rotate(-15 138 125)" />
+            <!-- Head -->
+            <circle cx="100" cy="82" r="26" fill="#b45309" stroke="#451a03" stroke-width="4" />
+            <!-- Pilgrim Hat -->
+            <rect x="70" y="52" width="60" height="8" rx="4" fill="#1f2937" stroke="#000" stroke-width="2" />
+            <path d="M80 52 L85 26 L115 26 L120 52 Z" fill="#1f2937" stroke="#000" stroke-width="2" />
+            <rect x="82" y="43" width="36" height="6" fill="#f59e0b" />
+            <!-- Eyes -->
+            <circle cx="90" cy="78" r="5" fill="#ffffff" />
+            <circle cx="90" cy="78" r="2.5" fill="#000000" />
+            <circle cx="110" cy="78" r="5" fill="#ffffff" />
+            <circle cx="110" cy="78" r="2.5" fill="#000000" />
+            <!-- Wattle (Red Gobble) -->
+            <path d="M104 88 C112 88, 114 104, 105 104 C99 104, 102 92, 104 88 Z" fill="#dc2626" />
+            <!-- Beak -->
+            <polygon points="93,85 107,85 100,97" fill="#facc15" stroke="#ca8a04" stroke-width="2" />
+          </svg>
+        </div>
+
+        <!-- Fallback Emoji for Game Over -->
+        <div id="end-emoji" class="text-7xl sm:text-8xl animate-bounce hidden">&#129411;&#128165;</div>
+
+        <h2 id="end-title" class="text-2xl sm:text-4xl font-black text-amber-950">Victory!</h2>
+        
+        <!-- Clue Box (Shown on Win) -->
+        <div id="win-clue-box" class="bg-orange-50 border-4 border-orange-400 rounded-2xl p-4 sm:p-5 w-full shadow-md space-y-3">
+          <p class="text-lg sm:text-2xl text-amber-950 font-black leading-snug">
+            Congratulations! You found <span class="text-orange-600 underline">Hank, the Turkey</span>. Now, it's time to go to this place to find <span class="text-orange-600 underline">Ariel, the Third Turkey</span>.
+          </p>
+          <hr class="border-t-2 border-orange-200 w-3/4 mx-auto" />
+          <p class="text-base sm:text-xl text-orange-800 font-bold leading-snug">
+            恭喜！你找到了<span class="text-red-600">火雞 Hank</span>。現在，是時候前往這個地方尋找<span class="text-red-600">第三隻火雞 Ariel</span> 了！
+          </p>
+          
+          <!-- Place Image Container -->
+          <div class="mt-3 w-full h-44 sm:h-56 rounded-xl overflow-hidden border-4 border-amber-500 bg-white shadow-inner flex items-center justify-center">
+            <img id="clue-place-image" src="ariel_place.jpg" alt="Location to find Ariel" 
+                 onerror="this.onerror=null; this.src=getSvgFallback('Next Location', '📍🏫');"
+                 class="w-full h-full object-cover" />
+          </div>
+        </div>
+
+        <!-- Subtitle (Shown on Game Over) -->
+        <p id="end-subtitle" class="text-xl sm:text-2xl text-orange-700 font-extrabold hidden">
+          You ran out of turkey lifelines!
+        </p>
+        
+        <div class="bg-amber-100/90 py-2.5 px-5 rounded-2xl border-2 border-amber-300 w-full shadow-inner">
+          <div class="text-amber-900 text-xs sm:text-sm font-bold">Final Score / 最終得分</div>
+          <div id="end-score-details" class="text-xl sm:text-2xl font-black text-amber-950">5 / 5 Words</div>
+        </div>
+
+        <button onclick="resetGame()" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-lg sm:text-xl py-3 px-8 rounded-full shadow-xl border-4 border-white transform hover:scale-105 active:scale-95 transition">
+          &#128260; Play Again / 再玩一次
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const VOCABULARY = [
+      { word: "stuffing", img: "stuffing.jpg", audio: "stuffing.mp3", fallbackEmoji: "🥘" },
+      { word: "gratitude", img: "gratitude.jpg", audio: "gratitude.mp3", fallbackEmoji: "🙏" },
+      { word: "pilgrim", img: "pilgrim.jpg", audio: "pilgrim.mp3", fallbackEmoji: "🎩" },
+      { word: "thanksgiving", img: "thanksgiving.jpg", audio: "thanksgiving.mp3", fallbackEmoji: "🍁" },
+      { word: "turkey", img: "turkey.jpg", audio: "turkey.mp3", fallbackEmoji: "🦃" }
+    ];
+
+    const BUBBLE_COLORS = [
+      { bg: '#f87171', border: '#dc2626', text: '#ffffff' },
+      { bg: '#fb923c', border: '#ea580c', text: '#ffffff' },
+      { bg: '#facc15', border: '#ca8a04', text: '#78350f' },
+      { bg: '#4ade80', border: '#16a34a', text: '#ffffff' },
+      { bg: '#38bdf8', border: '#0284c7', text: '#ffffff' },
+      { bg: '#c084fc', border: '#9333ea', text: '#ffffff' },
+      { bg: '#f472b6', border: '#db2777', text: '#ffffff' }
+    ];
+
+    let currentWordIndex = 0;
+    let currentLetterPointer = 0;
+    let remainingLives = 5;
+    let timerInterval = null;
+    let previewInterval = null;
+    let timerSeconds = 30;
+    let isMusicPlaying = false;
+    let isAudioMuted = false;
+    let currentWordAudio = null;
+
+    let canvas, ctx;
+    let bubbles = [];
+    let animationFrameId = null;
+    let particles = [];
+
+    let audioCtx = null;
+    let musicLoopTimer = null;
+
+    // Preload MP3 files
+    const preloadedAudio = {};
+    VOCABULARY.forEach(item => {
+      const audio = new Audio();
+      audio.src = item.audio;
+      audio.preload = 'auto';
+      preloadedAudio[item.word] = audio;
+    });
+
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playSound(type) {
+      if (isAudioMuted) return;
+      initAudio();
+
+      const now = audioCtx.currentTime;
+
+      if (type === 'pop') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(450, now);
+        osc.frequency.exponentialRampToValueAtTime(900, now + 0.09);
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.09);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.09);
+      } else if (type === 'correct') {
+        const freqs = [523.25, 659.25, 783.99, 1046.50];
+        freqs.forEach((f, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(f, now + i * 0.06);
+          gain.gain.setValueAtTime(0.25, now + i * 0.06);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.22);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + i * 0.06);
+          osc.stop(now + i * 0.06 + 0.22);
+        });
+      } else if (type === 'wrong') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(160, now);
+        osc.frequency.linearRampToValueAtTime(90, now + 0.35);
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      } else if (type === 'win') {
+        const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99];
+        notes.forEach((f, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(f, now + i * 0.1);
+          gain.gain.setValueAtTime(0.3, now + i * 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.1 + 0.35);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + i * 0.1);
+          osc.stop(now + i * 0.1 + 0.35);
+        });
+      }
+    }
+
+    function startGameshowMusic() {
+      if (isMusicPlaying || isAudioMuted) return;
+      initAudio();
+      isMusicPlaying = true;
+
+      const playGameshowBeat = () => {
+        if (!isMusicPlaying) return;
+        const now = audioCtx.currentTime;
+        const bassNotes = [130.81, 146.83, 164.81, 174.61];
+        
+        bassNotes.forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.25);
+          gain.gain.setValueAtTime(0.035, now + idx * 0.25);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.25 + 0.2);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + idx * 0.25);
+          osc.stop(now + idx * 0.25 + 0.2);
+        });
+
+        musicLoopTimer = setTimeout(playGameshowBeat, 1000);
+      };
+
+      playGameshowBeat();
+    }
+
+    function stopGameshowMusic() {
+      isMusicPlaying = false;
+      if (musicLoopTimer) clearTimeout(musicLoopTimer);
+    }
+
+    function toggleMusic() {
+      isAudioMuted = !isAudioMuted;
+      const btnText = document.getElementById('music-text');
+      const btnIcon = document.getElementById('music-icon');
+
+      if (isAudioMuted) {
+        stopGameshowMusic();
+        btnText.textContent = "Music: OFF";
+        btnIcon.textContent = "🔇";
+      } else {
+        btnText.textContent = "Music: ON";
+        btnIcon.textContent = "🎵";
+        startGameshowMusic();
+      }
+    }
+
+    function speakCurrentWord() {
+      const item = VOCABULARY[currentWordIndex];
+      if (!item || !item.audio) return;
+
+      if (currentWordAudio) {
+        currentWordAudio.pause();
+        currentWordAudio.currentTime = 0;
+      }
+
+      currentWordAudio = preloadedAudio[item.word] || new Audio(item.audio);
+      currentWordAudio.currentTime = 0;
+      currentWordAudio.play().catch(err => {
+        console.warn("Audio file not found or blocked: " + item.audio, err);
+      });
+    }
+
+    function getSvgFallback(text, emoji) {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="450" viewBox="0 0 600 450">
+        <rect width="600" height="450" fill="#fef3c7" rx="30"/>
+        <circle cx="300" cy="200" r="110" fill="#fde68a" stroke="#f59e0b" stroke-width="8"/>
+        <text x="300" y="225" font-size="110" text-anchor="middle" dominant-baseline="middle">${emoji}</text>
+        <text x="300" y="375" font-size="42" font-family="Comic Sans MS, cursive" font-weight="bold" fill="#78350f" text-anchor="middle">${text}</text>
+      </svg>`;
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    }
+
+    function showScreen(screenId) {
+      ['screen-cover', 'screen-preview', 'screen-gameplay', 'screen-end'].forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+      });
+      document.getElementById(screenId).classList.remove('hidden');
+    }
+
+    function startGame() {
+      initAudio();
+      startGameshowMusic();
+      currentWordIndex = 0;
+      remainingLives = 5;
+      updateLifelinesUI();
+      startRound();
+    }
+
+    function startRound() {
+      if (currentWordIndex >= VOCABULARY.length) {
+        triggerEndScreen(true);
+        return;
+      }
+
+      const item = VOCABULARY[currentWordIndex];
+      const previewImg = document.getElementById('preview-image');
+      const gameThumb = document.getElementById('game-thumbnail-image');
+      const fallbackUrl = getSvgFallback(item.word, item.fallbackEmoji);
+
+      previewImg.src = item.img;
+      previewImg.onerror = function() {
+        this.onerror = null;
+        this.src = fallbackUrl;
+      };
+
+      gameThumb.src = item.img;
+      gameThumb.onerror = function() {
+        this.onerror = null;
+        this.src = fallbackUrl;
+      };
+
+      showScreen('screen-preview');
+      speakCurrentWord();
+
+      let countdown = 5;
+      const countEl = document.getElementById('preview-countdown');
+      const barEl = document.getElementById('preview-bar');
+      countEl.textContent = countdown;
+      barEl.style.width = '100%';
+
+      if (previewInterval) clearInterval(previewInterval);
+
+      previewInterval = setInterval(() => {
+        countdown--;
+        countEl.textContent = countdown;
+        barEl.style.width = (countdown / 5 * 100) + '%';
+
+        if (countdown <= 0) {
+          clearInterval(previewInterval);
+          startSpellingPhase();
+        }
+      }, 1000);
+    }
+
+    function startSpellingPhase() {
+      showScreen('screen-gameplay');
+      const currentWord = VOCABULARY[currentWordIndex].word;
+      currentLetterPointer = 0;
+
+      document.getElementById('word-current-idx').textContent = currentWordIndex + 1;
+      document.getElementById('word-total-count').textContent = VOCABULARY.length;
+
+      renderAnswerSlots(currentWord);
+      start30sTimer();
+      setupCanvas();
+      initBubblesForWord(currentWord);
+    }
+
+    function renderAnswerSlots(word) {
+      const container = document.getElementById('answer-slots-container');
+      container.innerHTML = '';
+
+      for (let i = 0; i < word.length; i++) {
+        const slot = document.createElement('div');
+        slot.id = `slot-${i}`;
+        slot.className = 'w-10 h-12 sm:w-16 sm:h-20 bg-white border-4 border-amber-400 rounded-2xl flex items-center justify-center font-black text-2xl sm:text-4xl text-amber-950 shadow-lg transform transition-all duration-300';
+        slot.textContent = '_';
+        container.appendChild(slot);
+      }
+    }
+
+    function start30sTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerSeconds = 30;
+      const timerDisplay = document.getElementById('timer-display');
+      timerDisplay.textContent = timerSeconds;
+      timerDisplay.classList.remove('timer-warning');
+
+      timerInterval = setInterval(() => {
+        timerSeconds--;
+        timerDisplay.textContent = timerSeconds;
+
+        if (timerSeconds <= 5) {
+          timerDisplay.classList.add('timer-warning');
+        }
+
+        if (timerSeconds <= 0) {
+          clearInterval(timerInterval);
+          handleTimeOut();
+        }
+      }, 1000);
+    }
+
+    function handleTimeOut() {
+      playSound('wrong');
+      flashWrongX();
+      loseLife();
+
+      if (remainingLives > 0) {
+        start30sTimer();
+        initBubblesForWord(VOCABULARY[currentWordIndex].word);
+      }
+    }
+
+    function updateLifelinesUI() {
+      const container = document.getElementById('lifelines-container');
+      container.innerHTML = '';
+      for (let i = 0; i < 5; i++) {
+        const span = document.createElement('span');
+        span.className = i < remainingLives ? 'opacity-100 scale-100 transition duration-300' : 'opacity-25 scale-75 grayscale transition duration-300';
+        span.textContent = '🦃';
+        container.appendChild(span);
+      }
+    }
+
+    function loseLife() {
+      remainingLives--;
+      updateLifelinesUI();
+      if (remainingLives <= 0) {
+        if (timerInterval) clearInterval(timerInterval);
+        triggerEndScreen(false);
+      }
+    }
+
+    function flashWrongX() {
+      const overlay = document.getElementById('wrong-x-overlay');
+      overlay.classList.remove('hidden');
+      overlay.classList.add('x-overlay-active');
+      setTimeout(() => {
+        overlay.classList.remove('x-overlay-active');
+        overlay.classList.add('hidden');
+      }, 600);
+    }
+
+    function triggerEndScreen(isWin) {
+      if (timerInterval) clearInterval(timerInterval);
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+      showScreen('screen-end');
+
+      const winTurkey = document.getElementById('win-turkey-graphic');
+      const winClueBox = document.getElementById('win-clue-box');
+      const emoji = document.getElementById('end-emoji');
+      const title = document.getElementById('end-title');
+      const subtitle = document.getElementById('end-subtitle');
+      const score = document.getElementById('end-score-details');
+
+      if (isWin) {
+        playSound('win');
+        winTurkey.classList.remove('hidden');
+        winClueBox.classList.remove('hidden');
+        emoji.classList.add('hidden');
+        subtitle.classList.add('hidden');
+
+        title.textContent = 'Victory! 挑戰成功！';
+        score.textContent = `${VOCABULARY.length} / ${VOCABULARY.length} Words Completed`;
+      } else {
+        playSound('wrong');
+        winTurkey.classList.add('hidden');
+        winClueBox.classList.add('hidden');
+        emoji.classList.remove('hidden');
+        subtitle.classList.remove('hidden');
+
+        emoji.textContent = '🦃💥';
+        title.textContent = 'Game Over! 遊戲結束';
+        subtitle.textContent = 'You ran out of turkey lifelines! 火雞生命值用完了，再試一次吧！';
+        score.textContent = `${currentWordIndex} / ${VOCABULARY.length} Words Completed`;
+      }
+    }
+
+    function resetGame() {
+      startGame();
+    }
+
+    function setupCanvas() {
+      canvas = document.getElementById('bubble-canvas');
+      const container = document.getElementById('canvas-container');
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientHeight;
+      ctx = canvas.getContext('2d');
+      canvas.onclick = handleCanvasClick;
+    }
+
+    function initBubblesForWord(word) {
+      bubbles = [];
+      particles = [];
+      const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+      
+      const targetLetters = word.toLowerCase().split('');
+      const extraCount = Math.max(8, 14 - targetLetters.length);
+      const distractorLetters = [];
+      for (let i = 0; i < extraCount; i++) {
+        const randomChar = alphabet[Math.floor(Math.random() * alphabet.length)];
+        distractorLetters.push(randomChar);
+      }
+
+      const allLetters = [...targetLetters, ...distractorLetters];
+      allLetters.sort(() => Math.random() - 0.5);
+
+      const radius = canvas.width < 640 ? 32 : 44;
+
+      allLetters.forEach((char, index) => {
+        const colorScheme = BUBBLE_COLORS[index % BUBBLE_COLORS.length];
+        const x = radius + Math.random() * (canvas.width - radius * 2);
+        const y = radius + Math.random() * (canvas.height - radius * 2);
+        
+        const speed = 1.5 + Math.random() * 2.2;
+        const angle = Math.random() * Math.PI * 2;
+
+        bubbles.push({
+          char: char,
+          x: x,
+          y: y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          radius: radius,
+          color: colorScheme,
+          pulse: Math.random() * Math.PI,
+          popping: false
+        });
+      });
+
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      animateBubbles();
+    }
+
+    function animateBubbles() {
+      if (!ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      bubbles.forEach(b => {
+        if (b.popping) return;
+
+        b.x += b.vx;
+        b.y += b.vy;
+        b.pulse += 0.05;
+        const currentRadius = b.radius + Math.sin(b.pulse) * 3;
+
+        if (b.x - currentRadius < 0) { b.x = currentRadius; b.vx *= -1; }
+        if (b.x + currentRadius > canvas.width) { b.x = canvas.width - currentRadius; b.vx *= -1; }
+        if (b.y - currentRadius < 0) { b.y = currentRadius; b.vy *= -1; }
+        if (b.y + currentRadius > canvas.height) { b.y = canvas.height - currentRadius; b.vy *= -1; }
+
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, currentRadius, 0, Math.PI * 2);
+        ctx.fillStyle = b.color.bg;
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        ctx.shadowBlur = 12;
+        ctx.shadowOffsetY = 6;
+        ctx.fill();
+
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = b.color.border;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        ctx.beginPath();
+        ctx.arc(b.x - currentRadius * 0.3, b.y - currentRadius * 0.3, currentRadius * 0.28, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+        ctx.fill();
+
+        ctx.font = `bold ${Math.round(currentRadius * 1.15)}px 'Comic Sans MS', cursive, sans-serif`;
+        ctx.fillStyle = b.color.text;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(b.char, b.x, b.y + 3);
+      });
+
+      particles.forEach((p, idx) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha -= 0.04;
+
+        if (p.alpha <= 0) {
+          particles.splice(idx, 1);
+        } else {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${p.rgb}, ${p.alpha})`;
+          ctx.fill();
+        }
+      });
+
+      animationFrameId = requestAnimationFrame(animateBubbles);
+    }
+
+    function createPopParticles(x, y) {
+      for (let i = 0; i < 16; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 2.5 + Math.random() * 5;
+        particles.push({
+          x: x,
+          y: y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          radius: 4 + Math.random() * 5,
+          rgb: '255, 255, 255',
+          alpha: 1
+        });
+      }
+    }
+
+    function handleCanvasClick(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      const currentWord = VOCABULARY[currentWordIndex].word;
+      const expectedLetter = currentWord[currentLetterPointer].toLowerCase();
+
+      for (let i = bubbles.length - 1; i >= 0; i--) {
+        const b = bubbles[i];
+        if (b.popping) continue;
+
+        const dist = Math.hypot(clickX - b.x, clickY - b.y);
+        if (dist <= b.radius + 8) {
+          if (b.char === expectedLetter) {
+            playSound('pop');
+            playSound('correct');
+            createPopParticles(b.x, b.y);
+
+            const slot = document.getElementById(`slot-${currentLetterPointer}`);
+            slot.textContent = b.char;
+            slot.classList.add('bg-green-300', 'border-green-600', 'scale-110');
+            setTimeout(() => slot.classList.remove('scale-110'), 200);
+
+            bubbles.splice(i, 1);
+            currentLetterPointer++;
+
+            if (currentLetterPointer >= currentWord.length) {
+              clearInterval(timerInterval);
+              setTimeout(() => {
+                currentWordIndex++;
+                startRound();
+              }, 600);
+            }
+          } else {
+            playSound('wrong');
+            flashWrongX();
+            loseLife();
+          }
+          break;
+        }
+      }
+    }
+
+    window.addEventListener('resize', () => {
+      if (canvas && !document.getElementById('screen-gameplay').classList.contains('hidden')) {
+        setupCanvas();
+        if (VOCABULARY[currentWordIndex]) {
+          initBubblesForWord(VOCABULARY[currentWordIndex].word);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
