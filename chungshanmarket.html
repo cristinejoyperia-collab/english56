@@ -251,7 +251,7 @@
     0% { transform: scale(0.5); opacity: 0; }
     100% { transform: scale(1); opacity: 1; }
   }
-  /* Market Layout (Updated for 8 items!) */
+  /* Market Layout (8 items) */
   .market-container {
     display: flex;
     flex-wrap: wrap;
@@ -424,44 +424,9 @@
   </button>
 </div>
 
-<!-- SCREEN 2: RANDOM SELLER WITH ROLLING EFFECT -->
-<div id="screen-seller" class="screen">
-  <div id="seller-header" class="animated-title">Welcome to ChungShan Market! 歡迎光臨中山超市！</div>
-  <div class="card-box">
-    <h2 style="color:#ff3366; margin-top:0;">
-      Enter the Sellers' Names:
-      <span class="zh-sub" style="color:#666;">輸入老闆的名字（兩位老闆都有賣全部 8 種商品喔！）：</span>
-    </h2>
-    <div>
-      <label style="font-size:1.25rem; font-weight:bold;">Seller 1 老闆一 (All 8 Items 全部商品):</label>
-      <input type="text" id="seller1-input" value="Cristine">
-    </div>
-    <div>
-      <label style="font-size:1.25rem; font-weight:bold;">Seller 2 老闆二 (All 8 Items 全部商品):</label>
-      <input type="text" id="seller2-input" value="Erica">
-    </div>
-
-    <div id="seller-roller-box" class="rolling-box" style="font-size:2.1rem; font-weight:bold; color:#ff3366;">
-      ❓ Who is the seller? 今天誰當老闆？ ❓
-    </div>
-    <br>
-    <button id="btn-spin-seller" class="btn btn-blue" onclick="pickRandomSeller()">
-      🎲 Spin Seller Randomizer!
-      <span class="zh-sub">轉轉盤選老闆！</span>
-    </button>
-
-    <div id="chosen-seller-box" style="display:none; margin-top:8px;">
-      <button class="btn btn-green" onclick="goToScreen('screen-cart')">
-        Choose A Shopping Cart 🛒
-        <span class="zh-sub">選擇購物車</span>
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- SCREEN 3: CHOOSE ONE OF 15 MYSTERY SHOPPING CARTS (AMOUNTS HIDDEN) -->
+<!-- SCREEN 2: CHOOSE ONE OF 15 MYSTERY SHOPPING CARTS (AMOUNTS HIDDEN) -->
 <div id="screen-cart" class="screen">
-  <div class="animated-title market-title-banner">Market 超市</div>
+  <div class="animated-title market-title-banner">ChungShan Market 中山超市</div>
   <div class="card-box">
     <h2 style="color:#ff3366; margin-top:0;">
       Pick a Mystery Shopping Cart! (1 - 15)
@@ -479,9 +444,9 @@
   </div>
 </div>
 
-<!-- SCREEN 4: WHOLE SCREEN FOR SELECTED CART MONEY PICTURES -->
+<!-- SCREEN 3: WHOLE SCREEN FOR SELECTED CART MONEY PICTURES -->
 <div id="screen-cart-reveal" class="screen">
-  <div class="animated-title market-title-banner">Market 超市</div>
+  <div class="animated-title market-title-banner">ChungShan Market 中山超市</div>
   <div class="card-box">
     <h2 id="reveal-cart-title" style="font-size:2.3rem; color:#ff3366; margin:4px 0;">Shopping Cart 購物車</h2>
     <h1 id="reveal-cart-num" style="font-size:3.1rem; color:#2ac845; margin:4px 0;">NT$ 0</h1>
@@ -503,9 +468,9 @@
   </div>
 </div>
 
-<!-- SCREEN 5: CHOOSE THE SUBJECT WITH ROLLING EFFECT -->
+<!-- SCREEN 4: CHOOSE THE SUBJECT WITH ROLLING EFFECT -->
 <div id="screen-subject" class="screen">
-  <div class="animated-title market-title-banner">Market 超市</div>
+  <div class="animated-title market-title-banner">ChungShan Market 中山超市</div>
   <div class="card-box">
     <h2 style="color:#3399ff; font-size:2rem; margin-top:0;">
       Sentence Pattern Subject
@@ -529,9 +494,9 @@
   </div>
 </div>
 
-<!-- SCREEN 6: THE MARKET + AUTOMATIC SIDE COMPUTATION & CALCULATOR -->
+<!-- SCREEN 5: THE MARKET + AUTOMATIC SIDE COMPUTATION & CALCULATOR -->
 <div id="screen-market" class="screen">
-  <div class="animated-title market-title-banner">Market 超市</div>
+  <div class="animated-title market-title-banner">ChungShan Market 中山超市</div>
   <div style="font-size:1.35rem; font-weight:bold; background:#fff; padding:10px 24px; border-radius:30px; border:4px solid #ff9933; margin-bottom:12px; text-align:center;">
     Subject 主詞: <span id="market-subject-label" style="color:#ff3366;"></span> &nbsp;|&nbsp;
     Budget 預算: <span id="market-budget-label" style="color:#2ac845;"></span>
@@ -594,9 +559,9 @@
   </button>
 </div>
 
-<!-- SCREEN 7: SHOW THE CART, REMAINING MONEY & LEADERBOARD -->
+<!-- SCREEN 6: SHOW THE CART, REMAINING MONEY & LEADERBOARD -->
 <div id="screen-checkout" class="screen">
-  <div class="animated-title market-title-banner">Market 超市</div>
+  <div class="animated-title market-title-banner">ChungShan Market 中山超市</div>
   <div class="card-box">
     <h2 style="color:#ff3366; margin-top:0;">
       🛒 Your Shopping Cart Summary
@@ -697,7 +662,7 @@
     }
   }
 
-  // --- ALL 8 ITEMS FOR BOTH SELLERS + TRADITIONAL CHINESE ---
+  // --- ALL 8 ITEMS + TRADITIONAL CHINESE ---
   const allMarketItems = [
     { id: 'eggs', displayName: 'egg/s (15NTD)', zhName: '雞蛋', singular: 'egg', plural: 'eggs', price: 15, word: 'Fifteen NT Dollars', zhWord: '十五元', img: 'eggs.jpg' },
     { id: 'oranges', displayName: 'orange/s (20NTD)', zhName: '柳丁', singular: 'orange', plural: 'oranges', price: 20, word: 'Twenty NT Dollars', zhWord: '二十元', img: 'oranges.jpg' },
@@ -708,12 +673,6 @@
     { id: 'sandwiches', displayName: 'sandwich/es (40NTD)', zhName: '三明治', singular: 'sandwich', plural: 'sandwiches', price: 40, word: 'Forty NT Dollars', zhWord: '四十元', img: 'sandwiches.jpg' },
     { id: 'hotdogs', displayName: 'hotdog/s (35NTD)', zhName: '熱狗', singular: 'hotdog', plural: 'hotdogs', price: 35, word: 'Thirty-five NT Dollars', zhWord: '三十五元', img: 'hotdogs.jpg' }
   ];
-
-  // Both Seller 1 and Seller 2 sell all 8 items
-  const marketsData = {
-    1: allMarketItems,
-    2: allMarketItems
-  };
 
   // --- SUBJECT TRANSLATION MAP ---
   const subjectZhMap = {
@@ -745,7 +704,6 @@
   let usedCartIds = new Set();
   let currentSelectedCartId = null;
 
-  let selectedMarketIndex = 1;
   let currentMarketName = "ChungShan Market 中山超市";
   let selectedBudget = 0;
   let selectedBudgetWord = "";
@@ -773,52 +731,12 @@
   function startGame() {
     startBgm();
     sfxSuccess();
-    // Reset Seller screen UI for new player
-    document.getElementById('chosen-seller-box').style.display = 'none';
-    document.getElementById('seller-roller-box').textContent = '❓ Who is the seller? 今天誰當老闆？ ❓';
+    // Reset Subject screen UI for new player
     document.getElementById('go-market-btn-wrap').style.display = 'none';
     document.getElementById('subject-roller-box').textContent = '?';
 
-    goToScreen('screen-seller');
-    renderCartsGrid();
+    goToScreen('screen-cart');
     renderKeyboard();
-  }
-
-  // --- ROLLING EFFECT FOR SELLER RANDOMIZER ---
-  function pickRandomSeller() {
-    const s1 = document.getElementById('seller1-input').value.trim() || 'Cristine';
-    const s2 = document.getElementById('seller2-input').value.trim() || 'Erica';
-    const rollerBox = document.getElementById('seller-roller-box');
-    const spinBtn = document.getElementById('btn-spin-seller');
-    const nextBox = document.getElementById('chosen-seller-box');
-
-    spinBtn.disabled = true;
-    nextBox.style.display = 'none';
-    rollerBox.classList.add('rolling-active');
-
-    let ticks = 0;
-    const totalTicks = 22;
-    const interval = setInterval(() => {
-      sfxTick();
-      const tempIdx = (ticks % 2 === 0) ? 1 : 2;
-      const tempName = tempIdx === 1 ? s1 : s2;
-      rollerBox.textContent = `🎰 ${tempName}'s Market (${tempName}的超市)`;
-      ticks++;
-
-      if (ticks >= totalTicks) {
-        clearInterval(interval);
-        rollerBox.classList.remove('rolling-active');
-        selectedMarketIndex = Math.random() < 0.5 ? 1 : 2;
-        const chosenName = selectedMarketIndex === 1 ? s1 : s2;
-        currentMarketName = `${chosenName}'s Market (${chosenName}的超市)`;
-
-        document.getElementById('seller-header').textContent = currentMarketName;
-        rollerBox.textContent = `🎉 ${currentMarketName}!`;
-        sfxSuccess();
-        spinBtn.disabled = false;
-        nextBox.style.display = 'block';
-      }
-    }, 90);
   }
 
   // --- RENDER 15 MYSTERY CARTS (MARK PREVIOUSLY SELECTED WITH X) ---
@@ -932,7 +850,7 @@
   // --- MARKET SCREEN & AUTOMATIC SIDE COMPUTATION ---
   function setupMarketScreen() {
     currentCartQuantities = {};
-    const items = marketsData[selectedMarketIndex];
+    const items = allMarketItems;
     items.forEach(item => currentCartQuantities[item.id] = 0);
 
     const zhSub = subjectZhMap[selectedSubject];
@@ -968,7 +886,7 @@
 
   function changeQty(itemId, delta) {
     sfxClick();
-    const items = marketsData[selectedMarketIndex];
+    const items = allMarketItems;
     const itemObj = items.find(i => i.id === itemId);
     const newQty = (currentCartQuantities[itemId] || 0) + delta;
     if (newQty < 0) return;
@@ -985,12 +903,12 @@
   }
 
   function getSpentTotal() {
-    const items = marketsData[selectedMarketIndex];
+    const items = allMarketItems;
     return items.reduce((sum, item) => sum + (currentCartQuantities[item.id] * item.price), 0);
   }
 
   function updateAutoTotals(lastClickedItem) {
-    const items = marketsData[selectedMarketIndex];
+    const items = allMarketItems;
     const spent = getSpentTotal();
     const left = selectedBudget - spent;
     const zhSub = subjectZhMap[selectedSubject];
@@ -1055,7 +973,7 @@
   // --- CHECKOUT & LEADERBOARD ---
   function showCartSummary() {
     sfxSuccess();
-    const items = marketsData[selectedMarketIndex];
+    const items = allMarketItems;
     const listEl = document.getElementById('order-summary-list');
     const bought = items.filter(i => currentCartQuantities[i.id] > 0);
     const zhSub = subjectZhMap[selectedSubject];
