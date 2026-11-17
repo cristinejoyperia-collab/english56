@@ -962,12 +962,10 @@
          ========================================================== -->
     <script>
         // ==========================================================
-        // FIREBASE LIVE LEADERBOARD CONFIGURATION
-        // Paste your Firebase Realtime Database URL below so iPads &
-        // Chromebooks share live scores in real time!
+        // FIREBASE LIVE LEADERBOARD CONFIGURATION (CONNECTED!)
         // ==========================================================
         const FIREBASE_CONFIG = {
-            databaseURL: "YOUR_FIREBASE_DATABASE_URL_HERE" // e.g., "https://thanksgiving-game-default-rtdb.firebaseio.com"
+            databaseURL: "https://mission-5-e56e9-default-rtdb.firebaseio.com/"
         };
 
         let dbRef = null;
@@ -1000,7 +998,7 @@
 
         function setupLocalFallback() {
             const statusText = document.getElementById('firebase-status-text');
-            statusText.textContent = "🟡 Local Preview Mode (Add Firebase databaseURL in code to sync across iPads/Chromebooks)";
+            statusText.textContent = "🟡 Local Preview Mode (Offline fallback)";
             statusText.className = "text-xs sm:text-sm font-bold text-amber-700";
             try {
                 localScoresCache = JSON.parse(localStorage.getItem('thanksgiving_lb_local') || '{}');
