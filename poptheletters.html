@@ -18,6 +18,12 @@
       -webkit-touch-callout: none;
     }
 
+    /* Allow typing and selecting inside input fields on iPad/Mobile */
+    input {
+      user-select: text !important;
+      -webkit-user-select: text !important;
+    }
+
     html, body {
       width: 100vw;
       height: 100vh;
@@ -65,7 +71,7 @@
 
     @keyframes pulseBtn {
       0%, 100% { transform: scale(1); box-shadow: 0 10px 25px rgba(234, 88, 12, 0.5); }
-      50% { transform: scale(1.05); box-shadow: 0 15px 35px rgba(234, 88, 12, 0.8); }
+      50% { transform: scale(1.03); box-shadow: 0 15px 35px rgba(234, 88, 12, 0.8); }
     }
 
     .btn-pulse {
@@ -99,9 +105,12 @@
 
   <div id="game-frame" class="game-bg relative w-screen h-screen flex flex-col justify-between overflow-hidden">
     
-    <!-- Audio Toggle -->
+    <!-- Top Right Controls: Leaderboard & Audio Toggle -->
     <div class="absolute top-4 right-4 z-50 flex gap-2">
-      <button id="music-btn" onclick="toggleMusic()" class="bg-amber-500 hover:bg-amber-600 text-white font-black py-2.5 px-5 rounded-full shadow-2xl border-2 border-white flex items-center gap-2 text-base sm:text-lg transition active:scale-95">
+      <button onclick="openLeaderboardModal()" class="bg-yellow-500 hover:bg-yellow-600 text-amber-950 font-black py-2.5 px-4 sm:px-5 rounded-full shadow-2xl border-2 border-white flex items-center gap-1.5 text-sm sm:text-lg transition active:scale-95">
+        <span>&#127942;</span> <span class="hidden sm:inline">Leaderboard</span>
+      </button>
+      <button id="music-btn" onclick="toggleMusic()" class="bg-amber-500 hover:bg-amber-600 text-white font-black py-2.5 px-4 sm:px-5 rounded-full shadow-2xl border-2 border-white flex items-center gap-2 text-sm sm:text-lg transition active:scale-95">
         <span id="music-icon">&#127925;</span> <span id="music-text">Music: ON</span>
       </button>
     </div>
@@ -113,14 +122,75 @@
       </div>
     </div>
 
-    <!-- SCREEN 1: COVER -->
-    <div id="screen-cover" class="relative w-full h-full flex flex-col justify-end items-center p-6 sm:p-12 z-10 overflow-hidden">
+    <!-- LEADERBOARD MODAL -->
+    <div id="leaderboard-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+      <div class="glass-card max-w-xl w-full rounded-3xl p-5 sm:p-7 flex flex-col max-h-[85vh] border-4 border-amber-400">
+        <div class="flex justify-between items-center border-b-2 border-amber-200 pb-3 mb-3">
+          <h3 class="text-2xl sm:text-3xl font-black text-amber-950 flex items-center gap-2">
+            &#127942; Top Spellers / 排行榜
+          </h3>
+          <button onclick="closeLeaderboardModal()" class="bg-red-500 hover:bg-red-600 text-white font-black w-10 h-10 rounded-full text-xl border-2 border-white shadow-md active:scale-95">
+            &#10005;
+          </button>
+        </div>
+
+        <p id="firebase-status-banner" class="text-xs font-bold text-amber-800 bg-amber-100 px-3 py-1.5 rounded-xl mb-3 text-center">
+          Loading live scores...
+        </p>
+
+        <!-- Leaderboard Table Header -->
+        <div class="grid grid-cols-12 text-xs sm:text-sm font-black text-amber-900 bg-amber-200/80 py-2 px-3 rounded-xl mb-2">
+          <div class="col-span-2 text-center">Rank</div>
+          <div class="col-span-3">Class/No.</div>
+          <div class="col-span-4">Name</div>
+          <div class="col-span-3 text-right">Time</div>
+        </div>
+
+        <!-- Scrollable List -->
+        <div id="leaderboard-list" class="flex-1 overflow-y-auto space-y-2 pr-1">
+          <!-- Populated dynamically -->
+        </div>
+
+        <button onclick="closeLeaderboardModal()" class="mt-4 w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-3 rounded-full border-2 border-white shadow-lg text-lg active:scale-95">
+          Close / 關閉
+        </button>
+      </div>
+    </div>
+
+    <!-- SCREEN 1: COVER + STUDENT REGISTRATION -->
+    <div id="screen-cover" class="relative w-full h-full flex flex-col justify-end items-center p-4 sm:p-10 z-10 overflow-hidden">
       <img id="cover-image" src="cover_image.jpg" alt="Thanksgiving Cover" 
            onerror="this.onerror=null; this.src=getSvgFallback('Thanksgiving Game', '🍁🦃🌽');"
            class="absolute inset-0 w-full h-full object-cover z-0" />
 
-      <div class="mb-6 sm:mb-10 w-full flex justify-center z-10">
-        <button onclick="startGame()" class="btn-pulse w-11/12 max-w-xl bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-white text-3xl sm:text-5xl font-black py-5 px-10 rounded-full border-4 border-white transform hover:scale-105 active:scale-95 transition-all duration-200 shadow-2xl">
+      <div class="mb-3 sm:mb-6 w-full max-w-lg glass-card rounded-3xl p-4 sm:p-6 z-10 flex flex-col gap-3 border-4 border-amber-400">
+        <div class="text-center">
+          <h2 class="text-xl sm:text-2xl font-black text-amber-950">Player Check-In / 學生簽到</h2>
+          <p class="text-xs sm:text-sm font-bold text-amber-800">Enter your Class Number &amp; Name for the Leaderboard!</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="input-class-num" class="block text-xs sm:text-sm font-black text-amber-950 mb-1">
+              Class &amp; No. / 班級座號
+            </label>
+            <input id="input-class-num" type="text" maxlength="15" placeholder="e.g. 302-15"
+                   class="w-full px-4 py-2.5 rounded-2xl border-3 border-amber-400 bg-white text-amber-950 font-black text-base sm:text-lg focus:outline-none focus:border-orange-500 shadow-inner" />
+          </div>
+          <div>
+            <label for="input-student-name" class="block text-xs sm:text-sm font-black text-amber-950 mb-1">
+              English Name / 英文名字
+            </label>
+            <input id="input-student-name" type="text" maxlength="20" placeholder="e.g. Ryan"
+                   class="w-full px-4 py-2.5 rounded-2xl border-3 border-amber-400 bg-white text-amber-950 font-black text-base sm:text-lg focus:outline-none focus:border-orange-500 shadow-inner" />
+          </div>
+        </div>
+
+        <p id="login-error-msg" class="text-red-600 text-xs sm:text-sm font-black text-center hidden">
+          &#9888;&#65039; Please enter both your Class Number and Name! / 請輸入班級座號和名字！
+        </p>
+
+        <button onclick="validateAndStartGame()" class="btn-pulse w-full bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-white text-2xl sm:text-4xl font-black py-4 px-8 rounded-full border-4 border-white transform hover:scale-105 active:scale-95 transition-all duration-200 shadow-2xl mt-1">
           &#127918; START GAME &#127809;
         </button>
       </div>
@@ -150,11 +220,11 @@
 
     <!-- SCREEN 3: GAMEPLAY -->
     <div id="screen-gameplay" class="w-full h-full flex flex-col justify-between items-center p-3 sm:p-6 z-10 relative hidden">
-      <!-- Top Bar (Lives removed, Unlimited tries badge added) -->
-      <div class="w-full flex justify-between items-center bg-white/90 backdrop-blur-md px-6 py-3 rounded-2xl border-4 border-amber-400 shadow-xl">
+      <!-- Top Bar -->
+      <div class="w-full flex justify-between items-center bg-white/90 backdrop-blur-md px-4 sm:px-6 py-3 rounded-2xl border-4 border-amber-400 shadow-xl mt-12 sm:mt-0">
         <div class="flex items-center gap-2">
-          <span class="text-xl sm:text-3xl">&#129411;</span>
-          <span class="text-base sm:text-xl font-black text-amber-950">Unlimited Tries!</span>
+          <span class="text-xl sm:text-2xl">&#129411;</span>
+          <span id="hud-player-badge" class="text-sm sm:text-lg font-black text-amber-950">Player</span>
         </div>
 
         <div class="font-black text-amber-950 text-base sm:text-2xl">
@@ -195,9 +265,8 @@
       <div class="glass-card max-w-2xl w-full rounded-3xl p-5 sm:p-7 flex flex-col items-center gap-3 shadow-2xl border-4 border-white my-auto">
         
         <!-- Animated Picture of Turkey -->
-        <div id="win-turkey-graphic" class="turkey-animate w-28 h-28 sm:w-36 sm:h-36 flex items-center justify-center">
+        <div id="win-turkey-graphic" class="turkey-animate w-24 h-24 sm:w-32 sm:h-32 flex items-center justify-center">
           <svg viewBox="0 0 200 200" class="w-full h-full drop-shadow-xl">
-            <!-- Tail Feathers -->
             <g class="feathers-animate">
               <ellipse cx="100" cy="65" rx="18" ry="52" fill="#ef4444" stroke="#78350f" stroke-width="4" transform="rotate(-50 100 115)" />
               <ellipse cx="100" cy="65" rx="18" ry="52" fill="#f97316" stroke="#78350f" stroke-width="4" transform="rotate(-25 100 115)" />
@@ -205,29 +274,21 @@
               <ellipse cx="100" cy="65" rx="18" ry="52" fill="#f97316" stroke="#78350f" stroke-width="4" transform="rotate(25 100 115)" />
               <ellipse cx="100" cy="65" rx="18" ry="52" fill="#ef4444" stroke="#78350f" stroke-width="4" transform="rotate(50 100 115)" />
             </g>
-            <!-- Feet -->
             <path d="M80 165 L70 182 M80 165 L80 184 M80 165 L90 182" stroke="#f59e0b" stroke-width="5" stroke-linecap="round" />
             <path d="M120 165 L110 182 M120 165 L120 184 M120 165 L130 182" stroke="#f59e0b" stroke-width="5" stroke-linecap="round" />
-            <!-- Body -->
             <circle cx="100" cy="125" r="42" fill="#92400e" stroke="#451a03" stroke-width="4" />
             <ellipse cx="100" cy="132" rx="26" ry="28" fill="#b45309" />
-            <!-- Wings -->
             <ellipse cx="62" cy="125" rx="12" ry="24" fill="#78350f" stroke="#451a03" stroke-width="3" transform="rotate(15 62 125)" />
             <ellipse cx="138" cy="125" rx="12" ry="24" fill="#78350f" stroke="#451a03" stroke-width="3" transform="rotate(-15 138 125)" />
-            <!-- Head -->
             <circle cx="100" cy="82" r="26" fill="#b45309" stroke="#451a03" stroke-width="4" />
-            <!-- Pilgrim Hat -->
             <rect x="70" y="52" width="60" height="8" rx="4" fill="#1f2937" stroke="#000" stroke-width="2" />
             <path d="M80 52 L85 26 L115 26 L120 52 Z" fill="#1f2937" stroke="#000" stroke-width="2" />
             <rect x="82" y="43" width="36" height="6" fill="#f59e0b" />
-            <!-- Eyes -->
             <circle cx="90" cy="78" r="5" fill="#ffffff" />
             <circle cx="90" cy="78" r="2.5" fill="#000000" />
             <circle cx="110" cy="78" r="5" fill="#ffffff" />
             <circle cx="110" cy="78" r="2.5" fill="#000000" />
-            <!-- Wattle (Red Gobble) -->
             <path d="M104 88 C112 88, 114 104, 105 104 C99 104, 102 92, 104 88 Z" fill="#dc2626" />
-            <!-- Beak -->
             <polygon points="93,85 107,85 100,97" fill="#facc15" stroke="#ca8a04" stroke-width="2" />
           </svg>
         </div>
@@ -235,45 +296,197 @@
         <h2 id="end-title" class="text-2xl sm:text-4xl font-black text-amber-950">Victory! 挑戰成功！</h2>
         
         <!-- Clue Box -->
-        <div id="win-clue-box" class="bg-orange-50 border-4 border-orange-400 rounded-2xl p-4 sm:p-5 w-full shadow-md space-y-3">
-          <p class="text-lg sm:text-2xl text-amber-950 font-black leading-snug">
+        <div id="win-clue-box" class="bg-orange-50 border-4 border-orange-400 rounded-2xl p-4 w-full shadow-md space-y-2">
+          <p class="text-base sm:text-xl text-amber-950 font-black leading-snug">
             Congratulations! You found <span class="text-orange-600 underline">Hank, the Turkey</span>. Now, it's time to go to this place to find <span class="text-orange-600 underline">Ariel, the Third Turkey</span>.
           </p>
           <hr class="border-t-2 border-orange-200 w-3/4 mx-auto" />
-          <p class="text-base sm:text-xl text-orange-800 font-bold leading-snug">
+          <p class="text-sm sm:text-lg text-orange-800 font-bold leading-snug">
             恭喜！你找到了<span class="text-red-600">火雞 Hank</span>。現在，是時候前往這個地方尋找<span class="text-red-600">第三隻火雞 Ariel</span> 了！
           </p>
           
           <!-- Place Image Container -->
-          <div class="mt-3 w-full h-44 sm:h-56 rounded-xl overflow-hidden border-4 border-amber-500 bg-white shadow-inner flex items-center justify-center">
+          <div class="mt-2 w-full h-36 sm:h-48 rounded-xl overflow-hidden border-4 border-amber-500 bg-white shadow-inner flex items-center justify-center">
             <img id="clue-place-image" src="ariel_place.jpg" alt="Location to find Ariel" 
                  onerror="this.onerror=null; this.src=getSvgFallback('Next Location', '📍🏫');"
                  class="w-full h-full object-cover" />
           </div>
         </div>
         
-        <div class="bg-amber-100/90 py-2.5 px-5 rounded-2xl border-2 border-amber-300 w-full shadow-inner">
-          <div class="text-amber-900 text-xs sm:text-sm font-bold">Final Score / 最終得分</div>
-          <div id="end-score-details" class="text-xl sm:text-2xl font-black text-amber-950">3 / 3 Words Completed</div>
+        <!-- Personal Result & Live Rank Summary -->
+        <div class="bg-amber-100/90 py-2.5 px-5 rounded-2xl border-2 border-amber-300 w-full shadow-inner flex flex-col sm:flex-row justify-between items-center gap-2">
+          <div class="text-left">
+            <div class="text-amber-900 text-xs font-bold">Player / 學生</div>
+            <div id="end-player-info" class="text-base sm:text-lg font-black text-amber-950">302-15 Ryan</div>
+          </div>
+          <div class="text-center sm:text-right">
+            <div class="text-amber-900 text-xs font-bold">Total Time &amp; Mistakes / 總時間與錯誤</div>
+            <div id="end-score-details" class="text-lg sm:text-xl font-black text-orange-600">18.5s (0 mistakes)</div>
+          </div>
         </div>
 
-        <button onclick="resetGame()" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-lg sm:text-xl py-3 px-8 rounded-full shadow-xl border-4 border-white transform hover:scale-105 active:scale-95 transition">
-          &#128260; Play Again / 再玩一次
-        </button>
+        <div class="w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button onclick="openLeaderboardModal()" class="w-full bg-yellow-400 hover:bg-yellow-500 text-amber-950 font-black text-lg py-3 px-6 rounded-full shadow-xl border-4 border-white transform hover:scale-105 active:scale-95 transition">
+            &#127942; View Leaderboard / 排行榜
+          </button>
+          <button onclick="resetGame()" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-lg py-3 px-6 rounded-full shadow-xl border-4 border-white transform hover:scale-105 active:scale-95 transition">
+            &#128260; Play Again / 再玩一次
+          </button>
+        </div>
       </div>
     </div>
 
   </div>
 
-  <script>
-    // Retained only the 3 requested words: stuffing, turkey, thanksgiving
+  <!-- Firebase Realtime Database SDK + Game Logic -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+    import { getDatabase, ref, push, get, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+
+    // Connected to your Firebase Realtime Database link
+    const firebaseConfig = {
+      databaseURL: "https://mission-2-ef712-default-rtdb.firebaseio.com/"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const DB_PATH = "thanksgiving_spelling_leaderboard";
+
+    // Student Session & Score Tracking
+    let studentClassNum = "";
+    let studentName = "";
+    let totalSpellingTimeMs = 0;
+    let roundStartTimeMs = 0;
+    let totalMistakes = 0;
+    let lastSubmittedKey = null;
+
+    // Save Score to Firebase Realtime Database
+    async function saveScoreToLeaderboard(classNum, name, timeSeconds, mistakes) {
+      const record = {
+        classNum: classNum,
+        name: name,
+        timeSeconds: Number(timeSeconds.toFixed(1)),
+        mistakes: mistakes,
+        wordsCompleted: VOCABULARY.length,
+        createdAtMs: Date.now()
+      };
+
+      // Local backup in case of school Wi-Fi hiccup
+      const localScores = JSON.parse(localStorage.getItem(DB_PATH) || "[]");
+      localScores.push(record);
+      localStorage.setItem(DB_PATH, JSON.stringify(localScores));
+
+      try {
+        const scoresRef = ref(db, DB_PATH);
+        const newRef = await push(scoresRef, {
+          ...record,
+          timestamp: serverTimestamp()
+        });
+        lastSubmittedKey = newRef.key;
+      } catch (error) {
+        console.error("Error saving score to Firebase Realtime Database:", error);
+      }
+    }
+
+    // Fetch Top 15 Scores from Firebase Realtime Database
+    async function loadLeaderboardData() {
+      const listEl = document.getElementById('leaderboard-list');
+      const statusEl = document.getElementById('firebase-status-banner');
+      listEl.innerHTML = '<div class="text-center py-8 text-amber-800 font-bold">Loading live scores... 🦃</div>';
+
+      let entries = [];
+
+      try {
+        const scoresRef = ref(db, DB_PATH);
+        const snapshot = await get(scoresRef);
+
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          entries = Object.keys(data).map(key => ({
+            id: key,
+            ...data[key]
+          }));
+        }
+        statusEl.textContent = "🟢 Live Classroom Leaderboard (Fastest Time Wins!)";
+      } catch (error) {
+        console.error("Error loading Firebase leaderboard:", error);
+        statusEl.textContent = "⚠️ Could not reach Firebase (check Realtime Database Rules). Showing local scores.";
+        entries = JSON.parse(localStorage.getItem(DB_PATH) || "[]");
+      }
+
+      // Sort by fastest time first, then fewest mistakes
+      entries.sort((a, b) => {
+        if (a.timeSeconds !== b.timeSeconds) return a.timeSeconds - b.timeSeconds;
+        return (a.mistakes || 0) - (b.mistakes || 0);
+      });
+
+      const topEntries = entries.slice(0, 15);
+
+      if (topEntries.length === 0) {
+        listEl.innerHTML = '<div class="text-center py-8 text-amber-900 font-bold">No scores yet! Be the first to finish! 🌟</div>';
+        return;
+      }
+
+      listEl.innerHTML = topEntries.map((item, idx) => {
+        const rank = idx + 1;
+        let medal = `#${rank}`;
+        let rowBg = "bg-white/90 border-amber-200";
+
+        if (rank === 1) { medal = "🥇"; rowBg = "bg-yellow-100 border-yellow-400"; }
+        else if (rank === 2) { medal = "🥈"; rowBg = "bg-gray-100 border-gray-300"; }
+        else if (rank === 3) { medal = "🥉"; rowBg = "bg-orange-100 border-orange-300"; }
+
+        const isCurrentPlayer = (lastSubmittedKey && item.id === lastSubmittedKey) ||
+          (studentClassNum && item.classNum === studentClassNum && item.name === studentName);
+
+        if (isCurrentPlayer) {
+          rowBg += " ring-4 ring-orange-500";
+        }
+
+        const safeClass = escapeHtml(item.classNum || "-");
+        const safeName = escapeHtml(item.name || "Student");
+        const mistakeBadge = item.mistakes > 0 ? `<span class="text-[10px] text-red-600 block">${item.mistakes} err</span>` : '';
+
+        return `
+          <div class="grid grid-cols-12 items-center py-2.5 px-3 rounded-2xl border-2 ${rowBg} shadow-sm text-sm sm:text-base font-black text-amber-950">
+            <div class="col-span-2 text-center text-lg sm:text-xl">${medal}</div>
+            <div class="col-span-3 truncate text-orange-700">${safeClass}</div>
+            <div class="col-span-4 truncate">${safeName}</div>
+            <div class="col-span-3 text-right leading-tight">
+              <span>${Number(item.timeSeconds).toFixed(1)}s</span>
+              ${mistakeBadge}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    window.openLeaderboardModal = function() {
+      document.getElementById('leaderboard-modal').classList.remove('hidden');
+      loadLeaderboardData();
+    };
+
+    window.closeLeaderboardModal = function() {
+      document.getElementById('leaderboard-modal').classList.add('hidden');
+    };
+
+    // =========================================================================
+    // GAME LOGIC & AUDIO
+    // =========================================================================
     const VOCABULARY = [
       { word: "stuffing", img: "stuffing.jpg", audio: "stuffing.mp3", fallbackEmoji: "🥘" },
       { word: "turkey", img: "turkey.jpg", audio: "turkey.mp3", fallbackEmoji: "🦃" },
       { word: "thanksgiving", img: "thanksgiving.jpg", audio: "thanksgiving.mp3", fallbackEmoji: "🍁" }
     ];
 
-    // Kid-friendly Comic Sans font stack without 'cursive' so iPad Safari never uses fancy script
     const KID_FONT_STACK = "'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', 'Chalkboard', 'Arial Rounded MT Bold', sans-serif";
 
     const BUBBLE_COLORS = [
@@ -303,7 +516,6 @@
     let audioCtx = null;
     let musicLoopTimer = null;
 
-    // Preload MP3 files
     const preloadedAudio = {};
     VOCABULARY.forEach(item => {
       const audio = new Audio();
@@ -417,7 +629,7 @@
       if (musicLoopTimer) clearTimeout(musicLoopTimer);
     }
 
-    function toggleMusic() {
+    window.toggleMusic = function() {
       isAudioMuted = !isAudioMuted;
       const btnText = document.getElementById('music-text');
       const btnIcon = document.getElementById('music-icon');
@@ -431,9 +643,9 @@
         btnIcon.textContent = "🎵";
         startGameshowMusic();
       }
-    }
+    };
 
-    function speakCurrentWord() {
+    window.speakCurrentWord = function() {
       const item = VOCABULARY[currentWordIndex];
       if (!item || !item.audio) return;
 
@@ -447,9 +659,9 @@
       currentWordAudio.play().catch(err => {
         console.warn("Audio file not found or blocked: " + item.audio, err);
       });
-    }
+    };
 
-    function getSvgFallback(text, emoji) {
+    window.getSvgFallback = function(text, emoji) {
       const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="450" viewBox="0 0 600 450">
         <rect width="600" height="450" fill="#fef3c7" rx="30"/>
         <circle cx="300" cy="200" r="110" fill="#fde68a" stroke="#f59e0b" stroke-width="8"/>
@@ -457,7 +669,7 @@
         <text x="300" y="375" font-size="42" font-family="Comic Sans MS, Comic Neue, Chalkboard SE, sans-serif" font-weight="bold" fill="#78350f" text-anchor="middle">${text}</text>
       </svg>`;
       return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
-    }
+    };
 
     function showScreen(screenId) {
       ['screen-cover', 'screen-preview', 'screen-gameplay', 'screen-end'].forEach(id => {
@@ -466,10 +678,30 @@
       document.getElementById(screenId).classList.remove('hidden');
     }
 
+    window.validateAndStartGame = function() {
+      const classInput = document.getElementById('input-class-num').value.trim();
+      const nameInput = document.getElementById('input-student-name').value.trim();
+      const errorEl = document.getElementById('login-error-msg');
+
+      if (!classInput || !nameInput) {
+        errorEl.classList.remove('hidden');
+        return;
+      }
+
+      errorEl.classList.add('hidden');
+      studentClassNum = classInput;
+      studentName = nameInput;
+      document.getElementById('hud-player-badge').textContent = `${studentClassNum} ${studentName}`;
+      startGame();
+    };
+
     function startGame() {
       initAudio();
       startGameshowMusic();
       currentWordIndex = 0;
+      totalSpellingTimeMs = 0;
+      totalMistakes = 0;
+      lastSubmittedKey = null;
       startRound();
     }
 
@@ -523,6 +755,7 @@
       showScreen('screen-gameplay');
       const currentWord = VOCABULARY[currentWordIndex].word;
       currentLetterPointer = 0;
+      roundStartTimeMs = performance.now();
 
       document.getElementById('word-current-idx').textContent = currentWordIndex + 1;
       document.getElementById('word-total-count').textContent = VOCABULARY.length;
@@ -537,7 +770,6 @@
       const container = document.getElementById('answer-slots-container');
       container.innerHTML = '';
 
-      // Slightly adjust slot size for longer words like "thanksgiving" (12 letters) so it fits nicely on iPad
       const isLongWord = word.length > 9;
       const sizeClasses = isLongWord
         ? 'w-9 h-12 sm:w-12 sm:h-16 text-xl sm:text-3xl'
@@ -575,7 +807,7 @@
     }
 
     function handleTimeOut() {
-      // Unlimited tries: flash X, reset the timer, and respawn remaining letters so they can keep trying
+      totalMistakes++;
       playSound('wrong');
       flashWrongX();
       start30sTimer();
@@ -593,20 +825,23 @@
       }, 600);
     }
 
-    function triggerEndScreen() {
+    async function triggerEndScreen() {
       if (timerInterval) clearInterval(timerInterval);
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
       showScreen('screen-end');
       playSound('win');
 
-      const score = document.getElementById('end-score-details');
-      score.textContent = `${VOCABULARY.length} / ${VOCABULARY.length} Words Completed`;
+      const finalTimeSec = totalSpellingTimeMs / 1000;
+      document.getElementById('end-player-info').textContent = `${studentClassNum} - ${studentName}`;
+      document.getElementById('end-score-details').textContent = `${finalTimeSec.toFixed(1)}s (${totalMistakes} mistakes)`;
+
+      await saveScoreToLeaderboard(studentClassNum, studentName, finalTimeSec, totalMistakes);
     }
 
-    function resetGame() {
-      startGame();
-    }
+    window.resetGame = function() {
+      showScreen('screen-cover');
+    };
 
     function setupCanvas() {
       canvas = document.getElementById('bubble-canvas');
@@ -614,7 +849,6 @@
       canvas.width = container.clientWidth;
       canvas.height = container.clientHeight;
       ctx = canvas.getContext('2d');
-      // Use pointerdown for instant iPad touch response without 300ms click delay
       canvas.onpointerdown = handleCanvasClick;
     }
 
@@ -696,7 +930,6 @@
         ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
         ctx.fill();
 
-        // Easy-to-read Comic Sans / Comic Neue / Chalkboard SE print letters (no cursive fallback)
         ctx.font = `bold ${Math.round(currentRadius * 1.2)}px ${KID_FONT_STACK}`;
         ctx.fillStyle = b.color.text;
         ctx.textAlign = 'center';
@@ -770,13 +1003,14 @@
 
             if (currentLetterPointer >= currentWord.length) {
               clearInterval(timerInterval);
+              totalSpellingTimeMs += (performance.now() - roundStartTimeMs);
               setTimeout(() => {
                 currentWordIndex++;
                 startRound();
               }, 600);
             }
           } else {
-            // Unlimited tries: play wrong buzzer and flash X without losing lives
+            totalMistakes++;
             playSound('wrong');
             flashWrongX();
           }
