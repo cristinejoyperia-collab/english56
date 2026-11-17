@@ -129,7 +129,7 @@
           <h3 class="text-2xl sm:text-3xl font-black text-amber-950 flex items-center gap-2">
             &#127942; Top Spellers / 排行榜
           </h3>
-          <button onclick="closeLeaderboardModal()" class="bg-red-500 hover:bg-red-600 text-white font-black w-10 h-10 rounded-full text-xl border-2 border-white shadow-md active:scale-95">
+          <button onclick="closeLeaderboardModal()" aria-label="Close Leaderboard" class="bg-red-500 hover:bg-red-600 text-white font-black w-10 h-10 rounded-full text-xl border-2 border-white shadow-md active:scale-95">
             &#10005;
           </button>
         </div>
@@ -151,9 +151,15 @@
           <!-- Populated dynamically -->
         </div>
 
-        <button onclick="closeLeaderboardModal()" class="mt-4 w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-3 rounded-full border-2 border-white shadow-lg text-lg active:scale-95">
-          Close / 關閉
-        </button>
+        <!-- Bottom Action Buttons: Clear All & Close -->
+        <div class="mt-4 grid grid-cols-2 gap-3">
+          <button id="clear-leaderboard-btn" onclick="handleClearLeaderboard()" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-3 px-4 rounded-full border-2 border-white shadow-lg text-base sm:text-lg active:scale-95 transition">
+            &#128465;&#65039; Clear All / 清除名單
+          </button>
+          <button onclick="closeLeaderboardModal()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-3 px-4 rounded-full border-2 border-white shadow-lg text-base sm:text-lg active:scale-95 transition">
+            &#10006; Close / 關閉
+          </button>
+        </div>
       </div>
     </div>
 
@@ -341,7 +347,7 @@
   <!-- Firebase Realtime Database SDK + Game Logic -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-    import { getDatabase, ref, push, get, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+    import { getDatabase, ref, push, get, remove, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
 
     // Connected to your Firebase Realtime Database link
     const firebaseConfig = {
@@ -360,6 +366,58 @@
     let totalMistakes = 0;
     let lastSubmittedKey = null;
 
+    // Two-tap safety state for Clear All button
+    let clearConfirmArmed = false;
+    let clearConfirmTimer = null;
+
+    function resetClearButtonState() {
+      clearConfirmArmed = false;
+      if (clearConfirmTimer) clearTimeout(clearConfirmTimer);
+      const btn = document.getElementById('clear-leaderboard-btn');
+      if (btn) {
+        btn.innerHTML = '&#128465;&#65039; Clear All / 清除名單';
+        btn.classList.remove('bg-red-800', 'ring-4', 'ring-yellow-300');
+        btn.classList.add('bg-red-600');
+      }
+    }
+
+    // Clear all names from Firebase Realtime Database + LocalStorage
+    window.handleClearLeaderboard = async function() {
+      const btn = document.getElementById('clear-leaderboard-btn');
+      const statusEl = document.getElementById('firebase-status-banner');
+
+      if (!clearConfirmArmed) {
+        clearConfirmArmed = true;
+        btn.innerHTML = '&#9888;&#65039; Tap Again to Clear!';
+        btn.classList.remove('bg-red-600');
+        btn.classList.add('bg-red-800', 'ring-4', 'ring-yellow-300');
+
+        clearConfirmTimer = setTimeout(() => {
+          resetClearButtonState();
+        }, 4000);
+        return;
+      }
+
+      // Second tap confirmed -> delete all entries
+      resetClearButtonState();
+      btn.disabled = true;
+      btn.textContent = "Clearing...";
+
+      localStorage.removeItem(DB_PATH);
+      lastSubmittedKey = null;
+
+      try {
+        await remove(ref(db, DB_PATH));
+        statusEl.textContent = "🗑️ Leaderboard cleared! Ready for the next class.";
+      } catch (error) {
+        console.error("Error clearing Firebase leaderboard:", error);
+        statusEl.textContent = "⚠️ Local scores cleared (check Firebase write rules if online entries remain).";
+      } finally {
+        btn.disabled = false;
+        await loadLeaderboardData();
+      }
+    };
+
     // Save Score to Firebase Realtime Database
     async function saveScoreToLeaderboard(classNum, name, timeSeconds, mistakes) {
       const record = {
@@ -371,7 +429,6 @@
         createdAtMs: Date.now()
       };
 
-      // Local backup in case of school Wi-Fi hiccup
       const localScores = JSON.parse(localStorage.getItem(DB_PATH) || "[]");
       localScores.push(record);
       localStorage.setItem(DB_PATH, JSON.stringify(localScores));
@@ -414,7 +471,6 @@
         entries = JSON.parse(localStorage.getItem(DB_PATH) || "[]");
       }
 
-      // Sort by fastest time first, then fewest mistakes
       entries.sort((a, b) => {
         if (a.timeSeconds !== b.timeSeconds) return a.timeSeconds - b.timeSeconds;
         return (a.mistakes || 0) - (b.mistakes || 0);
@@ -470,11 +526,13 @@
     }
 
     window.openLeaderboardModal = function() {
+      resetClearButtonState();
       document.getElementById('leaderboard-modal').classList.remove('hidden');
       loadLeaderboardData();
     };
 
     window.closeLeaderboardModal = function() {
+      resetClearButtonState();
       document.getElementById('leaderboard-modal').classList.add('hidden');
     };
 
