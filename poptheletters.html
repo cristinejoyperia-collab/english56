@@ -2,14 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Thanksgiving Spelling Game</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Load Comic Neue from Google Fonts so iPads get a true Comic Sans look instead of cursive -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
   <style>
+    /* Removed 'cursive' keyword which forces iPad Safari to use Snell Roundhand cursive script */
     * {
-      font-family: 'Comic Sans MS', 'Comic Sans', 'Chalkboard SE', 'Comic Neue', 'Microsoft JhengHei', cursive, sans-serif !important;
+      font-family: 'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', 'Chalkboard', 'Arial Rounded MT Bold', 'Microsoft JhengHei', sans-serif !important;
       user-select: none;
       -webkit-user-select: none;
+      -webkit-touch-callout: none;
     }
 
     html, body {
@@ -18,6 +24,7 @@
       margin: 0;
       padding: 0;
       overflow: hidden;
+      touch-action: manipulation;
     }
 
     .game-bg {
@@ -143,16 +150,15 @@
 
     <!-- SCREEN 3: GAMEPLAY -->
     <div id="screen-gameplay" class="w-full h-full flex flex-col justify-between items-center p-3 sm:p-6 z-10 relative hidden">
+      <!-- Top Bar (Lives removed, Unlimited tries badge added) -->
       <div class="w-full flex justify-between items-center bg-white/90 backdrop-blur-md px-6 py-3 rounded-2xl border-4 border-amber-400 shadow-xl">
         <div class="flex items-center gap-2">
-          <span class="text-base sm:text-xl font-black text-amber-950 mr-1 hidden sm:inline">Lives:</span>
-          <div id="lifelines-container" class="flex text-2xl sm:text-4xl gap-1">
-            <span>&#129411;</span><span>&#129411;</span><span>&#129411;</span><span>&#129411;</span><span>&#129411;</span>
-          </div>
+          <span class="text-xl sm:text-3xl">&#129411;</span>
+          <span class="text-base sm:text-xl font-black text-amber-950">Unlimited Tries!</span>
         </div>
 
         <div class="font-black text-amber-950 text-base sm:text-2xl">
-          Word <span id="word-current-idx" class="text-orange-600">1</span> / <span id="word-total-count">5</span>
+          Word <span id="word-current-idx" class="text-orange-600">1</span> / <span id="word-total-count">3</span>
         </div>
 
         <div class="flex items-center gap-2 font-black text-xl sm:text-3xl text-orange-600">
@@ -160,7 +166,7 @@
         </div>
       </div>
 
-      <div class="my-2 flex flex-col items-center w-full max-w-2xl">
+      <div class="my-2 flex flex-col items-center w-full max-w-3xl">
         <div class="flex items-center justify-center gap-4 bg-white/85 backdrop-blur-sm px-6 py-2 rounded-2xl border-2 border-amber-300 shadow-md mb-2">
           <div class="w-20 h-20 sm:w-28 sm:h-28 rounded-xl overflow-hidden border-2 border-amber-500 bg-white flex-shrink-0 shadow-inner">
             <img id="game-thumbnail-image" src="" alt="Word Thumbnail" class="w-full h-full object-contain" />
@@ -170,7 +176,7 @@
           </button>
         </div>
 
-        <div id="answer-slots-container" class="flex flex-wrap justify-center gap-2 sm:gap-3 my-1"></div>
+        <div id="answer-slots-container" class="flex flex-wrap justify-center gap-1.5 sm:gap-2.5 my-1"></div>
       </div>
 
       <div id="canvas-container" class="relative w-full flex-1 rounded-3xl overflow-hidden border-4 border-white/70 bg-white/10 backdrop-blur-sm shadow-2xl">
@@ -188,7 +194,7 @@
     <div id="screen-end" class="w-full h-full flex flex-col justify-center items-center p-4 sm:p-6 z-10 text-center hidden overflow-y-auto">
       <div class="glass-card max-w-2xl w-full rounded-3xl p-5 sm:p-7 flex flex-col items-center gap-3 shadow-2xl border-4 border-white my-auto">
         
-        <!-- Animated Picture of Turkey (Shown on Win) -->
+        <!-- Animated Picture of Turkey -->
         <div id="win-turkey-graphic" class="turkey-animate w-28 h-28 sm:w-36 sm:h-36 flex items-center justify-center">
           <svg viewBox="0 0 200 200" class="w-full h-full drop-shadow-xl">
             <!-- Tail Feathers -->
@@ -226,12 +232,9 @@
           </svg>
         </div>
 
-        <!-- Fallback Emoji for Game Over -->
-        <div id="end-emoji" class="text-7xl sm:text-8xl animate-bounce hidden">&#129411;&#128165;</div>
-
-        <h2 id="end-title" class="text-2xl sm:text-4xl font-black text-amber-950">Victory!</h2>
+        <h2 id="end-title" class="text-2xl sm:text-4xl font-black text-amber-950">Victory! 挑戰成功！</h2>
         
-        <!-- Clue Box (Shown on Win) -->
+        <!-- Clue Box -->
         <div id="win-clue-box" class="bg-orange-50 border-4 border-orange-400 rounded-2xl p-4 sm:p-5 w-full shadow-md space-y-3">
           <p class="text-lg sm:text-2xl text-amber-950 font-black leading-snug">
             Congratulations! You found <span class="text-orange-600 underline">Hank, the Turkey</span>. Now, it's time to go to this place to find <span class="text-orange-600 underline">Ariel, the Third Turkey</span>.
@@ -248,15 +251,10 @@
                  class="w-full h-full object-cover" />
           </div>
         </div>
-
-        <!-- Subtitle (Shown on Game Over) -->
-        <p id="end-subtitle" class="text-xl sm:text-2xl text-orange-700 font-extrabold hidden">
-          You ran out of turkey lifelines!
-        </p>
         
         <div class="bg-amber-100/90 py-2.5 px-5 rounded-2xl border-2 border-amber-300 w-full shadow-inner">
           <div class="text-amber-900 text-xs sm:text-sm font-bold">Final Score / 最終得分</div>
-          <div id="end-score-details" class="text-xl sm:text-2xl font-black text-amber-950">5 / 5 Words</div>
+          <div id="end-score-details" class="text-xl sm:text-2xl font-black text-amber-950">3 / 3 Words Completed</div>
         </div>
 
         <button onclick="resetGame()" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-lg sm:text-xl py-3 px-8 rounded-full shadow-xl border-4 border-white transform hover:scale-105 active:scale-95 transition">
@@ -268,13 +266,15 @@
   </div>
 
   <script>
+    // Retained only the 3 requested words: stuffing, turkey, thanksgiving
     const VOCABULARY = [
       { word: "stuffing", img: "stuffing.jpg", audio: "stuffing.mp3", fallbackEmoji: "🥘" },
-      { word: "gratitude", img: "gratitude.jpg", audio: "gratitude.mp3", fallbackEmoji: "🙏" },
-      { word: "pilgrim", img: "pilgrim.jpg", audio: "pilgrim.mp3", fallbackEmoji: "🎩" },
-      { word: "thanksgiving", img: "thanksgiving.jpg", audio: "thanksgiving.mp3", fallbackEmoji: "🍁" },
-      { word: "turkey", img: "turkey.jpg", audio: "turkey.mp3", fallbackEmoji: "🦃" }
+      { word: "turkey", img: "turkey.jpg", audio: "turkey.mp3", fallbackEmoji: "🦃" },
+      { word: "thanksgiving", img: "thanksgiving.jpg", audio: "thanksgiving.mp3", fallbackEmoji: "🍁" }
     ];
+
+    // Kid-friendly Comic Sans font stack without 'cursive' so iPad Safari never uses fancy script
+    const KID_FONT_STACK = "'Comic Sans MS', 'Comic Sans', 'Comic Neue', 'Chalkboard SE', 'Chalkboard', 'Arial Rounded MT Bold', sans-serif";
 
     const BUBBLE_COLORS = [
       { bg: '#f87171', border: '#dc2626', text: '#ffffff' },
@@ -288,7 +288,6 @@
 
     let currentWordIndex = 0;
     let currentLetterPointer = 0;
-    let remainingLives = 5;
     let timerInterval = null;
     let previewInterval = null;
     let timerSeconds = 30;
@@ -455,7 +454,7 @@
         <rect width="600" height="450" fill="#fef3c7" rx="30"/>
         <circle cx="300" cy="200" r="110" fill="#fde68a" stroke="#f59e0b" stroke-width="8"/>
         <text x="300" y="225" font-size="110" text-anchor="middle" dominant-baseline="middle">${emoji}</text>
-        <text x="300" y="375" font-size="42" font-family="Comic Sans MS, cursive" font-weight="bold" fill="#78350f" text-anchor="middle">${text}</text>
+        <text x="300" y="375" font-size="42" font-family="Comic Sans MS, Comic Neue, Chalkboard SE, sans-serif" font-weight="bold" fill="#78350f" text-anchor="middle">${text}</text>
       </svg>`;
       return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
     }
@@ -471,14 +470,12 @@
       initAudio();
       startGameshowMusic();
       currentWordIndex = 0;
-      remainingLives = 5;
-      updateLifelinesUI();
       startRound();
     }
 
     function startRound() {
       if (currentWordIndex >= VOCABULARY.length) {
-        triggerEndScreen(true);
+        triggerEndScreen();
         return;
       }
 
@@ -540,10 +537,16 @@
       const container = document.getElementById('answer-slots-container');
       container.innerHTML = '';
 
+      // Slightly adjust slot size for longer words like "thanksgiving" (12 letters) so it fits nicely on iPad
+      const isLongWord = word.length > 9;
+      const sizeClasses = isLongWord
+        ? 'w-9 h-12 sm:w-12 sm:h-16 text-xl sm:text-3xl'
+        : 'w-10 h-12 sm:w-16 sm:h-20 text-2xl sm:text-4xl';
+
       for (let i = 0; i < word.length; i++) {
         const slot = document.createElement('div');
         slot.id = `slot-${i}`;
-        slot.className = 'w-10 h-12 sm:w-16 sm:h-20 bg-white border-4 border-amber-400 rounded-2xl flex items-center justify-center font-black text-2xl sm:text-4xl text-amber-950 shadow-lg transform transition-all duration-300';
+        slot.className = `${sizeClasses} bg-white border-4 border-amber-400 rounded-2xl flex items-center justify-center font-black text-amber-950 shadow-lg transform transition-all duration-300`;
         slot.textContent = '_';
         container.appendChild(slot);
       }
@@ -572,34 +575,12 @@
     }
 
     function handleTimeOut() {
+      // Unlimited tries: flash X, reset the timer, and respawn remaining letters so they can keep trying
       playSound('wrong');
       flashWrongX();
-      loseLife();
-
-      if (remainingLives > 0) {
-        start30sTimer();
-        initBubblesForWord(VOCABULARY[currentWordIndex].word);
-      }
-    }
-
-    function updateLifelinesUI() {
-      const container = document.getElementById('lifelines-container');
-      container.innerHTML = '';
-      for (let i = 0; i < 5; i++) {
-        const span = document.createElement('span');
-        span.className = i < remainingLives ? 'opacity-100 scale-100 transition duration-300' : 'opacity-25 scale-75 grayscale transition duration-300';
-        span.textContent = '🦃';
-        container.appendChild(span);
-      }
-    }
-
-    function loseLife() {
-      remainingLives--;
-      updateLifelinesUI();
-      if (remainingLives <= 0) {
-        if (timerInterval) clearInterval(timerInterval);
-        triggerEndScreen(false);
-      }
+      start30sTimer();
+      const remainingWordPart = VOCABULARY[currentWordIndex].word.slice(currentLetterPointer);
+      initBubblesForWord(remainingWordPart);
     }
 
     function flashWrongX() {
@@ -612,40 +593,15 @@
       }, 600);
     }
 
-    function triggerEndScreen(isWin) {
+    function triggerEndScreen() {
       if (timerInterval) clearInterval(timerInterval);
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
       showScreen('screen-end');
+      playSound('win');
 
-      const winTurkey = document.getElementById('win-turkey-graphic');
-      const winClueBox = document.getElementById('win-clue-box');
-      const emoji = document.getElementById('end-emoji');
-      const title = document.getElementById('end-title');
-      const subtitle = document.getElementById('end-subtitle');
       const score = document.getElementById('end-score-details');
-
-      if (isWin) {
-        playSound('win');
-        winTurkey.classList.remove('hidden');
-        winClueBox.classList.remove('hidden');
-        emoji.classList.add('hidden');
-        subtitle.classList.add('hidden');
-
-        title.textContent = 'Victory! 挑戰成功！';
-        score.textContent = `${VOCABULARY.length} / ${VOCABULARY.length} Words Completed`;
-      } else {
-        playSound('wrong');
-        winTurkey.classList.add('hidden');
-        winClueBox.classList.add('hidden');
-        emoji.classList.remove('hidden');
-        subtitle.classList.remove('hidden');
-
-        emoji.textContent = '🦃💥';
-        title.textContent = 'Game Over! 遊戲結束';
-        subtitle.textContent = 'You ran out of turkey lifelines! 火雞生命值用完了，再試一次吧！';
-        score.textContent = `${currentWordIndex} / ${VOCABULARY.length} Words Completed`;
-      }
+      score.textContent = `${VOCABULARY.length} / ${VOCABULARY.length} Words Completed`;
     }
 
     function resetGame() {
@@ -658,7 +614,8 @@
       canvas.width = container.clientWidth;
       canvas.height = container.clientHeight;
       ctx = canvas.getContext('2d');
-      canvas.onclick = handleCanvasClick;
+      // Use pointerdown for instant iPad touch response without 300ms click delay
+      canvas.onpointerdown = handleCanvasClick;
     }
 
     function initBubblesForWord(word) {
@@ -667,7 +624,7 @@
       const alphabet = 'abcdefghijklmnopqrstuvwxyz';
       
       const targetLetters = word.toLowerCase().split('');
-      const extraCount = Math.max(8, 14 - targetLetters.length);
+      const extraCount = Math.max(6, 14 - targetLetters.length);
       const distractorLetters = [];
       for (let i = 0; i < extraCount; i++) {
         const randomChar = alphabet[Math.floor(Math.random() * alphabet.length)];
@@ -677,14 +634,14 @@
       const allLetters = [...targetLetters, ...distractorLetters];
       allLetters.sort(() => Math.random() - 0.5);
 
-      const radius = canvas.width < 640 ? 32 : 44;
+      const radius = canvas.width < 640 ? 34 : 46;
 
       allLetters.forEach((char, index) => {
         const colorScheme = BUBBLE_COLORS[index % BUBBLE_COLORS.length];
         const x = radius + Math.random() * (canvas.width - radius * 2);
         const y = radius + Math.random() * (canvas.height - radius * 2);
         
-        const speed = 1.5 + Math.random() * 2.2;
+        const speed = 1.4 + Math.random() * 2.0;
         const angle = Math.random() * Math.PI * 2;
 
         bubbles.push({
@@ -739,11 +696,12 @@
         ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
         ctx.fill();
 
-        ctx.font = `bold ${Math.round(currentRadius * 1.15)}px 'Comic Sans MS', cursive, sans-serif`;
+        // Easy-to-read Comic Sans / Comic Neue / Chalkboard SE print letters (no cursive fallback)
+        ctx.font = `bold ${Math.round(currentRadius * 1.2)}px ${KID_FONT_STACK}`;
         ctx.fillStyle = b.color.text;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(b.char, b.x, b.y + 3);
+        ctx.fillText(b.char, b.x, b.y + 2);
       });
 
       particles.forEach((p, idx) => {
@@ -781,9 +739,12 @@
     }
 
     function handleCanvasClick(e) {
+      e.preventDefault();
       const rect = canvas.getBoundingClientRect();
-      const clickX = e.clientX - rect.left;
-      const clickY = e.clientY - rect.top;
+      const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+      const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+      const clickX = clientX - rect.left;
+      const clickY = clientY - rect.top;
 
       const currentWord = VOCABULARY[currentWordIndex].word;
       const expectedLetter = currentWord[currentLetterPointer].toLowerCase();
@@ -793,7 +754,7 @@
         if (b.popping) continue;
 
         const dist = Math.hypot(clickX - b.x, clickY - b.y);
-        if (dist <= b.radius + 8) {
+        if (dist <= b.radius + 10) {
           if (b.char === expectedLetter) {
             playSound('pop');
             playSound('correct');
@@ -815,9 +776,9 @@
               }, 600);
             }
           } else {
+            // Unlimited tries: play wrong buzzer and flash X without losing lives
             playSound('wrong');
             flashWrongX();
-            loseLife();
           }
           break;
         }
@@ -828,7 +789,8 @@
       if (canvas && !document.getElementById('screen-gameplay').classList.contains('hidden')) {
         setupCanvas();
         if (VOCABULARY[currentWordIndex]) {
-          initBubblesForWord(VOCABULARY[currentWordIndex].word);
+          const remainingWordPart = VOCABULARY[currentWordIndex].word.slice(currentLetterPointer);
+          initBubblesForWord(remainingWordPart);
         }
       }
     });
