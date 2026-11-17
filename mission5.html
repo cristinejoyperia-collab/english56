@@ -8,6 +8,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK (Compat for easy single-file HTML usage) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
     <style>
         /* Enforce Comic Sans MS for English and Clear Traditional Chinese Fonts */
         * {
@@ -178,33 +181,37 @@
     <!-- Optional External Audio Element -->
     <audio id="bg-audio-file" src="thanksgiving_music.mp3" loop preload="auto"></audio>
 
-    <!-- Floating Top-Right Controls: Music Toggle & Teacher Setup Button -->
-    <div class="fixed top-3 right-3 z-[90] flex items-center gap-2">
+    <!-- Floating Top-Right Controls: Leaderboard, Music Toggle & Teacher Setup Button -->
+    <div class="fixed top-3 right-3 z-[90] flex flex-wrap items-center justify-end gap-2">
+        <button type="button" onclick="window.toggleLeaderboardModal(event)" 
+            class="bg-yellow-400 hover:bg-yellow-300 text-amber-950 font-extrabold py-2 px-4 rounded-full border-4 border-white shadow-lg flex items-center gap-2 transition transform hover:scale-105 cursor-pointer">
+            <i class="fas fa-trophy text-amber-700 text-lg"></i>
+            <span class="text-xs sm:text-sm">Live Leaderboard / 即時排行榜</span>
+            <span id="leaderboard-count-badge" class="bg-red-600 text-white text-xs font-extrabold px-2 py-0.5 rounded-full">0</span>
+        </button>
+
         <button id="music-toggle-btn" type="button" onclick="window.toggleBackgroundMusic(event)" 
             class="bg-amber-500 hover:bg-amber-400 text-white font-bold py-2 px-4 rounded-full border-4 border-white shadow-lg flex items-center gap-2 transition transform hover:scale-105 cursor-pointer">
             <i id="music-icon" class="fas fa-volume-up text-lg"></i>
-            <span id="music-label" class="text-xs sm:text-sm">Music ON / 背景音樂：開</span>
+            <span id="music-label" class="text-xs sm:text-sm">Music ON / 音樂：開</span>
         </button>
 
         <button type="button" onclick="window.toggleTeacherModal(event)" 
             class="bg-amber-900/90 hover:bg-amber-800 text-amber-100 font-bold py-2 px-4 rounded-full border-2 border-amber-300 shadow-lg flex items-center gap-1.5 text-xs sm:text-sm transition transform hover:scale-105 cursor-pointer">
             <i class="fas fa-images"></i>
-            <span>Teacher Setup / 教師圖片設定</span>
+            <span>Teacher Setup / 教師設定</span>
         </button>
     </div>
 
     <!-- ==========================================================
          1. FULL-SCREEN BLANK COVER PAGE (recordcover.gif)
-         Clicking anywhere on the screen or button starts the game!
          ========================================================== -->
     <div id="cover-screen" onclick="window.startFromCover(event)">
-        <!-- Full-screen <img> layer that displays recordcover.gif cleanly -->
         <img id="cover-img-element" src="recordcover.gif" alt="" 
              class="absolute inset-0 w-full h-full object-cover pointer-events-none hidden"
              onload="this.classList.remove('hidden');"
              onerror="this.classList.add('hidden');">
 
-        <!-- Floating Click to Start Button at bottom -->
         <button id="cover-start-btn" type="button" onclick="window.startFromCover(event)" 
             class="relative z-[60] btn-game bg-gradient-to-b from-amber-400 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-white font-extrabold text-2xl sm:text-3xl py-4 px-12 rounded-full border-4 border-white flex flex-col items-center gap-1 animate-bounce shadow-2xl cursor-pointer">
             <div class="flex items-center gap-3">
@@ -220,7 +227,7 @@
     <!-- ==========================================================
          MAIN GAME CONTAINER (Background: game_background.jpg / .jpeg)
          ========================================================== -->
-    <div id="game-container" class="hidden flex-col items-center justify-center p-4 sm:p-6 md:p-8 min-h-screen">
+    <div id="game-container" class="hidden flex-col items-center justify-center p-4 sm:p-6 md:p-8 min-h-screen pt-16 sm:pt-16">
         
         <!-- Decorative Floating Autumn Leaves -->
         <div id="leaves-container" class="pointer-events-none"></div>
@@ -242,11 +249,11 @@
             <!-- Interactive Step Indicators (Bilingual) -->
             <div class="flex items-center gap-2 text-xs sm:text-sm font-extrabold">
                 <button type="button" onclick="window.goToStep(1)" id="step-badge-1" class="px-3.5 py-1.5 rounded-full bg-amber-500 text-white border-2 border-amber-700 shadow cursor-pointer">
-                    Step 1: Practice / 第一步：完成與練習句子
+                    Step 1: Practice / 第一步：完成句子
                 </button>
                 <i class="fas fa-chevron-right text-amber-600"></i>
                 <button type="button" onclick="window.goToStep(2)" id="step-badge-2" class="px-3.5 py-1.5 rounded-full bg-amber-100 text-amber-800 border-2 border-amber-300 cursor-pointer">
-                    Step 2: Record / 第二步：錄音與評分
+                    Step 2: Record / 第二步：錄音評分
                 </button>
                 <i class="fas fa-chevron-right text-amber-600"></i>
                 <button type="button" onclick="window.goToStep(3)" id="step-badge-3" class="px-3.5 py-1.5 rounded-full bg-amber-100 text-amber-800 border-2 border-amber-300 cursor-pointer">
@@ -260,6 +267,24 @@
              ========================================================== -->
         <main id="screen-practice" class="relative z-20 w-full max-w-5xl bg-white/95 backdrop-blur-md rounded-3xl border-4 border-amber-600 shadow-2xl p-6 sm:p-8 md:p-10">
             
+            <!-- Student Name & Class Input Bar for Live Leaderboard -->
+            <div class="bg-yellow-100 border-4 border-amber-500 rounded-2xl p-4 mb-5 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
+                <div class="flex items-center gap-3 text-left">
+                    <span class="text-3xl">📛</span>
+                    <div>
+                        <label for="student-name-input" class="block text-base sm:text-lg font-extrabold text-amber-950">
+                            Enter Your Class & Name / 請輸入班級座號與姓名：
+                        </label>
+                        <span class="text-xs sm:text-sm font-bold text-amber-800">
+                            (Your score will appear on the live class leaderboard! / 分數會即時顯示在全班排行榜上喔！)
+                        </span>
+                    </div>
+                </div>
+                <input id="student-name-input" type="text" maxlength="25" placeholder="e.g. 501-05 Amy / 501-05 王小明"
+                    onchange="window.saveStudentName()"
+                    class="w-full sm:w-80 bg-white text-amber-950 font-extrabold text-lg px-4 py-2.5 rounded-xl border-3 border-amber-600 focus:outline-none focus:ring-4 focus:ring-amber-300 shadow-inner">
+            </div>
+
             <!-- Required Instruction First with Clear Traditional Chinese Translation -->
             <div class="bg-gradient-to-r from-amber-100 via-orange-100 to-amber-100 border-4 border-amber-500 rounded-2xl p-5 mb-7 shadow-inner">
                 <div class="flex items-start gap-4">
@@ -274,7 +299,7 @@
                             "Complete the sentence first, practice how to read. Then, click start if you're ready to record your speech."
                         </h2>
                         <p class="text-lg sm:text-2xl font-extrabold text-red-700 mt-2 bg-white/80 px-3 py-1.5 rounded-xl border border-amber-300">
-                            「請先完成句子並練習朗讀。準備好錄音時，請點擊『開始』按鈕！」
+                            「請先輸入姓名、完成句子並練習朗讀。準備好錄音時，請點擊『開始』按鈕！」
                         </p>
                     </div>
                 </div>
@@ -286,16 +311,13 @@
                     ✨ Choose words to complete your Thanksgiving sentence / 請選擇單字來完成你的感恩節句子 ✨
                 </div>
 
-                <!-- Interactive Sentence Pattern (Every word has English + Traditional Chinese underneath) -->
+                <!-- Interactive Sentence Pattern -->
                 <div class="flex flex-wrap items-center justify-center gap-3 my-2">
-                    
-                    <!-- "I want to thank my" -->
                     <div class="word-card">
                         <span class="word-en">I want to thank my</span>
                         <span class="word-zh">我想感謝我的</span>
                     </div>
                     
-                    <!-- Blank 1: mom, dad, teacher, friend -->
                     <div class="inline-flex flex-col items-center bg-yellow-100 border-4 border-amber-700 rounded-2xl p-2 shadow-md">
                         <select id="select-person" onchange="window.updateSentence(event)" 
                             class="sentence-select bg-yellow-300 hover:bg-yellow-200 text-amber-950 font-extrabold px-4 py-1.5 rounded-xl border-2 border-amber-800 cursor-pointer focus:outline-none text-xl sm:text-2xl">
@@ -305,17 +327,15 @@
                             <option value="friend" data-zh="朋友" data-pronoun="auto">friend (朋友)</option>
                         </select>
                         <span class="text-xs sm:text-sm font-extrabold text-amber-900 mt-1">
-                            Person / 選擇感謝對象 (媽媽/爸爸/老師/朋友)
+                            Person / 選擇感謝對象
                         </span>
                     </div>
 
-                    <!-- "because" -->
                     <div class="word-card">
                         <span class="word-en">because</span>
                         <span class="word-zh">因為</span>
                     </div>
 
-                    <!-- Blank 2: he / she -->
                     <div class="inline-flex flex-col items-center bg-orange-100 border-4 border-amber-700 rounded-2xl p-2 shadow-md">
                         <select id="select-pronoun" onchange="window.updateSentence(event)" 
                             class="sentence-select bg-orange-200 hover:bg-orange-100 text-amber-950 font-extrabold px-4 py-1.5 rounded-xl border-2 border-amber-800 cursor-pointer focus:outline-none text-xl sm:text-2xl">
@@ -323,17 +343,15 @@
                             <option value="he" data-zh="他">he (男生：他)</option>
                         </select>
                         <span class="text-xs sm:text-sm font-extrabold text-amber-900 mt-1">
-                            he / she (選擇：他 / 她)
+                            he / she (他 / 她)
                         </span>
                     </div>
 
-                    <!-- "is" -->
                     <div class="word-card">
                         <span class="word-en">is</span>
                         <span class="word-zh">是／非常</span>
                     </div>
 
-                    <!-- Blank 3: good, caring, helpful, loving -->
                     <div class="inline-flex flex-col items-center bg-green-100 border-4 border-green-700 rounded-2xl p-2 shadow-md">
                         <select id="select-adj" onchange="window.updateSentence(event)" 
                             class="sentence-select bg-green-200 hover:bg-green-100 text-green-950 font-extrabold px-4 py-1.5 rounded-xl border-2 border-green-800 cursor-pointer focus:outline-none text-xl sm:text-2xl">
@@ -343,18 +361,17 @@
                             <option value="loving" data-zh="充滿愛心">loving (充滿愛心)</option>
                         </select>
                         <span class="text-xs sm:text-sm font-extrabold text-green-900 mt-1">
-                            Adjective / 選擇形容詞 (好/體貼/助人/有愛心)
+                            Adjective / 選擇形容詞
                         </span>
                     </div>
 
-                    <!-- "to me." -->
                     <div class="word-card">
                         <span class="word-en">to me.</span>
                         <span class="word-zh">對我。</span>
                     </div>
                 </div>
 
-                <!-- Vocabulary Quick Reference Table (All Options with Chinese Translations) -->
+                <!-- Vocabulary Quick Reference Table -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5 text-left bg-amber-100/90 p-3.5 rounded-2xl border-2 border-amber-300 text-xs sm:text-sm font-bold text-amber-950">
                     <div>
                         <span class="bg-amber-600 text-white px-2 py-0.5 rounded mr-1">Word Bank 1 / 人物單字：</span>
@@ -366,7 +383,7 @@
                     </div>
                 </div>
 
-                <!-- Completed Sentence Live Preview Box (Bilingual) -->
+                <!-- Completed Sentence Live Preview Box -->
                 <div class="mt-5 bg-white rounded-2xl p-5 border-4 border-amber-400 shadow-inner">
                     <p class="text-sm sm:text-base font-extrabold text-amber-700 mb-2">
                         🔊 Your Completed Sentence to Read Aloud / 你完成的句子（請跟著大聲練習唸唸看）：
@@ -380,7 +397,7 @@
                 </div>
             </div>
 
-            <!-- Action Buttons: Listen to Practice & Always-Clickable START Button -->
+            <!-- Action Buttons -->
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
                 <button type="button" onclick="window.speakTargetSentence(0.85)" 
                     class="btn-game w-full sm:w-auto bg-amber-500 hover:bg-amber-400 text-white font-extrabold text-xl py-4 px-7 rounded-2xl border-4 border-white flex items-center justify-center gap-3">
@@ -416,12 +433,17 @@
              ========================================================== -->
         <main id="screen-record" class="hidden relative z-20 w-full max-w-5xl bg-white/95 backdrop-blur-md rounded-3xl border-4 border-amber-600 shadow-2xl p-6 sm:p-8">
             
-            <!-- Top Sentence Reminder Banner (Bilingual) -->
+            <!-- Top Sentence Reminder Banner -->
             <div class="bg-amber-100 border-4 border-amber-400 rounded-2xl p-4 sm:p-5 mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
                 <div class="text-center md:text-left">
-                    <span class="text-xs sm:text-sm font-extrabold uppercase bg-amber-600 text-white px-3 py-1 rounded-full">
-                        Sentence to Read Aloud / 請對著麥克風大聲唸出這句話：
-                    </span>
+                    <div class="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-1">
+                        <span class="text-xs sm:text-sm font-extrabold uppercase bg-amber-600 text-white px-3 py-1 rounded-full">
+                            Sentence to Read Aloud / 請對著麥克風大聲唸出這句話：
+                        </span>
+                        <span id="active-player-badge" class="text-xs sm:text-sm font-extrabold bg-amber-900 text-amber-100 px-3 py-1 rounded-full">
+                            👤 Player: Guest
+                        </span>
+                    </div>
                     <h2 id="record-target-en" class="text-2xl sm:text-3xl font-extrabold text-amber-950 mt-2">
                         I want to thank my mom because she is good to me.
                     </h2>
@@ -436,37 +458,32 @@
                     </button>
                     <button type="button" onclick="window.goToStep(1)" class="bg-white hover:bg-amber-50 text-amber-900 font-extrabold py-2.5 px-4 rounded-xl border-2 border-amber-400 shadow flex items-center gap-2 text-sm cursor-pointer">
                         <i class="fas fa-edit text-amber-600"></i>
-                        <span>Back / 返回修改句子</span>
+                        <span>Back / 返回修改</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Main Two-Column Area: Left = Clickable Turkey Holding Recorder, Right = Grade & Comment -->
+            <!-- Main Two-Column Area -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
                 
-                <!-- LEFT: Clickable Turkey Holding a Recorder (turkey_recorder.jpg / .jpeg) -->
+                <!-- LEFT: Clickable Turkey Holding a Recorder -->
                 <div class="lg:col-span-6 flex flex-col items-center justify-center bg-gradient-to-b from-amber-50 to-orange-100 border-4 border-amber-400 rounded-3xl p-6 text-center shadow-inner relative">
                     
-                    <!-- Tap to Record Label (Bilingual) -->
                     <div id="tap-prompt-badge" onclick="window.toggleRecording()" class="bg-red-600 hover:bg-red-500 text-white font-extrabold px-6 py-2.5 rounded-full text-lg sm:text-xl shadow-md mb-4 flex items-center gap-2 animate-bounce cursor-pointer">
                         <i class="fas fa-microphone-lines"></i>
                         <span>Tap to record / 點擊火雞開始錄音</span>
                     </div>
 
-                    <!-- Clickable Turkey Holding a Recorder Image / Button -->
                     <button id="turkey-record-btn" type="button" onclick="window.toggleRecording()" 
                         class="group relative w-64 h-64 sm:w-72 sm:h-72 rounded-full bg-white border-8 border-amber-500 hover:border-red-500 shadow-2xl flex items-center justify-center overflow-hidden transition-all duration-300 cursor-pointer focus:outline-none"
                         title="Tap to record / 點擊火雞開始錄音">
                         
-                        <!-- Teacher's Uploaded Turkey Recorder JPEG (turkey_recorder.jpg or turkey_recorder.jpeg) -->
                         <img id="custom-turkey-img" src="turkey_recorder.jpg" alt="Turkey Recorder" 
                             class="w-full h-full object-cover hidden pointer-events-none"
                             onload="this.classList.remove('hidden'); document.getElementById('default-turkey-svg').classList.add('hidden');"
                             onerror="window.tryAlternateExtension(this, ['turkey_recorder.jpeg', 'turkey_recorder.png', 'turkey_recorder.gif'], 'default-turkey-svg');">
 
-                        <!-- Built-in Cute SVG Turkey Holding a Recorder (Fallback if turkey_recorder.jpg isn't placed yet) -->
                         <svg id="default-turkey-svg" viewBox="0 0 260 260" class="w-full h-full p-3 transition-transform duration-300 group-hover:scale-105 pointer-events-none">
-                            <!-- Tail Feathers -->
                             <g transform="translate(130, 135)">
                                 <ellipse cx="-65" cy="-25" rx="22" ry="55" transform="rotate(-48 -65 -25)" fill="#dc2626" stroke="#7f1d1d" stroke-width="4"/>
                                 <ellipse cx="-42" cy="-55" rx="22" ry="55" transform="rotate(-24 -42 -55)" fill="#f97316" stroke="#7f1d1d" stroke-width="4"/>
@@ -474,32 +491,23 @@
                                 <ellipse cx="42" cy="-55" rx="22" ry="55" transform="rotate(24 42 -55)" fill="#f97316" stroke="#7f1d1d" stroke-width="4"/>
                                 <ellipse cx="65" cy="-25" rx="22" ry="55" transform="rotate(48 65 -25)" fill="#dc2626" stroke="#7f1d1d" stroke-width="4"/>
                             </g>
-                            <!-- Turkey Body -->
                             <circle cx="130" cy="155" r="56" fill="#92400e" stroke="#451a03" stroke-width="4"/>
                             <ellipse cx="130" cy="162" rx="36" ry="38" fill="#b45309"/>
-                            <!-- Turkey Head -->
                             <circle cx="130" cy="96" r="36" fill="#92400e" stroke="#451a03" stroke-width="4"/>
-                            <!-- Pilgrim Hat -->
                             <rect x="92" y="54" width="76" height="10" rx="5" fill="#1f2937" stroke="#000" stroke-width="3"/>
                             <path d="M104 54 L112 22 L148 22 L156 54 Z" fill="#1f2937" stroke="#000" stroke-width="3"/>
                             <rect x="106" y="42" width="48" height="8" fill="#f59e0b"/>
                             <rect x="123" y="40" width="14" height="12" fill="#fde047" stroke="#000" stroke-width="2"/>
-                            <!-- Eyes -->
                             <circle cx="116" cy="90" r="8" fill="#fff"/>
                             <circle cx="144" cy="90" r="8" fill="#fff"/>
                             <circle cx="117" cy="90" r="4" fill="#000"/>
                             <circle cx="143" cy="90" r="4" fill="#000"/>
                             <circle cx="119" cy="88" r="1.5" fill="#fff"/>
                             <circle cx="145" cy="88" r="1.5" fill="#fff"/>
-                            <!-- Red Snood / Wattle -->
                             <path d="M135 98 C144 98, 146 116, 136 118 C128 118, 130 105, 135 98 Z" fill="#ef4444" stroke="#7f1d1d" stroke-width="2"/>
-                            <!-- Beak -->
                             <polygon points="120,98 140,98 130,113" fill="#facc15" stroke="#854d0e" stroke-width="2.5"/>
-                            <!-- Left Wing waving -->
                             <ellipse cx="70" cy="150" rx="16" ry="32" transform="rotate(25 70 150)" fill="#78350f" stroke="#451a03" stroke-width="3"/>
-                            <!-- Right Wing holding Voice Recorder -->
                             <ellipse cx="185" cy="155" rx="16" ry="32" transform="rotate(-30 185 155)" fill="#78350f" stroke="#451a03" stroke-width="3"/>
-                            <!-- Recorder / Microphone in Turkey's Wing -->
                             <g transform="translate(175, 105) rotate(-12)">
                                 <rect x="8" y="25" width="20" height="44" rx="6" fill="#374151" stroke="#111827" stroke-width="3"/>
                                 <circle cx="18" cy="16" r="16" fill="#ef4444" stroke="#7f1d1d" stroke-width="3"/>
@@ -507,19 +515,16 @@
                                 <circle cx="18" cy="40" r="4.5" fill="#ef4444"/>
                                 <rect x="13" y="50" width="10" height="8" rx="2" fill="#9ca3af"/>
                             </g>
-                            <!-- Feet -->
                             <path d="M105 208 L95 224 M105 208 L105 225 M105 208 L115 224" stroke="#f59e0b" stroke-width="5" stroke-linecap="round"/>
                             <path d="M155 208 L145 224 M155 208 L155 225 M155 208 L165 224" stroke="#f59e0b" stroke-width="5" stroke-linecap="round"/>
                         </svg>
 
-                        <!-- Overlay Recording Pulse Indicator -->
                         <div id="recording-overlay-badge" class="hidden absolute bottom-3 bg-red-600/95 text-white font-extrabold px-4 py-1 rounded-full text-sm shadow-lg items-center gap-2 pointer-events-none">
                             <span class="w-3 h-3 rounded-full bg-white animate-ping"></span>
                             <span>Recording... / 錄音中...</span>
                         </div>
                     </button>
 
-                    <!-- Status Text Below Turkey (Bilingual) -->
                     <p id="record-status-en" class="text-xl font-extrabold text-amber-950 mt-4">
                         Tap to record! Click the turkey to start recording.
                     </p>
@@ -527,7 +532,6 @@
                         點擊開始錄音！請點一下火雞開始錄音，唸完後再點一下完成評分。
                     </p>
 
-                    <!-- Live Audio Bars while Recording -->
                     <div id="live-wave-bars" class="hidden items-end justify-center gap-1.5 h-10 mt-3">
                         <div class="w-2.5 bg-red-500 rounded-full animate-pulse h-4"></div>
                         <div class="w-2.5 bg-red-500 rounded-full animate-pulse h-9" style="animation-delay: 0.1s"></div>
@@ -537,7 +541,6 @@
                         <div class="w-2.5 bg-red-500 rounded-full animate-pulse h-5" style="animation-delay: 0.25s"></div>
                     </div>
 
-                    <!-- Replay Student's Own Recorded Voice Button -->
                     <div id="replay-voice-container" class="hidden mt-4">
                         <button type="button" onclick="window.playRecordedVoice()" class="bg-amber-200 hover:bg-amber-300 text-amber-950 font-extrabold py-2.5 px-5 rounded-full border-2 border-amber-500 shadow flex items-center gap-2 text-sm cursor-pointer">
                             <i class="fas fa-play text-amber-700"></i>
@@ -546,9 +549,8 @@
                     </div>
                 </div>
 
-                <!-- RIGHT: Side Panel for Grade & Speaking Skills Comment (Bilingual) -->
+                <!-- RIGHT: Side Panel for Grade & Speaking Skills Comment -->
                 <div class="lg:col-span-6 flex flex-col justify-between bg-white border-4 border-amber-500 rounded-3xl p-6 shadow-xl">
-                    
                     <div>
                         <div class="flex items-center justify-between border-b-2 border-amber-200 pb-3 mb-4">
                             <div>
@@ -560,11 +562,10 @@
                                 </p>
                             </div>
                             <span class="bg-amber-100 text-amber-900 font-extrabold px-3 py-1.5 rounded-xl border-2 border-amber-400 text-xs sm:text-sm">
-                                Pass: 60%+ / 及格標準：60分
+                                Pass: 60%+ / 及格：60分
                             </span>
                         </div>
 
-                        <!-- Score Circle & Grade Display -->
                         <div class="flex flex-col sm:flex-row items-center gap-5 bg-amber-50/80 rounded-2xl p-4 border-2 border-amber-200 mb-4">
                             <div id="score-badge-circle" class="w-28 h-28 rounded-full border-8 border-amber-300 bg-white flex flex-col items-center justify-center shrink-0 shadow-inner">
                                 <span id="score-number" class="text-3xl font-extrabold text-amber-900">--%</span>
@@ -584,7 +585,6 @@
                             </div>
                         </div>
 
-                        <!-- Detailed Speaking Skills Comment Box -->
                         <div class="bg-orange-50/90 rounded-2xl p-4 border-2 border-orange-300 mb-4">
                             <div class="text-xs sm:text-sm font-extrabold uppercase text-orange-900 mb-1 flex items-center gap-1.5">
                                 <i class="fas fa-comment-dots"></i>
@@ -598,7 +598,6 @@
                             </p>
                         </div>
 
-                        <!-- Recognized Speech Transcript Box -->
                         <div class="bg-gray-50 rounded-2xl p-3.5 border-2 border-gray-200 text-sm">
                             <div class="font-extrabold text-gray-700 text-xs sm:text-sm mb-1">
                                 🎙️ What You Said / 系統聽到的語音內容：
@@ -609,9 +608,7 @@
                         </div>
                     </div>
 
-                    <!-- Bottom Action Area inside Report Card -->
                     <div class="mt-5 pt-4 border-t-2 border-amber-100">
-                        <!-- Mission Failed (< 60%) Retry Prompt -->
                         <div id="retry-action-box" class="hidden flex-col sm:flex-row items-center justify-between gap-3 bg-red-50 border-2 border-red-400 rounded-2xl p-3.5 mb-2">
                             <div class="text-center sm:text-left">
                                 <p class="font-extrabold text-red-800 text-sm sm:text-base">
@@ -627,7 +624,6 @@
                             </button>
                         </div>
 
-                        <!-- Mission Success (>= 60%) Proceed to Victory Button -->
                         <div id="success-action-box" class="hidden flex-col items-center mb-2">
                             <button type="button" onclick="window.goToStep(3)" 
                                 class="btn-game btn-green w-full bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-500 hover:to-emerald-400 text-white font-extrabold text-xl py-4 px-6 rounded-2xl border-4 border-white flex items-center justify-center gap-3 animate-bounce cursor-pointer">
@@ -640,41 +636,35 @@
                             </button>
                         </div>
 
-                        <!-- Classroom Teacher Quick-Grade Buttons (Bilingual) -->
                         <div class="mt-2 pt-2 border-t border-amber-100 flex flex-wrap items-center justify-between gap-2 text-xs text-amber-900">
                             <span class="font-extrabold">👩‍🏫 Teacher Quick Grade / 教師手動評分測試：</span>
                             <div class="flex flex-wrap gap-1.5">
                                 <button type="button" onclick="window.applyManualGrade(95)" class="bg-green-100 hover:bg-green-200 text-green-900 font-extrabold px-2.5 py-1 rounded-lg border border-green-400 cursor-pointer">
-                                    🌟 95% (優秀過關)
+                                    🌟 95%
                                 </button>
                                 <button type="button" onclick="window.applyManualGrade(75)" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-900 font-extrabold px-2.5 py-1 rounded-lg border border-emerald-400 cursor-pointer">
-                                    👍 75% (及格過關)
+                                    👍 75%
                                 </button>
                                 <button type="button" onclick="window.applyManualGrade(45)" class="bg-red-100 hover:bg-red-200 text-red-900 font-extrabold px-2.5 py-1 rounded-lg border border-red-400 cursor-pointer">
-                                    🔄 45% (未滿60重錄)
+                                    🔄 45%
                                 </button>
                             </div>
                         </div>
                     </div>
-
                 </div>
             </div>
         </main>
 
         <!-- ==========================================================
              STEP 3: VICTORY SCREEN (60% AND ABOVE)
-             Shows Kevin (#5), Picture of Sam (sam.jpg/.jpeg), and
-             Picture Clue of Place to Find Sam (sam_place.jpg/.jpeg)
              ========================================================== -->
         <main id="screen-victory" class="hidden relative z-20 w-full max-w-5xl bg-white/95 backdrop-blur-md rounded-3xl border-4 border-yellow-500 shadow-2xl p-6 sm:p-10 text-center">
             
-            <!-- Celebration Header -->
             <div class="inline-flex items-center gap-2 bg-green-100 text-green-800 border-2 border-green-500 font-extrabold px-5 py-1.5 rounded-full text-base sm:text-lg mb-3 shadow-sm">
                 <i class="fas fa-check-circle text-green-600"></i>
                 <span>Mission Success! Score: <span id="victory-score-label">95%</span> / 任務成功過關！你的成績：<span id="victory-score-label-zh">95%</span></span>
             </div>
 
-            <!-- Found Kevin the 5th Turkey Badge -->
             <div class="flex justify-center my-2">
                 <div class="relative inline-block bounce-slow">
                     <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-amber-100 border-4 border-amber-500 flex items-center justify-center text-6xl shadow-lg">
@@ -686,7 +676,6 @@
                 </div>
             </div>
 
-            <!-- Exact Victory Message with High-Contrast Traditional Chinese Translation -->
             <div class="bg-gradient-to-b from-yellow-50 to-amber-100 border-4 border-amber-500 rounded-3xl p-5 sm:p-7 my-5 shadow-md">
                 <h2 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-amber-950 leading-snug">
                     "Victory! You passed the mission! You found Kevin, the fifth turkey. To find the last turkey named Sam, look in this place."
@@ -698,12 +687,8 @@
                 </p>
             </div>
 
-            <!-- TWO SIDE-BY-SIDE PHOTO FRAMES:
-                 1. Picture of Sam the last turkey (sam.jpg / sam.jpeg)
-                 2. Picture clue of the place to find Sam (sam_place.jpg / sam_place.jpeg) -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-6 text-left">
-                
-                <!-- Photo Frame 1: Picture of Sam (the last turkey) -->
+                <!-- Photo Frame 1: Picture of Sam -->
                 <div class="bg-amber-50 border-4 border-amber-500 rounded-3xl p-4 sm:p-5 shadow-lg flex flex-col justify-between">
                     <div class="flex items-center justify-between gap-2 mb-3">
                         <div>
@@ -728,7 +713,6 @@
                             onload="this.classList.remove('hidden'); document.getElementById('sam-turkey-placeholder').classList.add('hidden');"
                             onerror="window.tryAlternateExtension(this, ['sam.jpeg', 'sam.png', 'sam.gif'], 'sam-turkey-placeholder');">
 
-                        <!-- Placeholder if sam.jpg/sam.jpeg is not yet loaded -->
                         <div id="sam-turkey-placeholder" class="p-6 text-center">
                             <div class="text-6xl mb-3">🎩🦃✨</div>
                             <p class="text-lg font-extrabold text-amber-900">
@@ -741,7 +725,7 @@
                     </div>
                 </div>
 
-                <!-- Photo Frame 2: Picture Clue of the Place to Find Sam -->
+                <!-- Photo Frame 2: Picture Clue -->
                 <div class="bg-amber-50 border-4 border-amber-500 rounded-3xl p-4 sm:p-5 shadow-lg flex flex-col justify-between">
                     <div class="flex items-center justify-between gap-2 mb-3">
                         <div>
@@ -766,7 +750,6 @@
                             onload="this.classList.remove('hidden'); document.getElementById('sam-clue-placeholder').classList.add('hidden');"
                             onerror="window.tryAlternateExtension(this, ['sam_place.jpeg', 'sam_place.png', 'sam_place.gif'], 'sam-clue-placeholder');">
                         
-                        <!-- Placeholder if sam_place.jpg/sam_place.jpeg is not yet loaded -->
                         <div id="sam-clue-placeholder" class="p-6 text-center">
                             <div class="text-6xl mb-3">🗺️🔍🏫</div>
                             <p class="text-lg font-extrabold text-amber-900">
@@ -778,11 +761,19 @@
                         </div>
                     </div>
                 </div>
-
             </div>
 
-            <!-- Play Again / Practice Another Sentence Button -->
+            <!-- Action Buttons -->
             <div class="flex flex-wrap items-center justify-center gap-4 mt-4">
+                <button type="button" onclick="window.toggleLeaderboardModal(event)" 
+                    class="btn-game bg-yellow-400 hover:bg-yellow-300 text-amber-950 font-extrabold text-xl py-4 px-8 rounded-2xl border-4 border-white flex items-center gap-3 cursor-pointer">
+                    <i class="fas fa-trophy text-amber-700"></i>
+                    <div class="text-left">
+                        <div>View Live Leaderboard / 查看即時排行榜</div>
+                        <div class="text-xs sm:text-sm text-amber-800">看看全班同學的排名與分數！</div>
+                    </div>
+                </button>
+
                 <button type="button" onclick="window.resetForNewRound()" 
                     class="btn-game bg-amber-500 hover:bg-amber-400 text-white font-extrabold text-xl py-4 px-8 rounded-2xl border-4 border-white flex items-center gap-3 cursor-pointer">
                     <i class="fas fa-redo"></i>
@@ -793,12 +784,83 @@
                 </button>
             </div>
         </main>
+    </div>
 
+    <!-- ==========================================================
+         LIVE LEADERBOARD MODAL (Project on Classroom Screen or View on iPads)
+         ========================================================== -->
+    <div id="leaderboard-modal" class="hidden fixed inset-0 z-[105] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl border-4 border-yellow-500 shadow-2xl max-w-4xl w-full p-6 sm:p-8 max-h-[90vh] flex flex-col">
+            <!-- Header -->
+            <div class="flex items-center justify-between border-b-2 border-amber-200 pb-4 mb-4 shrink-0">
+                <div class="flex items-center gap-3">
+                    <span class="text-4xl">🏆</span>
+                    <div>
+                        <h3 class="text-2xl sm:text-3xl font-extrabold text-amber-950">
+                            Live Class Leaderboard / 感恩節口說即時排行榜
+                        </h3>
+                        <p id="firebase-status-text" class="text-xs sm:text-sm font-bold text-amber-700">
+                            Connecting to live standings...
+                        </p>
+                    </div>
+                </div>
+                <button type="button" onclick="window.toggleLeaderboardModal(event)" class="text-gray-500 hover:text-red-600 text-3xl font-bold px-2 cursor-pointer">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Live Stats Summary -->
+            <div class="grid grid-cols-3 gap-3 mb-4 shrink-0 text-center">
+                <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-3">
+                    <div class="text-xs sm:text-sm font-extrabold text-amber-700">Total Players / 參與人數</div>
+                    <div id="lb-stat-total" class="text-2xl sm:text-3xl font-extrabold text-amber-950">0</div>
+                </div>
+                <div class="bg-green-50 border-2 border-green-300 rounded-2xl p-3">
+                    <div class="text-xs sm:text-sm font-extrabold text-green-700">Passed (60%+) / 過關人數</div>
+                    <div id="lb-stat-passed" class="text-2xl sm:text-3xl font-extrabold text-green-700">0</div>
+                </div>
+                <div class="bg-yellow-50 border-2 border-yellow-400 rounded-2xl p-3">
+                    <div class="text-xs sm:text-sm font-extrabold text-yellow-800">Top Score / 最高分</div>
+                    <div id="lb-stat-top" class="text-2xl sm:text-3xl font-extrabold text-yellow-700">--%</div>
+                </div>
+            </div>
+
+            <!-- Scrollable Standings Table -->
+            <div class="overflow-y-auto flex-1 rounded-2xl border-2 border-amber-300 bg-amber-50/40">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-amber-500 text-white sticky top-0 z-10 text-sm sm:text-base">
+                        <tr>
+                            <th class="py-3 px-4 font-extrabold w-20 text-center">Rank / 名次</th>
+                            <th class="py-3 px-4 font-extrabold">Student / 學生姓名</th>
+                            <th class="py-3 px-4 font-extrabold hidden md:table-cell">Sentence / 練習句子</th>
+                            <th class="py-3 px-4 font-extrabold text-center">Status / 狀態</th>
+                            <th class="py-3 px-4 font-extrabold text-right">Score / 分數</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-tbody" class="divide-y divide-amber-200 text-sm sm:text-base font-bold">
+                        <tr>
+                            <td colspan="5" class="py-10 text-center text-amber-800">
+                                Waiting for students to record their speech... / 等待學生錄音上傳成績中... 🦃
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Footer Controls -->
+            <div class="mt-4 pt-3 border-t-2 border-amber-200 flex flex-wrap items-center justify-between gap-3 shrink-0">
+                <button type="button" onclick="window.clearLeaderboard()" class="bg-red-100 hover:bg-red-200 text-red-800 font-extrabold py-2 px-4 rounded-xl border border-red-400 text-xs sm:text-sm cursor-pointer">
+                    <i class="fas fa-trash-alt mr-1"></i> Reset Class Scores / 清空本班排行榜
+                </button>
+                <button type="button" onclick="window.toggleLeaderboardModal(event)" class="bg-amber-600 hover:bg-amber-500 text-white font-extrabold py-2.5 px-8 rounded-xl shadow cursor-pointer">
+                    Close / 關閉視窗
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- ==========================================================
          TEACHER CUSTOM IMAGE & AUDIO SETUP MODAL
-         Supports all 5 images + custom audio upload
          ========================================================== -->
     <div id="teacher-modal" class="hidden fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl border-4 border-amber-600 shadow-2xl max-w-2xl w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
@@ -817,7 +879,6 @@
             </div>
 
             <div class="space-y-3 text-sm">
-                <!-- 1. Cover Photo (recordcover.gif) -->
                 <div class="bg-amber-50 p-3.5 rounded-2xl border-2 border-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                         <p class="font-extrabold text-amber-950 text-base">1. Cover Photo / 全螢幕封面圖片 (<code>recordcover.gif</code>)</p>
@@ -829,7 +890,6 @@
                     </label>
                 </div>
 
-                <!-- 2. Game Background JPEG (game_background.jpg / .jpeg) -->
                 <div class="bg-amber-50 p-3.5 rounded-2xl border-2 border-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                         <p class="font-extrabold text-amber-950 text-base">2. Game Background / 遊戲背景圖片 (<code>game_background.jpg</code> / <code>.jpeg</code>)</p>
@@ -841,7 +901,6 @@
                     </label>
                 </div>
 
-                <!-- 3. Turkey Holding a Recorder JPEG (turkey_recorder.jpg / .jpeg) -->
                 <div class="bg-amber-50 p-3.5 rounded-2xl border-2 border-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                         <p class="font-extrabold text-amber-950 text-base">3. Turkey Holding Recorder / 拿錄音機的火雞 (<code>turkey_recorder.jpg</code> / <code>.jpeg</code>)</p>
@@ -853,7 +912,6 @@
                     </label>
                 </div>
 
-                <!-- 4. Picture of Sam the Last Turkey JPEG (sam.jpg / .jpeg) -->
                 <div class="bg-amber-50 p-3.5 rounded-2xl border-2 border-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                         <p class="font-extrabold text-amber-950 text-base">4. Photo of Sam / 最後一隻火雞山姆照片 (<code>sam.jpg</code> / <code>.jpeg</code>)</p>
@@ -865,7 +923,6 @@
                     </label>
                 </div>
 
-                <!-- 5. Picture Clue to Find Sam JPEG (sam_place.jpg / .jpeg) -->
                 <div class="bg-amber-50 p-3.5 rounded-2xl border-2 border-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                         <p class="font-extrabold text-amber-950 text-base">5. Place Clue to Find Sam / 尋找山姆的地點線索 (<code>sam_place.jpg</code> / <code>.jpeg</code>)</p>
@@ -877,7 +934,6 @@
                     </label>
                 </div>
 
-                <!-- 6. Optional Custom Thanksgiving Audio -->
                 <div class="bg-amber-50 p-3.5 rounded-2xl border-2 border-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                         <p class="font-extrabold text-amber-950 text-base">6. Thanksgiving Music / 感恩節背景音樂 (Optional)</p>
@@ -902,9 +958,202 @@
     </div>
 
     <!-- ==========================================================
-         JAVASCRIPT LOGIC (ALL HANDLERS ATTACHED TO WINDOW)
+         JAVASCRIPT LOGIC
          ========================================================== -->
     <script>
+        // ==========================================================
+        // FIREBASE LIVE LEADERBOARD CONFIGURATION
+        // Paste your Firebase Realtime Database URL below so iPads &
+        // Chromebooks share live scores in real time!
+        // ==========================================================
+        const FIREBASE_CONFIG = {
+            databaseURL: "YOUR_FIREBASE_DATABASE_URL_HERE" // e.g., "https://thanksgiving-game-default-rtdb.firebaseio.com"
+        };
+
+        let dbRef = null;
+        let isFirebaseConnected = false;
+        let localScoresCache = {};
+
+        function initLiveLeaderboard() {
+            const statusText = document.getElementById('firebase-status-text');
+            if (FIREBASE_CONFIG.databaseURL && FIREBASE_CONFIG.databaseURL.startsWith("https://")) {
+                try {
+                    firebase.initializeApp(FIREBASE_CONFIG);
+                    dbRef = firebase.database().ref('thanksgiving_speaking_scores');
+                    isFirebaseConnected = true;
+                    statusText.textContent = "🟢 Live Cloud Sync Active (All iPads & Chromebooks synced!) / 雲端即時連線中";
+                    statusText.className = "text-xs sm:text-sm font-bold text-green-700";
+
+                    // Listen for real-time updates from any device
+                    dbRef.on('value', (snapshot) => {
+                        const data = snapshot.val() || {};
+                        renderLeaderboardTable(data);
+                    });
+                } catch (err) {
+                    console.error("Firebase init error:", err);
+                    setupLocalFallback();
+                }
+            } else {
+                setupLocalFallback();
+            }
+        }
+
+        function setupLocalFallback() {
+            const statusText = document.getElementById('firebase-status-text');
+            statusText.textContent = "🟡 Local Preview Mode (Add Firebase databaseURL in code to sync across iPads/Chromebooks)";
+            statusText.className = "text-xs sm:text-sm font-bold text-amber-700";
+            try {
+                localScoresCache = JSON.parse(localStorage.getItem('thanksgiving_lb_local') || '{}');
+            } catch (e) {
+                localScoresCache = {};
+            }
+            renderLeaderboardTable(localScoresCache);
+        }
+
+        // Generate a unique device/player key so retakes update the student's best score cleanly
+        function getPlayerKey(name) {
+            const cleanName = name.trim().toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5_-]/g, '_');
+            return cleanName || ('guest_' + Math.floor(Math.random() * 10000));
+        }
+
+        window.saveStudentName = function() {
+            const input = document.getElementById('student-name-input');
+            const nameVal = input.value.trim();
+            if (nameVal) {
+                try { localStorage.setItem('thanksgiving_student_name', nameVal); } catch (e) {}
+            }
+            updateActivePlayerBadge();
+        };
+
+        function getCurrentPlayerName() {
+            const input = document.getElementById('student-name-input');
+            const val = input ? input.value.trim() : "";
+            return val || "Student (未填姓名)";
+        }
+
+        function updateActivePlayerBadge() {
+            const badge = document.getElementById('active-player-badge');
+            if (badge) {
+                badge.textContent = `👤 Player: ${getCurrentPlayerName()}`;
+            }
+        }
+
+        function submitScoreToLeaderboard(score) {
+            const playerName = getCurrentPlayerName();
+            const playerKey = getPlayerKey(playerName);
+            const passed = score >= 60;
+
+            const entry = {
+                name: playerName,
+                score: score,
+                passed: passed,
+                sentence: currentSentenceEn,
+                updatedAt: Date.now()
+            };
+
+            if (isFirebaseConnected && dbRef) {
+                // Keep student's highest score if they play multiple times
+                dbRef.child(playerKey).once('value').then((snap) => {
+                    const existing = snap.val();
+                    if (!existing || score >= existing.score) {
+                        dbRef.child(playerKey).set(entry);
+                    }
+                });
+            } else {
+                const existing = localScoresCache[playerKey];
+                if (!existing || score >= existing.score) {
+                    localScoresCache[playerKey] = entry;
+                    try { localStorage.setItem('thanksgiving_lb_local', JSON.stringify(localScoresCache)); } catch (e) {}
+                }
+                renderLeaderboardTable(localScoresCache);
+            }
+        }
+
+        function renderLeaderboardTable(dataObj) {
+            const entries = Object.values(dataObj || {});
+            // Sort by highest score first, then earliest timestamp
+            entries.sort((a, b) => (b.score - a.score) || (a.updatedAt - b.updatedAt));
+
+            const badge = document.getElementById('leaderboard-count-badge');
+            if (badge) badge.textContent = entries.length;
+
+            const statTotal = document.getElementById('lb-stat-total');
+            const statPassed = document.getElementById('lb-stat-passed');
+            const statTop = document.getElementById('lb-stat-top');
+
+            if (statTotal) statTotal.textContent = entries.length;
+            if (statPassed) statPassed.textContent = entries.filter(e => e.score >= 60).length;
+            if (statTop) statTop.textContent = entries.length > 0 ? `${entries[0].score}%` : '--%';
+
+            const tbody = document.getElementById('leaderboard-tbody');
+            if (!tbody) return;
+
+            if (entries.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="py-10 text-center text-amber-800">
+                            Waiting for students to record their speech... / 等待學生錄音上傳成績中... 🦃
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            tbody.innerHTML = entries.map((item, idx) => {
+                const rank = idx + 1;
+                let rankBadge = `<span class="text-amber-900 font-extrabold">#${rank}</span>`;
+                let rowBg = "bg-white hover:bg-amber-50";
+
+                if (rank === 1) {
+                    rankBadge = `<span class="text-2xl" title="1st Place">🥇</span>`;
+                    rowBg = "bg-yellow-50/90 hover:bg-yellow-100";
+                } else if (rank === 2) {
+                    rankBadge = `<span class="text-2xl" title="2nd Place">🥈</span>`;
+                    rowBg = "bg-gray-50/90 hover:bg-gray-100";
+                } else if (rank === 3) {
+                    rankBadge = `<span class="text-2xl" title="3rd Place">🥉</span>`;
+                    rowBg = "bg-orange-50/80 hover:bg-orange-100";
+                }
+
+                const statusHtml = item.score >= 60
+                    ? `<span class="inline-block bg-green-100 text-green-800 border border-green-400 px-2.5 py-0.5 rounded-full text-xs font-extrabold">✅ Passed / 過關</span>`
+                    : `<span class="inline-block bg-amber-100 text-amber-800 border border-amber-400 px-2.5 py-0.5 rounded-full text-xs font-extrabold">🔄 Practicing / 練習中</span>`;
+
+                const scoreColor = item.score >= 90 ? "text-green-700" : (item.score >= 60 ? "text-emerald-700" : "text-red-600");
+
+                return `
+                    <tr class="${rowBg} transition">
+                        <td class="py-3 px-4 text-center">${rankBadge}</td>
+                        <td class="py-3 px-4 font-extrabold text-amber-950">${escapeHtml(item.name)}</td>
+                        <td class="py-3 px-4 text-xs text-amber-800 hidden md:table-cell">${escapeHtml(item.sentence || '')}</td>
+                        <td class="py-3 px-4 text-center">${statusHtml}</td>
+                        <td class="py-3 px-4 text-right font-extrabold text-lg sm:text-xl ${scoreColor}">${item.score}%</td>
+                    </tr>`;
+            }).join('');
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, (m) => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[m]));
+        }
+
+        window.toggleLeaderboardModal = function(event) {
+            if (event) event.stopPropagation();
+            const modal = document.getElementById('leaderboard-modal');
+            modal.classList.toggle('hidden');
+        };
+
+        window.clearLeaderboard = function() {
+            if (!confirm("Are you sure you want to clear all scores on the leaderboard? / 確定要清空所有學生的排行榜成績嗎？")) return;
+            if (isFirebaseConnected && dbRef) {
+                dbRef.remove();
+            } else {
+                localScoresCache = {};
+                try { localStorage.removeItem('thanksgiving_lb_local'); } catch (e) {}
+                renderLeaderboardTable(localScoresCache);
+            }
+        };
+
         // --- AUTOMATIC .JPG / .JPEG EXTENSION FALLBACK HELPER ---
         window.tryAlternateExtension = function(imgElement, fallbackList, placeholderId) {
             const triedIndex = parseInt(imgElement.getAttribute('data-try-index') || '0', 10);
@@ -936,47 +1185,31 @@
         let musicLoopTimer = null;
         let useCustomAudioFile = false;
 
-        // Warm, festive Thanksgiving Autumn Folk Melody
         const melodySequence = [
-            { freq: 349.23, dur: 0.35 }, // F4
-            { freq: 392.00, dur: 0.35 }, // G4
-            { freq: 440.00, dur: 0.50 }, // A4
-            { freq: 523.25, dur: 0.35 }, // C5
-            { freq: 440.00, dur: 0.35 }, // A4
-            { freq: 392.00, dur: 0.35 }, // G4
-            { freq: 349.23, dur: 0.65 }, // F4
-            { freq: 0,      dur: 0.15 }, // Rest
-            { freq: 392.00, dur: 0.35 }, // G4
-            { freq: 440.00, dur: 0.35 }, // A4
-            { freq: 523.25, dur: 0.50 }, // C5
-            { freq: 587.33, dur: 0.35 }, // D5
-            { freq: 523.25, dur: 0.70 }, // C5
-            { freq: 0,      dur: 0.20 }, // Rest
-            { freq: 587.33, dur: 0.35 }, // D5
-            { freq: 523.25, dur: 0.35 }, // C5
-            { freq: 440.00, dur: 0.35 }, // A4
-            { freq: 392.00, dur: 0.35 }, // G4
-            { freq: 349.23, dur: 0.80 }, // F4
-            { freq: 0,      dur: 0.30 }  // Rest
+            { freq: 349.23, dur: 0.35 }, { freq: 392.00, dur: 0.35 },
+            { freq: 440.00, dur: 0.50 }, { freq: 523.25, dur: 0.35 },
+            { freq: 440.00, dur: 0.35 }, { freq: 392.00, dur: 0.35 },
+            { freq: 349.23, dur: 0.65 }, { freq: 0,      dur: 0.15 },
+            { freq: 392.00, dur: 0.35 }, { freq: 440.00, dur: 0.35 },
+            { freq: 523.25, dur: 0.50 }, { freq: 587.33, dur: 0.35 },
+            { freq: 523.25, dur: 0.70 }, { freq: 0,      dur: 0.20 },
+            { freq: 587.33, dur: 0.35 }, { freq: 523.25, dur: 0.35 },
+            { freq: 440.00, dur: 0.35 }, { freq: 392.00, dur: 0.35 },
+            { freq: 349.23, dur: 0.80 }, { freq: 0,      dur: 0.30 }
         ];
         let currentNoteIndex = 0;
 
         function playNextMelodyNote() {
             if (!isMusicPlaying || useCustomAudioFile) return;
-
             try {
                 if (!audioCtx) {
                     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
                     audioCtx = new AudioContextClass();
                 }
-                if (audioCtx.state === 'suspended') {
-                    audioCtx.resume();
-                }
+                if (audioCtx.state === 'suspended') audioCtx.resume();
 
                 const note = melodySequence[currentNoteIndex];
                 currentNoteIndex = (currentNoteIndex + 1) % melodySequence.length;
-
-                // Soften background music while student is actively recording
                 const baseGain = isRecording ? 0.008 : 0.055;
 
                 if (note.freq > 0) {
@@ -984,29 +1217,22 @@
                     const gain = audioCtx.createGain();
                     osc.type = 'triangle';
                     osc.frequency.setValueAtTime(note.freq, audioCtx.currentTime);
-
                     gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(baseGain, audioCtx.currentTime + 0.04);
                     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + note.dur);
-
                     osc.connect(gain);
                     gain.connect(audioCtx.destination);
-
                     osc.start();
                     osc.stop(audioCtx.currentTime + note.dur);
                 }
-
                 musicLoopTimer = setTimeout(playNextMelodyNote, note.dur * 1000);
-            } catch (e) {
-                console.warn("Audio notice:", e);
-            }
+            } catch (e) {}
         }
 
         window.startBackgroundMusic = function() {
             if (isMusicPlaying) return;
             isMusicPlaying = true;
             updateMusicUI();
-
             const audioEl = document.getElementById('bg-audio-file');
             if (useCustomAudioFile && audioEl) {
                 audioEl.volume = 0.25;
@@ -1029,11 +1255,8 @@
 
         window.toggleBackgroundMusic = function(event) {
             if (event) event.stopPropagation();
-            if (isMusicPlaying) {
-                window.stopBackgroundMusic();
-            } else {
-                window.startBackgroundMusic();
-            }
+            if (isMusicPlaying) window.stopBackgroundMusic();
+            else window.startBackgroundMusic();
         };
 
         function updateMusicUI() {
@@ -1041,10 +1264,10 @@
             const label = document.getElementById('music-label');
             if (isMusicPlaying) {
                 icon.className = 'fas fa-volume-up text-lg';
-                label.textContent = 'Music ON / 背景音樂：開';
+                label.textContent = 'Music ON / 音樂：開';
             } else {
                 icon.className = 'fas fa-volume-mute text-lg';
-                label.textContent = 'Music OFF / 背景音樂：關';
+                label.textContent = 'Music OFF / 音樂：關';
             }
         }
 
@@ -1055,7 +1278,6 @@
                     audioCtx = new AudioContextClass();
                 }
                 if (audioCtx.state === 'suspended') audioCtx.resume();
-
                 const now = audioCtx.currentTime;
                 if (type === 'success') {
                     const freqs = [523.25, 659.25, 783.99, 1046.50];
@@ -1092,19 +1314,16 @@
         // --- 1. COVER PAGE CLICK TO START ---
         window.startFromCover = function(event) {
             if (event) event.stopPropagation();
-
             const coverScreen = document.getElementById('cover-screen');
             if (coverScreen) {
                 coverScreen.style.display = 'none';
                 coverScreen.classList.add('hidden');
             }
-
             const gameContainer = document.getElementById('game-container');
             if (gameContainer) {
                 gameContainer.classList.remove('hidden');
                 gameContainer.style.display = 'flex';
             }
-
             window.goToStep(1);
             window.startBackgroundMusic();
         };
@@ -1116,12 +1335,11 @@
             coverScreen.style.display = 'flex';
         };
 
-        // --- 2. SENTENCE BUILDER LOGIC (BILINGUAL) ---
+        // --- 2. SENTENCE BUILDER LOGIC ---
         window.updateSentence = function(ev) {
             const personSelect = document.getElementById('select-person');
             const pronounSelect = document.getElementById('select-pronoun');
             const adjSelect = document.getElementById('select-adj');
-
             if (!personSelect || !pronounSelect || !adjSelect) return;
 
             const personOption = personSelect.options[personSelect.selectedIndex];
@@ -1129,7 +1347,6 @@
             const personZh = personOption.getAttribute('data-zh');
             const suggestedPronoun = personOption.getAttribute('data-pronoun');
 
-            // Automatically switch pronoun when mom or dad is selected
             if (ev && ev.target && ev.target.id === 'select-person') {
                 if (suggestedPronoun === 'she' || suggestedPronoun === 'he') {
                     pronounSelect.value = suggestedPronoun;
@@ -1153,7 +1370,6 @@
             document.getElementById('record-target-zh').textContent = currentSentenceZh;
         };
 
-        // --- TEXT-TO-SPEECH (PRACTICE HOW TO READ) ---
         window.speakTargetSentence = function(rate = 0.85) {
             if (!('speechSynthesis' in window)) return;
             window.speechSynthesis.cancel();
@@ -1164,11 +1380,8 @@
             window.speechSynthesis.speak(utter);
         };
 
-        // --- NAVIGATION BETWEEN STEPS ---
         window.goToStep = function(stepNumber) {
-            if (isRecording) {
-                window.stopRecordingProcess();
-            }
+            if (isRecording) window.stopRecordingProcess();
 
             const s1 = document.getElementById('screen-practice');
             const s2 = document.getElementById('screen-record');
@@ -1194,6 +1407,7 @@
                 b1.className = activeClass;
             } else if (stepNumber === 2) {
                 window.updateSentence();
+                updateActivePlayerBadge();
                 s2.classList.remove('hidden');
                 b2.className = activeClass;
             } else if (stepNumber === 3) {
@@ -1220,11 +1434,8 @@
 
         // --- STEP 2: VOICE RECORDING & GRADING ---
         window.toggleRecording = function() {
-            if (isRecording) {
-                window.stopRecordingProcess();
-            } else {
-                window.startRecordingProcess();
-            }
+            if (isRecording) window.stopRecordingProcess();
+            else window.startRecordingProcess();
         };
 
         window.startRecordingProcess = async function() {
@@ -1232,7 +1443,6 @@
             latestTranscript = "";
             recordingStartTime = Date.now();
 
-            // Visual UI updates for active recording
             const turkeyBtn = document.getElementById('turkey-record-btn');
             turkeyBtn.classList.add('recording-active');
 
@@ -1249,15 +1459,11 @@
             document.getElementById('record-status-zh').textContent = "正在錄音中... 請大聲朗讀句子，唸完再點一下火雞停止錄音！";
             document.getElementById('spoken-transcript-box').textContent = "Listening to your speech... / 正在聆聽你的發音...";
 
-            // Auto-stop after 8 seconds if student forgets to click stop
             if (autoStopTimeout) clearTimeout(autoStopTimeout);
             autoStopTimeout = setTimeout(() => {
-                if (isRecording) {
-                    window.stopRecordingProcess();
-                }
+                if (isRecording) window.stopRecordingProcess();
             }, 8000);
 
-            // 1. Start MediaRecorder so students can replay their own voice
             try {
                 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -1274,11 +1480,8 @@
                     };
                     mediaRecorder.start();
                 }
-            } catch (err) {
-                console.warn("MediaRecorder notice:", err);
-            }
+            } catch (err) {}
 
-            // 2. Start Web Speech API (SpeechRecognition)
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRecognition) {
                 try {
@@ -1292,26 +1495,16 @@
                         let finalStr = '';
                         for (let i = 0; i < event.results.length; i++) {
                             const transcript = event.results[i][0].transcript;
-                            if (event.results[i].isFinal) {
-                                finalStr += transcript + ' ';
-                            } else {
-                                interim += transcript;
-                            }
+                            if (event.results[i].isFinal) finalStr += transcript + ' ';
+                            else interim += transcript;
                         }
                         latestTranscript = (finalStr + interim).trim();
                         if (latestTranscript) {
                             document.getElementById('spoken-transcript-box').textContent = `"${latestTranscript}"`;
                         }
                     };
-
-                    recognition.onerror = (event) => {
-                        console.warn("SpeechRecognition notice:", event.error);
-                    };
-
                     recognition.start();
-                } catch (e) {
-                    console.warn("SpeechRecognition start error:", e);
-                }
+                } catch (e) {}
             }
         };
 
@@ -1322,7 +1515,6 @@
 
             const durationMs = Date.now() - recordingStartTime;
 
-            // Restore Turkey Button UI
             const turkeyBtn = document.getElementById('turkey-record-btn');
             turkeyBtn.classList.remove('recording-active');
 
@@ -1338,12 +1530,8 @@
             document.getElementById('record-status-en').textContent = "Tap the turkey to record again!";
             document.getElementById('record-status-zh').textContent = "點擊火雞圖案可以重新錄音！";
 
-            if (recognition) {
-                try { recognition.stop(); } catch (e) {}
-            }
-            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                try { mediaRecorder.stop(); } catch (e) {}
-            }
+            if (recognition) { try { recognition.stop(); } catch (e) {} }
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') { try { mediaRecorder.stop(); } catch (e) {} }
 
             setTimeout(() => {
                 evaluateSpeakingResult(latestTranscript, durationMs);
@@ -1356,11 +1544,9 @@
             audio.play();
         };
 
-        // Evaluate student speech with automatic duration fallback so classroom devices never get stuck
         function evaluateSpeakingResult(transcript, durationMs) {
             const cleanTarget = currentSentenceEn.toLowerCase().replace(/[^a-z\s]/g, '').trim();
             const targetWords = cleanTarget.split(/\s+/);
-
             let finalScore = 0;
 
             if (transcript && transcript.trim().length > 0) {
@@ -1389,7 +1575,6 @@
                 const rawRatio = matchedCount / targetWords.length;
                 finalScore = Math.min(100, Math.round(rawRatio * 105));
             } else {
-                // Automatic timer fallback if SpeechRecognition is restricted on school device
                 if (durationMs >= 1800) {
                     finalScore = Math.min(96, Math.max(74, Math.round((durationMs / 3800) * 86)));
                     document.getElementById('spoken-transcript-box').textContent = `"${currentSentenceEn}" (Voice recorded: ${(durationMs / 1000).toFixed(1)}s / 已完成語音錄製 ${(durationMs / 1000).toFixed(1)} 秒)`;
@@ -1419,8 +1604,10 @@
             return matrix[a.length][b.length];
         }
 
-        // Display Grade, Traditional Chinese & English Speaking Comment, and Pass (60%+) / Retry (<60%)
         function displayEvaluationGrade(score) {
+            // Automatically push score to the live cross-device leaderboard!
+            submitScoreToLeaderboard(score);
+
             const scoreNumEl = document.getElementById('score-number');
             const circleEl = document.getElementById('score-badge-circle');
             const statusBanner = document.getElementById('pass-status-banner');
@@ -1488,7 +1675,6 @@
                 playSoundEffect('success');
 
             } else {
-                // Lower than 60% -> Let them record again
                 circleEl.className = "w-28 h-28 rounded-full border-8 border-red-400 bg-red-50 flex flex-col items-center justify-center shrink-0 shadow-md";
                 scoreNumEl.className = "text-3xl font-extrabold text-red-600";
                 statusBanner.className = "inline-block px-3 py-1 rounded-full text-xs sm:text-sm font-extrabold bg-red-600 text-white mb-1";
@@ -1566,7 +1752,6 @@
             }
         };
 
-        // Decorative floating autumn leaves
         function initAutumnLeaves() {
             const container = document.getElementById('leaves-container');
             if (!container) return;
@@ -1582,10 +1767,14 @@
             }
         }
 
-        // Initialize immediately on load
         document.addEventListener('DOMContentLoaded', () => {
+            try {
+                const savedName = localStorage.getItem('thanksgiving_student_name');
+                if (savedName) document.getElementById('student-name-input').value = savedName;
+            } catch (e) {}
             window.updateSentence();
             initAutumnLeaves();
+            initLiveLeaderboard();
         });
     </script>
 </body>
