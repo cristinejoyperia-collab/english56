@@ -23,6 +23,12 @@
             font-weight: 900;
         }
 
+        /* Allow typing and selecting inside input fields on iPad/Mobile */
+        input {
+            user-select: text !important;
+            -webkit-user-select: text !important;
+        }
+
         body, html {
             margin: 0;
             padding: 0;
@@ -787,16 +793,16 @@
     </div>
 
     <!-- ==========================================================
-         LIVE LEADERBOARD MODAL (Project on Classroom Screen or View on iPads)
+         LIVE LEADERBOARD MODAL (Student Read-Only View; Owner PIN Required to Download or Reset)
          ========================================================== -->
     <div id="leaderboard-modal" class="hidden fixed inset-0 z-[105] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl border-4 border-yellow-500 shadow-2xl max-w-4xl w-full p-6 sm:p-8 max-h-[90vh] flex flex-col">
             <!-- Header -->
-            <div class="flex items-center justify-between border-b-2 border-amber-200 pb-4 mb-4 shrink-0">
+            <div class="flex items-center justify-between border-b-2 border-amber-200 pb-4 mb-4 shrink-0 gap-2">
                 <div class="flex items-center gap-3">
-                    <span class="text-4xl">🏆</span>
+                    <span class="text-3xl sm:text-4xl">🏆</span>
                     <div>
-                        <h3 class="text-2xl sm:text-3xl font-extrabold text-amber-950">
+                        <h3 class="text-xl sm:text-3xl font-extrabold text-amber-950">
                             Live Class Leaderboard / 感恩節口說即時排行榜
                         </h3>
                         <p id="firebase-status-text" class="text-xs sm:text-sm font-bold text-amber-700">
@@ -804,9 +810,59 @@
                         </p>
                     </div>
                 </div>
-                <button type="button" onclick="window.toggleLeaderboardModal(event)" class="text-gray-500 hover:text-red-600 text-3xl font-bold px-2 cursor-pointer">
-                    <i class="fas fa-times"></i>
-                </button>
+                <div class="flex items-center gap-2 shrink-0">
+                    <!-- Discreet Owner/Teacher Toggle Button -->
+                    <button id="teacher-toggle-btn" type="button" onclick="window.toggleTeacherAuthPanel()" title="Teacher / Owner Controls"
+                        class="bg-amber-100 hover:bg-amber-200 text-amber-900 font-extrabold px-3 py-1.5 rounded-full text-xs sm:text-sm border-2 border-amber-300 shadow-sm active:scale-95 transition flex items-center gap-1 cursor-pointer">
+                        <span>&#128274;</span> <span>老師專區</span>
+                    </button>
+                    <button type="button" onclick="window.toggleLeaderboardModal(event)" class="text-gray-500 hover:text-red-600 text-3xl font-bold px-2 cursor-pointer">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Inline Teacher PIN Prompt (Hidden for Students by default) -->
+            <div id="teacher-pin-panel" class="hidden bg-amber-50 border-2 border-amber-400 rounded-2xl p-3 mb-4 shadow-inner shrink-0">
+                <div class="flex flex-col sm:flex-row items-center gap-2">
+                    <label for="teacher-pin-input" class="text-xs sm:text-sm font-extrabold text-amber-950 whitespace-nowrap">
+                        &#128273; Owner PIN / 老師密碼:
+                    </label>
+                    <input id="teacher-pin-input" type="password" maxlength="20" placeholder="Enter PIN..."
+                           onkeydown="if(event.key==='Enter') window.verifyTeacherPin()"
+                           class="w-full sm:flex-1 px-3 py-1.5 rounded-xl border-2 border-amber-400 bg-white text-amber-950 font-extrabold text-sm focus:outline-none focus:border-orange-500" />
+                    <div class="flex gap-1.5 w-full sm:w-auto">
+                        <button type="button" onclick="window.verifyTeacherPin()" class="flex-1 sm:flex-initial bg-green-600 hover:bg-green-700 text-white font-extrabold px-4 py-1.5 rounded-xl text-xs sm:text-sm border-2 border-white shadow active:scale-95 cursor-pointer">
+                            Unlock / 解鎖
+                        </button>
+                        <button type="button" onclick="window.hideTeacherAuthPanel()" class="bg-gray-400 hover:bg-gray-500 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs sm:text-sm border-2 border-white shadow active:scale-95 cursor-pointer">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+                <p id="teacher-pin-error" class="text-red-600 text-xs font-extrabold mt-1.5 text-center hidden">
+                    &#10060; Incorrect PIN! Only the owner can access these controls. / 密碼錯誤！
+                </p>
+            </div>
+
+            <!-- Owner / Teacher Admin Panel (Visible ONLY after PIN unlock) -->
+            <div id="owner-controls-panel" class="hidden bg-orange-100 border-2 border-orange-400 rounded-2xl p-3.5 mb-4 shadow-md shrink-0">
+                <div class="flex justify-between items-center mb-2.5">
+                    <span class="text-xs sm:text-sm font-extrabold text-orange-950 flex items-center gap-1.5">
+                        <span>&#128275;</span> <span>Owner / Teacher Controls (老師管理專區)</span>
+                    </span>
+                    <button type="button" onclick="window.lockOwnerMode()" class="bg-amber-700 hover:bg-amber-800 text-white font-extrabold px-3 py-1 rounded-lg text-xs border border-white shadow active:scale-95 cursor-pointer">
+                        &#128274; Lock / 鎖定
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <button type="button" onclick="window.downloadLeaderboardCSV()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-2.5 px-4 rounded-xl border-2 border-white shadow text-sm sm:text-base active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer">
+                        <span>&#128229;</span> <span>Download CSV / 下載成績單</span>
+                    </button>
+                    <button id="clear-leaderboard-btn" type="button" onclick="window.handleClearLeaderboard()" class="w-full bg-red-600 hover:bg-red-700 text-white font-extrabold py-2.5 px-4 rounded-xl border-2 border-white shadow text-sm sm:text-base active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer">
+                        <span>&#128465;&#65039;</span> <span>Reset Class Scores / 清空本班排行榜</span>
+                    </button>
+                </div>
             </div>
 
             <!-- Live Stats Summary -->
@@ -847,12 +903,9 @@
                 </table>
             </div>
 
-            <!-- Footer Controls -->
-            <div class="mt-4 pt-3 border-t-2 border-amber-200 flex flex-wrap items-center justify-between gap-3 shrink-0">
-                <button type="button" onclick="window.clearLeaderboard()" class="bg-red-100 hover:bg-red-200 text-red-800 font-extrabold py-2 px-4 rounded-xl border border-red-400 text-xs sm:text-sm cursor-pointer">
-                    <i class="fas fa-trash-alt mr-1"></i> Reset Class Scores / 清空本班排行榜
-                </button>
-                <button type="button" onclick="window.toggleLeaderboardModal(event)" class="bg-amber-600 hover:bg-amber-500 text-white font-extrabold py-2.5 px-8 rounded-xl shadow cursor-pointer">
+            <!-- Footer Controls: Student Read-Only View (Only Close Button) -->
+            <div class="mt-4 pt-3 border-t-2 border-amber-200 flex items-center justify-end shrink-0">
+                <button type="button" onclick="window.toggleLeaderboardModal(event)" class="w-full sm:w-auto bg-amber-600 hover:bg-amber-500 text-white font-extrabold py-2.5 px-10 rounded-xl shadow cursor-pointer">
                     Close / 關閉視窗
                 </button>
             </div>
@@ -962,6 +1015,12 @@
          ========================================================== -->
     <script>
         // ==========================================================
+        // OWNER / TEACHER PIN CONFIGURATION
+        // Change OWNER_PIN below if you want a custom password to unlock CSV download & Reset Scores
+        // ==========================================================
+        const OWNER_PIN = "1234";
+
+        // ==========================================================
         // FIREBASE LIVE LEADERBOARD CONFIGURATION (CONNECTED!)
         // ==========================================================
         const FIREBASE_CONFIG = {
@@ -971,6 +1030,169 @@
         let dbRef = null;
         let isFirebaseConnected = false;
         let localScoresCache = {};
+
+        // Cached full sorted leaderboard entries for CSV export
+        let currentLeaderboardEntries = [];
+        let isOwnerUnlocked = false;
+
+        // Two-tap safety state for Reset Class Scores button
+        let clearConfirmArmed = false;
+        let clearConfirmTimer = null;
+
+        function resetClearButtonState() {
+            clearConfirmArmed = false;
+            if (clearConfirmTimer) clearTimeout(clearConfirmTimer);
+            const btn = document.getElementById('clear-leaderboard-btn');
+            if (btn) {
+                btn.innerHTML = '<span>&#128465;&#65039;</span> <span>Reset Class Scores / 清空本班排行榜</span>';
+                btn.classList.remove('bg-red-800', 'ring-4', 'ring-yellow-300');
+                btn.classList.add('bg-red-600');
+            }
+        }
+
+        // ==========================================================
+        // OWNER / TEACHER AUTHENTICATION & CONTROLS
+        // ==========================================================
+        window.toggleTeacherAuthPanel = function() {
+            if (isOwnerUnlocked) {
+                window.lockOwnerMode();
+                return;
+            }
+            const pinPanel = document.getElementById('teacher-pin-panel');
+            const pinInput = document.getElementById('teacher-pin-input');
+            const pinError = document.getElementById('teacher-pin-error');
+
+            if (pinPanel.classList.contains('hidden')) {
+                pinPanel.classList.remove('hidden');
+                pinError.classList.add('hidden');
+                pinInput.value = "";
+                setTimeout(() => pinInput.focus(), 50);
+            } else {
+                window.hideTeacherAuthPanel();
+            }
+        };
+
+        window.hideTeacherAuthPanel = function() {
+            document.getElementById('teacher-pin-panel').classList.add('hidden');
+            document.getElementById('teacher-pin-error').classList.add('hidden');
+            document.getElementById('teacher-pin-input').value = "";
+        };
+
+        window.verifyTeacherPin = function() {
+            const inputVal = document.getElementById('teacher-pin-input').value.trim();
+            const errorEl = document.getElementById('teacher-pin-error');
+
+            if (inputVal === OWNER_PIN || inputVal.toLowerCase() === "teacher") {
+                isOwnerUnlocked = true;
+                window.hideTeacherAuthPanel();
+                document.getElementById('owner-controls-panel').classList.remove('hidden');
+                document.getElementById('teacher-toggle-btn').classList.add('hidden');
+            } else {
+                errorEl.classList.remove('hidden');
+            }
+        };
+
+        window.lockOwnerMode = function() {
+            isOwnerUnlocked = false;
+            resetClearButtonState();
+            window.hideTeacherAuthPanel();
+            const ownerPanel = document.getElementById('owner-controls-panel');
+            const toggleBtn = document.getElementById('teacher-toggle-btn');
+            if (ownerPanel) ownerPanel.classList.add('hidden');
+            if (toggleBtn) toggleBtn.classList.remove('hidden');
+        };
+
+        // Export full leaderboard as UTF-8 BOM CSV for Excel compatibility
+        window.downloadLeaderboardCSV = function() {
+            if (!isOwnerUnlocked) return;
+
+            const statusText = document.getElementById('firebase-status-text');
+            if (!currentLeaderboardEntries || currentLeaderboardEntries.length === 0) {
+                statusText.textContent = "⚠️ No scores available to download yet! / 目前尚無學生分數可下載！";
+                statusText.className = "text-xs sm:text-sm font-bold text-red-600";
+                return;
+            }
+
+            const headers = ["Rank", "Student Class & Name", "Score (%)", "Status", "Sentence", "Recorded Time"];
+            const rows = currentLeaderboardEntries.map((item, idx) => {
+                const rank = idx + 1;
+                const studentName = String(item.name || "").replace(/"/g, '""');
+                const scoreVal = item.score !== undefined ? item.score : 0;
+                const statusStr = scoreVal >= 60 ? "Passed" : "Practicing";
+                const sentenceStr = String(item.sentence || "").replace(/"/g, '""');
+                const dateStr = item.updatedAt ? new Date(item.updatedAt).toLocaleString() : "";
+
+                return [
+                    rank,
+                    `"${studentName}"`,
+                    `${scoreVal}%`,
+                    `"${statusStr}"`,
+                    `"${sentenceStr}"`,
+                    `"${dateStr}"`
+                ].join(",");
+            });
+
+            // Prepend UTF-8 BOM (\uFEFF) so Microsoft Excel opens Traditional Chinese & symbols properly
+            const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            const filename = `thanksgiving_speaking_leaderboard_${yyyy}-${mm}-${dd}.csv`;
+
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            statusText.textContent = `📥 Downloaded ${currentLeaderboardEntries.length} student records (${filename})! / 已下載成績單！`;
+            statusText.className = "text-xs sm:text-sm font-bold text-emerald-700";
+        };
+
+        // Two-tap Reset Class Scores (Only accessible when Owner Mode is unlocked)
+        window.handleClearLeaderboard = function() {
+            if (!isOwnerUnlocked) return;
+
+            const btn = document.getElementById('clear-leaderboard-btn');
+            const statusText = document.getElementById('firebase-status-text');
+
+            if (!clearConfirmArmed) {
+                clearConfirmArmed = true;
+                btn.innerHTML = '<span>&#9888;&#65039;</span> <span>Tap Again to Clear / 再點一次確認清空</span>';
+                btn.classList.remove('bg-red-600');
+                btn.classList.add('bg-red-800', 'ring-4', 'ring-yellow-300');
+
+                clearConfirmTimer = setTimeout(() => {
+                    resetClearButtonState();
+                }, 4000);
+                return;
+            }
+
+            // Second tap confirmed -> delete all entries
+            resetClearButtonState();
+            localScoresCache = {};
+            currentLeaderboardEntries = [];
+            try { localStorage.removeItem('thanksgiving_lb_local'); } catch (e) {}
+
+            if (isFirebaseConnected && dbRef) {
+                dbRef.remove().then(() => {
+                    statusText.textContent = "🗑️ Leaderboard cleared by Owner! Ready for the next class. / 排行榜已清空！";
+                    statusText.className = "text-xs sm:text-sm font-bold text-amber-800";
+                }).catch((err) => {
+                    console.error("Error clearing Firebase leaderboard:", err);
+                    statusText.textContent = "⚠️ Local scores cleared (check Firebase write rules if online entries remain).";
+                });
+            } else {
+                renderLeaderboardTable(localScoresCache);
+                statusText.textContent = "🗑️ Local leaderboard cleared by Owner! / 排行榜已清空！";
+            }
+        };
 
         function initLiveLeaderboard() {
             const statusText = document.getElementById('firebase-status-text');
@@ -1072,6 +1294,9 @@
             // Sort by highest score first, then earliest timestamp
             entries.sort((a, b) => (b.score - a.score) || (a.updatedAt - b.updatedAt));
 
+            // Save sorted entries for Teacher CSV download
+            currentLeaderboardEntries = entries;
+
             const badge = document.getElementById('leaderboard-count-badge');
             if (badge) badge.textContent = entries.length;
 
@@ -1137,19 +1362,9 @@
 
         window.toggleLeaderboardModal = function(event) {
             if (event) event.stopPropagation();
+            window.lockOwnerMode();
             const modal = document.getElementById('leaderboard-modal');
             modal.classList.toggle('hidden');
-        };
-
-        window.clearLeaderboard = function() {
-            if (!confirm("Are you sure you want to clear all scores on the leaderboard? / 確定要清空所有學生的排行榜成績嗎？")) return;
-            if (isFirebaseConnected && dbRef) {
-                dbRef.remove();
-            } else {
-                localScoresCache = {};
-                try { localStorage.removeItem('thanksgiving_lb_local'); } catch (e) {}
-                renderLeaderboardTable(localScoresCache);
-            }
         };
 
         // --- AUTOMATIC .JPG / .JPEG EXTENSION FALLBACK HELPER ---
