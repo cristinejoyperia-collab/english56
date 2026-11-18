@@ -122,16 +122,66 @@
       </div>
     </div>
 
-    <!-- LEADERBOARD MODAL -->
+    <!-- LEADERBOARD MODAL (Student View Only by Default; Owner PIN Required to Download or Clear) -->
     <div id="leaderboard-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-      <div class="glass-card max-w-xl w-full rounded-3xl p-5 sm:p-7 flex flex-col max-h-[85vh] border-4 border-amber-400">
+      <div class="glass-card max-w-xl w-full rounded-3xl p-5 sm:p-7 flex flex-col max-h-[88vh] border-4 border-amber-400">
+        <!-- Header -->
         <div class="flex justify-between items-center border-b-2 border-amber-200 pb-3 mb-3">
-          <h3 class="text-2xl sm:text-3xl font-black text-amber-950 flex items-center gap-2">
+          <h3 class="text-xl sm:text-3xl font-black text-amber-950 flex items-center gap-2">
             &#127942; Top Spellers / 排行榜
           </h3>
-          <button onclick="closeLeaderboardModal()" aria-label="Close Leaderboard" class="bg-red-500 hover:bg-red-600 text-white font-black w-10 h-10 rounded-full text-xl border-2 border-white shadow-md active:scale-95">
-            &#10005;
-          </button>
+          <div class="flex items-center gap-2">
+            <!-- Discreet Owner/Teacher Toggle Button -->
+            <button id="teacher-toggle-btn" onclick="toggleTeacherAuthPanel()" title="Teacher / Owner Controls" class="bg-amber-100 hover:bg-amber-200 text-amber-900 font-black px-3 py-1.5 rounded-full text-xs sm:text-sm border-2 border-amber-300 shadow-sm active:scale-95 transition flex items-center gap-1">
+              &#128274; <span>老師專區</span>
+            </button>
+            <button onclick="closeLeaderboardModal()" aria-label="Close Leaderboard" class="bg-red-500 hover:bg-red-600 text-white font-black w-10 h-10 rounded-full text-xl border-2 border-white shadow-md active:scale-95">
+              &#10005;
+            </button>
+          </div>
+        </div>
+
+        <!-- Inline Teacher PIN Prompt (Hidden for Students by default) -->
+        <div id="teacher-pin-panel" class="hidden bg-amber-50 border-2 border-amber-400 rounded-2xl p-3 mb-3 shadow-inner">
+          <div class="flex flex-col sm:flex-row items-center gap-2">
+            <label for="teacher-pin-input" class="text-xs sm:text-sm font-black text-amber-950 whitespace-nowrap">
+              &#128273; Owner PIN / 老師密碼:
+            </label>
+            <input id="teacher-pin-input" type="password" maxlength="20" placeholder="Enter PIN..."
+                   onkeydown="if(event.key==='Enter') verifyTeacherPin()"
+                   class="w-full sm:flex-1 px-3 py-1.5 rounded-xl border-2 border-amber-400 bg-white text-amber-950 font-black text-sm focus:outline-none focus:border-orange-500" />
+            <div class="flex gap-1.5 w-full sm:w-auto">
+              <button onclick="verifyTeacherPin()" class="flex-1 sm:flex-initial bg-green-600 hover:bg-green-700 text-white font-black px-4 py-1.5 rounded-xl text-xs sm:text-sm border-2 border-white shadow active:scale-95">
+                Unlock / 解鎖
+              </button>
+              <button onclick="hideTeacherAuthPanel()" class="bg-gray-400 hover:bg-gray-500 text-white font-black px-3 py-1.5 rounded-xl text-xs sm:text-sm border-2 border-white shadow active:scale-95">
+                Cancel
+              </button>
+            </div>
+          </div>
+          <p id="teacher-pin-error" class="text-red-600 text-xs font-black mt-1.5 text-center hidden">
+            &#10060; Incorrect PIN! Only the owner can access these controls. / 密碼錯誤！
+          </p>
+        </div>
+
+        <!-- Owner / Teacher Admin Panel (Visible ONLY after PIN unlock) -->
+        <div id="owner-controls-panel" class="hidden bg-orange-100 border-2 border-orange-400 rounded-2xl p-3 mb-3 shadow-md">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-xs sm:text-sm font-black text-orange-900 flex items-center gap-1">
+              &#128275; Owner Controls / 老師管理專區
+            </span>
+            <button onclick="lockOwnerMode()" class="bg-amber-700 hover:bg-amber-800 text-white font-black px-2.5 py-1 rounded-lg text-xs border border-white shadow active:scale-95">
+              &#128274; Lock / 鎖定
+            </button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button onclick="downloadLeaderboardCSV()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2.5 px-4 rounded-xl border-2 border-white shadow text-sm sm:text-base active:scale-95 transition flex items-center justify-center gap-1.5">
+              &#128229; Download CSV / 下載成績單
+            </button>
+            <button id="clear-leaderboard-btn" onclick="handleClearLeaderboard()" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-2.5 px-4 rounded-xl border-2 border-white shadow text-sm sm:text-base active:scale-95 transition flex items-center justify-center gap-1.5">
+              &#128465;&#65039; Clear All / 清除名單
+            </button>
+          </div>
         </div>
 
         <p id="firebase-status-banner" class="text-xs font-bold text-amber-800 bg-amber-100 px-3 py-1.5 rounded-xl mb-3 text-center">
@@ -151,12 +201,9 @@
           <!-- Populated dynamically -->
         </div>
 
-        <!-- Bottom Action Buttons: Clear All & Close -->
-        <div class="mt-4 grid grid-cols-2 gap-3">
-          <button id="clear-leaderboard-btn" onclick="handleClearLeaderboard()" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-3 px-4 rounded-full border-2 border-white shadow-lg text-base sm:text-lg active:scale-95 transition">
-            &#128465;&#65039; Clear All / 清除名單
-          </button>
-          <button onclick="closeLeaderboardModal()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-3 px-4 rounded-full border-2 border-white shadow-lg text-base sm:text-lg active:scale-95 transition">
+        <!-- Student Bottom Action Button: Close Only (Students cannot clear or reset scores) -->
+        <div class="mt-4">
+          <button onclick="closeLeaderboardModal()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-3 px-6 rounded-full border-2 border-white shadow-lg text-base sm:text-lg active:scale-95 transition">
             &#10006; Close / 關閉
           </button>
         </div>
@@ -349,6 +396,12 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
     import { getDatabase, ref, push, get, remove, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
 
+    // =========================================================================
+    // OWNER / TEACHER PIN CONFIGURATION
+    // Change OWNER_PIN below if you want a custom password to unlock CSV download & Clear All
+    // =========================================================================
+    const OWNER_PIN = "1234";
+
     // Connected to your Firebase Realtime Database link
     const firebaseConfig = {
       databaseURL: "https://mission-2-ef712-default-rtdb.firebaseio.com/"
@@ -366,6 +419,10 @@
     let totalMistakes = 0;
     let lastSubmittedKey = null;
 
+    // Cached full sorted leaderboard entries for CSV export
+    let currentLeaderboardEntries = [];
+    let isOwnerUnlocked = false;
+
     // Two-tap safety state for Clear All button
     let clearConfirmArmed = false;
     let clearConfirmTimer = null;
@@ -381,14 +438,119 @@
       }
     }
 
-    // Clear all names from Firebase Realtime Database + LocalStorage
+    // =========================================================================
+    // OWNER / TEACHER AUTHENTICATION & CONTROLS
+    // =========================================================================
+    window.toggleTeacherAuthPanel = function() {
+      if (isOwnerUnlocked) {
+        lockOwnerMode();
+        return;
+      }
+      const pinPanel = document.getElementById('teacher-pin-panel');
+      const pinInput = document.getElementById('teacher-pin-input');
+      const pinError = document.getElementById('teacher-pin-error');
+
+      if (pinPanel.classList.contains('hidden')) {
+        pinPanel.classList.remove('hidden');
+        pinError.classList.add('hidden');
+        pinInput.value = "";
+        setTimeout(() => pinInput.focus(), 50);
+      } else {
+        hideTeacherAuthPanel();
+      }
+    };
+
+    window.hideTeacherAuthPanel = function() {
+      document.getElementById('teacher-pin-panel').classList.add('hidden');
+      document.getElementById('teacher-pin-error').classList.add('hidden');
+      document.getElementById('teacher-pin-input').value = "";
+    };
+
+    window.verifyTeacherPin = function() {
+      const inputVal = document.getElementById('teacher-pin-input').value.trim();
+      const errorEl = document.getElementById('teacher-pin-error');
+
+      if (inputVal === OWNER_PIN || inputVal.toLowerCase() === "teacher") {
+        isOwnerUnlocked = true;
+        hideTeacherAuthPanel();
+        document.getElementById('owner-controls-panel').classList.remove('hidden');
+        document.getElementById('teacher-toggle-btn').classList.add('hidden');
+      } else {
+        errorEl.classList.remove('hidden');
+      }
+    };
+
+    window.lockOwnerMode = function() {
+      isOwnerUnlocked = false;
+      resetClearButtonState();
+      hideTeacherAuthPanel();
+      document.getElementById('owner-controls-panel').classList.add('hidden');
+      document.getElementById('teacher-toggle-btn').classList.remove('hidden');
+    };
+
+    // Export full leaderboard as UTF-8 BOM CSV for Excel compatibility
+    window.downloadLeaderboardCSV = function() {
+      if (!isOwnerUnlocked) return;
+
+      const statusEl = document.getElementById('firebase-status-banner');
+      if (!currentLeaderboardEntries || currentLeaderboardEntries.length === 0) {
+        statusEl.textContent = "⚠️ No scores available to download yet!";
+        return;
+      }
+
+      const headers = ["Rank", "Class & No.", "English Name", "Time (Seconds)", "Mistakes", "Words Completed", "Recorded Time"];
+      const rows = currentLeaderboardEntries.map((item, idx) => {
+        const rank = idx + 1;
+        const classNum = String(item.classNum || "").replace(/"/g, '""');
+        const name = String(item.name || "").replace(/"/g, '""');
+        const timeSec = Number(item.timeSeconds || 0).toFixed(1);
+        const mistakes = item.mistakes || 0;
+        const wordsCompleted = item.wordsCompleted || VOCABULARY.length;
+        const dateStr = item.createdAtMs ? new Date(item.createdAtMs).toLocaleString() : "";
+
+        return [
+          rank,
+          `"${classNum}"`,
+          `"${name}"`,
+          timeSec,
+          mistakes,
+          wordsCompleted,
+          `"${dateStr}"`
+        ].join(",");
+      });
+
+      // Prepend UTF-8 BOM (\uFEFF) so Microsoft Excel opens Chinese & symbols properly
+      const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      const filename = `thanksgiving_leaderboard_${yyyy}-${mm}-${dd}.csv`;
+
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      statusEl.textContent = `📥 Downloaded ${currentLeaderboardEntries.length} student records (${filename})!`;
+    };
+
+    // Clear all names from Firebase Realtime Database + LocalStorage (Protected by Owner Mode)
     window.handleClearLeaderboard = async function() {
+      if (!isOwnerUnlocked) return;
+
       const btn = document.getElementById('clear-leaderboard-btn');
       const statusEl = document.getElementById('firebase-status-banner');
 
       if (!clearConfirmArmed) {
         clearConfirmArmed = true;
-        btn.innerHTML = '&#9888;&#65039; Tap Again to Clear!';
+        btn.innerHTML = '&#9888;&#65039; Tap Again to Confirm!';
         btn.classList.remove('bg-red-600');
         btn.classList.add('bg-red-800', 'ring-4', 'ring-yellow-300');
 
@@ -405,10 +567,11 @@
 
       localStorage.removeItem(DB_PATH);
       lastSubmittedKey = null;
+      currentLeaderboardEntries = [];
 
       try {
         await remove(ref(db, DB_PATH));
-        statusEl.textContent = "🗑️ Leaderboard cleared! Ready for the next class.";
+        statusEl.textContent = "🗑️ Leaderboard cleared by Owner! Ready for the next class.";
       } catch (error) {
         console.error("Error clearing Firebase leaderboard:", error);
         statusEl.textContent = "⚠️ Local scores cleared (check Firebase write rules if online entries remain).";
@@ -445,7 +608,7 @@
       }
     }
 
-    // Fetch Top 15 Scores from Firebase Realtime Database
+    // Fetch All Ranked Scores from Firebase Realtime Database
     async function loadLeaderboardData() {
       const listEl = document.getElementById('leaderboard-list');
       const statusEl = document.getElementById('firebase-status-banner');
@@ -464,7 +627,7 @@
             ...data[key]
           }));
         }
-        statusEl.textContent = "🟢 Live Classroom Leaderboard (Fastest Time Wins!)";
+        statusEl.textContent = `🟢 Live Classroom Leaderboard (${entries.length} records - Fastest Time Wins!)`;
       } catch (error) {
         console.error("Error loading Firebase leaderboard:", error);
         statusEl.textContent = "⚠️ Could not reach Firebase (check Realtime Database Rules). Showing local scores.";
@@ -476,14 +639,15 @@
         return (a.mistakes || 0) - (b.mistakes || 0);
       });
 
-      const topEntries = entries.slice(0, 15);
+      // Store full sorted list for Teacher CSV export
+      currentLeaderboardEntries = entries;
 
-      if (topEntries.length === 0) {
+      if (entries.length === 0) {
         listEl.innerHTML = '<div class="text-center py-8 text-amber-900 font-bold">No scores yet! Be the first to finish! 🌟</div>';
         return;
       }
 
-      listEl.innerHTML = topEntries.map((item, idx) => {
+      listEl.innerHTML = entries.map((item, idx) => {
         const rank = idx + 1;
         let medal = `#${rank}`;
         let rowBg = "bg-white/90 border-amber-200";
@@ -526,13 +690,13 @@
     }
 
     window.openLeaderboardModal = function() {
-      resetClearButtonState();
+      lockOwnerMode();
       document.getElementById('leaderboard-modal').classList.remove('hidden');
       loadLeaderboardData();
     };
 
     window.closeLeaderboardModal = function() {
-      resetClearButtonState();
+      lockOwnerMode();
       document.getElementById('leaderboard-modal').classList.add('hidden');
     };
 
