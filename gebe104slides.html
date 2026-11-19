@@ -36,13 +36,212 @@
       overflow-x: hidden;
     }
 
+    body.laser-active {
+      cursor: none;
+    }
+
+    /* =========================================================
+       LASER POINTER & CLICK RIPPLE
+    ========================================================== */
+    #laserPointer {
+      display: none;
+      position: fixed;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #ffffff 15%, #ff2e2e 45%, rgba(255, 46, 46, 0.45) 75%, transparent 100%);
+      box-shadow: 0 0 14px 5px rgba(239, 68, 68, 0.85), 0 0 28px 10px rgba(245, 158, 11, 0.45);
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: transform 0.06s ease-out;
+    }
+
+    body.laser-active #laserPointer {
+      display: block;
+    }
+
+    .laser-ripple {
+      position: fixed;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 4px solid #ef4444;
+      pointer-events: none;
+      z-index: 9998;
+      transform: translate(-50%, -50%);
+      animation: laserClickRipple 0.55s ease-out forwards;
+    }
+
+    @keyframes laserClickRipple {
+      0% { width: 18px; height: 18px; opacity: 1; }
+      100% { width: 72px; height: 72px; opacity: 0; }
+    }
+
+    /* =========================================================
+       FLOATING DRAGGABLE PRESENTER VIDEO SPOT
+    ========================================================== */
+    #presenterWidget {
+      position: fixed;
+      bottom: 108px;
+      right: 24px;
+      width: 340px;
+      background: rgba(15, 23, 42, 0.96);
+      border: 4px solid var(--secondary);
+      border-radius: 20px;
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55);
+      z-index: 1500;
+      overflow: hidden;
+      display: none;
+      user-select: none;
+      transition: width 0.25s ease, border-radius 0.25s ease;
+    }
+
+    #presenterWidget.visible {
+      display: block;
+    }
+
+    #presenterWidget.circle-mode {
+      width: 240px;
+      border-radius: 28px;
+    }
+
+    #presenterWidget.minimized {
+      width: 250px;
+    }
+
+    #presenterWidget.minimized .presenter-body,
+    #presenterWidget.minimized .presenter-footer {
+      display: none;
+    }
+
+    .presenter-header {
+      background: linear-gradient(90deg, #1e3a8a, #2563eb);
+      color: #ffffff;
+      padding: 8px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: grab;
+      font-size: 0.85rem;
+      font-weight: bold;
+      gap: 6px;
+    }
+
+    .presenter-header:active {
+      cursor: grabbing;
+    }
+
+    .presenter-controls {
+      display: flex;
+      gap: 5px;
+    }
+
+    .p-ctrl-btn {
+      font-family: inherit;
+      font-size: 0.78rem;
+      font-weight: bold;
+      background: rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+      border: 1.5px solid rgba(255, 255, 255, 0.45);
+      border-radius: 8px;
+      padding: 2px 7px;
+      cursor: pointer;
+    }
+
+    .p-ctrl-btn:hover {
+      background: var(--secondary);
+      color: #0f172a;
+    }
+
+    .presenter-body {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #0b1120;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    #presenterWidget.circle-mode .presenter-body {
+      aspect-ratio: 1 / 1;
+      padding: 10px;
+    }
+
+    #presenterVideo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    #presenterWidget.circle-mode #presenterVideo {
+      border-radius: 50%;
+      border: 4px solid var(--secondary);
+    }
+
+    #presenterPlaceholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 14px;
+      color: #e2e8f0;
+      border: 3px dashed rgba(245, 158, 11, 0.7);
+      border-radius: 12px;
+      margin: 8px;
+      background: rgba(30, 41, 59, 0.7);
+    }
+
+    #presenterWidget.circle-mode #presenterPlaceholder {
+      border-radius: 50%;
+      margin: 0;
+    }
+
+    #presenterPlaceholder.clean-frame .placeholder-info {
+      display: none;
+    }
+
+    .presenter-footer {
+      background: #0f172a;
+      padding: 6px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      border-top: 2px solid #334155;
+    }
+
+    .p-foot-btn {
+      font-family: inherit;
+      font-size: 0.75rem;
+      font-weight: bold;
+      padding: 4px 8px;
+      border-radius: 8px;
+      border: 1.5px solid #475569;
+      background: #1e293b;
+      color: #f8fafc;
+      cursor: pointer;
+    }
+
+    .p-foot-btn:hover {
+      background: var(--secondary);
+      color: #0f172a;
+      border-color: #ffffff;
+    }
+
     /* =========================================================
        FULL-SCREEN COVER PHOTO VIEW (CLEAN - NO TEXT BANNER)
     ========================================================== */
     #coverScreen {
       position: fixed;
       inset: 0;
-      bottom: 92px; /* Leave space for bottom 4-tab bar */
+      bottom: 92px;
       z-index: 500;
       background-color: #0f172a;
       background-image: url('gebe104_cover.jpg');
@@ -58,14 +257,14 @@
       pointer-events: none;
     }
 
-    /* Top bar button to return to Full-Screen Cover */
+    /* Top bar with Presenter Tools */
     .top-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
       background: rgba(15, 23, 42, 0.92);
       color: #ffffff;
-      padding: 14px 28px;
+      padding: 14px 24px;
       border-radius: 18px;
       margin-bottom: 22px;
       border: 3px solid var(--secondary);
@@ -73,22 +272,59 @@
       gap: 12px;
     }
 
+    .top-bar-tools {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
     .cover-return-btn {
       font-family: inherit;
-      font-size: 1.05rem;
+      font-size: 0.98rem;
       font-weight: bold;
       background: var(--secondary);
       color: #0f172a;
       border: 3px solid #ffffff;
-      padding: 8px 20px;
+      padding: 8px 16px;
       border-radius: 12px;
       cursor: pointer;
-      transition: transform 0.2s ease;
+      transition: transform 0.2s ease, background 0.2s ease;
     }
 
     .cover-return-btn:hover {
-      transform: scale(1.05);
+      transform: scale(1.04);
       background: #fde047;
+    }
+
+    .tool-toggle-btn {
+      font-family: inherit;
+      font-size: 0.98rem;
+      font-weight: bold;
+      background: #1e293b;
+      color: #f8fafc;
+      border: 3px solid #64748b;
+      padding: 8px 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tool-toggle-btn:hover {
+      border-color: var(--secondary);
+    }
+
+    .tool-toggle-btn.active-laser {
+      background: #dc2626;
+      color: #ffffff;
+      border-color: #fde047;
+      box-shadow: 0 0 14px rgba(239, 68, 68, 0.7);
+    }
+
+    .tool-toggle-btn.active-video {
+      background: #059669;
+      color: #ffffff;
+      border-color: #a7f3d0;
     }
 
     /* =========================================================
@@ -258,6 +494,119 @@
     }
 
     /* =========================================================
+       INTERACTIVE ITEM CLASSIFICATION CARDS (TAB B - ITEM ANALYSIS)
+    ========================================================== */
+    .ia-class-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 16px;
+      margin: 18px 0 22px 0;
+    }
+
+    .ia-class-card {
+      background: #ffffff;
+      border: 4px solid #cbd5e1;
+      border-radius: 18px;
+      padding: 18px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: left;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+    }
+
+    .ia-class-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.14);
+    }
+
+    .ia-class-card.active-filter {
+      transform: translateY(-4px);
+      box-shadow: 0 0 0 4px var(--secondary), 0 10px 22px rgba(0, 0, 0, 0.2);
+    }
+
+    .ia-class-card.cat-easy { border-color: #22c55e; background: #f0fdf4; }
+    .ia-class-card.cat-diff { border-color: #f59e0b; background: #fffbeb; }
+    .ia-class-card.cat-exc  { border-color: #2563eb; background: #eff6ff; }
+    .ia-class-card.cat-poor { border-color: #ef4444; background: #fef2f2; }
+
+    .ia-class-card h4 {
+      font-size: 1.18rem;
+      margin-bottom: 6px;
+      color: var(--primary);
+    }
+
+    .ia-class-card .ia-items-list {
+      font-weight: bold;
+      font-size: 1rem;
+      margin-bottom: 6px;
+      color: #0f172a;
+    }
+
+    .ia-class-card p {
+      font-size: 0.96rem;
+      line-height: 1.45;
+      color: #334155;
+    }
+
+    /* =========================================================
+       PHOTO FRAMES & LIGHTBOX (TAB C)
+    ========================================================== */
+    .photo-card {
+      background: #ffffff;
+      border: 4px solid var(--primary-light);
+      border-radius: 20px;
+      padding: 18px;
+      text-align: center;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .photo-card img {
+      width: 100%;
+      max-height: 520px;
+      object-fit: contain;
+      border-radius: 12px;
+      border: 2px solid #cbd5e1;
+      background: #f8fafc;
+      cursor: zoom-in;
+      transition: transform 0.2s ease;
+    }
+
+    .photo-card img:hover {
+      transform: scale(1.02);
+    }
+
+    .photo-caption {
+      margin-top: 10px;
+      font-size: 1rem;
+      font-weight: bold;
+      color: var(--primary);
+    }
+
+    #lightboxModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.92);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      cursor: zoom-out;
+    }
+
+    #lightboxModal.open {
+      display: flex;
+    }
+
+    #lightboxModal img {
+      max-width: 95%;
+      max-height: 90vh;
+      border-radius: 16px;
+      border: 4px solid var(--secondary);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    /* =========================================================
        INTERACTIVE QUIZ & DETECTIVE CARDS (TAB 1)
     ========================================================== */
     .q-card {
@@ -407,30 +756,23 @@
     }
 
     /* =========================================================
-       NOTEPAD / LETTER COMPONENT & EXIT TICKET MODAL (TAB C)
+       NOTEPAD / LETTER COMPONENT (TAB C)
     ========================================================== */
-    .notepad-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
-      gap: 32px;
-      margin-top: 20px;
-    }
-
     .notepad-paper {
       position: relative;
-      background-color: #fef9c3;
+      background-color: #ecfdf5;
       background-image: repeating-linear-gradient(
         transparent,
         transparent 43px,
-        #93c5fd 43px,
-        #93c5fd 45px
+        #a7f3d0 43px,
+        #a7f3d0 45px
       );
       border-radius: 16px;
       padding: 52px 34px 36px 68px;
-      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.28);
-      border: 3px solid #eab308;
+      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22);
+      border: 3px solid #10b981;
       line-height: 45px;
-      font-size: 1.22rem;
+      font-size: 1.15rem;
       color: #1e293b;
     }
 
@@ -465,7 +807,7 @@
 
     .notepad-stamp {
       display: inline-block;
-      background: #1e3a8a;
+      background: #047857;
       color: #ffffff;
       padding: 2px 16px;
       border-radius: 8px;
@@ -476,7 +818,8 @@
     }
 
     .script-line {
-      padding: 2px 8px;
+      display: inline;
+      padding: 2px 6px;
       border-radius: 8px;
       transition: background 0.3s ease;
     }
@@ -492,7 +835,7 @@
     ========================================================== */
     .flip-card {
       background-color: transparent;
-      height: 330px;
+      height: 360px;
       perspective: 1000px;
       cursor: pointer;
     }
@@ -515,7 +858,7 @@
       inset: 0;
       backface-visibility: hidden;
       border-radius: 22px;
-      padding: 24px;
+      padding: 22px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -538,7 +881,11 @@
     .flip-back h4 {
       color: #fde047;
       margin-bottom: 10px;
-      font-size: 1.35rem;
+      font-size: 1.3rem;
+    }
+
+    .flip-back p {
+      font-size: 1.02rem;
     }
 
     /* =========================================================
@@ -747,25 +1094,60 @@
       #coverScreen { bottom: 130px; }
       .bottom-nav { height: 130px; grid-template-columns: repeat(2, 1fr); }
       .rec-banner { grid-template-columns: 1fr; justify-items: center; text-align: center; }
-      .notepad-grid { grid-template-columns: 1fr; }
+      #presenterWidget { width: 260px; bottom: 140px; right: 12px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- =========================================================
-       FULL-SCREEN COVER PHOTO (CLEAN - NO FLOATING PROMPT PILL)
-  ========================================================== -->
+  <!-- LASER POINTER DOT -->
+  <div id="laserPointer"></div>
+
+  <!-- FLOATING DRAGGABLE PRESENTER VIDEO SPOT -->
+  <div id="presenterWidget">
+    <div class="presenter-header" id="presenterDragHandle">
+      <span id="presenterTabLabel">&#127909; Presenter Video</span>
+      <div class="presenter-controls">
+        <button class="p-ctrl-btn" onclick="toggleVideoShape()" title="Switch Rectangle / Circle">&#9711;</button>
+        <button class="p-ctrl-btn" onclick="toggleVideoMinimize()" title="Minimize / Expand">&minus;</button>
+        <button class="p-ctrl-btn" onclick="toggleVideoWidget()" title="Hide Video Spot">&times;</button>
+      </div>
+    </div>
+    <div class="presenter-body">
+      <video id="presenterVideo" controls playsinline></video>
+      <div id="presenterPlaceholder">
+        <div class="placeholder-info">
+          <div style="font-size: 2.2rem; margin-bottom: 4px;">&#127909;</div>
+          <div style="font-size: 0.92rem; font-weight: bold; color: #fde047;" id="placeholderTitle">Presenter Video Spot</div>
+          <div style="font-size: 0.78rem; color: #cbd5e1; margin-top: 4px;" id="placeholderFileHint">File: video_tab1.mp4</div>
+        </div>
+      </div>
+    </div>
+    <div class="presenter-footer">
+      <button class="p-foot-btn" onclick="document.getElementById('localVideoInput').click()">&#128194; Load Video</button>
+      <button class="p-foot-btn" onclick="toggleCleanFrame()" id="cleanFrameBtn">Clean Frame</button>
+      <input type="file" id="localVideoInput" accept="video/*" style="display: none;" onchange="loadLocalVideo(event)" />
+    </div>
+  </div>
+
+  <!-- FULL-SCREEN COVER PHOTO -->
   <div id="coverScreen"></div>
 
-  <!-- =========================================================
-       MAIN CONTENT WRAPPER (HIDDEN UNTIL A TAB IS CLICKED)
-  ========================================================== -->
+  <!-- LIGHTBOX FOR FULL-SCREEN PHOTO ZOOM -->
+  <div id="lightboxModal" onclick="closeLightbox()">
+    <img id="lightboxImg" src="" alt="Enlarged Document" />
+  </div>
+
+  <!-- MAIN CONTENT WRAPPER -->
   <div class="page-wrapper" id="mainContentWrapper" style="display: none;">
     
     <div class="top-bar">
       <div><strong>GEBE 104: Mathematics 6 Assessment &amp; Reporting</strong></div>
-      <button class="cover-return-btn" onclick="showCoverScreen()">&#128444;&#65039; View Full-Screen Cover Photo</button>
+      <div class="top-bar-tools">
+        <button class="tool-toggle-btn" id="laserToggleBtn" onclick="toggleLaserPointer()">&#128308; Laser Pointer: OFF</button>
+        <button class="tool-toggle-btn active-video" id="videoToggleBtn" onclick="toggleVideoWidget()">&#127909; Video Spot: ON</button>
+        <button class="cover-return-btn" onclick="showCoverScreen()">&#128444;&#65039; Cover Photo</button>
+      </div>
     </div>
 
     <!-- =========================================================
@@ -1011,7 +1393,6 @@
           <h2>Anonymized Class Data Set &amp; Interactive Score Histogram (N = 30)</h2>
           <p>Total Score = <strong>306</strong> | Class Mean = <strong>10.20</strong> | Median = <strong>10</strong> | Mode = <strong>9</strong> | Range = <strong>17</strong> (1 to 18). <strong>Click any bar on the chart below</strong> to filter learners with that exact score!</p>
 
-          <!-- Interactive Score Distribution Histogram -->
           <div class="histogram-box">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
               <strong>Score Distribution (Click a bar to filter learners):</strong>
@@ -1110,11 +1491,44 @@
         </div>
       </div>
 
-      <!-- 2C: Item Analysis -->
+      <!-- 2C: Item Analysis (WITH INTERACTIVE CLASSIFICATION CARDS) -->
       <div id="t2-item" class="sub-pane">
         <div class="card">
-          <h2>Item Analysis (GEBE 104 Milestone 3 Part B)</h2>
-          <p style="margin-bottom: 14px;"><strong>Upper Group (Top 27% = 8 learners):</strong> 18, 17, 16, 15, 13, 13, 12, 12 &nbsp;|&nbsp; <strong>Lower Group (Bottom 27% = 8 learners):</strong> 1, 5, 6, 6, 8, 8, 8, 8</p>
+          <h2>Item Analysis &amp; Classification (GEBE 104 Milestone 3 Part B)</h2>
+          <p style="margin-bottom: 8px;"><strong>Upper Group (Top 27% = 8 learners):</strong> 18, 17, 16, 15, 13, 13, 12, 12 &nbsp;|&nbsp; <strong>Lower Group (Bottom 27% = 8 learners):</strong> 1, 5, 6, 6, 8, 8, 8, 8</p>
+          <p style="margin-bottom: 14px; font-size: 1.05rem;"><strong>Formulas:</strong> Difficulty Index <code>P = R / N</code> &nbsp;|&nbsp; Discrimination Index <code>D = (U - L) / n</code> &nbsp;|&nbsp; <em>Click any classification card below to filter the table!</em></p>
+
+          <!-- 4 Interactive Classification Cards -->
+          <div class="ia-class-grid">
+            <div class="ia-class-card cat-easy" id="iaCard-veryEasy" onclick="filterItemAnalysis('veryEasy')">
+              <h4>&#128640; Very Easy &rarr; Level Up (HOTS)</h4>
+              <div class="ia-items-list">Items: 5, 20</div>
+              <p>Items 5 and 20 were <strong>Very Easy</strong>, meaning we can level them up with higher-order thinking questions next time.</p>
+            </div>
+
+            <div class="ia-class-card cat-diff" id="iaCard-veryDiff" onclick="filterItemAnalysis('veryDiff')">
+              <h4>&#127919; Very Difficult &rarr; Re-Teach</h4>
+              <div class="ia-items-list">Item: 15 (P = 0.27, D = 0.25)</div>
+              <p>Item 15 was <strong>Very Difficult</strong> (P = 0.27), yet had <strong>Good</strong> discrimination (D = 0.25). The question worked well—it tells us to <strong>re-teach direct proportion</strong>.</p>
+            </div>
+
+            <div class="ia-class-card cat-exc" id="iaCard-excellent" onclick="filterItemAnalysis('excellent')">
+              <h4>&#11088; Excellent Discrimination &rarr; Retain</h4>
+              <div class="ia-items-list">Items: 1, 3, 4, 5, 6, 10, 19, 20</div>
+              <p>Items 1, 3, 4, 5, 6, 10, 19, and 20 showed <strong>Excellent</strong> discrimination, effectively distinguishing high- and low-performing learners.</p>
+            </div>
+
+            <div class="ia-class-card cat-poor" id="iaCard-poor" onclick="filterItemAnalysis('poor')">
+              <h4>&#9999;&#65039; Poor Discrimination &rarr; Revise</h4>
+              <div class="ia-items-list">Items: 2, 9, 12, 13, 16, 17</div>
+              <p>Items 2, 9, 12, 13, 16, and 17 showed <strong>Poor</strong> discrimination and need revision in their wording or distractors.</p>
+            </div>
+          </div>
+
+          <div class="control-bar">
+            <button class="action-btn secondary" onclick="filterItemAnalysis('all')">&#128203; Show All 20 Items</button>
+            <span id="iaFilterStatus" class="badge badge-avg" style="font-size: 1rem; padding: 6px 14px;">Showing: All 20 Items</span>
+          </div>
 
           <div class="table-responsive">
             <table>
@@ -1122,11 +1536,12 @@
                 <tr>
                   <th>Item</th>
                   <th>Difficulty Index (P)</th>
-                  <th>Interpretation</th>
-                  <th>Upper Group Correct (U)</th>
-                  <th>Lower Group Correct (L)</th>
+                  <th>P Interpretation</th>
+                  <th>Upper (U)</th>
+                  <th>Lower (L)</th>
                   <th>Discrimination Index (D)</th>
-                  <th>Interpretation</th>
+                  <th>D Interpretation</th>
+                  <th>Classification &amp; Action</th>
                 </tr>
               </thead>
               <tbody id="itemAnalysisBody"></tbody>
@@ -1183,67 +1598,53 @@
             </div>
             <div class="visual-card">
               <div class="visual-illus">&#128736;&#65039;</div>
-              <h4>Need for Targeted Support</h4>
-              <p>Word problems and multiplicative ratios (Items 8–16, especially Item 15 at P = 0.27) require structured remediation and enrichment.</p>
+              <h4>Item Quality Insights</h4>
+              <p>Items 1, 3, 4, 5, 6, 10, 19, 20 showed <strong>Excellent</strong> discrimination. Items 2, 9, 12, 13, 16, 17 need revision (Poor D), and Item 15 (P = 0.27, Good D) needs re-teaching.</p>
             </div>
           </div>
 
           <h2>Instructional Next Steps (Visual Action Plan)</h2>
-          <div class="grid-4" style="margin-bottom: 30px;">
+          <div class="grid-3" style="margin-bottom: 30px;">
             <div class="visual-card">
               <span class="step-badge">Step 1</span>
               <div class="visual-illus">&#127919;</div>
-              <h4>Targeted Remediation</h4>
-              <p>Focus directly on least-mastered ratio &amp; proportion skills (Items 9, 11–16).</p>
+              <h4>Re-Teach Item 15 Competency</h4>
+              <p>Provide guided practice and reinforcement activities to address misconceptions on direct proportion.</p>
             </div>
 
             <div class="visual-card">
               <span class="step-badge">Step 2</span>
-              <div class="visual-illus">&#129309;</div>
-              <h4>I Do &rarr; We Do &rarr; You Do</h4>
-              <p>Provide step-by-step guided practice and worked examples during discussion.</p>
+              <div class="visual-illus">&#9999;&#65039;</div>
+              <h4>Revise Poor-D Items</h4>
+              <p>Review Items <strong>2, 9, 12, 13, 16, and 17</strong> to improve distractors, clarity, and LC alignment.</p>
             </div>
 
             <div class="visual-card">
               <span class="step-badge">Step 3</span>
-              <div class="visual-illus">&#128101;</div>
-              <h4>Peer-Assisted Learning</h4>
-              <p>Pair struggling learners with study buddies who mastered the concepts.</p>
+              <div class="visual-illus">&#128200;</div>
+              <h4>Elevate Very Easy Items</h4>
+              <p>Increase cognitive demand on Items <strong>5 and 20</strong> by incorporating HOTS and real-life application.</p>
             </div>
 
             <div class="visual-card">
               <span class="step-badge">Step 4</span>
-              <div class="visual-illus">&#128722;</div>
-              <h4>Real-Life Challenges</h4>
-              <p>Solve 10-minute practical problems using ratio tables and local scenarios.</p>
+              <div class="visual-illus">&#129309;</div>
+              <h4>Targeted Remediation</h4>
+              <p>Conduct structured intervention and peer-assisted learning for learners with low scores.</p>
             </div>
 
             <div class="visual-card">
               <span class="step-badge">Step 5</span>
-              <div class="visual-illus">&#127915;</div>
-              <h4>5-Min Exit Tickets</h4>
-              <p>Give a 1-to-3 item check at the end of every class to track progress.</p>
+              <div class="visual-illus">&#128640;</div>
+              <h4>Enrichment Tasks</h4>
+              <p>Challenge high-scoring learners with advanced multi-step problem-solving activities.</p>
             </div>
 
             <div class="visual-card">
               <span class="step-badge">Step 6</span>
-              <div class="visual-illus">&#128172;</div>
-              <h4>Immediate Feedback</h4>
-              <p>Correct misconceptions on the spot and model why cross-multiplying works.</p>
-            </div>
-
-            <div class="visual-card">
-              <span class="step-badge">Step 7</span>
-              <div class="visual-illus">&#128640;</div>
-              <h4>Enrichment Tasks</h4>
-              <p>Challenge high-mastery learners with multi-step partitive &amp; inverse puzzles.</p>
-            </div>
-
-            <div class="visual-card">
-              <span class="step-badge">Step 8</span>
               <div class="visual-illus">&#128203;</div>
-              <h4>Post-Remediation Test</h4>
-              <p>Re-assess learners so at least 80% achieve 80% mastery or higher.</p>
+              <h4>Post-Remediation Assessment</h4>
+              <p>Re-assess learners to evaluate learning gains and verify intervention effectiveness.</p>
             </div>
           </div>
 
@@ -1252,7 +1653,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
               <div>
                 <h3>&#129309; Interactive Peer-Buddy Generator (Top 27% + Bottom 27%)</h3>
-                <p>Click to pair your 8 Upper Group learners (scores 12–18) with your 8 Lower Group learners (scores 1–8) for reciprocal peer tutoring on Items 9 &amp; 11–18.</p>
+                <p>Click to pair your 8 Upper Group learners (scores 12–18) with your 8 Lower Group learners (scores 1–8) for reciprocal peer tutoring on least-mastered items.</p>
               </div>
               <button class="action-btn secondary" onclick="generateBuddyPairs()">&#9889; Generate / Shuffle Peer Buddy Pairs</button>
             </div>
@@ -1267,15 +1668,15 @@
     ========================================================== -->
     <section id="tab3" class="tab-pane">
       <div class="sub-nav">
-        <button class="sub-btn active" onclick="switchSubTab('tab3', 't3-deped', this)">1. DepEd DO 8 Simulator &amp; Calculator</button>
-        <button class="sub-btn" onclick="switchSubTab('tab3', 't3-notepad', this)">2. Notepad Letters &amp; Role-Play Mode</button>
+        <button class="sub-btn active" onclick="switchSubTab('tab3', 't3-deped', this)">1. DepEd Grading Simulator</button>
+        <button class="sub-btn" onclick="switchSubTab('tab3', 't3-notepad', this)">2. Progress Report, Agreement Form &amp; Script</button>
         <button class="sub-btn" onclick="switchSubTab('tab3', 't3-ethics', this)">3. Visual Ethical Issues &amp; References</button>
       </div>
 
       <!-- 3A: DepEd Grading + Full 3-Component Simulator -->
       <div id="t3-deped" class="sub-pane active">
         <div class="card">
-          <h2>Grading per DepEd Order No. 8, s. 2015 [16]</h2>
+          <h2>Grading System &amp; DepEd Policy Overview</h2>
           <div class="grid-3" style="margin-bottom: 24px;">
             <div class="visual-card">
               <div class="visual-illus">&#9997;&#65039;</div>
@@ -1291,15 +1692,15 @@
             </div>
             <div class="visual-card">
               <div class="visual-illus">&#128221;</div>
-              <h4>Quarterly Assessment (QA)</h4>
+              <h4>Term / Quarterly Exam</h4>
               <p style="font-size: 2.3rem; font-weight: bold; color: var(--primary);">20%</p>
-              <p>End-of-quarter comprehensive examination</p>
+              <p>End-of-term comprehensive examination</p>
             </div>
           </div>
 
           <div class="grid-2">
             <div class="visual-card" style="text-align: left; align-items: flex-start;">
-              <h3>4 Computation Steps &amp; Worked Example [17, 18]</h3>
+              <h3>4 Computation Steps &amp; Worked Example</h3>
               <ol style="padding-left: 24px; margin-bottom: 16px;">
                 <li><strong>(1) Percentage Score (PS):</strong> <code>PS = raw score &divide; highest possible score &times; 100</code></li>
                 <li><strong>(2) Weighted Score (WS):</strong> <code>WS = PS &times; weight</code></li>
@@ -1307,13 +1708,12 @@
                 <li><strong>(4) Transmutation:</strong> DO 8 Table (Appendix B) maps <strong>60.00</strong> to the passing grade of <strong>75</strong>.</li>
               </ol>
               <div style="background: #fef3c7; padding: 14px; border-radius: 14px; border: 2px solid var(--secondary); width: 100%;">
-                <strong>Worked Example Using Class Data [18]:</strong><br/>
+                <strong>Worked Example Using Class Data:</strong><br/>
                 If a learner's QA percentage score were <strong>51</strong> (your class MPS), the transmuted grade calculation is:<br/>
                 <code>60 + (0.4 &times; 51) = 80.4</code> &rarr; rounds to <strong>80</strong>.
               </div>
             </div>
 
-            <!-- Interactive 3-Component DepEd Grade Simulator -->
             <div class="visual-card" style="text-align: left; align-items: flex-start; border-color: var(--secondary); background: #fffbeb;">
               <h3>&#127899;&#65039; Interactive DepEd Grade Simulator</h3>
               <p style="margin-bottom: 10px;">Drag the sliders to see how Written Work (40%), Performance Tasks (40%), and Quarterly Assessment (20%) combine!</p>
@@ -1339,93 +1739,61 @@
         </div>
       </div>
 
-      <!-- 3B: Notepad Letters + Role-Play Stepper + Exit-Ticket Tracker Preview -->
+      <!-- 3B: Sample Progress Report Photo + 2 Parent Agreement Form Photos + Tagalog Script -->
       <div id="t3-notepad" class="sub-pane">
         <div class="card">
-          <h2>Progress Report &amp; Parent Conference Script (Notepad View)</h2>
+          <h2>Sample Learner's Progress Report</h2>
+          <p style="margin-bottom: 16px;">Click the image below to view it in full-screen zoom during your presentation.</p>
+          <div class="photo-card">
+            <img src="progress_report.jpg" alt="Sample Learner's Progress Report" onclick="openLightbox(this.src)" />
+            <div class="photo-caption">&#128221; Sample Learner's Progress Report (Click to Zoom)</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Parent Agreement Form &amp; Parent Conference Script</h2>
+          <p style="margin-bottom: 18px;">Below are the two pages of the sample <strong>Parent Agreement Form</strong> (click either photo to zoom) followed by the <strong>Parent Conference Script</strong> with interactive line-by-line role-play highlighting.</p>
+
+          <div class="grid-2" style="margin-bottom: 28px;">
+            <div class="photo-card">
+              <img src="parent_agreement_1.jpg" alt="Parent Agreement Form - Page 1" onclick="openLightbox(this.src)" />
+              <div class="photo-caption">&#128196; Parent Agreement Form — Page 1 (Click to Zoom)</div>
+            </div>
+            <div class="photo-card">
+              <img src="parent_agreement_2.jpg" alt="Parent Agreement Form - Page 2" onclick="openLightbox(this.src)" />
+              <div class="photo-caption">&#128196; Parent Agreement Form — Page 2 (Click to Zoom)</div>
+            </div>
+          </div>
+
           <div class="control-bar">
-            <label><strong>Learner's Name:</strong></label>
-            <input type="text" id="learnerNameInput" value="[Learner]" oninput="updateLearnerName()" style="width: 200px;" />
             <button class="action-btn secondary" onclick="stepRolePlay()">&#127908; Highlight Next Script Line (Role-Play Cue)</button>
-            <button class="action-btn" onclick="toggleTrackerPreview()">&#128203; View Sample Exit-Ticket Progress Tracker</button>
+            <button class="action-btn" onclick="resetRolePlay()">&#128260; Reset Highlight</button>
           </div>
 
-          <!-- Collapsible Sample Exit-Ticket Tracker Preview -->
-          <div id="exitTicketModal" style="display: none; background: #eff6ff; border: 4px solid var(--primary); border-radius: 18px; padding: 20px; margin-bottom: 22px;">
-            <h3>&#127915; Sample Exit-Ticket Progress Tracker (Shown to Parent During Conference)</h3>
-            <div class="table-responsive">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Week / Topic</th>
-                    <th>3-Item Exit Ticket Focus</th>
-                    <th>Score</th>
-                    <th>Mastery Status &amp; Teacher Note</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><strong>Week 1 (Mon–Wed)</strong></td>
-                    <td>Reading Ratio Tables &amp; Simplest Form</td>
-                    <td class="center"><strong>3 / 3</strong></td>
-                    <td class="center"><span class="badge badge-easy">Mastered! Great confidence</span></td>
-                  </tr>
-                  <tr>
-                    <td><strong>Week 2 (Mon–Wed)</strong></td>
-                    <td>Finding Missing Values in Direct Proportions</td>
-                    <td class="center"><strong>2 / 3</strong></td>
-                    <td class="center"><span class="badge badge-avg">Growing (Peer-buddy practice helped)</span></td>
-                  </tr>
-                  <tr>
-                    <td><strong>Week 3 (Target)</strong></td>
-                    <td>Partitive &amp; Inverse Word Problems (Cooking/Sharing)</td>
-                    <td class="center"><em>In Progress</em></td>
-                    <td class="center"><span class="badge badge-warn">Practicing 10 mins/day at home + school</span></td>
-                  </tr>
-                </tbody>
-              </table>
+          <div class="notepad-paper">
+            <div class="notepad-rings">
+              <div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div>
             </div>
-          </div>
-
-          <div class="notepad-grid">
-            <!-- Notepad 1: Progress Report Letter -->
-            <div class="notepad-paper">
-              <div class="notepad-rings">
-                <div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div>
-              </div>
-              <span class="notepad-stamp">&#128221; PROGRESS REPORT NOTE</span>
-              <p><strong>Date:</strong> Second Quarter, SY 2026–2027</p>
-              <p><strong>Dear Parent / Guardian,</strong></p>
-              <p id="reportLineText">
-                "In Mathematics this quarter, <strong>[Learner]</strong> scored 10 out of 20 (51%) on the first summative test on ratio and proportion, near the class median of 10.
-                <br/>&#9989; <strong>Strengths:</strong> identifying ratios and simple proportions.
-                <br/>&#127919; <strong>Focus for the next weeks:</strong> solving inverse and partitive proportion problems.
-                <br/>&#127968; <strong>Support at home:</strong> practice doubling/halving recipes and sharing amounts in given ratios."
-              </p>
-              <p style="text-align: right; font-weight: bold;">— Mathematics 6 Teacher</p>
-            </div>
-
-            <!-- Notepad 2: Parent Conference Script Letter -->
-            <div class="notepad-paper" style="background-color: #ecfdf5; border-color: #10b981;">
-              <div class="notepad-rings">
-                <div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div>
-              </div>
-              <span class="notepad-stamp" style="background: #047857;">&#128483;&#65039; PARENT CONFERENCE SCRIPT</span>
-              <p><strong>Setting:</strong> Face-to-Face / Home Partnership Dialogue</p>
-              <p><strong>Teacher's Dialogue (In Your Voice):</strong></p>
-              <p id="scriptLineText">
-                <span class="script-line" id="sLine0">"Good afternoon, po. <strong>[Learner]</strong> is doing well in reading and writing ratios, and I want us to work together on word problems.</span>
-                <br/><span class="script-line" id="sLine1">In class we are doing guided practice and peer buddy work three times a week.</span>
-                <br/><span class="script-line" id="sLine2">At home, even ten minutes of <em>'kaya ba natin ito?'</em> cooking-and-sharing problems will help a lot.</span>
-                <br/><span class="script-line" id="sLine3">Here is his exit-ticket progress tracker so we can both see the growth."</span>
-              </p>
-              <p style="text-align: right; font-weight: bold; color: #047857;">— Collaborative Action Plan</p>
-            </div>
+            <span class="notepad-stamp">&#128483;&#65039; SAMPLE PARENT CONFERENCE SCRIPT</span>
+            <p>
+              <span class="script-line" id="sLine0">"Magandang araw po, Ma'am. Maraming salamat po sa paglalaan ng oras na pumunta ngayon sa paaralan para pag-usapan ang lagay ng pag-aaral ng inyong anak. Pinatawag po namin kayo ngayon dahil napansin naming mga guro na madalas po siyang lumiban sa klase nitong mga nakaraang linggo. Dahil po sa mga pagliban na ito, marami na rin po siyang hindi nagawa at hindi naipasang mga gawain sa iba't ibang asignatura mula pa noong Term 1 at ngayong Term 2.</span>
+            </p>
+            <p style="margin-top: 12px;">
+              <span class="script-line" id="sLine1">Bago po ang conference na ito, kinausap na po namin ang bata at sinabihan tungkol sa madalas niyang pagliban, at nagpadala rin po kami ng letter para maimbitahan kayo. Naiintindihan po namin ang inyong pakiusap, kaya nagkasundo kaming mga guro na bigyan siya ng pangalawang pagkakataon upang makapagpasa ng mga itinakdang gawain. Para po makahabol siya at may mapagbasehan kami ng grado na ibibigay sa kanya, narito po ang mga napagkasunduan natin na kailangang tuparin:</span>
+            </p>
+            <ul style="padding-left: 28px; margin-top: 8px;">
+              <li><span class="script-line" id="sLine2"><strong>Una:</strong> Hindi na po siya muling liliban sa klase kahit isang beses. Kapag lumiban pa po siya ng isa pa ay hindi na po siya papasa.</span></li>
+              <li><span class="script-line" id="sLine3"><strong>Pangalawa:</strong> Kailangan niyang gawin at ipasa ang lahat ng kulang na gawain sa iba't ibang asignatura mula Term 1 at Term 2 hanggang sa December 4, 2026.</span></li>
+              <li><span class="script-line" id="sLine4"><strong>Pangatlo:</strong> Kapag hindi pa rin po siya nakagawa at nakapagpasa sa itinakdang araw na iyon, hindi na po talaga siya makakapasa dahil wala kaming pagbabasehan ng grado.</span></li>
+            </ul>
+            <p style="margin-top: 12px;">
+              <span class="script-line" id="sLine5">Naiintindihan po ba natin at sumasang-ayon po ba kayo sa kasunduang ito? Kung wala na pong tanong, pakisulat na lamang po ang inyong pangalan at pirma rito sa form bilang patunay ng ating kasunduan."</span>
+            </p>
           </div>
         </div>
       </div>
 
-      <!-- 3C: Ethical Issues (Pictures/Icons + Simple Description) -->
+      <!-- 3C: Ethical Issues -->
       <div id="t3-ethics" class="sub-pane">
         <div class="card">
           <h2>Ethical Issues in Assessment &amp; Reporting</h2>
@@ -1433,35 +1801,31 @@
             <div class="visual-card">
               <div class="visual-illus">&#128274;</div>
               <h4>Confidentiality</h4>
-              <p>Share scores only with the learner and guardians. Anonymize all class data shared outside (Learner 01–30).</p>
+              <p>Protect learners' personal information, grades, and assessment results. Share only with authorized guardians and never announce publicly.</p>
             </div>
 
             <div class="visual-card">
               <div class="visual-illus">&#9878;&#65039;</div>
               <h4>Fairness</h4>
-              <p>Use the TOS and validation form so every test item aligns strictly with a taught competency.</p>
+              <p>Give all learners equal opportunities to demonstrate their knowledge and skills using objective, bias-free assessment methods.</p>
             </div>
 
             <div class="visual-card">
               <div class="visual-illus">&#129309;</div>
               <h4>Inclusivity</h4>
-              <p>Treat scores as temporary skill gaps, never permanent ability tracks; strictly avoid harsh words like <em>"bobo."</em></p>
+              <p>Consider learners' different abilities, backgrounds, and needs so assessment activities remain flexible and supportive.</p>
             </div>
 
             <div class="visual-card">
               <div class="visual-illus">&#127991;&#65039;</div>
               <h4>Avoiding Labeling</h4>
-              <p>Say <strong>"least-mastered competencies,"</strong> never <strong>"slow learners."</strong> The LOP measures item mastery, not children.</p>
+              <p>Avoid negative labels like <em>"slow learner," "weak,"</em> or <em>"poor performer."</em> Focus on strengths, progress, and next steps.</p>
             </div>
           </div>
 
           <div style="background: #f8fafc; padding: 18px 24px; border-radius: 16px; border: 2px solid #cbd5e1;">
-            <h3>References (Tab C)</h3>
-            <ul style="padding-left: 24px;">
-              <li><strong>16.</strong> DepEd Order 8, s. 2015 (official PDF)</li>
-              <li><strong>17.</strong> DepEd grading system and transmutation table explained</li>
-              <li><strong>18.</strong> How to compute DepEd grades</li>
-            </ul>
+            <h3>Core Reminder</h3>
+            <p><em>"As teachers, we assess learners to help them grow, not to judge, compare, or define their worth."</em></p>
           </div>
         </div>
       </div>
@@ -1472,28 +1836,28 @@
     ========================================================== -->
     <section id="tab4" class="tab-pane">
       <div class="sub-nav">
-        <button class="sub-btn active" onclick="switchSubTab('tab4', 't4-ref', this)">1. Interactive Challenge Flip-Cards</button>
-        <button class="sub-btn" onclick="switchSubTab('tab4', 't4-rec', this)">2. Visual Recommendations &amp; Mastery Gauge</button>
+        <button class="sub-btn active" onclick="switchSubTab('tab4', 't4-ref', this)">1. Challenges in Assessment &amp; Reporting</button>
+        <button class="sub-btn" onclick="switchSubTab('tab4', 't4-rec', this)">2. Evidence-Based Recommendations &amp; Reflection</button>
       </div>
 
       <!-- 4A: Interactive Challenge-to-Solution Flip Cards -->
       <div id="t4-ref" class="sub-pane active">
         <div class="card">
-          <h2>Challenges in Your Context [7] (Click Any Card to Flip!)</h2>
-          <p style="margin-bottom: 18px;">Ask your audience: <em>"How do we address each classroom challenge?"</em> <strong>Click any card below</strong> to flip it over and reveal the matching action response!</p>
+          <h2>Challenges in Assessment and Reporting (Click Any Card to Flip!)</h2>
+          <p style="margin-bottom: 18px;">Based on Parts B and C, the TOS, Mathematics 6 test items, item analysis, and related literature, four key challenges emerged. <strong>Click any card below</strong> to reveal the deeper diagnostic insight!</p>
 
           <div class="grid-4">
             <div class="flip-card" onclick="this.classList.toggle('flipped')">
               <div class="flip-inner">
                 <div class="flip-front">
                   <div class="visual-illus" style="background:#fee2e2; border-color:#ef4444;">&#128200;</div>
-                  <h4>Wide Score Dispersion</h4>
-                  <p>Scores span from <strong>1 to 18</strong> (Range = 17) in one class.</p>
+                  <h4>Low Mastery &amp; Wide Spread</h4>
+                  <p>Grade 6–Pearl (N=30) scored <strong>306/600</strong> (Mean = <strong>10.20</strong>, <strong>51% MPS</strong>; Range 1–18).</p>
                   <span class="badge badge-warn" style="margin-top: 10px;">Click to Flip &#8635;</span>
                 </div>
                 <div class="flip-back">
-                  <h4>Our Solution</h4>
-                  <p>Pair Top 27% and Bottom 27% learners via <strong>Reciprocal Peer Tutoring (+0.43 effect size)</strong> while giving enrichment puzzles to high scorers.</p>
+                  <h4>Diagnostic Insight</h4>
+                  <p>Despite a balanced 20-item TOS (12 Easy, 6 Average, 2 Difficult), wide score dispersion shows learners still struggle with both conceptual understanding and real-life application of ratio and proportion.</p>
                 </div>
               </div>
             </div>
@@ -1501,14 +1865,14 @@
             <div class="flip-card" onclick="this.classList.toggle('flipped')">
               <div class="flip-inner">
                 <div class="flip-front">
-                  <div class="visual-illus" style="background:#fef3c7; border-color:#f59e0b;">&#128221;</div>
-                  <h4>Test Construction Load</h4>
-                  <p>Preparing <strong>20 validated items</strong> plus performance tasks every quarter.</p>
+                  <div class="visual-illus" style="background:#fef3c7; border-color:#f59e0b;">&#128269;</div>
+                  <h4>Identifying Specific Learning Gaps</h4>
+                  <p>Combined item analysis (63 learners: Pearl &amp; Sapphire) flagged <strong>Items 11, 15, 9, 13, 16</strong>.</p>
                   <span class="badge badge-warn" style="margin-top: 10px;">Click to Flip &#8635;</span>
                 </div>
                 <div class="flip-back">
-                  <h4>Our Solution</h4>
-                  <p>Maintain a <strong>40-item Validated Item Bank</strong> aligned with the TOS and refine flawed items (Items 8 &amp; 15) through systematic item analysis.</p>
+                  <h4>Diagnostic Insight</h4>
+                  <p><strong>Item 11 (30%)</strong> shows difficulty separating multiplicative comparisons from additive differences. <strong>Item 15 (33%)</strong> and <strong>Items 9, 13, 16 (35%)</strong> reveal gaps in direct, inverse, and partitive proportion.</p>
                 </div>
               </div>
             </div>
@@ -1516,14 +1880,14 @@
             <div class="flip-card" onclick="this.classList.toggle('flipped')">
               <div class="flip-inner">
                 <div class="flip-front">
-                  <div class="visual-illus" style="background:#e0e7ff; border-color:#6366f1;">&#9200;</div>
-                  <h4>Limited Remediation Time</h4>
-                  <p>Fitting re-teaching inside a tight <strong>15-hour LC allocation</strong>.</p>
+                  <div class="visual-illus" style="background:#e0e7ff; border-color:#6366f1;">&#128202;</div>
+                  <h4>Accuracy of Assessment Data</h4>
+                  <p>Ensuring complete <strong>difficulty (P)</strong> and <strong>discrimination (D)</strong> analysis before remediation.</p>
                   <span class="badge badge-warn" style="margin-top: 10px;">Click to Flip &#8635;</span>
                 </div>
                 <div class="flip-back">
-                  <h4>Our Solution</h4>
-                  <p>Embed <strong>5-minute daily Exit Tickets</strong> and 10-minute ratio-table warm-ups so remediation happens continuously within the week.</p>
+                  <h4>Diagnostic Insight</h4>
+                  <p>Paul et al. (2026) emphasize that accurate P and D indices are essential to spot problematic items, correct misclassifications, and improve exam validity before making instructional decisions.</p>
                 </div>
               </div>
             </div>
@@ -1532,13 +1896,13 @@
               <div class="flip-inner">
                 <div class="flip-front">
                   <div class="visual-illus" style="background:#dcfce7; border-color:#22c55e;">&#128172;</div>
-                  <h4>Parent Communication</h4>
-                  <p>Reporting 51% mastery data clearly <strong>without labeling children</strong>.</p>
+                  <h4>Fair, Inclusive &amp; Transparent Reporting</h4>
+                  <p>Communicating low scores clearly while protecting <strong>confidentiality &amp; dignity</strong>.</p>
                   <span class="badge badge-warn" style="margin-top: 10px;">Click to Flip &#8635;</span>
                 </div>
                 <div class="flip-back">
-                  <h4>Our Solution</h4>
-                  <p>Report <strong>"least-mastered competencies"</strong> alongside actionable 10-minute <em>"kaya ba natin ito?"</em> home cooking-and-sharing tasks.</p>
+                  <h4>Diagnostic Insight</h4>
+                  <p>Aligned with DepEd Order No. 8, s. 2015, progress reports must explain not only numerical grades, but also strengths, learning gaps, and practical parent-teacher interventions.</p>
                 </div>
               </div>
             </div>
@@ -1546,48 +1910,50 @@
         </div>
       </div>
 
-      <!-- 4B: Three Evidence-Based Recommendations + Interactive Mastery Gauge -->
+      <!-- 4B: Three Evidence-Based Recommendations + Reflection + References -->
       <div id="t4-rec" class="sub-pane">
         <div class="card">
-          <h2>Three Evidence-Based Recommendations</h2>
+          <h2>Evidence-Based Recommendations for Improving Practice</h2>
 
-          <!-- Recommendation 1 Visual Design -->
           <div class="rec-banner">
             <div class="rec-visual-badge">
-              <div class="big-icon">&#127915;</div>
-              <span>WEEKLY FEEDBACK LOOP</span>
+              <div class="big-icon">&#127919;</div>
+              <span>DIFFERENTIATED REMEDIATION</span>
             </div>
             <div>
-              <h3>1. Institutionalize Brief Formative Assessment [20]</h3>
-              <p>Use your daily <strong>5-minute exit-ticket strategy</strong> and act on the feedback within the same week. Formative assessment that elicits evidence and adjusts instruction reliably raises math achievement—especially for struggling learners. <span class="badge badge-avg">db334d4</span></p>
+              <h3>1. Implement Targeted Remediation &amp; Differentiated Instruction</h3>
+              <p>Use the TOS and item analysis to target least-mastered competencies (<strong>Items 9, 11, 13, 15, and 16</strong>). Use concrete objects, ratio tables, double number lines, real-life activities (recipes, transportation, shopping, sharing), the <strong>"I Do, We Do, You Do"</strong> approach, small-group support, enrichment tasks, and <strong>Peer-Assisted Learning</strong> (Fuchs et al., 2002; Thurston et al., 2020).</p>
             </div>
           </div>
 
-          <!-- Recommendation 2 Visual Design -->
           <div class="rec-banner" style="border-color: var(--accent);">
             <div class="rec-visual-badge" style="background: linear-gradient(135deg, #065f46, #10b981);">
-              <div class="big-icon">&#129309;</div>
-              <span>EFFECT SIZE +0.43</span>
+              <div class="big-icon">&#128269;</div>
+              <span>DATA-INFORMED FEEDBACK</span>
             </div>
             <div>
-              <h3>2. Use Structured Peer-Assisted Learning [22] [23]</h3>
-              <p>Pair learners on least-mastered items (<strong>items 9, 11–18</strong>). Peer-mediated math interventions show moderate positive effects for at-risk elementary learners, with reciprocal peer tutoring producing a <strong>+0.43 effect size</strong> and stronger social inclusion.</p>
+              <h3>2. Strengthen Item Analysis, Formative Assessment &amp; Constructive Feedback</h3>
+              <p>Examine both difficulty and discrimination indices (Paul et al., 2026) to refine problematic items and guide review on ratio interpretation (Item 11) and direct proportion (Item 15). Embed regular formative checks—such as a <strong>3-item exit ticket during the last 5 minutes of class</strong>—and provide immediate, reasoning-focused feedback (De Sousa, 2007).</p>
             </div>
           </div>
 
-          <!-- Recommendation 3 Visual Design -->
           <div class="rec-banner" style="border-color: var(--purple);">
             <div class="rec-visual-badge" style="background: linear-gradient(135deg, #4c1d95, #7c3aed);">
-              <div class="big-icon">&#128269;</div>
-              <span>QUALITY &amp; POST-TEST</span>
+              <div class="big-icon">&#129309;</div>
+              <span>COLLABORATIVE REPORTING</span>
             </div>
             <div>
-              <h3>3. Close the Loop on Item Quality [11]</h3>
-              <p>Revise or replace very difficult/low-performing items (<strong>item 15, P = 0.27</strong>) and correct the mislabeled <strong>item 8</strong> (P = 0.33), complete the discrimination index (D) for every item, and run a <strong>post-remediation assessment</strong> to verify learner growth.</p>
+              <h3>3. Strengthen Transparent, Inclusive &amp; Collaborative Reporting</h3>
+              <p>Communicate specific mastered competencies and growth areas alongside numerical grades (DepEd Order No. 8, s. 2015). Encourage simple home activities (comparing prices, adjusting recipes, measuring ingredients), hold regular parent-teacher conferences, uphold confidentiality, and strictly avoid negative labels such as <em>"slow learner"</em> or <em>"poor performer."</em></p>
             </div>
           </div>
 
-          <!-- Interactive Before-and-After Mastery Growth Simulator -->
+          <div style="background: #eff6ff; border: 4px solid var(--primary); border-radius: 22px; padding: 24px; margin-bottom: 24px;">
+            <h3>&#128161; Reflection and Conclusion</h3>
+            <p style="margin-bottom: 10px;">The analysis of the Grade 6 Mathematics assessment shows that assessment is not simply about administering exams and computing grades—it is a vital tool for identifying strengths, uncovering learning gaps, improving instruction, and monitoring growth.</p>
+            <p>With Grade 6–Pearl's 51% mean score and the least-mastered items identified through item analysis, combining differentiated instruction, peer-assisted learning, formative assessment, constructive feedback, and ethical parent-teacher collaboration ensures learner-centered, evidence-based support for every child.</p>
+          </div>
+
           <div style="background: #f0fdf4; border: 4px solid #16a34a; border-radius: 22px; padding: 24px; margin-bottom: 24px;">
             <h3>&#128640; Interactive Post-Remediation Mastery Target Gauge</h3>
             <p>Drag the intervention slider to demonstrate our expected outcome: moving from <strong>51% Baseline MPS (10.20/20)</strong> to our <strong>80% Post-Remediation Mastery Goal (16/20)</strong>!</p>
@@ -1603,12 +1969,13 @@
           </div>
 
           <div style="background: #f8fafc; padding: 18px 24px; border-radius: 16px; border: 2px solid #cbd5e1;">
-            <h3>References (Tab D)</h3>
-            <ul style="padding-left: 24px; font-size: 1.05rem;">
-              <li><strong>7, 11.</strong> [Missing authors]. (n.d.). <em>GEBE 104 Milestone 3 Part B.docx.</em></li>
-              <li><strong>20.</strong> Sousa, Teresa De (2007). <em>Effect of formative assessment on student achievement in mathematics.</em> <a href="https://openalex.org/W3197973845" target="_blank">https://openalex.org/W3197973845</a></li>
-              <li><strong>22.</strong> Fuchs, Lynn S. et al. (2002). <em>Enhancing First-Grade Children's Mathematical Development with Peer-Assisted Learning Strategies.</em> School Psychology Review, 31(4), 569-583. <a href="https://doi.org/10.1080/02796015.2002.12086175" target="_blank">https://doi.org/10.1080/02796015.2002.12086175</a></li>
-              <li><strong>23.</strong> Thurston, Allen et al. (2020). <em>The influence of social relationships on outcomes in mathematics when using peer tutoring in elementary school.</em> International Journal of Educational Research Open, 1, 100004. <a href="https://doi.org/10.1016/j.ijedro.2020.100004" target="_blank">https://doi.org/10.1016/j.ijedro.2020.100004</a></li>
+            <h3>References</h3>
+            <ul style="padding-left: 24px; font-size: 1rem;">
+              <li style="margin-bottom: 8px;">Department of Education. (2015, April 1). <em>Policy guidelines on classroom assessment for the K to 12 Basic Education Program (DepEd Order No. 8, s. 2015).</em> <a href="https://www.deped.gov.ph/2015/04/01/do-8-s-2015-policy-guidelines-on-classroom-assessment-for-the-k-to-12-basic-education-program/" target="_blank">https://www.deped.gov.ph/2015/04/01/do-8-s-2015-policy-guidelines-on-classroom-assessment-for-the-k-to-12-basic-education-program/</a></li>
+              <li style="margin-bottom: 8px;">De Sousa, T. (2007). <em>Effect of formative assessment on student achievement in mathematics.</em> OpenAlex. <a href="https://openalex.org/W3197973845" target="_blank">https://openalex.org/W3197973845</a></li>
+              <li style="margin-bottom: 8px;">Fuchs, L. S., Fuchs, D., Yazdian, L., &amp; Powell, S. R. (2002). Enhancing first-grade children's mathematical development with peer-assisted learning strategies. <em>School Psychology Review</em>, 31(4), 569–583. <a href="https://doi.org/10.1080/02796015.2002.12086175" target="_blank">https://doi.org/10.1080/02796015.2002.12086175</a></li>
+              <li style="margin-bottom: 8px;">Paul, B. K., Fatema, K., Chowdhury, T., Nahar, K., Saki, J., Salwa, M., &amp; Haque, M. A. (2026). Analyzing test items using difficulty index and discrimination index for evaluating postgraduate medical residents. <em>Cureus</em>, 18(9), Article e116220. <a href="https://doi.org/10.7759/cureus.116220" target="_blank">https://doi.org/10.7759/cureus.116220</a></li>
+              <li>Thurston, A., Cockerill, M., &amp; Chiang, T.-H. (2020). The influence of social relationships on outcomes in mathematics when using peer tutoring in elementary school. <em>International Journal of Educational Research Open</em>, 1, Article 100004. <a href="https://doi.org/10.1016/j.ijedro.2020.100004" target="_blank">https://doi.org/10.1016/j.ijedro.2020.100004</a></li>
             </ul>
           </div>
         </div>
@@ -1617,9 +1984,7 @@
 
   </div>
 
-  <!-- =========================================================
-       FIXED BOTTOM 4-TAB NAVIGATION BAR
-  ========================================================== -->
+  <!-- FIXED BOTTOM 4-TAB NAVIGATION BAR -->
   <nav class="bottom-nav">
     <button class="nav-tab" onclick="openTabFromBottom('tab1', this)">Tab 1: Assessment Design</button>
     <button class="nav-tab" onclick="openTabFromBottom('tab2', this)">Tab B: Data Analysis</button>
@@ -1628,7 +1993,152 @@
   </nav>
 
   <script>
-    // 1. Cover Screen vs. Tab Content Controller
+    // =========================================================
+    // 0. LASER POINTER & PRESENTER VIDEO WIDGET
+    // =========================================================
+    let laserEnabled = false;
+    let videoWidgetEnabled = true;
+    let activeTabKey = 'tab1';
+
+    const tabVideoMap = {
+      tab1: { label: 'Tab 1: Assessment', file: 'video_tab1.mp4' },
+      tab2: { label: 'Tab B: Data Analysis', file: 'video_tab2.mp4' },
+      tab3: { label: 'Tab C: Reporting', file: 'video_tab3.mp4' },
+      tab4: { label: 'Tab D: Reflection', file: 'video_tab4.mp4' }
+    };
+
+    const customLoadedVideos = {};
+
+    function toggleLaserPointer() {
+      laserEnabled = !laserEnabled;
+      document.body.classList.toggle('laser-active', laserEnabled);
+      const btn = document.getElementById('laserToggleBtn');
+      btn.classList.toggle('active-laser', laserEnabled);
+      btn.innerHTML = laserEnabled ? '&#128308; Laser Pointer: ON' : '&#128308; Laser Pointer: OFF';
+    }
+
+    document.addEventListener('mousemove', (e) => {
+      if (!laserEnabled) return;
+      const dot = document.getElementById('laserPointer');
+      dot.style.left = e.clientX + 'px';
+      dot.style.top = e.clientY + 'px';
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!laserEnabled) return;
+      const ripple = document.createElement('div');
+      ripple.className = 'laser-ripple';
+      ripple.style.left = e.clientX + 'px';
+      ripple.style.top = e.clientY + 'px';
+      document.body.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 550);
+    });
+
+    // Keyboard shortcuts: L = Laser Pointer, V = Video Spot
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+      if (e.key.toLowerCase() === 'l') toggleLaserPointer();
+      if (e.key.toLowerCase() === 'v') toggleVideoWidget();
+    });
+
+    function toggleVideoWidget() {
+      videoWidgetEnabled = !videoWidgetEnabled;
+      const widget = document.getElementById('presenterWidget');
+      const btn = document.getElementById('videoToggleBtn');
+      widget.classList.toggle('visible', videoWidgetEnabled);
+      btn.classList.toggle('active-video', videoWidgetEnabled);
+      btn.innerHTML = videoWidgetEnabled ? '&#127909; Video Spot: ON' : '&#127909; Video Spot: OFF';
+      if (!videoWidgetEnabled) {
+        const vid = document.getElementById('presenterVideo');
+        vid.pause();
+      }
+    }
+
+    function toggleVideoShape() {
+      document.getElementById('presenterWidget').classList.toggle('circle-mode');
+    }
+
+    function toggleVideoMinimize() {
+      document.getElementById('presenterWidget').classList.toggle('minimized');
+    }
+
+    function toggleCleanFrame() {
+      const ph = document.getElementById('presenterPlaceholder');
+      const btn = document.getElementById('cleanFrameBtn');
+      ph.classList.toggle('clean-frame');
+      btn.textContent = ph.classList.contains('clean-frame') ? 'Show Label' : 'Clean Frame';
+    }
+
+    function updatePresenterVideoForTab(tabId) {
+      activeTabKey = tabId;
+      const info = tabVideoMap[tabId] || tabVideoMap.tab1;
+      document.getElementById('presenterTabLabel').innerHTML = `&#127909; ${info.label}`;
+      document.getElementById('placeholderTitle').textContent = `${info.label} Video`;
+      document.getElementById('placeholderFileHint').textContent = `File: ${info.file}`;
+
+      const vid = document.getElementById('presenterVideo');
+      const ph = document.getElementById('presenterPlaceholder');
+      vid.pause();
+
+      const srcToUse = customLoadedVideos[tabId] || info.file;
+      vid.src = srcToUse;
+
+      vid.onloadeddata = () => {
+        vid.style.display = 'block';
+        ph.style.display = 'none';
+      };
+
+      vid.onerror = () => {
+        vid.style.display = 'none';
+        ph.style.display = 'flex';
+      };
+
+      vid.load();
+    }
+
+    function loadLocalVideo(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const url = URL.createObjectURL(file);
+      customLoadedVideos[activeTabKey] = url;
+      updatePresenterVideoForTab(activeTabKey);
+      event.target.value = '';
+    }
+
+    // Dragging logic for Presenter Video Widget
+    (function initDragWidget() {
+      const widget = document.getElementById('presenterWidget');
+      const handle = document.getElementById('presenterDragHandle');
+      let isDragging = false, offsetX = 0, offsetY = 0;
+
+      handle.addEventListener('mousedown', (e) => {
+        if (e.target.tagName === 'BUTTON') return;
+        isDragging = true;
+        const rect = widget.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+        widget.style.right = 'auto';
+        widget.style.bottom = 'auto';
+        widget.style.left = rect.left + 'px';
+        widget.style.top = rect.top + 'px';
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const x = Math.max(8, Math.min(window.innerWidth - widget.offsetWidth - 8, e.clientX - offsetX));
+        const y = Math.max(8, Math.min(window.innerHeight - widget.offsetHeight - 8, e.clientY - offsetY));
+        widget.style.left = x + 'px';
+        widget.style.top = y + 'px';
+      });
+
+      document.addEventListener('mouseup', () => {
+        isDragging = false;
+      });
+    })();
+
+    // =========================================================
+    // 1. Cover Screen, Tab Navigation & Lightbox
+    // =========================================================
     function openTabFromBottom(tabId, btn) {
       document.getElementById('coverScreen').classList.add('hidden');
       document.getElementById('mainContentWrapper').style.display = 'block';
@@ -1638,12 +2148,19 @@
 
       document.getElementById(tabId).classList.add('active');
       btn.classList.add('active');
+
+      if (videoWidgetEnabled) {
+        document.getElementById('presenterWidget').classList.add('visible');
+      }
+      updatePresenterVideoForTab(tabId);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function showCoverScreen() {
       document.getElementById('coverScreen').classList.remove('hidden');
       document.getElementById('mainContentWrapper').style.display = 'none';
+      document.getElementById('presenterWidget').classList.remove('visible');
+      document.getElementById('presenterVideo').pause();
       document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
     }
 
@@ -1655,6 +2172,15 @@
       btn.classList.add('active');
     }
 
+    function openLightbox(src) {
+      document.getElementById('lightboxImg').src = src;
+      document.getElementById('lightboxModal').classList.add('open');
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightboxModal').classList.remove('open');
+    }
+
     // 2. Validation Form Items + Interactive Quiz + Detective Mode
     const validationItems = [
       { no: 1, btl: "R", q: "1. What is the ratio of number of apples to the number of bananas?", opts: ["A. 2 : 4", "B. 2 : 5", "C. 2 : 6", "D. 5 : 2"], ans: 1 },
@@ -1664,16 +2190,16 @@
       { no: 5, btl: "U", q: "5. The table below shows the hours worked versus pesos earned, what does the vertical alignment between 2 on the top line and 300 on the bottom line explain?", opts: ["A. Working 2 hours yields an earning of ₱150.", "B. Working 2 hours yields an earning of ₱300.", "C. Working 300 hours yields an earning of ₱2.", "D. The hourly wage changes every 2 hours."], ans: 1 },
       { no: 6, btl: "U", q: "6. Which pair forms a proportion?", opts: ["A. 2:3 = 6:8", "B. 2:3 = 8:12", "C. 3:5 = 9:10", "D. 4:7 = 8:21"], ans: 1 },
       { no: 7, btl: "Ap", q: "7. A baker uses a ratio table to scale a bread recipe. The table indicates 3 cups of flour for every 2 cups of milk. If the baker uses 15 cups of flour, how many cups of milk are required?", opts: ["A. 5 cups", "B. 8 cups", "C. 10 cups", "D. 12 cups"], ans: 2 },
-      { no: 8, btl: "R", q: "8. What value makes 4/5 = x/20?", opts: ["A. 15", "B. 10", "C. 25", "D. 16"], ans: 3, flaw: "Validation Detective Note: P = 0.33 (Low Mastery in LOP), but mislabeled as 'Very Easy' instead of 'Average/Acceptable' in the draft table." },
+      { no: 8, btl: "R", q: "8. What value makes 4/5 = x/20?", opts: ["A. 15", "B. 10", "C. 25", "D. 16"], ans: 3, flaw: "Validation Detective Note: P = 0.33 (Average/Acceptable) with Good Discrimination (D = 0.25)." },
       { no: 9, btl: "R", q: "9. In the ratio 5:1, how many times is the first value as large as the second?", opts: ["A. 1 time", "B. 4 times", "C. 5 times", "D. 6 times"], ans: 2 },
       { no: 10, btl: "R", q: "10. The ratio of blue marbles to red marbles is 2:6. What is this ratio in its simplest form?", opts: ["A. 1:2", "B. 1:3", "C. 2:3", "D. 4:12"], ans: 1 },
       { no: 11, btl: "U", q: "11. The height of Tree A is 15 meters and the height of Tree B is 5 meters, giving a ratio of 15 : 5 (or 3 : 1). Which statement accurately interprets this ratio?", opts: ["A. Tree A is 3 meters taller than Tree B.", "B. Tree A is 3 times as tall as Tree B.", "C. Tree B is 3 times as tall as Tree A.", "D. Tree A is 10 times as tall as Tree B"], ans: 1 },
-      { no: 12, btl: "U", q: "12. The mass of a calamansi fruit is 20 grams and the mass of a pomelo is 1,000 grams. The ratio of the calamansi's mass to the pomelo's mass is 1 : 50. What does this ratio state about the calamansi compared to the pomelo?", opts: ["A. The calamansi is 50 times as heavy as the pomelo.", "B. The calamansi is 50 times as heavy as the pomelo.", "C. The calamansi is 980 grams lighter than the pomelo.", "D. The pomelo is 1/50 as heavy as the calamansi."], ans: 1, flaw: "Validation Detective Note: Options A and B are identical in the original Excel sheet and both reverse the 1:50 relationship (calamansi is 1/50 as heavy as the pomelo). Needs revision!" },
+      { no: 12, btl: "U", q: "12. The mass of a calamansi fruit is 20 grams and the mass of a pomelo is 1,000 grams. The ratio of the calamansi's mass to the pomelo's mass is 1 : 50. What does this ratio state about the calamansi compared to the pomelo?", opts: ["A. The calamansi is 50 times as heavy as the pomelo.", "B. The calamansi is 50 times as heavy as the pomelo.", "C. The calamansi is 980 grams lighter than the pomelo.", "D. The pomelo is 1/50 as heavy as the calamansi."], ans: 1, flaw: "Validation Detective Note: Options A and B are identical and reverse the 1:50 relationship (D = 0.13, Poor/Revise). Needs revision!" },
       { no: 13, btl: "U", q: "13. In a Grade 6 chess club, the ratio of boys to girls is 5 : 2. How many times larger is the number of boys compared to the number of girls?", opts: ["A. 2.5 times larger", "B. 3.0 times larger", "C. 0.4 times larger", "D. 5.0 times larger"], ans: 0 },
       { no: 14, btl: "Ap", q: "14. A recipe for lemonade calls for 2 cups of sugar for every 3 lemons. How many lemons are needed for 6 cups of sugar?", opts: ["A. 4", "B. 6", "C. 8", "D. 9"], ans: 3 },
-      { no: 15, btl: "Ap", q: "15. A delivery van travels 180 kilometers on 12 liters of diesel. How many kilometers can it travel on 20 liters of diesel at the same fuel efficiency rate?", opts: ["A. 240 km", "B. 300 km", "C. 320 km", "D. 360 km"], ans: 1, flaw: "Validation Detective Note: Lowest Difficulty Index on the test (P = 0.27, Very Difficult). Only 8 out of 30 learners answered correctly—targeted for revision and guided remediation." },
+      { no: 15, btl: "Ap", q: "15. A delivery van travels 180 kilometers on 12 liters of diesel. How many kilometers can it travel on 20 liters of diesel at the same fuel efficiency rate?", opts: ["A. 240 km", "B. 300 km", "C. 320 km", "D. 360 km"], ans: 1, flaw: "Validation Detective Note: Lowest Difficulty Index (P = 0.27, Very Difficult), but Good Discrimination (D = 0.25). Retain item and re-teach direct proportion." },
       { no: 16, btl: "An", q: "16. Analyze the three real-world math scenarios: Scenario I: 4 workers paint a wall in 6 hours; 8 workers in 3 hours. Scenario II: 2 notebooks cost ₱50; 6 cost ₱150. Scenario III: ₱12,000 shared among 3 winners in ratio 1:2:3.", opts: ["A. I: Direct, II: Inverse, III: Partitive", "B. I: Inverse Proportion, II: Direct Proportion, III: Partitive Proportion", "C. I: Partitive, II: Direct, III: Inverse", "D. I: Inverse, II: Partitive, III: Direct"], ans: 1 },
-      { no: 17, btl: "An", q: "17. It takes 6 community volunteers 4 hours to clean up a barangay park. If it increased to 8 volunteers, how many hours will it take them to clean the park?", opts: ["A. 2 hours", "B. 3 hours", "C. hours", "D. 5.33 hours"], ans: 1, flaw: "Validation Detective Note: Typographical omission in Option C ('C. hours' is missing its numerical value in the Excel Validation Form)." },
+      { no: 17, btl: "An", q: "17. It takes 6 community volunteers 4 hours to clean up a barangay park. If it increased to 8 volunteers, how many hours will it take them to clean the park?", opts: ["A. 2 hours", "B. 3 hours", "C. hours", "D. 5.33 hours"], ans: 1, flaw: "Validation Detective Note: Typographical omission in Option C ('C. hours' is missing its numerical value) and Poor Discrimination (D = 0.13)." },
       { no: 18, btl: "An", q: "18. A glass jar has 64 chocolates. Jeff, Lea, and Dave will share the chocolates in the ratio 1:1:2. How many chocolates will each one of them get?", opts: ["A. 15 : 15 : 30", "B. 16 : 16 : 32", "C. 17 : 17 : 34", "D. 18 : 18 : 36"], ans: 1 },
       { no: 19, btl: "Ev", q: "19. Student Juan solved: '5 water pumps empty a flooded cellar in 12 minutes. How long will 10 pumps take?' Juan wrote: 5/12 = 10/x -> x = 24 minutes. Evaluate Juan's solution.", opts: ["A. Correct, doubling pumps doubles time.", "B. Incorrect, because he used direct proportion instead of inverse proportion; more pumps take less time (6 minutes).", "C. Incorrect, he should have added 5 + 10 = 15 pumps.", "D. Correct, product of means equals product of extremes."], ans: 1 },
       { no: 20, btl: "C", q: "20. A teacher wants to construct a partitive proportion problem to distribute 60 storybooks among three Grade 6 learning centers in a ratio 1 : 2 : 3. Which correctly distributes all 60 books?", opts: ["A. 10 : 20 : 30", "B. 10 : 20 : 40", "C. 20 : 30 : 40", "D. 10 : 30 : 50"], ans: 0 },
@@ -1905,47 +2431,78 @@
       buddyOffset = (buddyOffset + 1) % lowerList.length;
     }
 
-    // 5. Item Analysis Table
+    // 5. Item Analysis Table with Interactive Classification Filter
     const itemAnalysisData = [
-      { item: 1, p: "0.67", interp: "Average/Acceptable" },
-      { item: 2, p: "0.63", interp: "Average/Acceptable" },
-      { item: 3, p: "0.70", interp: "Average/Acceptable" },
-      { item: 4, p: "0.63", interp: "Average/Acceptable" },
-      { item: 5, p: "0.87", interp: "Very Easy" },
-      { item: 6, p: "0.60", interp: "Average/Acceptable" },
-      { item: 7, p: "0.50", interp: "Average/Acceptable" },
-      { item: 8, p: "0.33", interp: "Very Easy" },
-      { item: 9, p: "0.43", interp: "Average/Acceptable" },
-      { item: 10, p: "0.57", interp: "Average/Acceptable" },
-      { item: 11, p: "0.37", interp: "Average/Acceptable" },
-      { item: 12, p: "0.30", interp: "Average/Acceptable" },
-      { item: 13, p: "0.33", interp: "Average/Acceptable" },
-      { item: 14, p: "0.30", interp: "Average/Acceptable" },
-      { item: 15, p: "0.27", interp: "Very Difficult" },
-      { item: 16, p: "0.33", interp: "Average/Acceptable" },
-      { item: 17, p: "0.43", interp: "Average/Acceptable" },
-      { item: 18, p: "0.57", interp: "Average/Acceptable" },
-      { item: 19, p: "0.63", interp: "Average/Acceptable" },
-      { item: 20, p: "0.73", interp: "Very Easy" }
+      { item: 1,  p: "0.67", pInterp: "Average/Acceptable", u: 10, l: 4, d: "0.75", dInterp: "Excellent",   cats: ["excellent"],             action: "Retain (Excellent D)",          actionCls: "badge-avg"  },
+      { item: 2,  p: "0.63", pInterp: "Average/Acceptable", u: 4,  l: 3, d: "0.13", dInterp: "Poor/Revise", cats: ["poor"],                  action: "Revise Wording / Distractors",  actionCls: "badge-diff" },
+      { item: 3,  p: "0.70", pInterp: "Average/Acceptable", u: 8,  l: 3, d: "0.63", dInterp: "Excellent",   cats: ["excellent"],             action: "Retain (Excellent D)",          actionCls: "badge-avg"  },
+      { item: 4,  p: "0.63", pInterp: "Average/Acceptable", u: 7,  l: 3, d: "0.50", dInterp: "Excellent",   cats: ["excellent"],             action: "Retain (Excellent D)",          actionCls: "badge-avg"  },
+      { item: 5,  p: "0.87", pInterp: "Very Easy",          u: 9,  l: 4, d: "0.63", dInterp: "Excellent",   cats: ["veryEasy", "excellent"], action: "Level Up (HOTS) & Excellent D", actionCls: "badge-easy" },
+      { item: 6,  p: "0.60", pInterp: "Average/Acceptable", u: 5,  l: 2, d: "0.38", dInterp: "Excellent",   cats: ["excellent"],             action: "Retain (Excellent D)",          actionCls: "badge-avg"  },
+      { item: 7,  p: "0.50", pInterp: "Average/Acceptable", u: 6,  l: 4, d: "0.25", dInterp: "Good",        cats: [],                        action: "Retain (Good D)",               actionCls: "badge-avg"  },
+      { item: 8,  p: "0.33", pInterp: "Average/Acceptable", u: 4,  l: 2, d: "0.25", dInterp: "Good",        cats: [],                        action: "Retain (Good D)",               actionCls: "badge-avg"  },
+      { item: 9,  p: "0.43", pInterp: "Average/Acceptable", u: 4,  l: 4, d: "0.00", dInterp: "Poor/Revise", cats: ["poor"],                  action: "Revise Wording / Distractors",  actionCls: "badge-diff" },
+      { item: 10, p: "0.57", pInterp: "Average/Acceptable", u: 5,  l: 2, d: "0.38", dInterp: "Excellent",   cats: ["excellent"],             action: "Retain (Excellent D)",          actionCls: "badge-avg"  },
+      { item: 11, p: "0.37", pInterp: "Average/Acceptable", u: 3,  l: 1, d: "0.25", dInterp: "Good",        cats: [],                        action: "Retain (Good D)",               actionCls: "badge-avg"  },
+      { item: 12, p: "0.30", pInterp: "Average/Acceptable", u: 2,  l: 1, d: "0.13", dInterp: "Poor/Revise", cats: ["poor"],                  action: "Revise Wording / Distractors",  actionCls: "badge-diff" },
+      { item: 13, p: "0.33", pInterp: "Average/Acceptable", u: 4,  l: 3, d: "0.13", dInterp: "Poor/Revise", cats: ["poor"],                  action: "Revise Wording / Distractors",  actionCls: "badge-diff" },
+      { item: 14, p: "0.30", pInterp: "Average/Acceptable", u: 4,  l: 2, d: "0.25", dInterp: "Good",        cats: [],                        action: "Retain (Good D)",               actionCls: "badge-avg"  },
+      { item: 15, p: "0.27", pInterp: "Very Difficult",     u: 3,  l: 1, d: "0.25", dInterp: "Good",        cats: ["veryDiff"],              action: "Re-Teach Direct Proportion",    actionCls: "badge-warn" },
+      { item: 16, p: "0.33", pInterp: "Average/Acceptable", u: 3,  l: 2, d: "0.13", dInterp: "Poor/Revise", cats: ["poor"],                  action: "Revise Wording / Distractors",  actionCls: "badge-diff" },
+      { item: 17, p: "0.43", pInterp: "Average/Acceptable", u: 4,  l: 3, d: "0.13", dInterp: "Poor/Revise", cats: ["poor"],                  action: "Revise Wording / Distractors",  actionCls: "badge-diff" },
+      { item: 18, p: "0.57", pInterp: "Average/Acceptable", u: 4,  l: 2, d: "0.25", dInterp: "Good",        cats: [],                        action: "Retain (Good D)",               actionCls: "badge-avg"  },
+      { item: 19, p: "0.63", pInterp: "Average/Acceptable", u: 5,  l: 0, d: "0.63", dInterp: "Excellent",   cats: ["excellent"],             action: "Retain (Excellent D)",          actionCls: "badge-avg"  },
+      { item: 20, p: "0.73", pInterp: "Very Easy",          u: 7,  l: 4, d: "0.38", dInterp: "Excellent",   cats: ["veryEasy", "excellent"], action: "Level Up (HOTS) & Excellent D", actionCls: "badge-easy" }
     ];
+
+    let currentIAFilter = 'all';
+
+    function filterItemAnalysis(category) {
+      currentIAFilter = (currentIAFilter === category && category !== 'all') ? 'all' : category;
+
+      document.querySelectorAll('.ia-class-card').forEach(c => c.classList.remove('active-filter'));
+      if (currentIAFilter !== 'all') {
+        const activeCard = document.getElementById('iaCard-' + currentIAFilter);
+        if (activeCard) activeCard.classList.add('active-filter');
+      }
+
+      const labels = {
+        all: 'Showing: All 20 Items',
+        veryEasy: 'Filter: Very Easy — Level Up with HOTS (Items 5, 20)',
+        veryDiff: 'Filter: Very Difficult & Good D — Re-Teach Direct Proportion (Item 15)',
+        excellent: 'Filter: Excellent Discrimination (Items 1, 3, 4, 5, 6, 10, 19, 20)',
+        poor: 'Filter: Poor Discrimination — Revise Wording/Distractors (Items 2, 9, 12, 13, 16, 17)'
+      };
+      document.getElementById('iaFilterStatus').textContent = labels[currentIAFilter];
+      renderItemAnalysis();
+    }
 
     function renderItemAnalysis() {
       const tbody = document.getElementById('itemAnalysisBody');
-      tbody.innerHTML = itemAnalysisData.map(row => {
-        let badgeClass = 'badge-avg';
-        if (row.p === '0.27') badgeClass = 'badge-diff';
-        else if (parseFloat(row.p) > 0.70) badgeClass = 'badge-easy';
-        else if (row.item === 8) badgeClass = 'badge-warn';
+      const filtered = currentIAFilter === 'all'
+        ? itemAnalysisData
+        : itemAnalysisData.filter(row => row.cats.includes(currentIAFilter));
+
+      tbody.innerHTML = filtered.map(row => {
+        let pBadge = 'badge-avg';
+        if (row.pInterp === 'Very Difficult') pBadge = 'badge-diff';
+        else if (row.pInterp === 'Very Easy') pBadge = 'badge-easy';
+
+        let dBadge = 'badge-avg';
+        if (row.dInterp === 'Excellent') dBadge = 'badge-easy';
+        else if (row.dInterp === 'Poor/Revise') dBadge = 'badge-diff';
+        else if (row.dInterp === 'Acceptable') dBadge = 'badge-warn';
 
         return `
           <tr>
             <td class="center"><strong>${row.item}</strong></td>
             <td class="center"><strong>${row.p}</strong></td>
-            <td class="center"><span class="badge ${badgeClass}">${row.interp}</span></td>
-            <td class="center">—</td>
-            <td class="center">—</td>
-            <td class="center">—</td>
-            <td class="center"><em>To be completed (Rec #3)</em></td>
+            <td class="center"><span class="badge ${pBadge}">${row.pInterp}</span></td>
+            <td class="center">${row.u}</td>
+            <td class="center">${row.l}</td>
+            <td class="center"><strong>${row.d}</strong></td>
+            <td class="center"><span class="badge ${dBadge}">${row.dInterp}</span></td>
+            <td class="center"><span class="badge ${row.actionCls}">${row.action}</span></td>
           </tr>
         `;
       }).join('');
@@ -1984,33 +2541,21 @@
     }
 
     let currentScriptStep = -1;
+    const totalScriptLines = 6;
     function stepRolePlay() {
-      currentScriptStep = (currentScriptStep + 1) % 4;
-      for (let i = 0; i < 4; i++) {
+      currentScriptStep = (currentScriptStep + 1) % totalScriptLines;
+      for (let i = 0; i < totalScriptLines; i++) {
         const el = document.getElementById('sLine' + i);
         if (el) el.classList.toggle('active-line', i === currentScriptStep);
       }
     }
 
-    function toggleTrackerPreview() {
-      const modal = document.getElementById('exitTicketModal');
-      modal.style.display = (modal.style.display === 'none') ? 'block' : 'none';
-    }
-
-    function updateLearnerName() {
-      const name = document.getElementById('learnerNameInput').value.trim() || '[Learner]';
-      document.getElementById('reportLineText').innerHTML = `
-        "In Mathematics this quarter, <strong>${name}</strong> scored 10 out of 20 (51%) on the first summative test on ratio and proportion, near the class median of 10.
-        <br/>&#9989; <strong>Strengths:</strong> identifying ratios and simple proportions.
-        <br/>&#127919; <strong>Focus for the next weeks:</strong> solving inverse and partitive proportion problems.
-        <br/>&#127968; <strong>Support at home:</strong> practice doubling/halving recipes and sharing amounts in given ratios."
-      `;
-      document.getElementById('scriptLineText').innerHTML = `
-        <span class="script-line" id="sLine0">"Good afternoon, po. <strong>${name}</strong> is doing well in reading and writing ratios, and I want us to work together on word problems.</span>
-        <br/><span class="script-line" id="sLine1">In class we are doing guided practice and peer buddy work three times a week.</span>
-        <br/><span class="script-line" id="sLine2">At home, even ten minutes of <em>'kaya ba natin ito?'</em> cooking-and-sharing problems will help a lot.</span>
-        <br/><span class="script-line" id="sLine3">Here is his exit-ticket progress tracker so we can both see the growth."</span>
-      `;
+    function resetRolePlay() {
+      currentScriptStep = -1;
+      for (let i = 0; i < totalScriptLines; i++) {
+        const el = document.getElementById('sLine' + i);
+        if (el) el.classList.remove('active-line');
+      }
     }
 
     // 7. Mastery Gauge Slider (Tab D)
