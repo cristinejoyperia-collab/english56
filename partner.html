@@ -1,0 +1,2278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Flick the Food - Supermarket Order Showdown 超市點餐大挑戰</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    input, textarea {
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Comic Sans MS', 'Comic Sans', 'Chalkboard SE', cursive, sans-serif;
+      background-color: #fef9c3;
+      touch-action: manipulation;
+    }
+
+    canvas {
+      touch-action: none;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 9999px;
+    }
+
+    /* Playful 3D Game Buttons */
+    .btn-game {
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 7px 0 rgba(0,0,0,0.28), 0 12px 20px rgba(0,0,0,0.2);
+      transform: translateY(0);
+    }
+    .btn-game:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 9px 0 rgba(0,0,0,0.28), 0 15px 24px rgba(0,0,0,0.25);
+    }
+    .btn-game:active:not(:disabled) {
+      transform: translateY(5px);
+      box-shadow: 0 2px 0 rgba(0,0,0,0.28), 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .btn-game:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Supermarket Awning Stripes */
+    .awning-fresh {
+      background: repeating-linear-gradient(
+        90deg,
+        #16a34a,
+        #16a34a 40px,
+        #dcfce7 40px,
+        #dcfce7 80px
+      );
+    }
+    .awning-snack {
+      background: repeating-linear-gradient(
+        90deg,
+        #ea580c,
+        #ea580c 40px,
+        #ffedd5 40px,
+        #ffedd5 80px
+      );
+    }
+
+    /* Big X Pop Animation */
+    @keyframes popShake {
+      0% { transform: scale(0.2) rotate(-15deg); opacity: 0; }
+      40% { transform: scale(1.15) rotate(8deg); opacity: 1; }
+      60% { transform: scale(0.95) rotate(-6deg); opacity: 1; }
+      80% { transform: scale(1.05) rotate(3deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg); opacity: 0; }
+    }
+    .animate-big-x {
+      animation: popShake 0.85s ease-out forwards;
+    }
+
+    /* Correct Check Pop Animation */
+    @keyframes popBounce {
+      0% { transform: scale(0.3); opacity: 0; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(1); opacity: 0; }
+    }
+    .animate-correct-pop {
+      animation: popBounce 0.65s ease-out forwards;
+    }
+
+    /* Shake animation for wrong sentence order */
+    @keyframes horizontalShake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-10px); }
+      40% { transform: translateX(10px); }
+      60% { transform: translateX(-8px); }
+      80% { transform: translateX(8px); }
+    }
+    .animate-shake {
+      animation: horizontalShake 0.45s ease-in-out;
+    }
+
+    /* Floating animation for cover button */
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+    .float-btn {
+      animation: floatSlow 2.4s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="relative w-screen h-screen overflow-hidden select-none">
+
+  <!-- ===================================================================== -->
+  <!-- GLOBAL BACKGROUND IMAGE LAYER (bg_flick.jpg)                          -->
+  <!-- ===================================================================== -->
+  <img id="globalBgImage" src="bg_flick.jpg" alt=""
+    class="absolute inset-0 w-full h-full object-cover pointer-events-none z-0 opacity-90"
+    onerror="handleGlobalBgError(this)" />
+
+  <!-- ===================================================================== -->
+  <!-- SCREEN 1: COVER PAGE (Uses coverphoto_flick.gif + Start Button)       -->
+  <!-- ===================================================================== -->
+  <section id="screenCover" class="relative z-10 w-full h-full flex flex-col items-center justify-end pb-14 bg-amber-100 bg-center bg-cover bg-no-repeat">
+    <img id="coverBgImage" src="coverphoto_flick.gif" alt=""
+      class="absolute inset-0 w-full h-full object-cover pointer-events-none"
+      onerror="handleCoverError(this)" />
+
+    <div class="relative z-10 flex flex-col items-center gap-4">
+      <button onclick="startShoppingFromCover()"
+        class="btn-game float-btn px-10 py-4 rounded-full bg-gradient-to-b from-lime-400 via-green-500 to-emerald-600 text-white text-2xl md:text-4xl font-extrabold tracking-wide border-4 border-white flex items-center gap-4">
+        <i class="fa-solid fa-cart-shopping drop-shadow"></i>
+        <span class="drop-shadow-[0_3px_2px_rgba(0,0,0,0.4)] leading-tight text-center">
+          Start Shopping
+          <span class="block text-lg md:text-2xl font-bold">開始購物</span>
+        </span>
+      </button>
+
+      <div class="flex items-center gap-3">
+        <button onclick="openLeaderboardModal()"
+          class="btn-game px-5 py-2.5 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 text-slate-950 font-black text-sm md:text-base border-2 border-white flex items-center gap-2">
+          <i class="fa-solid fa-trophy"></i>
+          <span>Leaderboard 排行榜</span>
+        </button>
+
+        <button onclick="openAssetModal()"
+          class="btn-game px-5 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm md:text-base border-2 border-white flex items-center gap-2">
+          <i class="fa-solid fa-images"></i>
+          <span>Upload Photos 上傳照片</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- PERSISTENT TOP SCOREBOARD & HEADER                                    -->
+  <!-- ===================================================================== -->
+  <header id="globalHeader" class="hidden fixed top-0 left-0 right-0 h-20 z-40 bg-slate-900/95 border-b-4 border-amber-400 px-2 md:px-4 flex items-center justify-between text-white shadow-xl">
+    <!-- Left: Team Fresh Score -->
+    <div class="flex items-center gap-2 md:gap-3 bg-emerald-800/80 border-2 border-emerald-400 rounded-2xl px-2.5 py-1.5 min-w-[135px] md:min-w-[215px]">
+      <div class="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-lg md:text-2xl shadow-inner shrink-0">
+        🥬
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="text-[10px] md:text-xs font-bold text-emerald-200 tracking-wider truncate">Team Fresh 新鮮隊</div>
+        <div id="headerFreshPlayer" class="text-xs md:text-sm font-black text-white truncate">Player 1</div>
+      </div>
+      <span id="scoreFresh" class="text-2xl md:text-3xl font-black text-lime-300 px-1">0</span>
+    </div>
+
+    <!-- Center: Locked Order Progress, Replay AI Voice, Audio, Leaderboard, Pause, End Game -->
+    <div class="flex items-center gap-1.5 md:gap-2">
+      <!-- Locked Order Counter (No Jumping Allowed) -->
+      <div id="headerOrderBadge" class="hidden items-center gap-1.5 bg-slate-800 border-2 border-amber-400 rounded-2xl px-2.5 py-1.5">
+        <i class="fa-solid fa-lock text-amber-300 text-xs"></i>
+        <span id="orderProgressText" class="text-amber-300 font-black text-xs md:text-sm whitespace-nowrap">
+          Order 1/15 (第1題)
+        </span>
+      </div>
+
+      <!-- Replay AI Order Voice Button -->
+      <button id="btnReplayOrderHeader" onclick="speakCurrentOrder()" title="Listen to AI Order Again 再聽一次"
+        class="hidden items-center gap-1.5 px-2.5 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-black text-xs md:text-sm border-2 border-white shadow-md transition">
+        <i class="fa-solid fa-volume-high"></i>
+        <span class="hidden sm:inline">Listen 聽題目</span>
+      </button>
+
+      <!-- BGM / Mute Toggle -->
+      <button onclick="toggleMute()" title="Toggle Sound 聲音開關"
+        class="flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-xl bg-slate-800 hover:bg-slate-700 border-2 border-slate-500 text-white transition">
+        <i id="soundIcon" class="fa-solid fa-volume-high text-emerald-400"></i>
+      </button>
+
+      <!-- Leaderboard Button -->
+      <button onclick="openLeaderboardModal()" title="View Standings 排行榜"
+        class="flex items-center gap-1.5 px-2.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs md:text-sm border-2 border-white shadow-md transition">
+        <i class="fa-solid fa-trophy"></i>
+        <span class="hidden lg:inline">Standings 排行</span>
+      </button>
+
+      <!-- Pause Button -->
+      <button id="btnPauseGame" onclick="togglePauseGame()" title="Pause 暫停"
+        class="hidden items-center gap-1.5 px-2.5 py-2 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-black text-xs md:text-sm border-2 border-white shadow-md transition">
+        <i id="pauseBtnIcon" class="fa-solid fa-pause"></i>
+        <span id="pauseBtnText" class="hidden lg:inline">Pause 暫停</span>
+      </button>
+
+      <!-- End Game Button -->
+      <button id="btnEndGame" onclick="triggerEndGame()" title="End Game 結束遊戲"
+        class="hidden items-center gap-1.5 px-2.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs md:text-sm border-2 border-white shadow-md transition">
+        <i class="fa-solid fa-flag-checkered"></i>
+        <span class="hidden md:inline">End 結束</span>
+      </button>
+    </div>
+
+    <!-- Right: Team Snack Score -->
+    <div class="flex items-center gap-2 md:gap-3 bg-orange-800/80 border-2 border-orange-400 rounded-2xl px-2.5 py-1.5 min-w-[135px] md:min-w-[215px]">
+      <span id="scoreSnack" class="text-2xl md:text-3xl font-black text-amber-300 px-1">0</span>
+      <div class="flex-1 min-w-0 text-right">
+        <div class="text-[10px] md:text-xs font-bold text-orange-200 tracking-wider truncate">Team Snack 點心隊</div>
+        <div id="headerSnackPlayer" class="text-xs md:text-sm font-black text-white truncate">Player 2</div>
+      </div>
+      <div class="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-orange-500 flex items-center justify-center text-lg md:text-2xl shadow-inner shrink-0">
+        🍪
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- SCREEN 2: TWO-STUDENT NAME ENTRY                                      -->
+  <!-- ===================================================================== -->
+  <section id="screenPlayerSetup" class="hidden relative z-10 pt-20 w-full h-full flex flex-col bg-transparent">
+    <div class="flex-1 grid grid-cols-2 w-full h-full overflow-hidden">
+
+      <!-- LEFT SIDE: TEAM FRESH -->
+      <div class="relative flex flex-col items-center justify-center p-4 md:p-8 bg-emerald-100/85 backdrop-blur-[2px] border-r-4 border-dashed border-emerald-500">
+        <div class="w-full h-4 awning-fresh rounded-full shadow-sm mb-6 absolute top-4 left-0 right-0 mx-auto max-w-[90%]"></div>
+
+        <div class="text-center mb-5">
+          <span class="inline-block px-4 py-1.5 rounded-full bg-emerald-600 text-white text-xs md:text-base font-bold shadow">
+            🥗 AISLE 1 • TEAM FRESH (第1走道 • 新鮮隊)
+          </span>
+          <h2 class="text-2xl md:text-4xl font-black text-emerald-900 mt-2 drop-shadow-sm">Team Fresh 新鮮隊</h2>
+          <p class="text-emerald-800 font-bold text-xs md:text-base mt-1">
+            Left-side shopper, enter your name!<br/>
+            <span class="text-emerald-700">左邊的小小購物員，請輸入你的名字！</span>
+          </p>
+        </div>
+
+        <div class="w-full max-w-md bg-white/95 rounded-3xl border-4 border-emerald-500 shadow-xl p-5">
+          <label for="inputFreshName" class="block text-xs md:text-sm font-black text-emerald-700 mb-2">
+            <i class="fa-solid fa-user mr-1"></i> Student 1 Name (學生 1 名字)
+          </label>
+          <input id="inputFreshName" type="text" maxlength="24" placeholder="Type your name... 輸入名字"
+            class="w-full px-4 py-3.5 rounded-2xl border-4 border-emerald-200 focus:border-emerald-500 focus:outline-none text-xl md:text-2xl font-black text-emerald-950 bg-emerald-50 text-center" />
+        </div>
+      </div>
+
+      <!-- RIGHT SIDE: TEAM SNACK -->
+      <div class="relative flex flex-col items-center justify-center p-4 md:p-8 bg-orange-100/85 backdrop-blur-[2px]">
+        <div class="w-full h-4 awning-snack rounded-full shadow-sm mb-6 absolute top-4 left-0 right-0 mx-auto max-w-[90%]"></div>
+
+        <div class="text-center mb-5">
+          <span class="inline-block px-4 py-1.5 rounded-full bg-orange-600 text-white text-xs md:text-base font-bold shadow">
+            🥨 AISLE 2 • TEAM SNACK (第2走道 • 點心隊)
+          </span>
+          <h2 class="text-2xl md:text-4xl font-black text-orange-900 mt-2 drop-shadow-sm">Team Snack 點心隊</h2>
+          <p class="text-orange-800 font-bold text-xs md:text-base mt-1">
+            Right-side shopper, enter your name!<br/>
+            <span class="text-orange-700">右邊的小小購物員，請輸入你的名字！</span>
+          </p>
+        </div>
+
+        <div class="w-full max-w-md bg-white/95 rounded-3xl border-4 border-orange-500 shadow-xl p-5">
+          <label for="inputSnackName" class="block text-xs md:text-sm font-black text-orange-700 mb-2">
+            <i class="fa-solid fa-user mr-1"></i> Student 2 Name (學生 2 名字)
+          </label>
+          <input id="inputSnackName" type="text" maxlength="24" placeholder="Type your name... 輸入名字"
+            class="w-full px-4 py-3.5 rounded-2xl border-4 border-orange-200 focus:border-orange-500 focus:outline-none text-xl md:text-2xl font-black text-orange-950 bg-orange-50 text-center" />
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Action Bar -->
+    <div class="w-full bg-slate-900/95 border-t-4 border-amber-400 py-3 px-4 flex flex-wrap items-center justify-center gap-3 md:gap-4 z-20">
+      <button onclick="goToCover()" class="px-4 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs md:text-sm flex items-center gap-2">
+        <i class="fa-solid fa-house"></i> Cover 回首頁
+      </button>
+
+      <button onclick="openAssetModal()" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs md:text-sm flex items-center gap-2">
+        <i class="fa-solid fa-images"></i> Upload Photos 上傳照片
+      </button>
+
+      <button onclick="startNewMatch()"
+        class="btn-game px-8 py-3 rounded-2xl bg-gradient-to-b from-lime-400 via-emerald-500 to-green-600 text-white font-black text-lg md:text-2xl border-2 border-white flex items-center gap-3">
+        <i class="fa-solid fa-play"></i>
+        <span>Start Orders! 開始接單！</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- SCREEN 3: SPLIT-SCREEN MAIN GAME (AI ORDER -> UNSCRAMBLE -> FLICK)    -->
+  <!-- ===================================================================== -->
+  <section id="screenGame" class="hidden relative z-10 pt-20 w-full h-full overflow-hidden">
+    <div class="w-full h-full grid grid-cols-2 relative">
+
+      <!-- =============================================================== -->
+      <!-- LEFT ARENA: TEAM FRESH                                          -->
+      <!-- =============================================================== -->
+      <div id="arenaFresh" class="relative w-full h-full bg-emerald-950/20 border-r-4 border-slate-900 overflow-hidden flex flex-col justify-between">
+        <!-- Top Awning & Team Banner -->
+        <div class="relative z-20">
+          <div class="w-full h-3 awning-fresh"></div>
+          <div class="flex items-center justify-between px-3 md:px-4 py-1.5 bg-emerald-700/95 text-white shadow">
+            <span class="font-black text-xs md:text-base tracking-wide">🥬 TEAM FRESH 新鮮隊</span>
+            <span id="arenaFreshPlayerName" class="font-bold text-xs md:text-sm bg-emerald-900 px-3 py-0.5 rounded-full text-lime-200 truncate max-w-[140px]">Player 1</span>
+          </div>
+
+          <!-- Status Bar -->
+          <div id="statusBarFresh" class="px-3 py-2 min-h-[54px] bg-white/90 backdrop-blur-sm border-b-2 border-emerald-400 shadow-sm flex items-center justify-between gap-2">
+            <div id="statusSentenceFresh" class="text-xs md:text-sm font-black text-emerald-900 leading-snug">
+              <i class="fa-solid fa-headphones text-emerald-600 mr-1"></i> Step 1: Listen & unscramble! (第一步：聽題目，把句子排好！)
+            </div>
+            <div id="foodCounterFresh" class="hidden shrink-0 items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-600 text-white font-black text-sm md:text-base shadow">
+              <span id="foodCounterFreshText">0 / 0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arena Body -->
+        <div class="relative flex-1 w-full h-full overflow-hidden">
+          <!-- PHASE 1 OVERLAY: SENTENCE UNSCRAMBLER -->
+          <div id="unscrambleOverlayFresh" class="absolute inset-0 z-20 bg-emerald-50/95 backdrop-blur-sm p-3 md:p-5 flex flex-col items-center justify-center gap-3 overflow-y-auto">
+            <div class="text-center">
+              <button onclick="speakCurrentOrder()"
+                class="btn-game px-5 py-2 rounded-full bg-sky-500 hover:bg-sky-400 text-white font-black text-sm md:text-base border-2 border-white inline-flex items-center gap-2 mb-1.5">
+                <i class="fa-solid fa-volume-high"></i>
+                <span>Listen to AI Order 聽聽看要買什麼</span>
+              </button>
+              <p class="text-xs md:text-sm font-bold text-emerald-800">
+                Tap the words in order to unlock the food bag!<br/>
+                <span class="text-emerald-700">按照順序點選單字，打開購物袋！</span>
+              </p>
+            </div>
+
+            <!-- Answer Tray -->
+            <div id="trayFresh" class="w-full max-w-lg min-h-[72px] p-3 rounded-2xl bg-white border-4 border-dashed border-emerald-400 flex flex-wrap items-center justify-center gap-2 shadow-inner">
+            </div>
+
+            <!-- Feedback Text -->
+            <div id="unscrambleMsgFresh" class="min-h-[24px] text-xs md:text-sm font-black text-rose-600 text-center"></div>
+
+            <!-- Scrambled Word Bank -->
+            <div id="bankFresh" class="w-full max-w-lg flex flex-wrap items-center justify-center gap-2">
+            </div>
+
+            <!-- Clear Button -->
+            <button onclick="clearUnscramble('fresh')"
+              class="mt-1 px-4 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs md:text-sm">
+              <i class="fa-solid fa-rotate-left mr-1"></i> Clear Words 清除重排
+            </button>
+          </div>
+
+          <!-- PHASE 2: INTERACTIVE CANVAS FOR FAST FLYING FOOD -->
+          <canvas id="canvasFresh" class="w-full h-full block"></canvas>
+
+          <!-- Giant Red X Overlay on Wrong Food -->
+          <div id="wrongOverlayFresh" class="hidden pointer-events-none absolute inset-0 flex flex-col items-center justify-center bg-rose-600/40 z-30">
+            <div class="text-[130px] md:text-[180px] font-black text-red-600 drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] leading-none">
+              ✖
+            </div>
+            <div class="px-5 py-2 rounded-full bg-red-600 text-white font-black text-lg md:text-2xl border-4 border-white shadow-2xl text-center">
+              WRONG FOOD! 拿錯食物囉！
+            </div>
+          </div>
+
+          <!-- Correct Hit Mini Celebration Overlay -->
+          <div id="correctOverlayFresh" class="hidden pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 z-30">
+            <div class="px-5 py-1.5 rounded-full bg-lime-500 text-white font-black text-base md:text-xl border-2 border-white shadow-lg whitespace-nowrap">
+              ★ YUM! 好吃 +1 ★
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =============================================================== -->
+      <!-- RIGHT ARENA: TEAM SNACK                                         -->
+      <!-- =============================================================== -->
+      <div id="arenaSnack" class="relative w-full h-full bg-orange-950/20 overflow-hidden flex flex-col justify-between">
+        <!-- Top Awning & Team Banner -->
+        <div class="relative z-20">
+          <div class="w-full h-3 awning-snack"></div>
+          <div class="flex items-center justify-between px-3 md:px-4 py-1.5 bg-orange-600/95 text-white shadow">
+            <span class="font-black text-xs md:text-base tracking-wide">🍪 TEAM SNACK 點心隊</span>
+            <span id="arenaSnackPlayerName" class="font-bold text-xs md:text-sm bg-orange-900 px-3 py-0.5 rounded-full text-amber-200 truncate max-w-[140px]">Player 2</span>
+          </div>
+
+          <!-- Status Bar -->
+          <div id="statusBarSnack" class="px-3 py-2 min-h-[54px] bg-white/90 backdrop-blur-sm border-b-2 border-orange-400 shadow-sm flex items-center justify-between gap-2">
+            <div id="statusSentenceSnack" class="text-xs md:text-sm font-black text-orange-900 leading-snug">
+              <i class="fa-solid fa-headphones text-orange-600 mr-1"></i> Step 1: Listen & unscramble! (第一步：聽題目，把句子排好！)
+            </div>
+            <div id="foodCounterSnack" class="hidden shrink-0 items-center gap-1.5 px-3 py-1 rounded-full bg-orange-600 text-white font-black text-sm md:text-base shadow">
+              <span id="foodCounterSnackText">0 / 0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arena Body -->
+        <div class="relative flex-1 w-full h-full overflow-hidden">
+          <!-- PHASE 1 OVERLAY: SENTENCE UNSCRAMBLER -->
+          <div id="unscrambleOverlaySnack" class="absolute inset-0 z-20 bg-orange-50/95 backdrop-blur-sm p-3 md:p-5 flex flex-col items-center justify-center gap-3 overflow-y-auto">
+            <div class="text-center">
+              <button onclick="speakCurrentOrder()"
+                class="btn-game px-5 py-2 rounded-full bg-sky-500 hover:bg-sky-400 text-white font-black text-sm md:text-base border-2 border-white inline-flex items-center gap-2 mb-1.5">
+                <i class="fa-solid fa-volume-high"></i>
+                <span>Listen to AI Order 聽聽看要買什麼</span>
+              </button>
+              <p class="text-xs md:text-sm font-bold text-orange-800">
+                Tap the words in order to unlock the food bag!<br/>
+                <span class="text-orange-700">按照順序點選單字，打開購物袋！</span>
+              </p>
+            </div>
+
+            <!-- Answer Tray -->
+            <div id="traySnack" class="w-full max-w-lg min-h-[72px] p-3 rounded-2xl bg-white border-4 border-dashed border-orange-400 flex flex-wrap items-center justify-center gap-2 shadow-inner">
+            </div>
+
+            <!-- Feedback Text -->
+            <div id="unscrambleMsgSnack" class="min-h-[24px] text-xs md:text-sm font-black text-rose-600 text-center"></div>
+
+            <!-- Scrambled Word Bank -->
+            <div id="bankSnack" class="w-full max-w-lg flex flex-wrap items-center justify-center gap-2">
+            </div>
+
+            <!-- Clear Button -->
+            <button onclick="clearUnscramble('snack')"
+              class="mt-1 px-4 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs md:text-sm">
+              <i class="fa-solid fa-rotate-left mr-1"></i> Clear Words 清除重排
+            </button>
+          </div>
+
+          <!-- PHASE 2: INTERACTIVE CANVAS FOR FAST FLYING FOOD -->
+          <canvas id="canvasSnack" class="w-full h-full block"></canvas>
+
+          <!-- Giant Red X Overlay on Wrong Food -->
+          <div id="wrongOverlaySnack" class="hidden pointer-events-none absolute inset-0 flex flex-col items-center justify-center bg-rose-600/40 z-30">
+            <div class="text-[130px] md:text-[180px] font-black text-red-600 drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] leading-none">
+              ✖
+            </div>
+            <div class="px-5 py-2 rounded-full bg-red-600 text-white font-black text-lg md:text-2xl border-4 border-white shadow-2xl text-center">
+              WRONG FOOD! 拿錯食物囉！
+            </div>
+          </div>
+
+          <!-- Correct Hit Mini Celebration Overlay -->
+          <div id="correctOverlaySnack" class="hidden pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 z-30">
+            <div class="px-5 py-1.5 rounded-full bg-amber-500 text-white font-black text-base md:text-xl border-2 border-white shadow-lg whitespace-nowrap">
+              ★ YUM! 好吃 +1 ★
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- PAUSE GAME MODAL OVERLAY                                              -->
+  <!-- ===================================================================== -->
+  <div id="modalPause" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white rounded-3xl border-8 border-amber-400 shadow-2xl p-6 md:p-8 text-center flex flex-col items-center">
+      <div class="w-20 h-20 rounded-full bg-amber-100 border-4 border-amber-400 flex items-center justify-center text-4xl text-amber-600 mb-3 shadow-inner">
+        <i class="fa-solid fa-pause"></i>
+      </div>
+      <h2 class="text-2xl md:text-3xl font-black text-slate-900 mb-1">Game Paused 遊戲暫停</h2>
+      <p class="text-sm md:text-base font-bold text-slate-600 mb-6">
+        Flying food is frozen. Take a breather!<br/>
+        食物暫停飛行了，休息一下吧！
+      </p>
+
+      <div class="w-full flex flex-col gap-3">
+        <button onclick="togglePauseGame()"
+          class="btn-game w-full py-3.5 rounded-2xl bg-gradient-to-b from-lime-400 via-emerald-500 to-green-600 text-white font-black text-lg md:text-xl border-2 border-white flex items-center justify-center gap-3">
+          <i class="fa-solid fa-play"></i>
+          <span>Resume Match 繼續遊戲</span>
+        </button>
+
+        <button onclick="triggerEndGame()"
+          class="btn-game w-full py-3 rounded-2xl bg-gradient-to-b from-rose-500 to-red-700 text-white font-black text-base md:text-lg border-2 border-white flex items-center justify-center gap-2">
+          <i class="fa-solid fa-flag-checkered"></i>
+          <span>End Game & Show Winner 結束並看贏家</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- ROUND OVER CELEBRATION MODAL (Unlocks Next Order Sequentially)        -->
+  <!-- ===================================================================== -->
+  <div id="modalRoundResult" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="max-w-xl w-full bg-white rounded-3xl border-8 border-amber-400 shadow-2xl p-6 md:p-8 text-center flex flex-col items-center">
+      <div id="resultBadgeIcon" class="text-6xl mb-2">🏆</div>
+      <h2 id="resultHeadline" class="text-2xl md:text-4xl font-black text-slate-900 mb-2">
+        Team Fresh Wins!
+      </h2>
+      <p id="resultSubtext" class="text-sm md:text-base font-bold text-slate-600 mb-4">
+        Completed the sentence and packed the bag first!
+      </p>
+
+      <!-- Completed Order Showcase -->
+      <div class="w-full bg-amber-50 border-4 border-amber-300 rounded-2xl p-4 mb-6 flex items-center justify-center gap-4">
+        <img id="resultItemImage" src="" alt="Food" class="w-20 h-20 object-contain rounded-xl bg-white border-2 border-amber-200 p-1" />
+        <div class="text-left">
+          <div class="text-xs font-bold uppercase tracking-wider text-amber-700">AI Order Completed 完成的訂單</div>
+          <div id="resultOrderSentence" class="text-lg md:text-2xl font-black text-slate-900">
+            I need two watermelons.
+          </div>
+        </div>
+      </div>
+
+      <button id="btnNextOrder" onclick="proceedToNextOrder()"
+        class="btn-game w-full py-4 rounded-2xl bg-gradient-to-b from-lime-400 via-emerald-500 to-green-600 text-white font-black text-lg md:text-2xl border-2 border-white flex items-center justify-center gap-3">
+        <i class="fa-solid fa-arrow-right"></i>
+        <span id="btnNextOrderText">Unlock Next Order 解鎖下一題</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- END GAME / FINAL WINNER CELEBRATION MODAL                             -->
+  <!-- ===================================================================== -->
+  <div id="modalEndGame" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="max-w-2xl w-full bg-white rounded-3xl border-8 border-amber-400 shadow-2xl p-6 md:p-8 text-center flex flex-col items-center">
+      <div id="endGameTrophyIcon" class="text-6xl md:text-7xl mb-2">🏆🎉</div>
+      <div class="px-4 py-1 rounded-full bg-amber-100 text-amber-800 font-black text-xs md:text-sm uppercase tracking-widest mb-2">
+        Supermarket Showdown Complete! 超市大挑戰完成！
+      </div>
+      <h2 id="endGameWinnerTitle" class="text-2xl md:text-4xl font-black text-slate-900 mb-2">
+        Team Fresh Wins!
+      </h2>
+      <p id="endGameSubtitle" class="text-sm md:text-lg font-bold text-slate-600 mb-2">
+        What an amazing shopping spree!
+      </p>
+      <div id="firebaseSaveStatus" class="text-xs md:text-sm font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full mb-5">
+        <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Saving winner to live leaderboard... 正在儲存到排行榜...
+      </div>
+
+      <!-- Final Score Comparison Cards -->
+      <div class="w-full grid grid-cols-2 gap-4 mb-6">
+        <div class="bg-emerald-50 border-4 border-emerald-400 rounded-2xl p-4 flex flex-col items-center shadow">
+          <div class="text-3xl mb-1">🥬</div>
+          <div class="text-xs font-black text-emerald-700 uppercase">Team Fresh 新鮮隊</div>
+          <div id="finalNameFresh" class="text-base md:text-lg font-black text-emerald-950 truncate max-w-full">Player 1</div>
+          <div id="finalScoreFresh" class="text-4xl md:text-5xl font-black text-emerald-600 mt-1">0</div>
+          <div class="text-xs font-bold text-emerald-700">Orders Won 贏得題數</div>
+        </div>
+
+        <div class="bg-orange-50 border-4 border-orange-400 rounded-2xl p-4 flex flex-col items-center shadow">
+          <div class="text-3xl mb-1">🍪</div>
+          <div class="text-xs font-black text-orange-700 uppercase">Team Snack 點心隊</div>
+          <div id="finalNameSnack" class="text-base md:text-lg font-black text-orange-950 truncate max-w-full">Player 2</div>
+          <div id="finalScoreSnack" class="text-4xl md:text-5xl font-black text-orange-600 mt-1">0</div>
+          <div class="text-xs font-bold text-orange-700">Orders Won 贏得題數</div>
+        </div>
+      </div>
+
+      <div class="w-full flex flex-col sm:flex-row gap-3">
+        <button onclick="openLeaderboardModal()"
+          class="btn-game flex-1 py-3.5 rounded-2xl bg-gradient-to-b from-amber-300 via-amber-400 to-orange-500 text-slate-950 font-black text-lg md:text-xl border-2 border-white flex items-center justify-center gap-2">
+          <i class="fa-solid fa-trophy"></i>
+          <span>Leaderboard 排行榜</span>
+        </button>
+
+        <button onclick="resetAndGoToSetup()"
+          class="btn-game flex-1 py-3.5 rounded-2xl bg-gradient-to-b from-lime-400 via-emerald-500 to-green-600 text-white font-black text-lg md:text-xl border-2 border-white flex items-center justify-center gap-2">
+          <i class="fa-solid fa-users"></i>
+          <span>New Players 換新玩家</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- FIREBASE LIVE LEADERBOARD MODAL                                       -->
+  <!-- ===================================================================== -->
+  <div id="modalLeaderboard" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="max-w-3xl w-full max-h-[90vh] bg-white rounded-3xl border-8 border-amber-400 shadow-2xl flex flex-col overflow-hidden">
+      <!-- Header -->
+      <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b-4 border-amber-400">
+        <div>
+          <h3 class="text-xl md:text-3xl font-black flex items-center gap-2 text-amber-300">
+            <i class="fa-solid fa-trophy"></i> Team Standings 隊伍戰績排行榜
+          </h3>
+          <p class="text-xs md:text-sm text-slate-300 font-bold">
+            Live standings showing total winners in each team! 即時顯示各隊獲勝總人數！
+          </p>
+        </div>
+        <button onclick="closeLeaderboardModal()" class="w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-xl">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="p-5 md:p-6 overflow-y-auto flex-1 space-y-5 bg-amber-50/50">
+        <!-- Team Standings Summary -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-emerald-100 border-4 border-emerald-500 rounded-3xl p-4 text-center shadow-md">
+            <div class="text-4xl mb-1">🥬</div>
+            <div class="text-sm md:text-lg font-black text-emerald-900 uppercase">Team Fresh 新鮮隊</div>
+            <div id="lbFreshWins" class="text-5xl md:text-6xl font-black text-emerald-600 my-1">0</div>
+            <div class="text-xs md:text-sm font-black text-emerald-800">Total Winners 獲勝人數</div>
+          </div>
+
+          <div class="bg-orange-100 border-4 border-orange-500 rounded-3xl p-4 text-center shadow-md">
+            <div class="text-4xl mb-1">🍪</div>
+            <div class="text-sm md:text-lg font-black text-orange-900 uppercase">Team Snack 點心隊</div>
+            <div id="lbSnackWins" class="text-5xl md:text-6xl font-black text-orange-600 my-1">0</div>
+            <div class="text-xs md:text-sm font-black text-orange-800">Total Winners 獲勝人數</div>
+          </div>
+        </div>
+
+        <!-- Recent Winners Hall of Fame -->
+        <div class="bg-white rounded-2xl border-2 border-slate-200 shadow-sm overflow-hidden">
+          <div class="bg-slate-100 px-4 py-2.5 border-b flex items-center justify-between">
+            <span class="font-black text-slate-800 text-sm md:text-base">
+              <i class="fa-solid fa-medal text-amber-500 mr-1.5"></i> Winning Shoppers 獲勝小小購物員
+            </span>
+            <button onclick="fetchLeaderboardFromFirebase()" class="text-xs font-bold px-3 py-1 rounded-lg bg-sky-100 hover:bg-sky-200 text-sky-800">
+              <i class="fa-solid fa-arrows-rotate mr-1"></i> Refresh 重新整理
+            </button>
+          </div>
+          <div id="lbWinnersList" class="divide-y divide-slate-100 max-h-60 overflow-y-auto">
+            <div class="p-6 text-center text-slate-400 font-bold">Loading standings... 載入中...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer with Teacher-Only Reset -->
+      <div class="bg-slate-100 px-6 py-3.5 border-t flex items-center justify-between gap-3">
+        <button onclick="openAdminResetModal()"
+          class="px-4 py-2 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-800 font-black text-xs md:text-sm flex items-center gap-2 border border-rose-300">
+          <i class="fa-solid fa-lock"></i>
+          <span>Teacher Reset 老師清除排行</span>
+        </button>
+
+        <button onclick="closeLeaderboardModal()"
+          class="px-6 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-sm">
+          Close 關閉
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- TEACHER-ONLY PIN MODAL FOR RESETTING LEADERBOARD                      -->
+  <!-- ===================================================================== -->
+  <div id="modalAdminReset" class="hidden fixed inset-0 z-[60] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="max-w-sm w-full bg-white rounded-3xl border-4 border-rose-500 shadow-2xl p-6 text-center">
+      <div class="w-14 h-14 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-2xl mx-auto mb-3">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+      <h3 class="text-2xl font-black text-slate-900 mb-1">Teacher Only 老師專用</h3>
+      <p class="text-xs md:text-sm font-bold text-slate-600 mb-4">
+        Enter the teacher password to clear the leaderboard.<br/>
+        請輸入老師密碼以清除排行榜紀錄。
+      </p>
+
+      <input id="adminPinInput" type="password" placeholder="Teacher Password 老師密碼"
+        class="w-full px-4 py-3 rounded-xl border-2 border-slate-300 focus:border-rose-500 focus:outline-none text-center text-lg font-black mb-2" />
+      <div id="adminPinError" class="h-5 text-xs font-black text-rose-600 mb-3"></div>
+
+      <div class="flex gap-2">
+        <button onclick="closeAdminResetModal()"
+          class="flex-1 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-black text-sm">
+          Cancel 取消
+        </button>
+        <button onclick="confirmAdminResetLeaderboard()"
+          class="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-sm">
+          Clear All 全部清除
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- CUSTOM PHOTO UPLOADER & FILENAME REFERENCE MODAL                      -->
+  <!-- ===================================================================== -->
+  <div id="modalAssets" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="max-w-4xl w-full max-h-[90vh] bg-white rounded-3xl border-4 border-indigo-500 shadow-2xl flex flex-col overflow-hidden">
+      <div class="bg-indigo-600 text-white px-6 py-4 flex items-center justify-between">
+        <div>
+          <h3 class="text-xl md:text-2xl font-black flex items-center gap-2">
+            <i class="fa-solid fa-folder-open"></i> Custom Photos 自訂食物與遊戲照片
+          </h3>
+          <p class="text-xs md:text-sm text-indigo-100">
+            Put your images in the same folder with these filenames, OR upload them here! (請將圖片放在同資料夾或直接上傳)
+          </p>
+        </div>
+        <button onclick="closeAssetModal()" class="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-xl">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-4 flex-1">
+        <div class="bg-indigo-50 border-2 border-dashed border-indigo-400 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <div class="font-black text-indigo-950 text-base">Quick Multi-File Upload 快速批次上傳</div>
+            <div class="text-xs text-indigo-700">
+              Select all your food photos at once (<code>eggs.jpg</code>, <code>oranges.jpg</code>, <code>watermelons.jpg</code>, etc.)!
+            </div>
+          </div>
+          <label class="cursor-pointer px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm whitespace-nowrap shadow">
+            <i class="fa-solid fa-cloud-arrow-up mr-1.5"></i> Select Files 選擇檔案...
+            <input type="file" accept="image/*,.gif" multiple class="hidden" onchange="handleBatchFileUpload(event)" />
+          </label>
+        </div>
+
+        <div id="assetSlotsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+      </div>
+
+      <div class="bg-slate-100 px-6 py-3 border-t flex items-center justify-between">
+        <span class="text-xs text-slate-600 font-bold">
+          Built-in emoji icons appear automatically if a photo isn't uploaded.
+        </span>
+        <button onclick="closeAssetModal()" class="px-6 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm">
+          Done 完成
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- GAME LOGIC, FIREBASE LEADERBOARD, KID-FRIENDLY AI SPEECH & PHYSICS    -->
+  <!-- ===================================================================== -->
+  <script>
+    /*************************************************************************
+     * 1. CONFIGURATION: FIREBASE, TEACHER PIN, FOOD PHOTOS & 15 AI ORDERS
+     *************************************************************************/
+    const FIREBASE_DB_URL = 'https://mission-2-ef712-default-rtdb.firebaseio.com';
+    const LEADERBOARD_ENDPOINT = `${FIREBASE_DB_URL}/leaderboard/matches.json`;
+
+    // CHANGE THIS PASSWORD TO YOUR OWN SECRET TEACHER PIN!
+    const ADMIN_RESET_PIN = '1234';
+
+    const COVER_FILENAME = 'coverphoto_flick.gif';
+    const BG_FILENAME = 'bg_flick.jpg';
+    const PAPERBAG_FILENAME = 'flick_paperbag.jpg';
+
+    // 8 Food Types with Exact Requested Filenames + Elementary Chinese Labels
+    const FOOD_CATALOG = {
+      eggs:         { key: 'eggs',         label: 'eggs',         zh: '雞蛋',   file: 'eggs.jpg',         emoji: '🥚', bg: '#fef9c3' },
+      oranges:      { key: 'oranges',      label: 'oranges',      zh: '柳丁',   file: 'oranges.jpg',      emoji: '🍊', bg: '#ffedd5' },
+      strawberries: { key: 'strawberries', label: 'strawberries', zh: '草莓',   file: 'strawberries.jpg', emoji: '🍓', bg: '#fce7f3' },
+      watermelons:  { key: 'watermelons',  label: 'watermelons',  zh: '西瓜',   file: 'watermelons.jpg',  emoji: '🍉', bg: '#dcfce7' },
+      cookies:      { key: 'cookies',      label: 'cookies',      zh: '餅乾',   file: 'cookies.jpg',      emoji: '🍪', bg: '#fef3c7' },
+      hamburgers:   { key: 'hamburgers',   label: 'hamburgers',   zh: '漢堡',   file: 'hamburgers.jpg',   emoji: '🍔', bg: '#ffedd5' },
+      hotdogs:      { key: 'hotdogs',      label: 'hot dogs',     zh: '熱狗',   file: 'hotdogs.jpg',      emoji: '🌭', bg: '#fee2e2' },
+      sandwiches:   { key: 'sandwiches',   label: 'sandwiches',   zh: '三明治', file: 'sandwiches.jpg',   emoji: '🥪', bg: '#fef3c7' }
+    };
+
+    const ALL_FOOD_KEYS = Object.keys(FOOD_CATALOG);
+
+    // 15 Exact AI Orders (Locked Sequentially from 1 to 15)
+    const ORDER_QUESTIONS = [
+      { id: 1,  sentence: 'I need two watermelons.',     foodKey: 'watermelons',  qty: 2 },
+      { id: 2,  sentence: 'We need five oranges.',       foodKey: 'oranges',      qty: 5 },
+      { id: 3,  sentence: 'We need ten strawberries.',   foodKey: 'strawberries', qty: 10 },
+      { id: 4,  sentence: 'I need three hamburgers.',    foodKey: 'hamburgers',   qty: 3 },
+      { id: 5,  sentence: 'I need a hotdog.',            foodKey: 'hotdogs',      qty: 1 },
+      { id: 6,  sentence: 'They need seven sandwiches.', foodKey: 'sandwiches',   qty: 7 },
+      { id: 7,  sentence: 'We need twelve eggs.',        foodKey: 'eggs',         qty: 12 },
+      { id: 8,  sentence: 'I need five cookies.',        foodKey: 'cookies',      qty: 5 },
+      { id: 9,  sentence: 'They need four hamburgers.',  foodKey: 'hamburgers',   qty: 4 },
+      { id: 10, sentence: 'I need two hot dogs.',        foodKey: 'hotdogs',      qty: 2 },
+      { id: 11, sentence: 'We need eleven oranges.',     foodKey: 'oranges',      qty: 11 },
+      { id: 12, sentence: 'I need six cookies.',         foodKey: 'cookies',      qty: 6 },
+      { id: 13, sentence: 'Mom needs eight eggs.',       foodKey: 'eggs',         qty: 8 },
+      { id: 14, sentence: 'Dad needs nine oranges.',     foodKey: 'oranges',      qty: 9 },
+      { id: 15, sentence: 'I need four hamburgers.',     foodKey: 'hamburgers',   qty: 4 }
+    ];
+
+    /*************************************************************************
+     * 2. IMAGE PRELOADING & FALLBACKS
+     *************************************************************************/
+    const customImageOverrides = {};
+    const foodImageObjects = {};
+    const foodImageLoaded = {};
+
+    function preloadFoodImages() {
+      ALL_FOOD_KEYS.forEach(key => {
+        const food = FOOD_CATALOG[key];
+        const img = new Image();
+        foodImageLoaded[key] = false;
+        img.onload = () => { foodImageLoaded[key] = true; };
+        img.onerror = () => {
+          if (!img.dataset.triedJpeg) {
+            img.dataset.triedJpeg = '1';
+            img.src = food.file.replace('.jpg', '.jpeg');
+          } else if (!img.dataset.triedPng) {
+            img.dataset.triedPng = '1';
+            img.src = food.file.replace('.jpg', '.png');
+          } else {
+            foodImageLoaded[key] = false;
+          }
+        };
+        img.src = food.file;
+        foodImageObjects[key] = img;
+      });
+    }
+
+    const paperBagImg = new Image();
+    let paperBagLoaded = false;
+    paperBagImg.onload = () => { paperBagLoaded = true; };
+    paperBagImg.onerror = () => {
+      if (!paperBagImg.dataset.triedJpeg) {
+        paperBagImg.dataset.triedJpeg = 'true';
+        paperBagImg.src = 'flick_paperbag.jpeg';
+      }
+    };
+    paperBagImg.src = PAPERBAG_FILENAME;
+
+    function createFallbackFoodDataURI(food) {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
+        <rect width="300" height="300" rx="36" fill="${food.bg}"/>
+        <circle cx="150" cy="145" r="105" fill="#ffffff" opacity="0.85"/>
+        <text x="150" y="180" font-size="115" text-anchor="middle" font-family="Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji, sans-serif">${food.emoji}</text>
+      </svg>`;
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    }
+
+    function createCoverFallbackSVG() {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+        <defs>
+          <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#fef08a"/>
+            <stop offset="50%" stop-color="#fed7aa"/>
+            <stop offset="100%" stop-color="#bbf7d0"/>
+          </linearGradient>
+        </defs>
+        <rect width="1600" height="900" fill="url(#sky)"/>
+        <g>
+          ${Array.from({length: 20}, (_, i) => `<rect x="${i*80}" y="0" width="80" height="70" fill="${i%2===0 ? '#ef4444' : '#ffffff'}"/>`).join('')}
+        </g>
+        <circle cx="260" cy="450" r="170" fill="#ffffff" opacity="0.6"/>
+        <text x="260" y="490" font-size="130" text-anchor="middle">🛒</text>
+        <circle cx="1340" cy="450" r="170" fill="#ffffff" opacity="0.6"/>
+        <text x="1340" y="490" font-size="130" text-anchor="middle">🛍️</text>
+        <text x="800" y="340" font-size="105" text-anchor="middle">🍓 🍔 🍉 🍪 🌭 🍊 🥪 🥚</text>
+        <text x="800" y="460" font-size="68" font-weight="bold" fill="#0f172a" text-anchor="middle" font-family="Comic Sans MS, Chalkboard SE, sans-serif">Supermarket Order Showdown!</text>
+        <text x="800" y="535" font-size="48" font-weight="bold" fill="#15803d" text-anchor="middle" font-family="Comic Sans MS, Chalkboard SE, sans-serif">超市點餐大挑戰</text>
+      </svg>`;
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    }
+
+    function createGlobalBgFallbackSVG() {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+        <defs>
+          <linearGradient id="storeBg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#ecfccb"/>
+            <stop offset="50%" stop-color="#fef9c3"/>
+            <stop offset="100%" stop-color="#ffedd5"/>
+          </linearGradient>
+        </defs>
+        <rect width="1600" height="900" fill="url(#storeBg)"/>
+        <rect x="0" y="220" width="1600" height="18" fill="#cbd5e1" opacity="0.45"/>
+        <rect x="0" y="450" width="1600" height="18" fill="#cbd5e1" opacity="0.45"/>
+        <rect x="0" y="680" width="1600" height="18" fill="#cbd5e1" opacity="0.45"/>
+      </svg>`;
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    }
+
+    function handleCoverError(imgEl) {
+      if (!imgEl.dataset.triedUpperGif) {
+        imgEl.dataset.triedUpperGif = '1';
+        imgEl.src = 'coverphoto_flick.GIF';
+      } else if (!imgEl.dataset.triedJpg) {
+        imgEl.dataset.triedJpg = '1';
+        imgEl.src = 'coverphoto_flick.jpg';
+      } else if (!imgEl.dataset.triedPng) {
+        imgEl.dataset.triedPng = '1';
+        imgEl.src = 'coverphoto_flick.png';
+      } else {
+        imgEl.src = createCoverFallbackSVG();
+      }
+    }
+
+    function handleGlobalBgError(imgEl) {
+      if (!imgEl.dataset.triedJpeg) {
+        imgEl.dataset.triedJpeg = '1';
+        imgEl.src = 'bg_flick.jpeg';
+      } else if (!imgEl.dataset.triedPng) {
+        imgEl.dataset.triedPng = '1';
+        imgEl.src = 'bg_flick.png';
+      } else {
+        imgEl.src = createGlobalBgFallbackSVG();
+      }
+    }
+
+    function setFoodImgWithFallback(imgEl, foodKey) {
+      const food = FOOD_CATALOG[foodKey];
+      imgEl.dataset.fallbackStage = '0';
+      imgEl.onerror = function () {
+        const stage = parseInt(this.dataset.fallbackStage || '0', 10);
+        if (stage === 0) {
+          this.dataset.fallbackStage = '1';
+          this.src = food.file.replace('.jpg', '.jpeg');
+        } else if (stage === 1) {
+          this.dataset.fallbackStage = '2';
+          this.src = food.file.replace('.jpg', '.png');
+        } else {
+          this.onerror = null;
+          this.src = createFallbackFoodDataURI(food);
+        }
+      };
+      imgEl.src = customImageOverrides[food.file] || food.file;
+    }
+
+    /*************************************************************************
+     * 3. KID-FRIENDLY AI SPEECH (iPad & Chromebook) + SOUND EFFECTS & BGM
+     *************************************************************************/
+    let audioCtx = null;
+    let isMuted = false;
+    let isSpeakingAI = false;
+    let bgMusicInterval = null;
+    let bgMusicStep = 0;
+
+    const GAME_SHOW_MELODY = [
+      { note: 523.25, bass: 130.81, dur: 0.16 },
+      { note: 659.25, bass: 196.00, dur: 0.16 },
+      { note: 783.99, bass: 130.81, dur: 0.16 },
+      { note: 659.25, bass: 196.00, dur: 0.16 },
+      { note: 880.00, bass: 146.83, dur: 0.22 },
+      { note: 783.99, bass: 196.00, dur: 0.18 },
+      { note: 659.25, bass: 130.81, dur: 0.16 },
+      { note: 587.33, bass: 196.00, dur: 0.18 }
+    ];
+
+    function getAudioCtx() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) audioCtx = new AudioContextClass();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    // Unlock iPadOS / Safari SpeechSynthesis on first user tap
+    function unlockSpeechForIPad() {
+      if (!('speechSynthesis' in window)) return;
+      const silent = new SpeechSynthesisUtterance('');
+      silent.volume = 0;
+      window.speechSynthesis.speak(silent);
+    }
+
+    function startGameShowMusic() {
+      if (bgMusicInterval) return;
+      getAudioCtx();
+      bgMusicInterval = setInterval(() => {
+        if (isMuted || isGamePaused || isSpeakingAI) return;
+        const ctx = getAudioCtx();
+        if (!ctx) return;
+
+        const now = ctx.currentTime;
+        const step = GAME_SHOW_MELODY[bgMusicStep % GAME_SHOW_MELODY.length];
+        bgMusicStep++;
+
+        const bassOsc = ctx.createOscillator();
+        const bassGain = ctx.createGain();
+        bassOsc.type = 'triangle';
+        bassOsc.frequency.setValueAtTime(step.bass, now);
+        bassGain.gain.setValueAtTime(0.03, now);
+        bassGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+        bassOsc.connect(bassGain);
+        bassGain.connect(ctx.destination);
+        bassOsc.start(now);
+        bassOsc.stop(now + 0.19);
+
+        const leadOsc = ctx.createOscillator();
+        const leadGain = ctx.createGain();
+        leadOsc.type = 'sine';
+        leadOsc.frequency.setValueAtTime(step.note, now);
+        leadGain.gain.setValueAtTime(0.025, now);
+        leadGain.gain.exponentialRampToValueAtTime(0.001, now + step.dur);
+        leadOsc.connect(leadGain);
+        leadGain.connect(ctx.destination);
+        leadOsc.start(now);
+        leadOsc.stop(now + step.dur + 0.02);
+      }, 240);
+    }
+
+    function toggleMute() {
+      isMuted = !isMuted;
+      const icon = document.getElementById('soundIcon');
+      if (isMuted) {
+        icon.className = 'fa-solid fa-volume-xmark text-rose-500';
+      } else {
+        icon.className = 'fa-solid fa-volume-high text-emerald-400';
+        playSound('pop');
+      }
+    }
+
+    function getKidFriendlyVoice() {
+      if (!('speechSynthesis' in window)) return null;
+      const voices = window.speechSynthesis.getVoices();
+      if (!voices || voices.length === 0) return null;
+
+      // Prioritize friendly, warm, clear voices available on iPad & Chromebook
+      const preferredNames = [
+        'Samantha', 'Nicky', 'Google US English', 'Aria', 'Karen', 'Victoria', 'Tessa', 'Zira'
+      ];
+      for (const name of preferredNames) {
+        const match = voices.find(v => v.lang.startsWith('en') && v.name.includes(name));
+        if (match) return match;
+      }
+      return voices.find(v => v.lang === 'en-US') || voices.find(v => v.lang.startsWith('en')) || null;
+    }
+
+    function speakCurrentOrder() {
+      const order = ORDER_QUESTIONS[currentOrderIndex];
+      if (!order || !('speechSynthesis' in window)) return;
+
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(order.sentence);
+      utter.lang = 'en-US';
+      utter.rate = 0.98;  // Average speaking speed
+      utter.pitch = 1.15; // Cheerful, kid-friendly tone
+
+      const voice = getKidFriendlyVoice();
+      if (voice) utter.voice = voice;
+
+      isSpeakingAI = true;
+      utter.onend = () => { isSpeakingAI = false; };
+      utter.onerror = () => { isSpeakingAI = false; };
+
+      window.speechSynthesis.speak(utter);
+    }
+
+    function playSound(type) {
+      if (isMuted) return;
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+
+      if (type === 'flick') {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(240, now);
+        osc.frequency.exponentialRampToValueAtTime(580, now + 0.12);
+        gain.gain.setValueAtTime(0.14, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.13);
+      } else if (type === 'correct') {
+        [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.05);
+          gain.gain.setValueAtTime(0.22, now + idx * 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.05 + 0.25);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + idx * 0.05);
+          osc.stop(now + idx * 0.05 + 0.26);
+        });
+      } else if (type === 'wrong') {
+        [150, 112].forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.16);
+          osc.frequency.linearRampToValueAtTime(freq - 25, now + idx * 0.16 + 0.22);
+          gain.gain.setValueAtTime(0.24, now + idx * 0.16);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.16 + 0.25);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + idx * 0.16);
+          osc.stop(now + idx * 0.16 + 0.26);
+        });
+      } else if (type === 'win') {
+        const melody = [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5];
+        const times  = [0, 0.11, 0.22, 0.33, 0.50, 0.64];
+        const durs   = [0.1, 0.1, 0.1, 0.15, 0.12, 0.45];
+        melody.forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(freq, now + times[i]);
+          gain.gain.setValueAtTime(0.16, now + times[i]);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + times[i] + durs[i]);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + times[i]);
+          osc.stop(now + times[i] + durs[i] + 0.02);
+        });
+      } else if (type === 'pop') {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
+        gain.gain.setValueAtTime(0.14, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.09);
+      }
+    }
+
+    /*************************************************************************
+     * 4. GAME STATE & NAVIGATION
+     *************************************************************************/
+    let playerFreshName = 'Fresh Shopper';
+    let playerSnackName = 'Snack Shopper';
+    let scoreFresh = 0;
+    let scoreSnack = 0;
+    let currentOrderIndex = 0; // Strictly sequential: 0 -> 14
+    let isMatchActive = false;
+    let isGamePaused = false;
+    let hasSavedMatchResult = false;
+
+    const unscrambleState = {
+      fresh: { solved: false, scrambled: [], selectedIndices: [] },
+      snack: { solved: false, scrambled: [], selectedIndices: [] }
+    };
+
+    function showOnlyScreen(screenId) {
+      ['screenCover', 'screenPlayerSetup', 'screenGame'].forEach(id => {
+        const el = document.getElementById(id);
+        if (id === screenId) el.classList.remove('hidden');
+        else el.classList.add('hidden');
+      });
+
+      const header = document.getElementById('globalHeader');
+      const isGame = screenId === 'screenGame';
+
+      if (screenId === 'screenCover') {
+        header.classList.add('hidden');
+      } else {
+        header.classList.remove('hidden');
+      }
+
+      ['headerOrderBadge', 'btnReplayOrderHeader', 'btnPauseGame', 'btnEndGame'].forEach(id => {
+        const el = document.getElementById(id);
+        if (isGame) {
+          el.classList.remove('hidden');
+          el.classList.add('flex');
+        } else {
+          el.classList.add('hidden');
+          el.classList.remove('flex');
+        }
+      });
+    }
+
+    function startShoppingFromCover() {
+      unlockSpeechForIPad();
+      startGameShowMusic();
+      playSound('pop');
+      showOnlyScreen('screenPlayerSetup');
+    }
+
+    function goToCover() {
+      isMatchActive = false;
+      isGamePaused = false;
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+      showOnlyScreen('screenCover');
+    }
+
+    function startNewMatch() {
+      unlockSpeechForIPad();
+      const freshVal = document.getElementById('inputFreshName').value.trim();
+      const snackVal = document.getElementById('inputSnackName').value.trim();
+
+      if (!freshVal || !snackVal) {
+        playSound('wrong');
+        alert('Both students must type their names before starting!\n兩位同學都要輸入名字才能開始喔！');
+        return;
+      }
+
+      playerFreshName = freshVal;
+      playerSnackName = snackVal;
+      scoreFresh = 0;
+      scoreSnack = 0;
+      currentOrderIndex = 0;
+      hasSavedMatchResult = false;
+
+      document.getElementById('headerFreshPlayer').textContent = playerFreshName;
+      document.getElementById('headerSnackPlayer').textContent = playerSnackName;
+      document.getElementById('arenaFreshPlayerName').textContent = playerFreshName;
+      document.getElementById('arenaSnackPlayerName').textContent = playerSnackName;
+      document.getElementById('scoreFresh').textContent = '0';
+      document.getElementById('scoreSnack').textContent = '0';
+
+      startGameShowMusic();
+      loadCurrentOrderRound();
+    }
+
+    /*************************************************************************
+     * 5. PHASE 1: SCRAMBLED SENTENCE LOGIC
+     *************************************************************************/
+    function shuffleWordsNotSame(words) {
+      const arr = [...words];
+      let attempts = 0;
+      do {
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        attempts++;
+      } while (arr.join(' ') === words.join(' ') && attempts < 12 && words.length > 1);
+      return arr;
+    }
+
+    function setupUnscrambleForTeam(teamKey, sentence) {
+      const words = sentence.split(' ');
+      unscrambleState[teamKey] = {
+        solved: false,
+        scrambled: shuffleWordsNotSame(words),
+        selectedIndices: []
+      };
+
+      const cap = teamKey === 'fresh' ? 'Fresh' : 'Snack';
+      document.getElementById(`unscrambleOverlay${cap}`).classList.remove('hidden');
+      document.getElementById(`foodCounter${cap}`).classList.add('hidden');
+      document.getElementById(`foodCounter${cap}`).classList.remove('flex');
+      document.getElementById(`unscrambleMsg${cap}`).textContent = '';
+      document.getElementById(`statusSentence${cap}`).innerHTML =
+        `<i class="fa-solid fa-headphones mr-1"></i> Step 1: Listen & unscramble! (第一步：聽題目，把句子排好！)`;
+
+      renderUnscrambleUI(teamKey);
+    }
+
+    function renderUnscrambleUI(teamKey) {
+      const cap = teamKey === 'fresh' ? 'Fresh' : 'Snack';
+      const state = unscrambleState[teamKey];
+      const tray = document.getElementById(`tray${cap}`);
+      const bank = document.getElementById(`bank${cap}`);
+
+      const btnBg = teamKey === 'fresh'
+        ? 'bg-emerald-500 hover:bg-emerald-400 border-emerald-700'
+        : 'bg-orange-500 hover:bg-orange-400 border-orange-700';
+
+      tray.innerHTML = '';
+      if (state.selectedIndices.length === 0) {
+        tray.innerHTML = `<span class="text-slate-400 font-bold text-xs md:text-sm text-center">Tap words below in order... (請依序點選下面的單字...)</span>`;
+      } else {
+        state.selectedIndices.forEach((wordIdx, pos) => {
+          const wordText = state.scrambled[wordIdx];
+          const btn = document.createElement('button');
+          btn.className = `px-3.5 py-2 rounded-xl ${btnBg} text-white font-black text-base md:text-lg border-b-4 shadow active:translate-y-0.5 transition`;
+          btn.textContent = wordText;
+          btn.onclick = () => removeWordFromTray(teamKey, pos);
+          tray.appendChild(btn);
+        });
+      }
+
+      bank.innerHTML = '';
+      state.scrambled.forEach((wordText, idx) => {
+        const isUsed = state.selectedIndices.includes(idx);
+        const btn = document.createElement('button');
+        btn.disabled = isUsed;
+        btn.className = isUsed
+          ? 'px-4 py-2.5 rounded-xl bg-slate-200 text-slate-400 font-black text-base md:text-xl border-2 border-slate-300 opacity-40 cursor-not-allowed'
+          : 'btn-game px-4 py-2.5 rounded-xl bg-white hover:bg-amber-50 text-slate-900 font-black text-base md:text-xl border-2 border-slate-400';
+        btn.textContent = wordText;
+        btn.onclick = () => pickWordFromBank(teamKey, idx);
+        bank.appendChild(btn);
+      });
+    }
+
+    function pickWordFromBank(teamKey, wordIdx) {
+      if (!isMatchActive || isGamePaused || unscrambleState[teamKey].solved) return;
+      const state = unscrambleState[teamKey];
+      if (state.selectedIndices.includes(wordIdx)) return;
+
+      playSound('pop');
+      state.selectedIndices.push(wordIdx);
+      renderUnscrambleUI(teamKey);
+
+      if (state.selectedIndices.length === state.scrambled.length) {
+        const attempt = state.selectedIndices.map(i => state.scrambled[i]).join(' ');
+        const target = ORDER_QUESTIONS[currentOrderIndex].sentence;
+        const cap = teamKey === 'fresh' ? 'Fresh' : 'Snack';
+        const msgEl = document.getElementById(`unscrambleMsg${cap}`);
+        const trayEl = document.getElementById(`tray${cap}`);
+
+        if (attempt === target) {
+          state.solved = true;
+          playSound('correct');
+          unlockFoodFlickPhase(teamKey);
+        } else {
+          playSound('wrong');
+          msgEl.textContent = 'Oops! Try again! 哎呀！再聽一次，重新排排看喔！';
+          trayEl.classList.remove('animate-shake');
+          void trayEl.offsetWidth;
+          trayEl.classList.add('animate-shake');
+          setTimeout(() => {
+            if (!state.solved) {
+              state.selectedIndices = [];
+              renderUnscrambleUI(teamKey);
+            }
+          }, 750);
+        }
+      }
+    }
+
+    function removeWordFromTray(teamKey, posInTray) {
+      if (!isMatchActive || isGamePaused || unscrambleState[teamKey].solved) return;
+      playSound('pop');
+      unscrambleState[teamKey].selectedIndices.splice(posInTray, 1);
+      const cap = teamKey === 'fresh' ? 'Fresh' : 'Snack';
+      document.getElementById(`unscrambleMsg${cap}`).textContent = '';
+      renderUnscrambleUI(teamKey);
+    }
+
+    function clearUnscramble(teamKey) {
+      if (!isMatchActive || isGamePaused || unscrambleState[teamKey].solved) return;
+      playSound('pop');
+      unscrambleState[teamKey].selectedIndices = [];
+      const cap = teamKey === 'fresh' ? 'Fresh' : 'Snack';
+      document.getElementById(`unscrambleMsg${cap}`).textContent = '';
+      renderUnscrambleUI(teamKey);
+    }
+
+    function unlockFoodFlickPhase(teamKey) {
+      const cap = teamKey === 'fresh' ? 'Fresh' : 'Snack';
+      const order = ORDER_QUESTIONS[currentOrderIndex];
+      const food = FOOD_CATALOG[order.foodKey];
+
+      document.getElementById(`unscrambleOverlay${cap}`).classList.add('hidden');
+      document.getElementById(`statusSentence${cap}`).innerHTML =
+        `<span class="text-slate-900">"${order.sentence}"</span> <span class="text-xs text-slate-600">(丟 ${order.qty} 個${food.zh}！)</span>`;
+
+      const counterEl = document.getElementById(`foodCounter${cap}`);
+      counterEl.classList.remove('hidden');
+      counterEl.classList.add('flex');
+      document.getElementById(`foodCounter${cap}Text`).textContent = `${food.emoji} 0 / ${order.qty}`;
+
+      const arena = teamKey === 'fresh' ? arenaFreshInstance : arenaSnackInstance;
+      arena.unlockAndSpawnFood(order.foodKey, order.qty);
+    }
+
+    /*************************************************************************
+     * 6. PHASE 2: FAST FLYING FOOD FLICK ENGINE (SPLIT-SCREEN MULTI-TOUCH)
+     *************************************************************************/
+    class TeamFoodArena {
+      constructor(teamKey, canvasId, wrongOverlayId, correctOverlayId) {
+        this.teamKey = teamKey;
+        this.canvas = document.getElementById(canvasId);
+        this.ctx = this.canvas.getContext('2d');
+        this.wrongOverlay = document.getElementById(wrongOverlayId);
+        this.correctOverlay = document.getElementById(correctOverlayId);
+
+        this.isUnlocked = false;
+        this.targetFoodKey = 'watermelons';
+        this.requiredQty = 1;
+        this.collectedQty = 0;
+
+        this.foods = [];
+        this.activePointers = new Map();
+
+        this.bag = {
+          x: 200,
+          y: 100,
+          width: 135,
+          height: 145,
+          phase: teamKey === 'fresh' ? 0 : Math.PI,
+          speed: 0.042,
+          scalePulse: 1
+        };
+
+        this.wrongTimeout = null;
+        this.correctTimeout = null;
+        this.bindEvents();
+      }
+
+      resizeCanvas() {
+        const rect = this.canvas.parentElement.getBoundingClientRect();
+        this.canvas.width = Math.max(300, rect.width);
+        this.canvas.height = Math.max(300, rect.height);
+
+        this.bag.width = Math.min(145, Math.max(105, this.canvas.width * 0.25));
+        this.bag.height = this.bag.width * 1.08;
+        this.bag.y = Math.max(85, this.canvas.height * 0.21);
+
+        const radius = Math.min(40, Math.max(30, Math.floor(this.canvas.width / 12)));
+        this.foods.forEach(item => { item.radius = radius; });
+      }
+
+      resetLocked() {
+        this.isUnlocked = false;
+        this.foods = [];
+        this.activePointers.clear();
+        this.collectedQty = 0;
+        this.resizeCanvas();
+      }
+
+      unlockAndSpawnFood(targetFoodKey, requiredQty) {
+        this.isUnlocked = true;
+        this.targetFoodKey = targetFoodKey;
+        this.requiredQty = requiredQty;
+        this.collectedQty = 0;
+        this.activePointers.clear();
+        this.resizeCanvas();
+
+        const otherKeys = ALL_FOOD_KEYS.filter(k => k !== targetFoodKey);
+        const shuffledOthers = [...otherKeys].sort(() => Math.random() - 0.5);
+
+        const spawnKeys = [
+          targetFoodKey, targetFoodKey, targetFoodKey, targetFoodKey,
+          shuffledOthers[0], shuffledOthers[1], shuffledOthers[2], shuffledOthers[3], shuffledOthers[4]
+        ];
+
+        const radius = Math.min(40, Math.max(30, Math.floor(this.canvas.width / 12)));
+
+        this.foods = spawnKeys.map((foodKey, idx) => {
+          const item = {
+            id: idx,
+            foodKey: foodKey,
+            x: 0,
+            y: 0,
+            driftVx: 0,
+            driftVy: 0,
+            vx: 0,
+            vy: 0,
+            radius: radius,
+            state: 'floating',
+            wavePhase: Math.random() * Math.PI * 2,
+            waveAmp: 1.2 + Math.random() * 1.6,
+            rotation: (Math.random() - 0.5) * 0.3,
+            rotSpeed: (Math.random() - 0.5) * 0.05
+          };
+          this.respawnFoodFromEdge(item, true);
+          return item;
+        });
+      }
+
+      respawnFoodFromEdge(item, staggerInitial = false) {
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+        const zoneTop = h * 0.44;
+        const zoneBottom = h - item.radius - 12;
+
+        const fastSpeed = 4.2 + Math.random() * 3.6;
+        const edgeChoice = Math.random();
+        const extraOffset = staggerInitial ? Math.random() * 240 : 0;
+
+        if (edgeChoice < 0.44) {
+          item.x = -item.radius * 1.5 - extraOffset;
+          item.y = zoneTop + Math.random() * Math.max(60, zoneBottom - zoneTop);
+          item.driftVx = fastSpeed;
+          item.driftVy = (Math.random() - 0.5) * 3.0;
+        } else if (edgeChoice < 0.88) {
+          item.x = w + item.radius * 1.5 + extraOffset;
+          item.y = zoneTop + Math.random() * Math.max(60, zoneBottom - zoneTop);
+          item.driftVx = -fastSpeed;
+          item.driftVy = (Math.random() - 0.5) * 3.0;
+        } else {
+          item.x = item.radius + Math.random() * Math.max(80, w - item.radius * 2);
+          item.y = h + item.radius * 1.5 + extraOffset;
+          item.driftVx = (Math.random() - 0.5) * 4.5;
+          item.driftVy = -(fastSpeed * 0.85);
+        }
+
+        item.vx = 0;
+        item.vy = 0;
+        item.state = 'floating';
+      }
+
+      bindEvents() {
+        this.canvas.addEventListener('pointerdown', (e) => this.onPointerDown(e));
+        this.canvas.addEventListener('pointermove', (e) => this.onPointerMove(e));
+        this.canvas.addEventListener('pointerup', (e) => this.onPointerUp(e));
+        this.canvas.addEventListener('pointercancel', (e) => this.onPointerUp(e));
+      }
+
+      getCanvasCoords(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      }
+
+      onPointerDown(e) {
+        if (!isMatchActive || isGamePaused || !this.isUnlocked) return;
+        const pt = this.getCanvasCoords(e);
+
+        for (let i = this.foods.length - 1; i >= 0; i--) {
+          const item = this.foods[i];
+          if (item.state !== 'floating') continue;
+
+          const dist = Math.hypot(pt.x - item.x, pt.y - item.y);
+          if (dist <= item.radius * 1.45) {
+            this.canvas.setPointerCapture(e.pointerId);
+            item.state = 'dragged';
+            item.vx = 0;
+            item.vy = 0;
+            item.x = pt.x;
+            item.y = pt.y;
+
+            this.activePointers.set(e.pointerId, {
+              item,
+              history: [{ x: pt.x, y: pt.y, t: performance.now() }]
+            });
+            playSound('pop');
+            break;
+          }
+        }
+      }
+
+      onPointerMove(e) {
+        if (!this.activePointers.has(e.pointerId) || isGamePaused) return;
+        const data = this.activePointers.get(e.pointerId);
+        const pt = this.getCanvasCoords(e);
+        const now = performance.now();
+
+        data.item.x = pt.x;
+        data.item.y = pt.y;
+
+        data.history.push({ x: pt.x, y: pt.y, t: now });
+        while (data.history.length > 2 && now - data.history[0].t > 120) {
+          data.history.shift();
+        }
+      }
+
+      onPointerUp(e) {
+        if (!this.activePointers.has(e.pointerId)) return;
+        const data = this.activePointers.get(e.pointerId);
+        this.activePointers.delete(e.pointerId);
+
+        const item = data.item;
+        if (isGamePaused || !this.isUnlocked) {
+          item.state = 'floating';
+          return;
+        }
+
+        const history = data.history;
+        const first = history[0];
+        const last = history[history.length - 1];
+        const dt = Math.max(16, last.t - first.t);
+
+        let vx = ((last.x - first.x) / dt) * 18;
+        let vy = ((last.y - first.y) / dt) * 18;
+        const speed = Math.hypot(vx, vy);
+
+        const distToBag = Math.hypot(item.x - this.bag.x, item.y - this.bag.y);
+        if (distToBag < this.bag.width * 0.65) {
+          this.evaluateBagHit(item);
+          return;
+        }
+
+        if (speed > 2.0) {
+          const maxSpeed = 26;
+          if (speed > maxSpeed) {
+            vx = (vx / speed) * maxSpeed;
+            vy = (vy / speed) * maxSpeed;
+          }
+          item.vx = vx;
+          item.vy = vy;
+          item.state = 'flying';
+          playSound('flick');
+        } else {
+          item.state = 'floating';
+        }
+      }
+
+      evaluateBagHit(item) {
+        if (item.foodKey === this.targetFoodKey) {
+          this.collectedQty++;
+          this.bag.scalePulse = 1.3;
+          playSound('correct');
+          this.triggerCorrectFeedback();
+
+          const cap = this.teamKey === 'fresh' ? 'Fresh' : 'Snack';
+          const food = FOOD_CATALOG[this.targetFoodKey];
+          document.getElementById(`foodCounter${cap}Text`).textContent =
+            `${food.emoji} ${this.collectedQty} / ${this.requiredQty}`;
+
+          this.respawnFoodFromEdge(item, false);
+
+          if (this.collectedQty >= this.requiredQty) {
+            handleTeamCompletedOrder(this.teamKey);
+          }
+        } else {
+          playSound('wrong');
+          this.triggerWrongFeedback();
+          this.respawnFoodFromEdge(item, false);
+        }
+      }
+
+      triggerWrongFeedback() {
+        if (this.wrongTimeout) clearTimeout(this.wrongTimeout);
+        this.wrongOverlay.classList.remove('hidden', 'animate-big-x');
+        void this.wrongOverlay.offsetWidth;
+        this.wrongOverlay.classList.add('animate-big-x');
+        this.wrongTimeout = setTimeout(() => {
+          this.wrongOverlay.classList.add('hidden');
+        }, 850);
+      }
+
+      triggerCorrectFeedback() {
+        if (this.correctTimeout) clearTimeout(this.correctTimeout);
+        this.correctOverlay.classList.remove('hidden', 'animate-correct-pop');
+        void this.correctOverlay.offsetWidth;
+        this.correctOverlay.classList.add('animate-correct-pop');
+        this.correctTimeout = setTimeout(() => {
+          this.correctOverlay.classList.add('hidden');
+        }, 650);
+      }
+
+      updateAndDraw() {
+        const ctx = this.ctx;
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+        ctx.clearRect(0, 0, w, h);
+
+        if (!this.isUnlocked) return;
+
+        if (!isGamePaused) {
+          this.bag.phase += this.bag.speed;
+        }
+        const maxSwingX = Math.max(40, (w - this.bag.width) * 0.37);
+        this.bag.x = w / 2 + Math.sin(this.bag.phase) * maxSwingX;
+        const bobY = Math.cos(this.bag.phase * 2) * 9;
+        const currentBagY = this.bag.y + bobY;
+
+        if (!isGamePaused && this.bag.scalePulse > 1) {
+          this.bag.scalePulse = Math.max(1, this.bag.scalePulse - 0.028);
+        }
+
+        // Aiming Zone Divider
+        ctx.save();
+        ctx.setLineDash([10, 10]);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(20, h * 0.41);
+        ctx.lineTo(w - 20, h * 0.41);
+        ctx.stroke();
+
+        ctx.font = "bold 12px 'Comic Sans MS', 'Comic Sans', 'Chalkboard SE', cursive, sans-serif";
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
+        ctx.shadowBlur = 4;
+        ctx.textAlign = 'center';
+        ctx.fillText('▲ Flick food into bag! 抓住食物丟進袋子！ ▲', w / 2, h * 0.41 - 8);
+        ctx.restore();
+
+        // Draw Paper Bag
+        this.drawPaperBag(ctx, this.bag.x, currentBagY, this.bag.width * this.bag.scalePulse, this.bag.height * this.bag.scalePulse);
+
+        // Draw Drag Trajectory Line
+        this.activePointers.forEach(({ item }) => {
+          ctx.save();
+          ctx.beginPath();
+          ctx.setLineDash([6, 6]);
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+          ctx.lineWidth = 4;
+          ctx.moveTo(item.x, item.y);
+          ctx.lineTo(this.bag.x, currentBagY);
+          ctx.stroke();
+          ctx.restore();
+        });
+
+        // Update & Draw Fast Flying Food Items
+        const zoneTop = h * 0.43;
+        for (let i = 0; i < this.foods.length; i++) {
+          const item = this.foods[i];
+
+          if (!isGamePaused) {
+            if (item.state === 'floating') {
+              item.wavePhase += 0.09;
+              item.rotation += item.rotSpeed;
+
+              item.x += item.driftVx;
+              item.y += item.driftVy + Math.sin(item.wavePhase) * item.waveAmp;
+
+              if (item.y < zoneTop && item.driftVy < 0) {
+                item.driftVy = Math.abs(item.driftVy);
+              }
+
+              const offMargin = item.radius * 2.4;
+              if (
+                item.x < -offMargin - 260 ||
+                item.x > w + offMargin + 260 ||
+                item.y > h + offMargin + 260 ||
+                (item.driftVx > 0 && item.x > w + offMargin) ||
+                (item.driftVx < 0 && item.x < -offMargin)
+              ) {
+                this.respawnFoodFromEdge(item, false);
+              }
+            } else if (item.state === 'flying') {
+              item.x += item.vx;
+              item.y += item.vy;
+              item.rotation += 0.14;
+
+              const hitBoxW = this.bag.width * 0.54;
+              const hitBoxH = this.bag.height * 0.54;
+              if (
+                Math.abs(item.x - this.bag.x) < hitBoxW + item.radius * 0.4 &&
+                Math.abs(item.y - currentBagY) < hitBoxH + item.radius * 0.4
+              ) {
+                this.evaluateBagHit(item);
+                continue;
+              }
+
+              if (
+                item.x < -item.radius * 2 ||
+                item.x > w + item.radius * 2 ||
+                item.y < -item.radius * 2 ||
+                item.y > h + item.radius * 2
+              ) {
+                this.respawnFoodFromEdge(item, false);
+              }
+            }
+          }
+
+          this.drawFoodTile(ctx, item);
+        }
+      }
+
+      drawPaperBag(ctx, cx, cy, bw, bh) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.28)';
+        ctx.shadowBlur = 14;
+        ctx.shadowOffsetY = 6;
+
+        if (paperBagLoaded && paperBagImg.complete && paperBagImg.naturalWidth > 0) {
+          ctx.fillStyle = '#ffffff';
+          this.roundRect(ctx, -bw / 2 - 4, -bh / 2 - 4, bw + 8, bh + 8, 16);
+          ctx.fill();
+          ctx.drawImage(paperBagImg, -bw / 2, -bh / 2, bw, bh);
+        } else {
+          ctx.fillStyle = '#78350f';
+          ctx.beginPath();
+          ctx.ellipse(0, -bh * 0.38, bw * 0.44, bh * 0.08, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          const grad = ctx.createLinearGradient(-bw / 2, -bh / 2, bw / 2, bh / 2);
+          grad.addColorStop(0, '#d97706');
+          grad.addColorStop(0.5, '#b45309');
+          grad.addColorStop(1, '#92400e');
+          ctx.fillStyle = grad;
+
+          ctx.beginPath();
+          ctx.moveTo(-bw * 0.44, -bh * 0.38);
+          ctx.lineTo(bw * 0.44, -bh * 0.38);
+          ctx.lineTo(bw * 0.48, bh * 0.46);
+          ctx.quadraticCurveTo(0, bh * 0.52, -bw * 0.48, bh * 0.46);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = '#fef3c7';
+          ctx.beginPath();
+          ctx.arc(0, bh * 0.06, bw * 0.24, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.font = `${Math.floor(bw * 0.26)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(this.teamKey === 'fresh' ? '🥬' : '🍪', 0, bh * 0.07);
+        }
+        ctx.restore();
+      }
+
+      drawFoodTile(ctx, item) {
+        const food = FOOD_CATALOG[item.foodKey];
+        const img = foodImageObjects[item.foodKey];
+        const r = item.radius;
+
+        ctx.save();
+        ctx.translate(item.x, item.y);
+        if (item.state === 'dragged') {
+          ctx.scale(1.22, 1.22);
+        } else {
+          ctx.rotate(item.rotation);
+        }
+
+        ctx.beginPath();
+        ctx.arc(0, 5, r, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#f59e0b';
+        ctx.stroke();
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(0, 0, r - 3, 0, Math.PI * 2);
+        ctx.clip();
+
+        if (foodImageLoaded[item.foodKey] && img && img.complete && img.naturalWidth > 0) {
+          ctx.drawImage(img, -(r - 2), -(r - 2), (r - 2) * 2, (r - 2) * 2);
+        } else {
+          ctx.fillStyle = food.bg;
+          ctx.fillRect(-r, -r, r * 2, r * 2);
+          ctx.font = `${Math.floor(r * 1.15)}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(food.emoji, 0, 3);
+        }
+        ctx.restore();
+
+        ctx.restore();
+      }
+
+      roundRect(ctx, x, y, width, height, radius) {
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+      }
+    }
+
+    let arenaFreshInstance = null;
+    let arenaSnackInstance = null;
+
+    function loadCurrentOrderRound() {
+      isGamePaused = false;
+      document.getElementById('modalPause').classList.add('hidden');
+      document.getElementById('modalRoundResult').classList.add('hidden');
+      showOnlyScreen('screenGame');
+
+      const order = ORDER_QUESTIONS[currentOrderIndex];
+      document.getElementById('orderProgressText').textContent = `Order ${order.id}/${ORDER_QUESTIONS.length} (第${order.id}題)`;
+
+      if (!arenaFreshInstance) {
+        arenaFreshInstance = new TeamFoodArena('fresh', 'canvasFresh', 'wrongOverlayFresh', 'correctOverlayFresh');
+      }
+      if (!arenaSnackInstance) {
+        arenaSnackInstance = new TeamFoodArena('snack', 'canvasSnack', 'wrongOverlaySnack', 'correctOverlaySnack');
+      }
+
+      isMatchActive = true;
+      arenaFreshInstance.resetLocked();
+      arenaSnackInstance.resetLocked();
+
+      setupUnscrambleForTeam('fresh', order.sentence);
+      setupUnscrambleForTeam('snack', order.sentence);
+
+      setTimeout(() => speakCurrentOrder(), 350);
+    }
+
+    function handleTeamCompletedOrder(winningTeam) {
+      if (!isMatchActive) return;
+      isMatchActive = false;
+      isGamePaused = false;
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+      playSound('win');
+
+      const order = ORDER_QUESTIONS[currentOrderIndex];
+      const food = FOOD_CATALOG[order.foodKey];
+
+      if (winningTeam === 'fresh') {
+        scoreFresh++;
+        document.getElementById('scoreFresh').textContent = scoreFresh;
+        document.getElementById('resultBadgeIcon').textContent = '🥬🏆';
+        document.getElementById('resultHeadline').textContent = `${playerFreshName} (新鮮隊) Wins! 獲勝！`;
+        document.getElementById('resultHeadline').className = 'text-2xl md:text-3xl font-black text-emerald-700 mb-2';
+        document.getElementById('resultSubtext').textContent =
+          `Packed ${order.qty} ${food.label} first! 最快排好句子並裝好 ${order.qty} 個${food.zh}！`;
+      } else {
+        scoreSnack++;
+        document.getElementById('scoreSnack').textContent = scoreSnack;
+        document.getElementById('resultBadgeIcon').textContent = '🍪🏆';
+        document.getElementById('resultHeadline').textContent = `${playerSnackName} (點心隊) Wins! 獲勝！`;
+        document.getElementById('resultHeadline').className = 'text-2xl md:text-3xl font-black text-orange-600 mb-2';
+        document.getElementById('resultSubtext').textContent =
+          `Packed ${order.qty} ${food.label} first! 最快排好句子並裝好 ${order.qty} 個${food.zh}！`;
+      }
+
+      setFoodImgWithFallback(document.getElementById('resultItemImage'), order.foodKey);
+      document.getElementById('resultOrderSentence').textContent = order.sentence;
+
+      const isLastOrder = currentOrderIndex >= ORDER_QUESTIONS.length - 1;
+      document.getElementById('btnNextOrderText').textContent = isLastOrder
+        ? 'Finish & Save 完成並儲存'
+        : `Unlock Order #${currentOrderIndex + 2} 解鎖第 ${currentOrderIndex + 2} 題`;
+
+      document.getElementById('modalRoundResult').classList.remove('hidden');
+    }
+
+    function proceedToNextOrder() {
+      document.getElementById('modalRoundResult').classList.add('hidden');
+      if (currentOrderIndex < ORDER_QUESTIONS.length - 1) {
+        currentOrderIndex++;
+        loadCurrentOrderRound();
+      } else {
+        triggerEndGame();
+      }
+    }
+
+    function togglePauseGame() {
+      if (!isMatchActive) return;
+      isGamePaused = !isGamePaused;
+      playSound('pop');
+
+      const pauseModal = document.getElementById('modalPause');
+      const pauseIcon = document.getElementById('pauseBtnIcon');
+      const pauseText = document.getElementById('pauseBtnText');
+
+      if (isGamePaused) {
+        pauseModal.classList.remove('hidden');
+        pauseIcon.className = 'fa-solid fa-play';
+        pauseText.textContent = 'Resume 繼續';
+      } else {
+        pauseModal.classList.add('hidden');
+        pauseIcon.className = 'fa-solid fa-pause';
+        pauseText.textContent = 'Pause 暫停';
+      }
+    }
+
+    function triggerEndGame() {
+      isGamePaused = false;
+      isMatchActive = false;
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+      document.getElementById('modalPause').classList.add('hidden');
+      document.getElementById('modalRoundResult').classList.add('hidden');
+      playSound('win');
+
+      document.getElementById('finalNameFresh').textContent = playerFreshName;
+      document.getElementById('finalNameSnack').textContent = playerSnackName;
+      document.getElementById('finalScoreFresh').textContent = scoreFresh;
+      document.getElementById('finalScoreSnack').textContent = scoreSnack;
+
+      const titleEl = document.getElementById('endGameWinnerTitle');
+      const subEl = document.getElementById('endGameSubtitle');
+      const trophyEl = document.getElementById('endGameTrophyIcon');
+      const saveStatusEl = document.getElementById('firebaseSaveStatus');
+
+      let winningTeam = null;
+      let winnerName = '';
+
+      if (scoreFresh > scoreSnack) {
+        winningTeam = 'fresh';
+        winnerName = playerFreshName;
+        trophyEl.textContent = '🥬🏆🎉';
+        titleEl.textContent = `${playerFreshName} Wins! 獲勝！`;
+        titleEl.className = 'text-2xl md:text-4xl font-black text-emerald-700 mb-2';
+        subEl.textContent = `Point for Team Fresh! 新鮮隊得一勝！ (${scoreFresh} - ${scoreSnack})`;
+      } else if (scoreSnack > scoreFresh) {
+        winningTeam = 'snack';
+        winnerName = playerSnackName;
+        trophyEl.textContent = '🍪🏆🎉';
+        titleEl.textContent = `${playerSnackName} Wins! 獲勝！`;
+        titleEl.className = 'text-2xl md:text-4xl font-black text-orange-600 mb-2';
+        subEl.textContent = `Point for Team Snack! 點心隊得一勝！ (${scoreSnack} - ${scoreFresh})`;
+      } else {
+        trophyEl.textContent = '🤝🏆🎉';
+        titleEl.textContent = "It's a Tie! 平手！";
+        titleEl.className = 'text-2xl md:text-4xl font-black text-indigo-700 mb-2';
+        subEl.textContent = `Both shoppers won ${scoreFresh} orders! 兩位都贏了 ${scoreFresh} 題！`;
+      }
+
+      document.getElementById('modalEndGame').classList.remove('hidden');
+
+      if (winningTeam && !hasSavedMatchResult) {
+        hasSavedMatchResult = true;
+        saveStatusEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Saving to Leaderboard... 正在儲存到排行榜...`;
+        saveWinnerToFirebase({
+          team: winningTeam,
+          winnerName: winnerName,
+          freshPlayer: playerFreshName,
+          snackPlayer: playerSnackName,
+          freshScore: scoreFresh,
+          snackScore: scoreSnack,
+          timestamp: Date.now()
+        });
+      } else if (!winningTeam) {
+        saveStatusEl.innerHTML = `<i class="fa-solid fa-handshake mr-1"></i> Tie match — no team win recorded. (平手 — 不計入隊伍勝場)`;
+      }
+    }
+
+    function resetAndGoToSetup() {
+      document.getElementById('modalEndGame').classList.add('hidden');
+      document.getElementById('inputFreshName').value = '';
+      document.getElementById('inputSnackName').value = '';
+      showOnlyScreen('screenPlayerSetup');
+    }
+
+    function gameLoop() {
+      if (isMatchActive && arenaFreshInstance && arenaSnackInstance) {
+        arenaFreshInstance.updateAndDraw();
+        arenaSnackInstance.updateAndDraw();
+      }
+      requestAnimationFrame(gameLoop);
+    }
+
+    /*************************************************************************
+     * 7. FIREBASE REALTIME DATABASE LEADERBOARD (With Teacher-Only Reset)
+     *************************************************************************/
+    async function saveWinnerToFirebase(record) {
+      const saveStatusEl = document.getElementById('firebaseSaveStatus');
+      try {
+        const res = await fetch(LEADERBOARD_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(record)
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        saveStatusEl.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> Saved to Live Leaderboard! 已儲存到即時排行榜！`;
+      } catch (err) {
+        console.error('Firebase save error:', err);
+        saveStatusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-600 mr-1"></i> Could not connect to Firebase. 無法連線到排行榜。`;
+      }
+    }
+
+    async function fetchLeaderboardFromFirebase() {
+      const listEl = document.getElementById('lbWinnersList');
+      listEl.innerHTML = `<div class="p-6 text-center text-slate-500 font-bold"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading... 載入中...</div>`;
+
+      try {
+        const res = await fetch(LEADERBOARD_ENDPOINT);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+
+        let freshWins = 0;
+        let snackWins = 0;
+        const records = [];
+
+        if (data && typeof data === 'object') {
+          Object.values(data).forEach(entry => {
+            if (!entry || !entry.team) return;
+            if (entry.team === 'fresh') freshWins++;
+            if (entry.team === 'snack') snackWins++;
+            records.push(entry);
+          });
+        }
+
+        document.getElementById('lbFreshWins').textContent = freshWins;
+        document.getElementById('lbSnackWins').textContent = snackWins;
+
+        records.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+        if (records.length === 0) {
+          listEl.innerHTML = `<div class="p-6 text-center text-slate-400 font-bold">No winners yet! 目前還沒有紀錄，快來挑戰吧！</div>`;
+          return;
+        }
+
+        listEl.innerHTML = records.map((r, idx) => {
+          const isFresh = r.team === 'fresh';
+          const badge = isFresh
+            ? `<span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black">🥬 Team Fresh 新鮮隊</span>`
+            : `<span class="px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-800 text-xs font-black">🍪 Team Snack 點心隊</span>`;
+          return `
+            <div class="px-4 py-3 flex items-center justify-between gap-3 hover:bg-amber-50/60">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="w-7 h-7 rounded-full bg-amber-100 text-amber-800 font-black text-xs flex items-center justify-center shrink-0">#${idx + 1}</span>
+                <div class="min-w-0">
+                  <div class="font-black text-slate-900 text-sm md:text-base truncate">${escapeHTML(r.winnerName || 'Winner')}</div>
+                  <div class="text-[11px] text-slate-500 font-bold truncate">
+                    ${escapeHTML(r.freshPlayer || 'Fresh')} (${r.freshScore ?? 0}) vs ${escapeHTML(r.snackPlayer || 'Snack')} (${r.snackScore ?? 0})
+                  </div>
+                </div>
+              </div>
+              <div class="shrink-0">${badge}</div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error('Firebase fetch error:', err);
+        listEl.innerHTML = `<div class="p-6 text-center text-rose-600 font-bold">Unable to load leaderboard. 無法載入排行榜，請檢查網路連線。</div>`;
+      }
+    }
+
+    function escapeHTML(str) {
+      return String(str).replace(/[&<>"']/g, s => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[s]));
+    }
+
+    function openLeaderboardModal() {
+      document.getElementById('modalLeaderboard').classList.remove('hidden');
+      fetchLeaderboardFromFirebase();
+    }
+
+    function closeLeaderboardModal() {
+      document.getElementById('modalLeaderboard').classList.add('hidden');
+    }
+
+    function openAdminResetModal() {
+      document.getElementById('adminPinInput').value = '';
+      document.getElementById('adminPinError').textContent = '';
+      document.getElementById('modalAdminReset').classList.remove('hidden');
+      setTimeout(() => document.getElementById('adminPinInput').focus(), 100);
+    }
+
+    function closeAdminResetModal() {
+      document.getElementById('modalAdminReset').classList.add('hidden');
+    }
+
+    async function confirmAdminResetLeaderboard() {
+      const entered = document.getElementById('adminPinInput').value.trim();
+      const errEl = document.getElementById('adminPinError');
+
+      if (entered !== ADMIN_RESET_PIN) {
+        playSound('wrong');
+        errEl.textContent = 'Incorrect password! 老師密碼錯誤！';
+        return;
+      }
+
+      try {
+        const res = await fetch(LEADERBOARD_ENDPOINT, { method: 'DELETE' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        playSound('correct');
+        closeAdminResetModal();
+        fetchLeaderboardFromFirebase();
+      } catch (err) {
+        console.error('Firebase delete error:', err);
+        errEl.textContent = 'Failed to clear. 清除失敗，請檢查網路。';
+      }
+    }
+
+    /*************************************************************************
+     * 8. CUSTOM PHOTO UPLOADER (Supports the 8 Requested Food Filenames)
+     *************************************************************************/
+    function buildAssetModalList() {
+      const grid = document.getElementById('assetSlotsGrid');
+      grid.innerHTML = '';
+
+      const allSlots = [
+        { label: 'Cover Page GIF 封面動畫', file: COVER_FILENAME, type: 'cover', accept: 'image/gif,image/*' },
+        { label: 'Background Photo 遊戲背景', file: BG_FILENAME, type: 'bg', accept: 'image/*' },
+        { label: 'Paper Bag Photo 紙袋照片', file: PAPERBAG_FILENAME, type: 'bag', accept: 'image/*' },
+        ...ALL_FOOD_KEYS.map(key => ({
+          label: `${FOOD_CATALOG[key].emoji} ${FOOD_CATALOG[key].label} (${FOOD_CATALOG[key].zh})`,
+          file: FOOD_CATALOG[key].file,
+          type: 'food',
+          foodKey: key,
+          accept: 'image/*'
+        }))
+      ];
+
+      allSlots.forEach(slot => {
+        const isUploaded = Boolean(customImageOverrides[slot.file]);
+        const card = document.createElement('div');
+        card.className = 'flex items-center justify-between gap-2 p-3 rounded-2xl border-2 ' +
+          (isUploaded ? 'bg-emerald-50 border-emerald-400' : 'bg-slate-50 border-slate-200');
+
+        card.innerHTML = `
+          <div class="min-w-0 flex-1">
+            <div class="font-black text-slate-800 text-sm truncate">${slot.label}</div>
+            <div class="text-xs font-mono text-indigo-700 truncate">${slot.file}</div>
+          </div>
+          <label class="cursor-pointer px-3 py-1.5 rounded-xl ${isUploaded ? 'bg-emerald-600 text-white' : 'bg-white border-2 border-slate-300 text-slate-700 hover:bg-slate-100'} text-xs font-bold whitespace-nowrap">
+            ${isUploaded ? '✓ Loaded 已載入' : 'Choose 選擇'}
+            <input type="file" accept="${slot.accept}" class="hidden" onchange="handleSingleAssetUpload(event, '${slot.file}', '${slot.type}', '${slot.foodKey || ''}')" />
+          </label>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function openAssetModal() {
+      buildAssetModalList();
+      document.getElementById('modalAssets').classList.remove('hidden');
+    }
+
+    function closeAssetModal() {
+      document.getElementById('modalAssets').classList.add('hidden');
+    }
+
+    function applyCustomAssetFile(fileKey, blobUrl, type, foodKey = '') {
+      customImageOverrides[fileKey] = blobUrl;
+
+      if (type === 'cover' || fileKey.startsWith('coverphoto_flick')) {
+        const coverImg = document.getElementById('coverBgImage');
+        if (coverImg) { coverImg.onerror = null; coverImg.src = blobUrl; }
+      } else if (type === 'bg' || fileKey.startsWith('bg_flick')) {
+        const globalBg = document.getElementById('globalBgImage');
+        if (globalBg) { globalBg.onerror = null; globalBg.src = blobUrl; }
+      } else if (type === 'bag' || fileKey.startsWith('flick_paperbag')) {
+        paperBagImg.src = blobUrl;
+        paperBagLoaded = true;
+      } else if (type === 'food' && foodKey) {
+        const img = foodImageObjects[foodKey];
+        if (img) {
+          img.onload = () => { foodImageLoaded[foodKey] = true; };
+          img.src = blobUrl;
+        }
+      }
+    }
+
+    function handleSingleAssetUpload(event, targetFilename, type, foodKey) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const blobUrl = URL.createObjectURL(file);
+      applyCustomAssetFile(targetFilename, blobUrl, type, foodKey);
+      buildAssetModalList();
+      playSound('correct');
+    }
+
+    function handleBatchFileUpload(event) {
+      const files = Array.from(event.target.files || []);
+      if (files.length === 0) return;
+
+      files.forEach(file => {
+        const lower = file.name.toLowerCase();
+        const blobUrl = URL.createObjectURL(file);
+
+        if (lower.includes('coverphoto_flick')) {
+          applyCustomAssetFile(COVER_FILENAME, blobUrl, 'cover');
+        } else if (lower.includes('bg_flick')) {
+          applyCustomAssetFile(BG_FILENAME, blobUrl, 'bg');
+        } else if (lower.includes('paperbag')) {
+          applyCustomAssetFile(PAPERBAG_FILENAME, blobUrl, 'bag');
+        } else {
+          ALL_FOOD_KEYS.forEach(key => {
+            const base = FOOD_CATALOG[key].file.replace('.jpg', '').toLowerCase();
+            if (lower === FOOD_CATALOG[key].file.toLowerCase() || lower.startsWith(base + '.')) {
+              applyCustomAssetFile(FOOD_CATALOG[key].file, blobUrl, 'food', key);
+            }
+          });
+        }
+      });
+
+      buildAssetModalList();
+      playSound('correct');
+    }
+
+    /*************************************************************************
+     * 9. INITIALIZATION & RESIZE
+     *************************************************************************/
+    window.addEventListener('resize', () => {
+      if (arenaFreshInstance) arenaFreshInstance.resizeCanvas();
+      if (arenaSnackInstance) arenaSnackInstance.resizeCanvas();
+    });
+
+    window.onload = function () {
+      preloadFoodImages();
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.getVoices();
+        window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+      }
+      gameLoop();
+    };
+  </script>
+</body>
+</html>
