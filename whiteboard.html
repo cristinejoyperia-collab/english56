@@ -1,0 +1,1767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Split-Screen Whiteboard &amp; Binocular Shadow Game</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* =========================================================
+       COMIC SANS MS & CHEERFUL PASTEL CLASSROOM THEME
+       ========================================================= */
+    :root {
+      --font-comic: "Comic Sans MS", "Comic Sans", "Chalkboard SE", "Marker Felt", cursive, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      font-family: var(--font-comic);
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #ffe4ef;
+    }
+
+    /* Full-screen Game Background: bg_whiteboard.jpeg with cheerful pastel fallback */
+    .game-bg {
+      background-image:
+        url('bg_whiteboard.jpeg'),
+        radial-gradient(circle at 18% 20%, rgba(255, 255, 255, 0.65) 0%, transparent 45%),
+        radial-gradient(circle at 82% 80%, rgba(254, 240, 138, 0.5) 0%, transparent 45%),
+        linear-gradient(135deg, #ffd6e7 0%, #ffe8f3 38%, #e0f2fe 72%, #fef3c7 100%);
+      background-size: cover, 100% 100%, 100% 100%, 100% 100%;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    /* Graceful pastel fallback behind cover_whiteboard.gif (no blocking text) */
+    .cover-bg {
+      background-image:
+        url('cover_whiteboard.gif'),
+        radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.6) 0%, transparent 45%),
+        radial-gradient(circle at 75% 75%, rgba(254, 215, 170, 0.55) 0%, transparent 45%),
+        linear-gradient(135deg, #fbcfe8 0%, #fde68a 50%, #bae6fd 100%);
+      background-size: cover, 100% 100%, 100% 100%, 100% 100%;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    /* Playful 3D Classroom Buttons */
+    .btn-3d {
+      transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.15s ease;
+    }
+    .btn-3d:hover {
+      filter: brightness(1.05);
+      transform: translateY(-2px);
+    }
+    .btn-3d:active {
+      transform: translateY(3px);
+    }
+
+    .btn-start {
+      background: linear-gradient(180deg, #ff7eb6 0%, #ec4899 100%);
+      border: 4px solid #ffffff;
+      box-shadow: 0 7px 0 #be185d, 0 14px 28px rgba(190, 24, 93, 0.38);
+    }
+    .btn-start:active {
+      box-shadow: 0 2px 0 #be185d, 0 6px 14px rgba(190, 24, 93, 0.35);
+    }
+
+    .btn-pink {
+      background: linear-gradient(180deg, #f472b6 0%, #db2777 100%);
+      box-shadow: 0 4px 0 #9d174d;
+    }
+    .btn-pink:active { box-shadow: 0 1px 0 #9d174d; }
+
+    .btn-sky {
+      background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%);
+      box-shadow: 0 4px 0 #1e40af;
+    }
+    .btn-sky:active { box-shadow: 0 1px 0 #1e40af; }
+
+    .btn-amber {
+      background: linear-gradient(180deg, #fcd34d 0%, #f59e0b 100%);
+      box-shadow: 0 4px 0 #b45309;
+    }
+    .btn-amber:active { box-shadow: 0 1px 0 #b45309; }
+
+    .btn-mint {
+      background: linear-gradient(180deg, #34d399 0%, #059669 100%);
+      box-shadow: 0 4px 0 #065f46;
+    }
+    .btn-mint:active { box-shadow: 0 1px 0 #065f46; }
+
+    /* Realistic Lined Notebook Pad Paper */
+    .notebook-paper {
+      background-color: #ffffff;
+      background-image:
+        /* Vertical pink/red margin line */
+        linear-gradient(to right, transparent 42px, rgba(244, 63, 94, 0.45) 42px, rgba(244, 63, 94, 0.45) 44px, transparent 44px),
+        /* Horizontal blue notebook lines */
+        repeating-linear-gradient(
+          to bottom,
+          transparent 0px,
+          transparent 31px,
+          rgba(59, 130, 246, 0.30) 31px,
+          rgba(59, 130, 246, 0.30) 33px
+        );
+      background-position: 0 0, 0 12px;
+    }
+
+    /* Spiral Notebook Rings Along Top Edge */
+    .spiral-top {
+      background: linear-gradient(180deg, #fce7f3 0%, #fbcfe8 100%);
+      background-image: radial-gradient(circle at 15px 11px, #475569 4px, transparent 4.5px);
+      background-size: 30px 20px;
+      background-repeat: repeat-x;
+      position: relative;
+    }
+    .spiral-top::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: -6px;
+      height: 16px;
+      background-image: repeating-linear-gradient(
+        to right,
+        transparent 0px,
+        transparent 12px,
+        #64748b 12px,
+        #cbd5e1 15px,
+        #475569 18px,
+        transparent 18px,
+        transparent 30px
+      );
+      pointer-events: none;
+    }
+
+    /* Illuminated Paper Card Behind Shadow Silhouette */
+    .shadow-light-card {
+      background: radial-gradient(circle at center, #ffffff 0%, #fffbeb 68%, #fef3c7 100%);
+      box-shadow: 0 0 60px rgba(255, 251, 235, 0.5);
+    }
+
+    /* Shadow / Silhouette CSS Filter for Binocular Phase */
+    .shadow-mode .s-fill { fill: #111827 !important; }
+    .shadow-mode .s-stroke { stroke: #111827 !important; }
+    .shadow-mode .s-cutout { fill: #fffdf7 !important; }
+    .shadow-mode .s-cutout-stroke { stroke: #fffdf7 !important; }
+    .shadow-mode .s-text { fill: #fffdf7 !important; }
+    .shadow-mode .s-dark-text { fill: #111827 !important; }
+
+    /* Drawing Canvas (Transparent over CSS notebook lines) */
+    .draw-canvas {
+      touch-action: none;
+      cursor: crosshair;
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .draw-canvas.eraser-cursor {
+      cursor: cell;
+    }
+
+    /* Active Tool & Swatch Highlight */
+    .tool-active {
+      background: linear-gradient(180deg, #fde047 0%, #f59e0b 100%) !important;
+      color: #1f2937 !important;
+      border-color: #b45309 !important;
+      box-shadow: 0 3px 0 #b45309;
+      transform: scale(1.04);
+    }
+    .swatch-active {
+      outline: 3px solid #f59e0b;
+      outline-offset: 2px;
+      transform: scale(1.16);
+    }
+    .size-active {
+      background-color: #ec4899 !important;
+      color: #ffffff !important;
+      border-color: #be185d !important;
+    }
+
+    /* Editable Team Name */
+    .team-input {
+      background: rgba(255, 255, 255, 0.5);
+      border: 2px dashed rgba(255, 255, 255, 0.8);
+      border-radius: 10px;
+      user-select: text;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .team-input:focus, .team-input:hover {
+      background: rgba(255, 255, 255, 0.9);
+      border-color: #ec4899;
+      outline: none;
+    }
+
+    /* Animations */
+    @keyframes bounceGentle {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    .animate-bounce-gentle {
+      animation: bounceGentle 2.2s ease-in-out infinite;
+    }
+
+    @keyframes pulseUrgent {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+    .animate-urgent {
+      animation: pulseUrgent 0.45s ease-in-out infinite;
+    }
+
+    @keyframes popIn {
+      0% { opacity: 0; transform: scale(0.86) translateY(12px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .animate-pop {
+      animation: popIn 0.26s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+  </style>
+</head>
+<body class="game-bg text-slate-800">
+
+  <!-- =========================================================
+       SCREEN 1: BLANK FULL-SCREEN COVER PAGE + START BUTTON ONLY
+       ========================================================= -->
+  <section id="screen-cover" class="fixed inset-0 z-30 cover-bg w-screen h-screen overflow-hidden">
+    <!-- User's cover_whiteboard.gif stretched across the ENTIRE viewport -->
+    <img
+      id="cover-photo"
+      src="cover_whiteboard.gif"
+      alt=""
+      onerror="this.style.display='none';"
+      style="width: 100vw; height: 100vh; object-fit: cover; position: fixed; inset: 0;"
+      class="pointer-events-none"
+    />
+
+    <!-- ONLY a single prominent, playful START button near bottom-center -->
+    <div class="fixed bottom-8 left-1/2 -translate-x-1/2 z-40">
+      <button
+        id="btn-start"
+        onclick="startGame()"
+        class="btn-3d btn-start animate-bounce-gentle text-white text-3xl sm:text-4xl font-bold px-12 sm:px-16 py-4 rounded-full tracking-wider flex items-center gap-3 cursor-pointer"
+      >
+        <span>▶</span>
+        <span>START</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       SCREEN 2: 7-SECOND FAST-PACED BINOCULAR SHADOW GAME
+       ========================================================= -->
+  <section id="screen-binocular" class="fixed inset-0 z-20 hidden flex-col items-center justify-center overflow-hidden game-bg">
+    <!-- Illuminated Card Holding the High-Contrast Silhouette -->
+    <div class="relative w-full h-full flex items-center justify-center p-4">
+      <div class="shadow-light-card rounded-[2.5rem] w-[86vw] max-w-[760px] h-[72vh] max-h-[560px] flex items-center justify-center p-6 sm:p-10">
+        <div id="shadow-svg-holder" class="shadow-mode w-full h-full flex items-center justify-center pointer-events-none select-none">
+          <!-- Custom SVG injected per round -->
+        </div>
+      </div>
+
+      <!-- Blackout Overlay with Fast-Moving Binocular Viewport Cutout -->
+      <canvas id="binocular-canvas" class="fixed inset-0 w-full h-full pointer-events-none"></canvas>
+
+      <!-- Top HUD Overlay -->
+      <div class="fixed top-4 left-4 right-4 z-30 flex items-center justify-between gap-2 pointer-events-none">
+        <!-- Round Indicator -->
+        <div class="bg-pink-500/90 border-2 border-white text-white px-4 py-2 rounded-2xl text-base sm:text-xl font-bold shadow-lg flex items-center gap-2">
+          <span>🔭</span>
+          <span id="bino-round-label">Round 1 / 15</span>
+        </div>
+
+        <!-- Crisp 7-Second Countdown Timer -->
+        <div id="bino-timer-badge" class="bg-amber-300 text-slate-900 border-4 border-white px-6 py-1.5 rounded-full text-3xl sm:text-5xl font-bold shadow-2xl min-w-[88px] text-center">
+          7
+        </div>
+
+        <!-- Mute & Skip Controls -->
+        <div class="flex items-center gap-2 pointer-events-auto">
+          <button onclick="toggleMute()" class="btn-3d bg-white/90 border-2 border-pink-300 text-slate-800 px-3 py-2 rounded-xl font-bold text-base shadow-lg cursor-pointer" title="Toggle Sound">
+            <span class="mute-icon">🔊</span>
+          </button>
+          <button onclick="skipToWhiteboard()" class="btn-3d btn-sky text-white border-2 border-white px-4 py-2 rounded-xl font-bold text-sm sm:text-base shadow-lg cursor-pointer">
+            Skip to Board ➔
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       SCREEN 3: SPLIT-SCREEN LINED NOTEBOOK WHITEBOARD
+       ========================================================= -->
+  <section id="screen-whiteboard" class="fixed inset-0 z-10 hidden flex-col h-full w-full p-2 sm:p-3 gap-2 game-bg">
+
+    <!-- TOP BAR: ADJUSTABLE SCOREBOARD + COMPACT TEACHER CONTROLS -->
+    <header class="shrink-0 w-full bg-white/90 backdrop-blur-md border-2 border-pink-300 rounded-2xl px-2 sm:px-3 py-1.5 shadow-lg flex flex-wrap lg:flex-nowrap items-center justify-between gap-2">
+
+      <!-- LEFT: TEAM 1 SCORE -->
+      <div class="flex items-center gap-1.5 sm:gap-2 bg-sky-100 border-2 border-sky-300 rounded-xl px-2 py-1">
+        <input
+          id="team1-name"
+          type="text"
+          value="Team 1"
+          aria-label="Team 1 Name"
+          class="team-input text-sky-900 font-bold text-sm sm:text-base w-20 sm:w-24 px-1.5 py-0.5"
+        />
+        <button onclick="adjustScore(1, -1)" class="btn-3d w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-rose-400 hover:bg-rose-500 text-white font-bold text-lg flex items-center justify-center shadow cursor-pointer" title="Subtract 1">−</button>
+        <span id="score-1" class="text-sky-900 font-bold text-xl sm:text-3xl min-w-[28px] sm:min-w-[38px] text-center">0</span>
+        <button onclick="adjustScore(1, 1)" class="btn-3d w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-lg flex items-center justify-center shadow cursor-pointer" title="Add 1">+</button>
+      </div>
+
+      <!-- CENTER: COMPACT TEACHER CONTROLS -->
+      <div class="flex flex-wrap items-center justify-center gap-1.5">
+        <span id="wb-round-label" class="bg-pink-100 border-2 border-pink-300 text-pink-800 px-2.5 py-1 rounded-xl font-bold text-xs sm:text-sm">
+          Round 1 / 15
+        </span>
+        <button onclick="replayBinoculars()" class="btn-3d btn-sky text-white px-2.5 sm:px-3 py-1 rounded-xl font-bold text-xs sm:text-sm cursor-pointer" title="Replay 7-second Binoculars">
+          🔭 Replay Binoculars (7s)
+        </button>
+        <button onclick="revealAnswer()" class="btn-3d btn-amber text-slate-900 px-2.5 sm:px-3 py-1 rounded-xl font-bold text-xs sm:text-sm cursor-pointer" title="Reveal Answer">
+          ✨ Reveal Answer
+        </button>
+        <button id="btn-next-top" onclick="nextRound()" class="btn-3d btn-mint text-white px-2.5 sm:px-3 py-1 rounded-xl font-bold text-xs sm:text-sm cursor-pointer" title="Next Round">
+          <span id="next-round-label">Next Round ➔</span>
+        </button>
+        <button onclick="toggleMute()" class="btn-3d bg-pink-100 hover:bg-pink-200 border border-pink-300 text-slate-800 px-2.5 py-1 rounded-xl font-bold text-xs sm:text-sm cursor-pointer" title="Toggle Sound">
+          <span class="mute-icon">🔊</span>
+        </button>
+        <button onclick="goHome()" class="btn-3d bg-pink-100 hover:bg-pink-200 border border-pink-300 text-slate-800 px-2.5 py-1 rounded-xl font-bold text-xs sm:text-sm cursor-pointer" title="Home">
+          🏠 Home
+        </button>
+      </div>
+
+      <!-- RIGHT: TEAM 2 SCORE -->
+      <div class="flex items-center gap-1.5 sm:gap-2 bg-pink-100 border-2 border-pink-300 rounded-xl px-2 py-1">
+        <button onclick="adjustScore(2, -1)" class="btn-3d w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-rose-400 hover:bg-rose-500 text-white font-bold text-lg flex items-center justify-center shadow cursor-pointer" title="Subtract 1">−</button>
+        <span id="score-2" class="text-pink-900 font-bold text-xl sm:text-3xl min-w-[28px] sm:min-w-[38px] text-center">0</span>
+        <button onclick="adjustScore(2, 1)" class="btn-3d w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-lg flex items-center justify-center shadow cursor-pointer" title="Add 1">+</button>
+        <input
+          id="team2-name"
+          type="text"
+          value="Team 2"
+          aria-label="Team 2 Name"
+          class="team-input text-pink-900 font-bold text-sm sm:text-base w-20 sm:w-24 px-1.5 py-0.5 text-right"
+        />
+      </div>
+    </header>
+
+    <!-- MIDDLE AREA: SPLIT-SCREEN LINED NOTEBOOK PADS -->
+    <main class="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3">
+
+      <!-- =====================================================
+           LEFT NOTEBOOK PAD (TEAM 1)
+           ===================================================== -->
+      <div class="flex flex-col min-h-0 rounded-2xl overflow-hidden shadow-xl border-[3px] border-sky-300 bg-white">
+        <!-- Spiral Notebook Rings at Top -->
+        <div class="spiral-top h-5 shrink-0 border-b border-pink-200"></div>
+
+        <!-- Lined Notebook Drawing Area -->
+        <div class="relative flex-1 min-h-0 notebook-paper overflow-hidden">
+          <div class="absolute top-1.5 right-2.5 px-2.5 py-0.5 rounded-full bg-sky-100/90 border border-sky-300 text-sky-800 text-xs font-bold pointer-events-none">
+            <span id="pad1-label">Team 1</span>
+          </div>
+          <canvas id="canvas-0" class="draw-canvas"></canvas>
+        </div>
+
+        <!-- BOTTOM DRAWING TOOLBAR (PEN, ERASER, COLORS, SIZES, CLEAR) -->
+        <div class="shrink-0 bg-gradient-to-r from-sky-50 via-pink-50 to-sky-50 border-t-2 border-sky-200 px-2 py-1.5 flex flex-wrap items-center justify-between gap-1.5">
+          <!-- Pen & Eraser -->
+          <div class="flex items-center gap-1.5">
+            <button id="pen-btn-0" onclick="selectPen(0)" class="tool-active px-2.5 py-1.5 rounded-xl bg-white border-2 border-slate-300 text-slate-800 font-bold text-xs sm:text-sm cursor-pointer">
+              ✏️ Pen
+            </button>
+            <button id="eraser-btn-0" onclick="selectEraser(0)" class="px-2.5 py-1.5 rounded-xl bg-white border-2 border-slate-300 text-slate-800 font-bold text-xs sm:text-sm cursor-pointer">
+              🧽 Eraser
+            </button>
+          </div>
+
+          <!-- 6 Color Swatches -->
+          <div class="flex items-center gap-1.5">
+            <button onclick="setColor(0, '#1f2937', this)" data-color="#1f2937" class="swatch-0 swatch-active w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-800 border-2 border-white shadow cursor-pointer" title="Black"></button>
+            <button onclick="setColor(0, '#2563eb', this)" data-color="#2563eb" class="swatch-0 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-blue-600 border-2 border-white shadow cursor-pointer" title="Blue"></button>
+            <button onclick="setColor(0, '#ef4444', this)" data-color="#ef4444" class="swatch-0 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-red-500 border-2 border-white shadow cursor-pointer" title="Red"></button>
+            <button onclick="setColor(0, '#ec4899', this)" data-color="#ec4899" class="swatch-0 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-pink-500 border-2 border-white shadow cursor-pointer" title="Pink"></button>
+            <button onclick="setColor(0, '#16a34a', this)" data-color="#16a34a" class="swatch-0 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-green-600 border-2 border-white shadow cursor-pointer" title="Green"></button>
+            <button onclick="setColor(0, '#9333ea', this)" data-color="#9333ea" class="swatch-0 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-purple-600 border-2 border-white shadow cursor-pointer" title="Purple"></button>
+          </div>
+
+          <!-- Sizes (S / M / L) & Clear -->
+          <div class="flex items-center gap-1">
+            <button onclick="setSize(0, 0, this)" class="size-0 w-7 h-7 rounded-lg bg-white border border-pink-300 text-slate-700 font-bold text-xs cursor-pointer" title="Small">S</button>
+            <button onclick="setSize(0, 1, this)" class="size-0 size-active w-7 h-7 rounded-lg bg-white border border-pink-300 text-slate-700 font-bold text-xs cursor-pointer" title="Medium">M</button>
+            <button onclick="setSize(0, 2, this)" class="size-0 w-7 h-7 rounded-lg bg-white border border-pink-300 text-slate-700 font-bold text-xs cursor-pointer" title="Large">L</button>
+            <button onclick="clearPad(0)" class="ml-1 px-2.5 py-1.5 rounded-xl bg-rose-100 hover:bg-rose-200 border-2 border-rose-300 text-rose-700 font-bold text-xs sm:text-sm cursor-pointer" title="Clear Board">
+              🗑️ Clear
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- =====================================================
+           RIGHT NOTEBOOK PAD (TEAM 2)
+           ===================================================== -->
+      <div class="flex flex-col min-h-0 rounded-2xl overflow-hidden shadow-xl border-[3px] border-pink-300 bg-white">
+        <!-- Spiral Notebook Rings at Top -->
+        <div class="spiral-top h-5 shrink-0 border-b border-pink-200"></div>
+
+        <!-- Lined Notebook Drawing Area -->
+        <div class="relative flex-1 min-h-0 notebook-paper overflow-hidden">
+          <div class="absolute top-1.5 right-2.5 px-2.5 py-0.5 rounded-full bg-pink-100/90 border border-pink-300 text-pink-800 text-xs font-bold pointer-events-none">
+            <span id="pad2-label">Team 2</span>
+          </div>
+          <canvas id="canvas-1" class="draw-canvas"></canvas>
+        </div>
+
+        <!-- BOTTOM DRAWING TOOLBAR (PEN, ERASER, COLORS, SIZES, CLEAR) -->
+        <div class="shrink-0 bg-gradient-to-r from-pink-50 via-amber-50 to-pink-50 border-t-2 border-pink-200 px-2 py-1.5 flex flex-wrap items-center justify-between gap-1.5">
+          <!-- Pen & Eraser -->
+          <div class="flex items-center gap-1.5">
+            <button id="pen-btn-1" onclick="selectPen(1)" class="tool-active px-2.5 py-1.5 rounded-xl bg-white border-2 border-slate-300 text-slate-800 font-bold text-xs sm:text-sm cursor-pointer">
+              ✏️ Pen
+            </button>
+            <button id="eraser-btn-1" onclick="selectEraser(1)" class="px-2.5 py-1.5 rounded-xl bg-white border-2 border-slate-300 text-slate-800 font-bold text-xs sm:text-sm cursor-pointer">
+              🧽 Eraser
+            </button>
+          </div>
+
+          <!-- 6 Color Swatches -->
+          <div class="flex items-center gap-1.5">
+            <button onclick="setColor(1, '#1f2937', this)" data-color="#1f2937" class="swatch-1 swatch-active w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-800 border-2 border-white shadow cursor-pointer" title="Black"></button>
+            <button onclick="setColor(1, '#2563eb', this)" data-color="#2563eb" class="swatch-1 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-blue-600 border-2 border-white shadow cursor-pointer" title="Blue"></button>
+            <button onclick="setColor(1, '#ef4444', this)" data-color="#ef4444" class="swatch-1 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-red-500 border-2 border-white shadow cursor-pointer" title="Red"></button>
+            <button onclick="setColor(1, '#ec4899', this)" data-color="#ec4899" class="swatch-1 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-pink-500 border-2 border-white shadow cursor-pointer" title="Pink"></button>
+            <button onclick="setColor(1, '#16a34a', this)" data-color="#16a34a" class="swatch-1 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-green-600 border-2 border-white shadow cursor-pointer" title="Green"></button>
+            <button onclick="setColor(1, '#9333ea', this)" data-color="#9333ea" class="swatch-1 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-purple-600 border-2 border-white shadow cursor-pointer" title="Purple"></button>
+          </div>
+
+          <!-- Sizes (S / M / L) & Clear -->
+          <div class="flex items-center gap-1">
+            <button onclick="setSize(1, 0, this)" class="size-1 w-7 h-7 rounded-lg bg-white border border-pink-300 text-slate-700 font-bold text-xs cursor-pointer" title="Small">S</button>
+            <button onclick="setSize(1, 1, this)" class="size-1 size-active w-7 h-7 rounded-lg bg-white border border-pink-300 text-slate-700 font-bold text-xs cursor-pointer" title="Medium">M</button>
+            <button onclick="setSize(1, 2, this)" class="size-1 w-7 h-7 rounded-lg bg-white border border-pink-300 text-slate-700 font-bold text-xs cursor-pointer" title="Large">L</button>
+            <button onclick="clearPad(1)" class="ml-1 px-2.5 py-1.5 rounded-xl bg-rose-100 hover:bg-rose-200 border-2 border-rose-300 text-rose-700 font-bold text-xs sm:text-sm cursor-pointer" title="Clear Board">
+              🗑️ Clear
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </section>
+
+  <!-- =========================================================
+       MODAL: REVEAL ANSWER (FULL-COLOR SVG + QUICK POINTS)
+       ========================================================= -->
+  <div id="modal-reveal" class="fixed inset-0 z-40 hidden items-center justify-center bg-slate-900/65 backdrop-blur-sm p-4">
+    <div class="bg-gradient-to-b from-white to-pink-50 rounded-3xl max-w-lg w-full p-6 text-center shadow-2xl border-4 border-pink-400 animate-pop relative">
+      <button onclick="closeRevealModal()" class="absolute top-3 right-3 w-9 h-9 rounded-full bg-pink-100 hover:bg-pink-200 text-pink-700 font-bold text-lg flex items-center justify-center cursor-pointer" title="Close">✕</button>
+
+      <div class="inline-block px-3.5 py-1 rounded-full bg-amber-200 text-amber-900 font-bold text-xs uppercase tracking-wider mb-2">
+        🌟 Correct Answer
+      </div>
+
+      <!-- Full-Color SVG Illustration -->
+      <div id="reveal-svg-holder" class="w-full h-52 sm:h-60 flex items-center justify-center bg-white rounded-2xl border-2 border-pink-200 p-3 mb-3 shadow-inner">
+        <!-- Injected dynamically -->
+      </div>
+
+      <h2 id="reveal-word" class="text-4xl sm:text-5xl font-bold text-pink-600 leading-tight">
+        Art
+      </h2>
+      <p id="reveal-subtitle" class="text-slate-500 font-bold text-sm sm:text-base mb-4">
+        Paint
+      </p>
+
+      <!-- Quick Point Award Buttons: +1 Team 1, +1 Team 2, +1 Both -->
+      <div class="flex flex-wrap items-center justify-center gap-2 mb-5">
+        <button onclick="awardPoints('t1', this)" class="btn-3d btn-sky text-white font-bold text-sm px-3.5 py-2 rounded-xl cursor-pointer">
+          +1 <span id="award-t1-name">Team 1</span>
+        </button>
+        <button onclick="awardPoints('t2', this)" class="btn-3d btn-pink text-white font-bold text-sm px-3.5 py-2 rounded-xl cursor-pointer">
+          +1 <span id="award-t2-name">Team 2</span>
+        </button>
+        <button onclick="awardPoints('both', this)" class="btn-3d btn-amber text-slate-900 font-bold text-sm px-3.5 py-2 rounded-xl cursor-pointer">
+          +1 Both 🌟
+        </button>
+      </div>
+
+      <div class="flex items-center justify-center gap-3">
+        <button onclick="closeRevealModal()" class="px-4 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-sm cursor-pointer">
+          Back to Boards
+        </button>
+        <button onclick="closeRevealModal(); nextRound();" class="btn-3d btn-mint text-white font-bold text-base px-6 py-2.5 rounded-xl cursor-pointer">
+          <span id="modal-next-label">Next Round ➔</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       MODAL: FINAL WINNER CELEBRATION + CONFETTI (WITH bg_whiteboard.jpeg)
+       ========================================================= -->
+  <div id="modal-winner" class="fixed inset-0 z-50 hidden items-center justify-center game-bg p-4">
+    <div class="fixed inset-0 bg-slate-900/55 backdrop-blur-sm pointer-events-none"></div>
+    <!-- Live Confetti Canvas -->
+    <canvas id="confetti-canvas" class="fixed inset-0 w-full h-full pointer-events-none z-10"></canvas>
+
+    <div class="relative z-20 bg-gradient-to-b from-white via-pink-50 to-amber-50 rounded-3xl max-w-lg w-full p-7 text-center shadow-2xl border-4 border-amber-400 animate-pop">
+      <div class="text-6xl mb-2 animate-bounce-gentle">🏆</div>
+      <h2 class="text-4xl sm:text-5xl font-bold text-pink-600 mb-2">Great Job!</h2>
+      <p id="winner-banner" class="text-2xl sm:text-3xl font-bold text-emerald-600 mb-5">
+        Team 1 Wins!
+      </p>
+
+      <!-- Final Scores -->
+      <div class="grid grid-cols-2 gap-4 mb-6">
+        <div class="bg-sky-100 border-2 border-sky-300 rounded-2xl p-4">
+          <div id="final-t1-name" class="font-bold text-sky-800 text-base">Team 1</div>
+          <div id="final-t1-score" class="text-4xl sm:text-5xl font-bold text-sky-900 mt-1">0</div>
+        </div>
+        <div class="bg-pink-100 border-2 border-pink-300 rounded-2xl p-4">
+          <div id="final-t2-name" class="font-bold text-pink-800 text-base">Team 2</div>
+          <div id="final-t2-score" class="text-4xl sm:text-5xl font-bold text-pink-900 mt-1">0</div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-center gap-3">
+        <button onclick="goHome()" class="px-5 py-3 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-base cursor-pointer">
+          🏠 Home
+        </button>
+        <button onclick="playAgain()" class="btn-3d btn-start text-white font-bold text-xl px-8 py-3 rounded-2xl cursor-pointer">
+          🔄 Play Again
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       GAME LOGIC, 15 CUSTOM SVGS, AUDIO & MULTI-TOUCH DRAWING
+       ========================================================= -->
+  <script>
+    /* ===========================================================
+       1. EXACT 15 CLASSROOM ITEMS IN ORDER
+       Every SVG uses:
+         .s-fill          -> dark silhouette in binocular shadow mode
+         .s-stroke        -> dark stroke in shadow mode
+         .s-cutout        -> bright illuminated cutout in shadow mode
+         .s-cutout-stroke -> bright line detail in shadow mode
+         .s-text          -> bright text inside dark shapes in shadow mode
+         .s-dark-text     -> dark text on bright shapes in shadow mode
+       =========================================================== */
+    const ITEMS = [
+      // 1. Art — Paint palette, paint tubes/splashes, paintbrush
+      {
+        answer: 'Art',
+        subtitle: 'Paint',
+        svg: `
+          <svg viewBox="0 0 420 320" class="w-full h-full">
+            <!-- Painter's Palette -->
+            <path class="s-fill" d="M168 48 C82 48 28 106 34 178 C39 234 90 264 146 258 C176 255 188 232 180 212 C173 194 192 182 216 186 C264 194 298 164 294 120 C290 74 236 48 168 48 Z" fill="#f59e0b" stroke="#92400e" stroke-width="6"/>
+            <!-- Thumb Hole -->
+            <ellipse class="s-cutout" cx="92" cy="202" rx="20" ry="15" fill="#ffffff" stroke="#92400e" stroke-width="4"/>
+            <!-- Paint Blobs -->
+            <circle class="s-cutout" cx="98" cy="112" r="18" fill="#ef4444"/>
+            <circle class="s-cutout" cx="152" cy="86" r="18" fill="#3b82f6"/>
+            <circle class="s-cutout" cx="212" cy="92" r="18" fill="#22c55e"/>
+            <circle class="s-cutout" cx="252" cy="134" r="17" fill="#a855f7"/>
+            <circle class="s-cutout" cx="142" cy="148" r="14" fill="#ec4899"/>
+            <!-- Paintbrush -->
+            <g transform="rotate(-34 252 168)">
+              <rect class="s-fill" x="242" y="34" width="20" height="170" rx="9" fill="#b45309" stroke="#451a03" stroke-width="4"/>
+              <rect class="s-cutout" x="240" y="190" width="24" height="20" rx="3" fill="#cbd5e1" stroke="#475569" stroke-width="3"/>
+              <path class="s-fill" d="M240 210 Q252 264 264 210 Z" fill="#ec4899" stroke="#451a03" stroke-width="4"/>
+            </g>
+            <!-- Paint Tube 1 (Red) -->
+            <g transform="rotate(14 338 228)">
+              <rect class="s-fill" x="310" y="176" width="46" height="92" rx="8" fill="#ef4444" stroke="#991b1b" stroke-width="4"/>
+              <rect class="s-cutout" x="318" y="200" width="30" height="36" rx="4" fill="#ffffff"/>
+              <rect class="s-fill" x="306" y="264" width="54" height="12" rx="4" fill="#b91c1c"/>
+              <rect class="s-fill" x="323" y="160" width="20" height="16" rx="3" fill="#e2e8f0" stroke="#475569" stroke-width="3"/>
+            </g>
+            <!-- Paint Tube 2 (Blue) -->
+            <g transform="rotate(-12 372 130)">
+              <rect class="s-fill" x="352" y="72" width="38" height="78" rx="7" fill="#3b82f6" stroke="#1e3a8a" stroke-width="4"/>
+              <rect class="s-cutout" x="359" y="92" width="24" height="28" rx="4" fill="#ffffff"/>
+              <rect class="s-fill" x="362" y="58" width="18" height="14" rx="3" fill="#e2e8f0" stroke="#475569" stroke-width="3"/>
+            </g>
+          </svg>`
+      },
+
+      // 2. Chinese — Taiwanese / Traditional Chinese calligraphy brush, inkstone, scroll with 書法 / 永
+      {
+        answer: 'Chinese',
+        subtitle: 'Taiwanese Calligraphy',
+        svg: `
+          <svg viewBox="0 0 420 320" class="w-full h-full">
+            <!-- Hanging Vertical Calligraphy Scroll -->
+            <rect class="s-fill" x="48" y="26" width="186" height="20" rx="9" fill="#92400e" stroke="#451a03" stroke-width="4"/>
+            <rect class="s-fill" x="66" y="46" width="150" height="218" fill="#fef3c7" stroke="#92400e" stroke-width="5"/>
+            <rect class="s-fill" x="48" y="262" width="186" height="20" rx="9" fill="#92400e" stroke="#451a03" stroke-width="4"/>
+            <!-- Traditional Calligraphy Characters 書法 & 永 -->
+            <text class="s-text" x="155" y="116" text-anchor="middle" font-family="serif" font-size="60" font-weight="900" fill="#111827">書</text>
+            <text class="s-text" x="155" y="186" text-anchor="middle" font-family="serif" font-size="60" font-weight="900" fill="#111827">法</text>
+            <text class="s-text" x="98" y="152" text-anchor="middle" font-family="serif" font-size="52" font-weight="900" fill="#111827">永</text>
+            <!-- Red Artist Chop Seal -->
+            <rect class="s-cutout" x="84" y="208" width="28" height="28" rx="4" fill="#dc2626"/>
+            <!-- Inkstone (硯台) -->
+            <rect class="s-fill" x="252" y="196" width="136" height="84" rx="18" fill="#334155" stroke="#0f172a" stroke-width="5"/>
+            <ellipse class="s-cutout" cx="320" cy="238" rx="46" ry="26" fill="#0f172a" stroke="#64748b" stroke-width="4"/>
+            <ellipse class="s-fill" cx="312" cy="234" rx="22" ry="12" fill="#1e293b"/>
+            <!-- Calligraphy Brush (毛筆) -->
+            <g transform="rotate(24 318 112)">
+              <rect class="s-fill" x="308" y="20" width="20" height="145" rx="8" fill="#d97706" stroke="#78350f" stroke-width="4"/>
+              <line class="s-cutout-stroke" x1="308" y1="68" x2="328" y2="68" stroke="#78350f" stroke-width="4"/>
+              <line class="s-cutout-stroke" x1="308" y1="115" x2="328" y2="115" stroke="#78350f" stroke-width="4"/>
+              <path class="s-fill" d="M305 164 Q318 228 331 164 Z" fill="#111827" stroke="#0f172a" stroke-width="4"/>
+            </g>
+          </svg>`
+      },
+
+      // 3. English — English alphabet letters A, B, C, a, b, c
+      {
+        answer: 'English',
+        subtitle: 'English Alphabet',
+        svg: `
+          <svg viewBox="0 0 420 320" class="w-full h-full">
+            <!-- Top Row: A B C -->
+            <g transform="rotate(-6 88 94)">
+              <rect class="s-fill" x="42" y="44" width="92" height="92" rx="18" fill="#ef4444" stroke="#991b1b" stroke-width="5"/>
+              <text class="s-text" x="88" y="112" text-anchor="middle" font-size="62" font-weight="900" fill="#ffffff">A</text>
+            </g>
+            <g transform="rotate(4 210 88)">
+              <rect class="s-fill" x="164" y="38" width="92" height="92" rx="18" fill="#f59e0b" stroke="#92400e" stroke-width="5"/>
+              <text class="s-text" x="210" y="106" text-anchor="middle" font-size="62" font-weight="900" fill="#ffffff">B</text>
+            </g>
+            <g transform="rotate(-5 332 94)">
+              <rect class="s-fill" x="286" y="44" width="92" height="92" rx="18" fill="#10b981" stroke="#065f46" stroke-width="5"/>
+              <text class="s-text" x="332" y="112" text-anchor="middle" font-size="62" font-weight="900" fill="#ffffff">C</text>
+            </g>
+            <!-- Bottom Row: a b c -->
+            <g transform="rotate(5 88 222)">
+              <rect class="s-fill" x="42" y="174" width="92" height="92" rx="18" fill="#3b82f6" stroke="#1e3a8a" stroke-width="5"/>
+              <text class="s-text" x="88" y="238" text-anchor="middle" font-size="62" font-weight="900" fill="#ffffff">a</text>
+            </g>
+            <g transform="rotate(-4 210 226)">
+              <rect class="s-fill" x="164" y="178" width="92" height="92" rx="18" fill="#a855f7" stroke="#581c87" stroke-width="5"/>
+              <text class="s-text" x="210" y="244" text-anchor="middle" font-size="62" font-weight="900" fill="#ffffff">b</text>
+            </g>
+            <g transform="rotate(6 332 222)">
+              <rect class="s-fill" x="286" y="174" width="92" height="92" rx="18" fill="#ec4899" stroke="#9d174d" stroke-width="5"/>
+              <text class="s-text" x="332" y="238" text-anchor="middle" font-size="62" font-weight="900" fill="#ffffff">c</text>
+            </g>
+          </svg>`
+      },
+
+      // 4. Math — Numbers 1-9, 0 and basic symbols
+      {
+        answer: 'Math',
+        subtitle: 'Numbers & Symbols',
+        svg: `
+          <svg viewBox="0 0 420 320" class="w-full h-full">
+            <!-- Row 1: 1 2 3 4 5 -->
+            <text class="s-fill" x="52" y="108" text-anchor="middle" font-size="76" font-weight="900" fill="#ef4444" stroke="#991b1b" stroke-width="2.5">1</text>
+            <text class="s-fill" x="130" y="98" text-anchor="middle" font-size="76" font-weight="900" fill="#f59e0b" stroke="#92400e" stroke-width="2.5">2</text>
+            <text class="s-fill" x="210" y="110" text-anchor="middle" font-size="76" font-weight="900" fill="#10b981" stroke="#065f46" stroke-width="2.5">3</text>
+            <text class="s-fill" x="290" y="98" text-anchor="middle" font-size="76" font-weight="900" fill="#3b82f6" stroke="#1e3a8a" stroke-width="2.5">4</text>
+            <text class="s-fill" x="366" y="110" text-anchor="middle" font-size="76" font-weight="900" fill="#a855f7" stroke="#581c87" stroke-width="2.5">5</text>
+            <!-- Row 2: 6 7 8 9 0 -->
+            <text class="s-fill" x="52" y="206" text-anchor="middle" font-size="76" font-weight="900" fill="#ec4899" stroke="#9d174d" stroke-width="2.5">6</text>
+            <text class="s-fill" x="130" y="196" text-anchor="middle" font-size="76" font-weight="900" fill="#06b6d4" stroke="#155e75" stroke-width="2.5">7</text>
+            <text class="s-fill" x="210" y="208" text-anchor="middle" font-size="76" font-weight="900" fill="#f97316" stroke="#9a3412" stroke-width="2.5">8</text>
+            <text class="s-fill" x="290" y="196" text-anchor="middle" font-size="76" font-weight="900" fill="#22c55e" stroke="#166534" stroke-width="2.5">9</text>
+            <text class="s-fill" x="366" y="208" text-anchor="middle" font-size="76" font-weight="900" fill="#6366f1" stroke="#3730a3" stroke-width="2.5">0</text>
+            <!-- Row 3: Math Symbols + − × ÷ = -->
+            <text class="s-fill" x="72" y="286" text-anchor="middle" font-size="56" font-weight="900" fill="#db2777">+</text>
+            <text class="s-fill" x="142" y="286" text-anchor="middle" font-size="56" font-weight="900" fill="#2563eb">−</text>
+            <text class="s-fill" x="210" y="286" text-anchor="middle" font-size="56" font-weight="900" fill="#059669">×</text>
+            <text class="s-fill" x="278" y="286" text-anchor="middle" font-size="56" font-weight="900" fill="#d97706">÷</text>
+            <text class="s-fill" x="348" y="286" text-anchor="middle" font-size="56" font-weight="900" fill="#7c3aed">=</text>
+          </svg>`
+      },
+
+      // 5. Music — Treble clef and musical notes on a staff
+      {
+        answer: 'Music',
+        subtitle: 'Musical Notes',
+        svg: `
+          <svg viewBox="0 0 420 320" class="w-full h-full">
+            <!-- 5-Line Music Staff -->
+            <line class="s-stroke" x1="24" y1="95" x2="396" y2="95" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/>
+            <line class="s-stroke" x1="24" y1="125" x2="396" y2="125" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/>
+            <line class="s-stroke" x1="24" y1="155" x2="396" y2="155" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/>
+            <line class="s-stroke" x1="24" y1="185" x2="396" y2="185" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/>
+            <line class="s-stroke" x1="24" y1="215" x2="396" y2="215" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/>
+            <!-- Treble Clef (Left) -->
+            <text class="s-fill" x="68" y="220" text-anchor="middle" font-family="serif" font-size="185" fill="#ec4899">𝄞</text>
+            <!-- Single Eighth Note -->
+            <rect class="s-fill" x="158" y="72" width="11" height="114" rx="5" fill="#3b82f6"/>
+            <path class="s-fill" d="M164 72 Q204 92 190 132 Q180 106 164 102 Z" fill="#3b82f6"/>
+            <ellipse class="s-fill" cx="148" cy="186" rx="22" ry="15" transform="rotate(-20 148 186)" fill="#3b82f6"/>
+            <!-- Beamed Eighth Notes -->
+            <rect class="s-fill" x="242" y="64" width="12" height="132" rx="5" fill="#a855f7"/>
+            <rect class="s-fill" x="322" y="48" width="12" height="132" rx="5" fill="#a855f7"/>
+            <polygon class="s-fill" points="242,64 334,44 334,68 242,88" fill="#a855f7"/>
+            <ellipse class="s-fill" cx="230" cy="198" rx="22" ry="16" transform="rotate(-20 230 198)" fill="#a855f7"/>
+            <ellipse class="s-fill" cx="310" cy="182" rx="22" ry="16" transform="rotate(-20 310 182)" fill="#a855f7"/>
+            <!-- Extra Floating Eighth Note -->
+            <rect class="s-fill" x="368" y="138" width="10" height="92" rx="5" fill="#f59e0b"/>
+            <path class="s-fill" d="M374 138 Q402 152 394 182 Q384 162 374 160 Z" fill="#f59e0b"/>
+            <ellipse class="s-fill" cx="360" cy="232" rx="18" ry="13" transform="rotate(-20 360 232)" fill="#f59e0b"/>
+          </svg>`
+      },
+
+      // 6. PE — Sports equipment: basketball, soccer ball, jump rope, running shoe
+      {
+        answer: 'PE',
+        subtitle: 'Sports',
+        svg: `
+          <svg viewBox="0 0 420 320" class="w-full h-full">
+            <!-- Basketball (Top Left) -->
+            <circle class="s-fill" cx="102" cy="102" r="62" fill="#f97316" stroke="#9a3412" stroke-width="5"/>
+            <line class="s-cutout-stroke" x1="40" y1="102" x2="164" y2="102" stroke="#9a3412" stroke-width="5"/>
+            <line class="s-cutout-stroke" x1="102" y1="40" x2="102" y2="164" stroke="#9a3412" stroke-width="5"/>
+            <path class="s-cutout-stroke" d="M60 58 Q98 102 60 146" fill="none" stroke="#9a3412" stroke-width="5"/>
+            <path class="s-cutout-stroke" d="M144 58 Q106 102 144 146" fill="none" stroke="#9a3412" stroke-width="5"/>
+            <!-- Soccer Ball (Bottom Left) -->
+            <circle class="s-fill" cx="114" cy="238" r="54" fill="#ffffff" stroke="#1e293b" stroke-width="6"/>
+            <polygon class="s-cutout" points="114,212 136,228 128,254 100,254 92,228" fill="#1e293b"/>
+            <line class="s-cutout-stroke" x1="114" y1="184" x2="114" y2="212" stroke="#1e293b" stroke-width="5"/>
+            <line class="s-cutout-stroke" x1="164" y1="222" x2="136" y2="228" stroke="#1e293b" stroke-width="5"/>
+            <line class="s-cutout-stroke" x1="64" y1="222" x2="92" y2="228" stroke="#1e293b" stroke-width="5"/>
+            <line class="s-cutout-stroke" x1="144" y1="280" x2="128" y2="254" stroke="#1e293b" stroke-width="5"/>
+            <line class="s-cutout-stroke" x1="84" y1="280" x2="100" y2="254" stroke="#1e293b" stroke-width="5"/>
+            <!-- Jump Rope (Top Right) -->
+            <path class="s-stroke" d="M222 104 C222 20 374 20 374 104 C374 156 266 156 266 110" fill="none" stroke="#10b981" stroke-width="9" stroke-linecap="round"/>
+            <rect class="s-fill" x="208" y="96" width="24" height="58" rx="8" fill="#ef4444" stroke="#991b1b" stroke-width="4"/>
+            <rect class="s-fill" x="254" y="96" width="24" height="58" rx="8" fill="#ef4444" stroke="#991b1b" stroke-width="4"/>
+            <!-- Running Shoe (Bottom Right) -->
+            <g transform="translate(208, 198)">
+              <path class="s-fill" d="M16 42 L58 14 L88 38 L156 50 Q180 56 178 76 L16 76 Z" fill="#3b82f6" stroke="#1e3a8a" stroke-width="5"/>
+              <rect class="s-cutout" x="14" y="68" width="166" height="16" rx="7" fill="#ffffff" stroke="#1e3a8a" stroke-width="4"/>
+              <line class="s-cutout-stroke" x1="72" y1="28" x2="86" y2="44" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>
+              <line class="s-cutout-stroke" x1="92" y1="36" x2="104" y2="50" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>
+              <line class="s-cutout-stroke" x1="112" y1="42" x2="122" y2="54" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>
+            </g>
+          </svg>`
+      },
+
+      // 7. Science — Bubbling Erlenmeyer flask, test tubes in a rack, beaker
+      {
+        answer: 'Science',
+        subtitle: 'Experiment',
+        svg: `
+          <svg viewBox="0 0 420 320" class="w-full h-full">
+            <!-- Bubbling Erlenmeyer Flask (Left) -->
+            <path class="s-fill" d="M84 84 L132 84 L132 140 L180 258 Q188 278 164 278 L52 278 Q28 278 36 258 L84 140 Z" fill="#38bdf8" stroke="#0369a1" stroke-width="5"/>
+            <rect class="s-fill" x="74" y="72" width="68" height="16" rx="7" fill="#0284c7"/>
+            <path class="s-cutout" d="M60 206 L156 206 L172 260 Q174 266 162 266 L54 266 Q42 266 44 260 Z" fill="#22c55e"/>
+            <circle class="s-fill" cx="92" cy="242" r="10" fill="#bbf7d0"/>
+            <circle class="s-fill" cx="128" cy="230" r="8" fill="#bbf7d0"/>
+            <!-- Rising Bubbles -->
+            <circle class="s-fill" cx="102" cy="54" r="10" fill="#34d399"/>
+            <circle class="s-fill" cx="122" cy="34" r="7" fill="#60a5fa"/>
+            <circle class="s-fill" cx="88" cy="28" r="6" fill="#f472b6"/>
+            <!-- Test Tubes in a Rack (Center) -->
+            <rect class="s-fill" x="194" y="256" width="114" height="22" rx="6" fill="#b45309" stroke="#78350f" stroke-width="4"/>
+            <rect class="s-fill" x="198" y="168" width="106" height="14" rx="5" fill="#d97706" stroke="#78350f" stroke-width="4"/>
+            <rect class="s-fill" x="202" y="168" width="10" height="90" fill="#92400e"/>
+            <rect class="s-fill" x="290" y="168" width="10" height="90" fill="#92400e"/>
+            <!-- Test Tube 1 -->
+            <rect class="s-fill" x="220" y="102" width="24" height="150" rx="12" fill="#e0f2fe" stroke="#0284c7" stroke-width="4"/>
+            <rect class="s-cutout" x="224" y="176" width="16" height="72" rx="8" fill="#ec4899"/>
+            <!-- Test Tube 2 -->
+            <rect class="s-fill" x="258" y="114" width="24" height="138" rx="12" fill="#e0f2fe" stroke="#0284c7" stroke-width="4"/>
+            <rect class="s-cutout" x="262" y="164" width="16" height="84" rx="8" fill="#f59e0b"/>
+            <!-- Graduated Beaker (Right) -->
+            <path class="s-fill" d="M322 150 L396 150 L390 268 Q390 278 378 278 L336 278 Q324 278 324 268 Z" fill="#bae6fd" stroke="#0369a1" stroke-width="5"/>
+            <rect class="s-cutout" x="330" y="206" width="56" height="64" rx="6" fill="#a855f7"/>
+            <line class="s-cutout-stroke" x1="330" y1="176" x2="352" y2="176" stroke="#0369a1" stroke-width="4"/>
+            <line class="s-cutout-stroke" x1="330" y1="194" x2="348" y2="194" stroke="#0369a1" stroke-width="4"/>
+          </svg>`
+      },
+
+      // 8. Social Studies — Detailed classroom world globe on a tilted stand
+      {
+        answer: 'Social Studies',
+        subtitle: 'Globe',
+        svg: `
+          <svg viewBox="0 0 420 320" class="w-full h-full">
+            <!-- Tilted Globe Meridian Arc & Stand -->
+            <g transform="rotate(18 210 138)">
+              <path class="s-stroke" d="M210 22 A116 116 0 0 1 210 254" fill="none" stroke="#b45309" stroke-width="14" stroke-linecap="round"/>
+              <line class="s-stroke" x1="210" y1="18" x2="210" y2="38" stroke="#78350f" stroke-width="10" stroke-linecap="round"/>
+              <line class="s-stroke" x1="210" y1="238" x2="210" y2="258" stroke="#78350f" stroke-width="10" stroke-linecap="round"/>
+            </g>
+            <!-- Stand Neck & Base -->
+            <rect class="s-fill" x="198" y="246" width="24" height="30" fill="#92400e"/>
+            <path class="s-fill" d="M126 292 Q210 264 294 292 Z" fill="#78350f" stroke="#451a03" stroke-width="4"/>
+            <!-- Globe Sphere -->
+            <circle class="s-fill" cx="210" cy="138" r="96" fill="#38bdf8" stroke="#0369a1" stroke-width="6"/>
+            <!-- Continents -->
+            <path class="s-cutout" d="M144 88 Q178 68 198 98 Q186 130 156 126 Q132 112 144 88 Z" fill="#22c55e"/>
+            <path class="s-cutout" d="M168 148 Q196 144 204 184 Q182 214 162 190 Z" fill="#22c55e"/>
+            <path class="s-cutout" d="M222 76 Q272 82 284 122 Q262 162 232 148 Q214 120 222 76 Z" fill="#22c55e"/>
+            <path class="s-cutout" d="M250 170 Q278 166 286 192 Q266 212 246 196 Z" fill="#22c55e"/>
+          </svg>`
+      },
+
+      // 9. Chinese — Traditional Chinese poem scroll 《靜夜思》 with bamboo & moon
+      {
+        answer: 'Chinese',
+        subtitle: 'Chinese Traditional Poem',
+        svg: `
+          <svg viewBox="0 0 420 320" class="w-full h-full">
+            <!-- Full Moon Accent -->
+            <circle class="s-fill" cx="62" cy="64" r="34" fill="#fde047" stroke="#ca8a04" stroke-width="4"/>
+            <!-- Bamboo Stalks & Leaves -->
+            <line class="s-stroke" x1="42" y1="120" x2="42" y2="296" stroke="#16a34a" stroke-width="9" stroke-linecap="round"/>
+            <line class="s-stroke" x1="66" y1="150" x2="66" y2="296" stroke="#15803d" stroke-width="7" stroke-linecap="round"/>
+            <ellipse class="s-fill" cx="24" cy="166" rx="18" ry="7" transform="rotate(-25 24 166)" fill="#22c55e"/>
+            <ellipse class="s-fill" cx="84" cy="186" rx="18" ry="7" transform="rotate(20 84 186)" fill="#22c55e"/>
+            <ellipse class="s-fill" cx="24" cy="230" rx="16" ry="6" transform="rotate(-18 24 230)" fill="#22c55e"/>
+            <!-- Traditional Poem Scroll -->
+            <rect class="s-fill" x="100" y="24" width="296" height="18" rx="8" fill="#92400e" stroke="#451a03" stroke-width="4"/>
+            <rect class="s-fill" x="114" y="42" width="268" height="234" fill="#fef3c7" stroke="#92400e" stroke-width="5"/>
+            <rect class="s-fill" x="100" y="276" width="296" height="18" rx="8" fill="#92400e" stroke="#451a03" stroke-width="4"/>
+            <!-- Vertical Poem Columns (Right-to-Left): 《靜夜思》 -->
+            <text class="s-text" x="350" y="76" text-anchor="middle" font-family="serif" font-size="22" font-weight="900" fill="#dc2626">靜</text>
+            <text class="s-text" x="350" y="106" text-anchor="middle" font-family="serif" font-size="22" font-weight="900" fill="#dc2626">夜</text>
+            <text class="s-text" x="350" y="136" text-anchor="middle" font-family="serif" font-size="22" font-weight="900" fill="#dc2626">思</text>
+            <!-- Column 1: 床前明月光 -->
+            <text class="s-text" x="302" y="84" text-anchor="middle" font-family="serif" font-size="28" font-weight="900" fill="#1e293b">床</text>
+            <text class="s-text" x="302" y="124" text-anchor="middle" font-family="serif" font-size="28" font-weight="900" fill="#1e293b">前</text>
+            <text class="s-text" x="302" y="164" text-anchor="middle" font-family="serif" font-size="28" font-weight="900" fill="#1e293b">明</text>
+            <text class="s-text" x="302" y="204" text-anchor="middle" font-family="serif" font-size="28" font-weight="900" fill="#1e293b">月</text>
+            <text class="s-text" x="302" y="244" text-anchor="middle" font-family="serif" font-size="28" font-weight="900" fill="#1e293b">光</text>
+            <!-- Column 2: 疑是地上霜 -->
+            <text class="s-text" x="252" y="84" text-anchor="middle" font-family="serif" font-size="28" font-weight="900" fill="#1e293b">疑</text>
+            <text class="s-text" x="252" y="124" text-anchor="middle" font-family="serif" font-size="28" font-weight="900" fill="#1e293b">是</text>
+            <text class="s-text" x="252" y="164" text-anchor="middle" font-family="serif" font-size="28" font-weight="900" fill="#1e293b">地</text>
+            <text class="s-text" x="252" y="204" text-anchor="middle" font-family="serif" font-size="28" font-weight="900" fill="#1e293b">上</text>
+            <text class="s-text" x="252" y="244" text-anchor="middle" font-family="serif" font-size="28" font-weight="900" fill="#1e293b">霜</text>
+            <!-- Column 3: 舉頭望明月 -->
+            <text class="s-text" x="202" y="84" text-anchor="middle" font-family="serif" font-size="28" font-weight="900" fill="#1e293b">舉</text>
+            <text class="s-text" x="202" y="124" text-anchor="middle" font-family="serif" font-size="28" font-weight="900" fill="#1e293b">頭</text>
+            <text class="s-text" x="202" y="164" text-anchor="middle" font-family="serif" font-size="28" font-weight="900" fill="#1e293b">望</text>
+            <text class="s-text" x="202" y="204" text-anchor="middle" font-family="serif" font-size="28" font-weight="900" fill="#1e293b">明</text>
+            <text class="s-text" x="202" y="244" text-anchor="middle" font-family="serif" font-size="28" font-weight="900" fill="#1e293b">月</text>
+            <!-- Column 4: 低頭思故鄉 -->
+            <text class="s-text" x="152" y="84" text-anchor="middle" font-family="serif" font-size="28" font-weight="900" fill="#1e293b">低</text>
+            <text class="s-text" x="152" y="124" text-anchor="middle" font-family="serif" font-size="28" font-weight="900" fill="#1e293b">頭</text>
+            <text class="s-text" x="152" y="164" text-anchor="middle" font-family="serif" font-size="28" font-weight="900" fill="#1e293b">思</text>
+            <text class="s-text" x="152" y="204" text-anchor="middle" font-family="serif" font-size="28" font-weight="900" fill="#1e293b">故</text>
+            <text class="s-text" x="152" y="244" text-anchor="middle" font-family="serif" font-size="28" font-weight="900" fill="#1e293b">鄉</text>
+          </svg>`
+      },
+
+      // 10. English — Greeting speech bubbles: "Hello!", "Hi!", "Good morning!", "How are you?"
+      {
+        answer: 'English',
+        subtitle: 'English Greetings',
+        svg: `
+          <svg viewBox="0 0 420 320" class="w-full h-full">
+            <!-- Speech Bubble 1: Hello! -->
+            <path class="s-fill" d="M26 42 Q26 24 46 24 L190 24 Q210 24 210 42 L210 92 Q210 110 190 110 L92 110 L62 132 L68 110 L46 110 Q26 110 26 92 Z" fill="#f472b6" stroke="#be185d" stroke-width="5"/>
+            <text class="s-text" x="118" y="80" text-anchor="middle" font-size="38" font-weight="900" fill="#ffffff">Hello!</text>
+            <!-- Speech Bubble 2: Hi! -->
+            <path class="s-fill" d="M244 36 Q244 18 264 18 L374 18 Q394 18 394 36 L394 84 Q394 102 374 102 L348 102 L360 124 L322 102 L264 102 Q244 102 244 84 Z" fill="#38bdf8" stroke="#0369a1" stroke-width="5"/>
+            <text class="s-text" x="319" y="74" text-anchor="middle" font-size="40" font-weight="900" fill="#ffffff">Hi!</text>
+            <!-- Speech Bubble 3: Good morning! -->
+            <path class="s-fill" d="M26 154 Q26 136 46 136 L262 136 Q282 136 282 154 L282 200 Q282 218 262 218 L108 218 L82 240 L86 218 L46 218 Q26 218 26 200 Z" fill="#fbbf24" stroke="#b45309" stroke-width="5"/>
+            <text class="s-text" x="154" y="188" text-anchor="middle" font-size="28" font-weight="900" fill="#78350f">Good morning!</text>
+            <!-- Speech Bubble 4: How are you? -->
+            <path class="s-fill" d="M148 228 Q148 212 168 212 L378 212 Q398 212 398 228 L398 274 Q398 292 378 292 L344 292 L356 312 L320 292 L168 292 Q148 292 148 274 Z" fill="#34d399" stroke="#065f46" stroke-width="5"/>
+            <text class="s-text" x="273" y="262" text-anchor="middle" font-size="27" font-weight="900" fill="#ffffff">How are you?</text>
+          </svg>`
+      },
+
+      // 11. Science — Plants: potted green plant, leaves, roots, sprout, magnifying glass
+      {
+        answer: 'Science',
+        subtitle: 'Plants',
+        svg: `
+          <svg viewBox="0 0 420 320" class="w-full h-full">
+            <!-- Potted Leafy Plant (Left) -->
+            <line class="s-stroke" x1="116" y1="196" x2="116" y2="76" stroke="#15803d" stroke-width="10" stroke-linecap="round"/>
+            <path class="s-fill" d="M116 154 C64 148 46 108 72 94 C96 82 116 122 116 154 Z" fill="#22c55e" stroke="#166534" stroke-width="4"/>
+            <path class="s-fill" d="M116 146 C168 140 188 100 162 86 C138 74 116 116 116 146 Z" fill="#22c55e" stroke="#166534" stroke-width="4"/>
+            <path class="s-fill" d="M116 98 C88 54 108 28 126 42 C142 54 134 82 116 98 Z" fill="#4ade80" stroke="#166534" stroke-width="4"/>
+            <!-- Terracotta Pot -->
+            <rect class="s-fill" x="58" y="186" width="116" height="24" rx="6" fill="#ea580c" stroke="#9a3412" stroke-width="5"/>
+            <polygon class="s-fill" points="68,210 164,210 150,286 82,286" fill="#f97316" stroke="#9a3412" stroke-width="5"/>
+            <!-- Sprouting Seedling with Roots (Right) -->
+            <path class="s-fill" d="M226 226 Q284 210 342 226 L342 238 L226 238 Z" fill="#92400e"/>
+            <line class="s-stroke" x1="284" y1="226" x2="284" y2="152" stroke="#16a34a" stroke-width="8" stroke-linecap="round"/>
+            <path class="s-fill" d="M284 168 C248 156 238 128 262 122 C280 118 284 146 284 168 Z" fill="#4ade80" stroke="#166534" stroke-width="4"/>
+            <path class="s-fill" d="M284 168 C320 156 330 128 306 122 C288 118 284 146 284 168 Z" fill="#4ade80" stroke="#166534" stroke-width="4"/>
+            <!-- Roots below soil -->
+            <path class="s-stroke" d="M284 236 Q272 262 252 284" fill="none" stroke="#92400e" stroke-width="6" stroke-linecap="round"/>
+            <path class="s-stroke" d="M284 236 Q286 266 284 292" fill="none" stroke="#92400e" stroke-width="6" stroke-linecap="round"/>
+            <path class="s-stroke" d="M284 236 Q302 260 320 284" fill="none" stroke="#92400e" stroke-width="6" stroke-linecap="round"/>
+            <!-- Magnifying Glass (Top Right) -->
+            <g transform="rotate(-25 344 74)">
+              <circle class="s-fill" cx="330" cy="64" r="34" fill="#bae6fd" stroke="#0284c7" stroke-width="7"/>
+              <circle class="s-cutout" cx="322" cy="56" r="14" fill="#e0f2fe"/>
+              <rect class="s-fill" x="323" y="98" width="14" height="46" rx="6" fill="#475569" stroke="#1e293b" stroke-width="3"/>
+            </g>
+          </svg>`
+      },
+
+      // 12. Social Studies — World map showing continents, oceans, and compass rose
+      {
+        answer: 'Social Studies',
+        subtitle: 'World Map',
+        svg: `
+          <svg viewBox="0 0 420 320" class="w-full h-full">
+            <!-- Unfolded Flat World Map (3-Panel Paper) -->
+            <polygon class="s-fill" points="26,64 148,46 148,256 26,274" fill="#bae6fd" stroke="#0369a1" stroke-width="5"/>
+            <polygon class="s-fill" points="148,46 272,64 272,274 148,256" fill="#e0f2fe" stroke="#0369a1" stroke-width="5"/>
+            <polygon class="s-fill" points="272,64 394,46 394,256 272,274" fill="#bae6fd" stroke="#0369a1" stroke-width="5"/>
+            <!-- Continents -->
+            <path class="s-cutout" d="M46 96 Q88 78 116 112 Q100 144 74 146 Q46 130 46 96 Z" fill="#22c55e"/>
+            <path class="s-cutout" d="M84 162 Q116 164 122 204 Q98 242 82 216 Z" fill="#22c55e"/>
+            <path class="s-cutout" d="M170 84 Q212 76 232 106 Q204 126 172 114 Z" fill="#4ade80"/>
+            <path class="s-cutout" d="M174 134 Q224 132 234 176 Q210 228 184 202 Q168 172 174 134 Z" fill="#22c55e"/>
+            <path class="s-cutout" d="M242 94 Q324 78 366 118 Q350 162 292 158 Q250 142 242 94 Z" fill="#16a34a"/>
+            <path class="s-cutout" d="M312 186 Q356 180 368 214 Q346 238 312 224 Z" fill="#22c55e"/>
+            <!-- Compass Rose -->
+            <g transform="translate(342, 250)">
+              <circle class="s-fill" cx="0" cy="0" r="36" fill="#fef3c7" stroke="#b45309" stroke-width="5"/>
+              <polygon class="s-cutout" points="0,-28 8,-8 28,0 8,8 0,28 -8,8 -28,0 -8,-8" fill="#ef4444"/>
+              <text class="s-text" x="0" y="-39" text-anchor="middle" font-size="16" font-weight="900" fill="#92400e">N</text>
+            </g>
+          </svg>`
+      },
+
+      // 13. Music — Musical instruments: guitar, piano keys, drum, recorder
+      {
+        answer: 'Music',
+        subtitle: 'Musical Instruments',
+        svg: `
+          <svg viewBox="0 0 420 320" class="w-full h-full">
+            <!-- Acoustic Guitar (Left) -->
+            <g transform="rotate(-18 102 162)">
+              <rect class="s-fill" x="92" y="20" width="20" height="122" rx="5" fill="#92400e" stroke="#451a03" stroke-width="4"/>
+              <rect class="s-fill" x="86" y="14" width="32" height="24" rx="5" fill="#78350f"/>
+              <circle class="s-fill" cx="102" cy="170" r="36" fill="#f59e0b" stroke="#92400e" stroke-width="5"/>
+              <circle class="s-fill" cx="102" cy="224" r="48" fill="#f59e0b" stroke="#92400e" stroke-width="5"/>
+              <circle class="s-cutout" cx="102" cy="186" r="16" fill="#451a03"/>
+              <rect class="s-cutout" x="84" y="226" width="36" height="10" rx="3" fill="#451a03"/>
+            </g>
+            <!-- Recorder / Flute (Top Right) -->
+            <g transform="translate(188, 42) rotate(-8)">
+              <rect class="s-fill" x="0" y="14" width="196" height="24" rx="10" fill="#fde68a" stroke="#92400e" stroke-width="4"/>
+              <circle class="s-cutout" cx="56" cy="26" r="5" fill="#78350f"/>
+              <circle class="s-cutout" cx="80" cy="26" r="5" fill="#78350f"/>
+              <circle class="s-cutout" cx="104" cy="26" r="5" fill="#78350f"/>
+              <circle class="s-cutout" cx="128" cy="26" r="5" fill="#78350f"/>
+              <circle class="s-cutout" cx="152" cy="26" r="5" fill="#78350f"/>
+            </g>
+            <!-- Drum with Drumsticks (Middle Right) -->
+            <g transform="translate(292, 124)">
+              <line class="s-stroke" x1="-18" y1="-22" x2="36" y2="12" stroke="#b45309" stroke-width="7" stroke-linecap="round"/>
+              <line class="s-stroke" x1="94" y1="-22" x2="40" y2="12" stroke="#b45309" stroke-width="7" stroke-linecap="round"/>
+              <rect class="s-fill" x="0" y="14" width="76" height="58" rx="8" fill="#ef4444" stroke="#991b1b" stroke-width="5"/>
+              <ellipse class="s-cutout" cx="38" cy="14" rx="38" ry="12" fill="#fef3c7" stroke="#991b1b" stroke-width="4"/>
+              <polyline class="s-cutout-stroke" points="6,26 22,64 38,26 54,64 70,26" fill="none" stroke="#fde047" stroke-width="4"/>
+            </g>
+            <!-- Piano Keys (Bottom Right) -->
+            <rect class="s-fill" x="184" y="218" width="208" height="78" rx="10" fill="#ffffff" stroke="#1e293b" stroke-width="6"/>
+            <line class="s-cutout-stroke" x1="214" y1="218" x2="214" y2="296" stroke="#1e293b" stroke-width="4"/>
+            <line class="s-cutout-stroke" x1="244" y1="218" x2="244" y2="296" stroke="#1e293b" stroke-width="4"/>
+            <line class="s-cutout-stroke" x1="274" y1="218" x2="274" y2="296" stroke="#1e293b" stroke-width="4"/>
+            <line class="s-cutout-stroke" x1="304" y1="218" x2="304" y2="296" stroke="#1e293b" stroke-width="4"/>
+            <line class="s-cutout-stroke" x1="334" y1="218" x2="334" y2="296" stroke="#1e293b" stroke-width="4"/>
+            <line class="s-cutout-stroke" x1="364" y1="218" x2="364" y2="296" stroke="#1e293b" stroke-width="4"/>
+            <rect class="s-cutout" x="204" y="218" width="18" height="44" rx="3" fill="#0f172a"/>
+            <rect class="s-cutout" x="234" y="218" width="18" height="44" rx="3" fill="#0f172a"/>
+            <rect class="s-cutout" x="294" y="218" width="18" height="44" rx="3" fill="#0f172a"/>
+            <rect class="s-cutout" x="324" y="218" width="18" height="44" rx="3" fill="#0f172a"/>
+            <rect class="s-cutout" x="354" y="218" width="18" height="44" rx="3" fill="#0f172a"/>
+          </svg>`
+      },
+
+      // 14. Art — Drawings: open sketchbook with house/sun/flower drawing, colored pencil & crayon
+      {
+        answer: 'Art',
+        subtitle: 'Drawings',
+        svg: `
+          <svg viewBox="0 0 420 320" class="w-full h-full">
+            <!-- Open Sketchbook -->
+            <rect class="s-fill" x="34" y="48" width="268" height="202" rx="14" fill="#ffffff" stroke="#ec4899" stroke-width="6"/>
+            <line class="s-cutout-stroke" x1="168" y1="48" x2="168" y2="250" stroke="#f472b6" stroke-width="6"/>
+            <!-- Left Page Drawing: Cute House + Sun -->
+            <circle class="s-cutout" cx="72" cy="88" r="18" fill="#facc15"/>
+            <polygon class="s-cutout" points="62,158 112,114 160,158" fill="#ef4444"/>
+            <rect class="s-cutout" x="72" y="158" width="78" height="62" rx="4" fill="#60a5fa"/>
+            <rect class="s-fill" x="98" y="182" width="24" height="38" rx="3" fill="#fef3c7"/>
+            <!-- Right Page Drawing: Cute Flower -->
+            <line class="s-cutout-stroke" x1="234" y1="154" x2="234" y2="226" stroke="#22c55e" stroke-width="8" stroke-linecap="round"/>
+            <circle class="s-cutout" cx="234" cy="110" r="16" fill="#f472b6"/>
+            <circle class="s-cutout" cx="256" cy="128" r="16" fill="#f472b6"/>
+            <circle class="s-cutout" cx="246" cy="152" r="16" fill="#f472b6"/>
+            <circle class="s-cutout" cx="222" cy="152" r="16" fill="#f472b6"/>
+            <circle class="s-cutout" cx="212" cy="128" r="16" fill="#f472b6"/>
+            <circle class="s-fill" cx="234" cy="132" r="14" fill="#facc15"/>
+            <!-- Colored Pencil -->
+            <g transform="rotate(14 344 150)">
+              <rect class="s-fill" x="332" y="56" width="22" height="154" rx="4" fill="#3b82f6" stroke="#1e3a8a" stroke-width="4"/>
+              <polygon class="s-fill" points="332,210 354,210 343,246" fill="#fde68a" stroke="#92400e" stroke-width="4"/>
+              <polygon class="s-fill" points="339,232 347,232 343,246" fill="#1e3a8a"/>
+              <rect class="s-cutout" x="332" y="42" width="22" height="16" rx="4" fill="#f472b6"/>
+            </g>
+            <!-- Crayon -->
+            <g transform="rotate(-10 378 180)">
+              <rect class="s-fill" x="366" y="102" width="24" height="136" rx="5" fill="#22c55e" stroke="#166534" stroke-width="4"/>
+              <polygon class="s-fill" points="368,102 388,102 378,70" fill="#16a34a" stroke="#166534" stroke-width="4"/>
+              <rect class="s-cutout" x="366" y="132" width="24" height="14" fill="#ffffff"/>
+              <rect class="s-cutout" x="366" y="196" width="24" height="14" fill="#ffffff"/>
+            </g>
+          </svg>`
+      },
+
+      // 15. Math — Calculator and math computations (25 + 17 = 42, 6 × 8 = 48)
+      {
+        answer: 'Math',
+        subtitle: 'Calculator & Computations',
+        svg: `
+          <svg viewBox="0 0 420 320" class="w-full h-full">
+            <!-- Pocket Calculator (Left) -->
+            <rect class="s-fill" x="30" y="34" width="154" height="252" rx="20" fill="#334155" stroke="#0f172a" stroke-width="6"/>
+            <!-- LCD Display -->
+            <rect class="s-cutout" x="48" y="54" width="118" height="48" rx="8" fill="#a7f3d0"/>
+            <text class="s-dark-text" x="156" y="90" text-anchor="end" font-size="30" font-weight="900" fill="#065f46">1234</text>
+            <!-- Calculator Keys -->
+            <rect class="s-cutout" x="48" y="118" width="32" height="28" rx="6" fill="#cbd5e1"/>
+            <rect class="s-cutout" x="91" y="118" width="32" height="28" rx="6" fill="#cbd5e1"/>
+            <rect class="s-cutout" x="134" y="118" width="32" height="28" rx="6" fill="#f59e0b"/>
+            <rect class="s-cutout" x="48" y="158" width="32" height="28" rx="6" fill="#cbd5e1"/>
+            <rect class="s-cutout" x="91" y="158" width="32" height="28" rx="6" fill="#cbd5e1"/>
+            <rect class="s-cutout" x="134" y="158" width="32" height="28" rx="6" fill="#f59e0b"/>
+            <rect class="s-cutout" x="48" y="198" width="32" height="28" rx="6" fill="#cbd5e1"/>
+            <rect class="s-cutout" x="91" y="198" width="32" height="28" rx="6" fill="#cbd5e1"/>
+            <rect class="s-cutout" x="134" y="198" width="32" height="28" rx="6" fill="#f59e0b"/>
+            <rect class="s-cutout" x="48" y="238" width="75" height="28" rx="6" fill="#cbd5e1"/>
+            <rect class="s-cutout" x="134" y="238" width="32" height="28" rx="6" fill="#22c55e"/>
+            <!-- Computations Cards (Right) -->
+            <rect class="s-fill" x="202" y="48" width="194" height="104" rx="18" fill="#fef3c7" stroke="#f59e0b" stroke-width="5"/>
+            <text class="s-text" x="299" y="114" text-anchor="middle" font-size="34" font-weight="900" fill="#b45309">25 + 17 = 42</text>
+            <rect class="s-fill" x="202" y="172" width="194" height="104" rx="18" fill="#dbeafe" stroke="#3b82f6" stroke-width="5"/>
+            <text class="s-text" x="299" y="238" text-anchor="middle" font-size="38" font-weight="900" fill="#1d4ed8">6 × 8 = 48</text>
+          </svg>`
+      }
+    ];
+
+    /* ===========================================================
+       2. WEB AUDIO SOUND EFFECTS (TICK / WHOOSH / BELL / FANFARE)
+       =========================================================== */
+    let audioCtx = null;
+    let isMuted = false;
+
+    function ensureAudio() {
+      try {
+        if (!audioCtx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) audioCtx = new AudioCtx();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+      } catch (err) {
+        // Ignore audio errors on restricted devices
+      }
+    }
+
+    function playTone(freq, duration, type = 'sine', volume = 0.14, delay = 0) {
+      if (isMuted) return;
+      ensureAudio();
+      if (!audioCtx) return;
+      try {
+        const now = audioCtx.currentTime + delay;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, now);
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.exponentialRampToValueAtTime(volume, now + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + duration + 0.02);
+      } catch (err) {
+        // Ignore playback errors
+      }
+    }
+
+    function sfxClick() { playTone(620, 0.07, 'triangle', 0.12); }
+
+    function sfxWhoosh() {
+      if (isMuted) return;
+      ensureAudio();
+      if (!audioCtx) return;
+      try {
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(240, now);
+        osc.frequency.exponentialRampToValueAtTime(680, now + 0.18);
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.exponentialRampToValueAtTime(0.12, now + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.24);
+      } catch (err) {}
+    }
+
+    function sfxTick(urgent) {
+      playTone(urgent ? 920 : 540, urgent ? 0.12 : 0.08, 'triangle', urgent ? 0.14 : 0.10);
+    }
+
+    function sfxBell() {
+      playTone(784, 0.16, 'sine', 0.18, 0);
+      playTone(1046.5, 0.35, 'sine', 0.20, 0.12);
+    }
+
+    function sfxScore(up) {
+      if (up) {
+        playTone(659.25, 0.09, 'sine', 0.16, 0);
+        playTone(987.77, 0.18, 'sine', 0.16, 0.08);
+      } else {
+        playTone(280, 0.12, 'sawtooth', 0.08, 0);
+      }
+    }
+
+    function sfxReveal() {
+      [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => playTone(f, 0.24, 'triangle', 0.16, i * 0.07));
+    }
+
+    function sfxVictory() {
+      const notes = [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5];
+      const times = [0, 0.11, 0.22, 0.34, 0.50, 0.62];
+      notes.forEach((f, i) => playTone(f, 0.26, 'triangle', 0.18, times[i]));
+    }
+
+    function toggleMute() {
+      isMuted = !isMuted;
+      document.querySelectorAll('.mute-icon').forEach(el => el.textContent = isMuted ? '🔇' : '🔊');
+      if (!isMuted) sfxClick();
+    }
+
+    /* ===========================================================
+       3. GAME STATE & NAVIGATION
+       =========================================================== */
+    let currentRoundIdx = 0; // Exact order 0..14
+    let scores = { 1: 0, 2: 0 };
+
+    // Binocular loop state
+    let binoAnimId = null;
+    let binoTimerId = null;
+    let binoTimeLeft = 7;
+    let binoPos = { x: 200, y: 200, vx: 720, vy: 560, lastTime: 0, wobbleT: 0 };
+
+    const screenCover = document.getElementById('screen-cover');
+    const screenBinocular = document.getElementById('screen-binocular');
+    const screenWhiteboard = document.getElementById('screen-whiteboard');
+    const modalReveal = document.getElementById('modal-reveal');
+    const modalWinner = document.getElementById('modal-winner');
+
+    // Sync editable team names to pad corner badges
+    document.getElementById('team1-name').addEventListener('input', (e) => {
+      document.getElementById('pad1-label').textContent = e.target.value.trim() || 'Team 1';
+    });
+    document.getElementById('team2-name').addEventListener('input', (e) => {
+      document.getElementById('pad2-label').textContent = e.target.value.trim() || 'Team 2';
+    });
+
+    function showScreen(name) {
+      screenCover.classList.add('hidden');
+      screenBinocular.classList.add('hidden');
+      screenBinocular.classList.remove('flex');
+      screenWhiteboard.classList.add('hidden');
+      screenWhiteboard.classList.remove('flex');
+
+      if (name === 'cover') {
+        screenCover.classList.remove('hidden');
+      } else if (name === 'binocular') {
+        screenBinocular.classList.remove('hidden');
+        screenBinocular.classList.add('flex');
+      } else if (name === 'whiteboard') {
+        screenWhiteboard.classList.remove('hidden');
+        screenWhiteboard.classList.add('flex');
+        requestAnimationFrame(() => {
+          resizeWhiteboardCanvas(0);
+          resizeWhiteboardCanvas(1);
+        });
+      }
+    }
+
+    function startGame() {
+      sfxWhoosh();
+      currentRoundIdx = 0;
+      scores = { 1: 0, 2: 0 };
+      updateScoreDisplay();
+      clearPad(0);
+      clearPad(1);
+      startBinocularPhase();
+    }
+
+    function playAgain() {
+      stopConfetti();
+      modalWinner.classList.add('hidden');
+      modalWinner.classList.remove('flex');
+      startGame();
+    }
+
+    function goHome() {
+      sfxClick();
+      stopBinocularPhase();
+      stopConfetti();
+      closeRevealModal();
+      modalWinner.classList.add('hidden');
+      modalWinner.classList.remove('flex');
+      showScreen('cover');
+    }
+
+    /* ===========================================================
+       4. 7-SECOND FAST-PACED BINOCULAR SHADOW GAME
+       =========================================================== */
+    const binoCanvas = document.getElementById('binocular-canvas');
+    const binoCtx = binoCanvas.getContext('2d');
+    const shadowHolder = document.getElementById('shadow-svg-holder');
+    const binoTimerBadge = document.getElementById('bino-timer-badge');
+
+    function startBinocularPhase() {
+      stopBinocularPhase();
+      const item = ITEMS[currentRoundIdx];
+      shadowHolder.innerHTML = item.svg;
+
+      document.getElementById('bino-round-label').textContent = `Round ${currentRoundIdx + 1} / ${ITEMS.length}`;
+      document.getElementById('wb-round-label').textContent = `Round ${currentRoundIdx + 1} / ${ITEMS.length}`;
+
+      const isLast = currentRoundIdx === ITEMS.length - 1;
+      document.getElementById('next-round-label').textContent = isLast ? 'Finish 🏆' : 'Next Round ➔';
+      document.getElementById('modal-next-label').textContent = isLast ? 'See Winner 🏆' : 'Next Round ➔';
+
+      showScreen('binocular');
+      resizeBinocularCanvas();
+
+      // Fast-paced velocity scaled to viewport
+      const w = binoCanvas.width;
+      const h = binoCanvas.height;
+      const scale = Math.max(1, Math.min(w, h) / 680);
+      const angle = (Math.random() * 0.45 + 0.22) * Math.PI + (Math.random() < 0.5 ? 0 : Math.PI);
+      const speed = 740 * scale;
+      binoPos = {
+        x: w * 0.5,
+        y: h * 0.5,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        lastTime: performance.now(),
+        wobbleT: 0
+      };
+
+      // 7-second countdown
+      binoTimeLeft = 7;
+      updateBinoTimerUI();
+      sfxTick(false);
+
+      binoTimerId = setInterval(() => {
+        binoTimeLeft--;
+        if (binoTimeLeft > 0) {
+          updateBinoTimerUI();
+          sfxTick(binoTimeLeft <= 3);
+        } else {
+          stopBinocularPhase();
+          sfxBell();
+          showScreen('whiteboard');
+        }
+      }, 1000);
+
+      binoAnimId = requestAnimationFrame(renderBinoculars);
+    }
+
+    function updateBinoTimerUI() {
+      binoTimerBadge.textContent = binoTimeLeft;
+      if (binoTimeLeft <= 3) {
+        binoTimerBadge.classList.remove('bg-amber-300', 'text-slate-900');
+        binoTimerBadge.classList.add('bg-rose-500', 'text-white', 'animate-urgent');
+      } else {
+        binoTimerBadge.classList.add('bg-amber-300', 'text-slate-900');
+        binoTimerBadge.classList.remove('bg-rose-500', 'text-white', 'animate-urgent');
+      }
+    }
+
+    function stopBinocularPhase() {
+      if (binoAnimId) {
+        cancelAnimationFrame(binoAnimId);
+        binoAnimId = null;
+      }
+      if (binoTimerId) {
+        clearInterval(binoTimerId);
+        binoTimerId = null;
+      }
+    }
+
+    function skipToWhiteboard() {
+      sfxClick();
+      stopBinocularPhase();
+      showScreen('whiteboard');
+    }
+
+    function replayBinoculars() {
+      sfxWhoosh();
+      startBinocularPhase();
+    }
+
+    function resizeBinocularCanvas() {
+      if (screenBinocular.classList.contains('hidden')) return;
+      binoCanvas.width = window.innerWidth;
+      binoCanvas.height = window.innerHeight;
+    }
+
+    function renderBinoculars(now) {
+      const dt = Math.min(0.05, (now - binoPos.lastTime) / 1000);
+      binoPos.lastTime = now;
+      binoPos.wobbleT += dt * 5.2;
+
+      const w = binoCanvas.width;
+      const h = binoCanvas.height;
+
+      const lensRadius = Math.max(66, Math.min(w, h) * 0.155);
+      const lensOffset = lensRadius * 0.72;
+
+      // Sweep rapidly across the illuminated card area
+      const minX = Math.max(lensRadius + lensOffset, w * 0.15);
+      const maxX = Math.min(w - lensRadius - lensOffset, w * 0.85);
+      const minY = Math.max(lensRadius + 64, h * 0.16);
+      const maxY = Math.min(h - lensRadius - 36, h * 0.84);
+
+      binoPos.x += (binoPos.vx + Math.sin(binoPos.wobbleT) * 165) * dt;
+      binoPos.y += (binoPos.vy + Math.cos(binoPos.wobbleT * 1.35) * 165) * dt;
+
+      if (binoPos.x < minX) {
+        binoPos.x = minX;
+        binoPos.vx = Math.abs(binoPos.vx) * (0.95 + Math.random() * 0.12);
+      } else if (binoPos.x > maxX) {
+        binoPos.x = maxX;
+        binoPos.vx = -Math.abs(binoPos.vx) * (0.95 + Math.random() * 0.12);
+      }
+
+      if (binoPos.y < minY) {
+        binoPos.y = minY;
+        binoPos.vy = Math.abs(binoPos.vy) * (0.95 + Math.random() * 0.12);
+      } else if (binoPos.y > maxY) {
+        binoPos.y = maxY;
+        binoPos.vy = -Math.abs(binoPos.vy) * (0.95 + Math.random() * 0.12);
+      }
+
+      // Maintain brisk speed
+      const maxSpd = Math.max(820, Math.min(w, h) * 1.32);
+      const minSpd = Math.max(580, Math.min(w, h) * 0.90);
+      const curSpd = Math.hypot(binoPos.vx, binoPos.vy);
+      if (curSpd > maxSpd) {
+        binoPos.vx = (binoPos.vx / curSpd) * maxSpd;
+        binoPos.vy = (binoPos.vy / curSpd) * maxSpd;
+      } else if (curSpd < minSpd) {
+        binoPos.vx = (binoPos.vx / curSpd) * minSpd;
+        binoPos.vy = (binoPos.vy / curSpd) * minSpd;
+      }
+
+      const lx = binoPos.x - lensOffset;
+      const rx = binoPos.x + lensOffset;
+      const cy = binoPos.y;
+
+      // 1. Dark blackout overlay
+      binoCtx.globalCompositeOperation = 'source-over';
+      binoCtx.fillStyle = '#0f172a';
+      binoCtx.fillRect(0, 0, w, h);
+
+      // 2. Cut out two overlapping circular binocular lenses
+      binoCtx.globalCompositeOperation = 'destination-out';
+      binoCtx.beginPath();
+      binoCtx.arc(lx, cy, lensRadius, 0, Math.PI * 2);
+      binoCtx.arc(rx, cy, lensRadius, 0, Math.PI * 2);
+      binoCtx.fill();
+
+      // 3. Subtle lens vignette, rim & glass glint
+      binoCtx.globalCompositeOperation = 'source-over';
+      [lx, rx].forEach(cx => {
+        const grad = binoCtx.createRadialGradient(cx, cy, lensRadius * 0.65, cx, cy, lensRadius);
+        grad.addColorStop(0, 'rgba(15, 23, 42, 0)');
+        grad.addColorStop(1, 'rgba(15, 23, 42, 0.55)');
+        binoCtx.fillStyle = grad;
+        binoCtx.beginPath();
+        binoCtx.arc(cx, cy, lensRadius, 0, Math.PI * 2);
+        binoCtx.fill();
+
+        // Outer lens ring
+        binoCtx.strokeStyle = 'rgba(244, 114, 182, 0.6)';
+        binoCtx.lineWidth = 5;
+        binoCtx.beginPath();
+        binoCtx.arc(cx, cy, lensRadius - 2, 0, Math.PI * 2);
+        binoCtx.stroke();
+
+        // Subtle curved glass highlight
+        binoCtx.strokeStyle = 'rgba(255, 255, 255, 0.32)';
+        binoCtx.lineWidth = 4;
+        binoCtx.lineCap = 'round';
+        binoCtx.beginPath();
+        binoCtx.arc(cx, cy, lensRadius * 0.78, Math.PI * 1.15, Math.PI * 1.42);
+        binoCtx.stroke();
+      });
+
+      binoAnimId = requestAnimationFrame(renderBinoculars);
+    }
+
+    /* ===========================================================
+       5. SCOREBOARD, REVEAL ANSWER & ROUND PROGRESSION
+       =========================================================== */
+    function adjustScore(team, delta) {
+      scores[team] = Math.max(0, scores[team] + delta);
+      updateScoreDisplay();
+      sfxScore(delta > 0);
+    }
+
+    function updateScoreDisplay() {
+      document.getElementById('score-1').textContent = scores[1];
+      document.getElementById('score-2').textContent = scores[2];
+    }
+
+    function revealAnswer() {
+      sfxReveal();
+      const item = ITEMS[currentRoundIdx];
+      document.getElementById('reveal-svg-holder').innerHTML = item.svg;
+      document.getElementById('reveal-word').textContent = item.answer;
+      document.getElementById('reveal-subtitle').textContent = item.subtitle;
+
+      const t1 = document.getElementById('team1-name').value.trim() || 'Team 1';
+      const t2 = document.getElementById('team2-name').value.trim() || 'Team 2';
+      document.getElementById('award-t1-name').textContent = t1;
+      document.getElementById('award-t2-name').textContent = t2;
+
+      modalReveal.classList.remove('hidden');
+      modalReveal.classList.add('flex');
+    }
+
+    function closeRevealModal() {
+      modalReveal.classList.add('hidden');
+      modalReveal.classList.remove('flex');
+    }
+
+    function awardPoints(target, btnEl) {
+      if (target === 't1') {
+        scores[1]++;
+      } else if (target === 't2') {
+        scores[2]++;
+      } else if (target === 'both') {
+        scores[1]++;
+        scores[2]++;
+      }
+      updateScoreDisplay();
+      sfxScore(true);
+
+      // Brief visual feedback pulse on clicked button
+      if (btnEl) {
+        btnEl.style.transform = 'scale(1.12)';
+        setTimeout(() => { btnEl.style.transform = ''; }, 180);
+      }
+    }
+
+    function nextRound() {
+      sfxWhoosh();
+      clearPad(0);
+      clearPad(1);
+      if (currentRoundIdx < ITEMS.length - 1) {
+        currentRoundIdx++;
+        startBinocularPhase();
+      } else {
+        showWinnerModal();
+      }
+    }
+
+    function showWinnerModal() {
+      const t1Name = document.getElementById('team1-name').value.trim() || 'Team 1';
+      const t2Name = document.getElementById('team2-name').value.trim() || 'Team 2';
+
+      document.getElementById('final-t1-name').textContent = t1Name;
+      document.getElementById('final-t2-name').textContent = t2Name;
+      document.getElementById('final-t1-score').textContent = scores[1];
+      document.getElementById('final-t2-score').textContent = scores[2];
+
+      const banner = document.getElementById('winner-banner');
+      if (scores[1] > scores[2]) {
+        banner.textContent = `🎉 ${t1Name} Wins! 🎉`;
+      } else if (scores[2] > scores[1]) {
+        banner.textContent = `🎉 ${t2Name} Wins! 🎉`;
+      } else {
+        banner.textContent = `🤝 It's a Tie! Great Teamwork! 🤝`;
+      }
+
+      modalWinner.classList.remove('hidden');
+      modalWinner.classList.add('flex');
+      sfxVictory();
+      startConfetti();
+    }
+
+    /* ===========================================================
+       6. MULTI-TOUCH SPLIT-SCREEN NOTEBOOK DRAWING SYSTEM
+       Supports simultaneous multi-touch / stylus / mouse on both pads
+       =========================================================== */
+    const PEN_SIZES = [3.5, 7, 13];
+    const ERASER_SIZES = [18, 28, 44];
+
+    const pads = [0, 1].map((idx) => {
+      const canvas = document.getElementById(`canvas-${idx}`);
+      const ctx = canvas.getContext('2d');
+      return {
+        idx,
+        canvas,
+        ctx,
+        mode: 'pen',          // 'pen' | 'eraser'
+        color: '#1f2937',
+        sizeIdx: 1,           // 0 = S, 1 = M, 2 = L
+        activePointers: new Map() // pointerId -> { x, y }
+      };
+    });
+
+    function getCanvasPoint(canvas, e) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+    }
+
+    function resizeWhiteboardCanvas(padIdx) {
+      const pad = pads[padIdx];
+      const canvas = pad.canvas;
+      const parent = canvas.parentElement;
+      if (!parent) return;
+
+      const rect = parent.getBoundingClientRect();
+      const width = Math.max(1, Math.floor(rect.width));
+      const height = Math.max(1, Math.floor(rect.height));
+
+      if (canvas.width === width && canvas.height === height) return;
+
+      // Snapshot existing ink before resizing so drawings are preserved
+      let snapshot = null;
+      if (canvas.width > 0 && canvas.height > 0) {
+        snapshot = document.createElement('canvas');
+        snapshot.width = canvas.width;
+        snapshot.height = canvas.height;
+        snapshot.getContext('2d').drawImage(canvas, 0, 0);
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+
+      if (snapshot) {
+        pad.ctx.drawImage(snapshot, 0, 0);
+      }
+    }
+
+    function drawSegment(pad, from, to) {
+      const ctx = pad.ctx;
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      if (pad.mode === 'eraser') {
+        // Erase transparent so CSS notebook lines remain untouched!
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.lineWidth = ERASER_SIZES[pad.sizeIdx];
+        ctx.strokeStyle = 'rgba(0,0,0,1)';
+      } else {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.lineWidth = PEN_SIZES[pad.sizeIdx];
+        ctx.strokeStyle = pad.color;
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawDot(pad, pt) {
+      const ctx = pad.ctx;
+      ctx.save();
+      if (pad.mode === 'eraser') {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.fillStyle = 'rgba(0,0,0,1)';
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, ERASER_SIZES[pad.sizeIdx] / 2, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = pad.color;
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, PEN_SIZES[pad.sizeIdx] / 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    // Bind Pointer Events to each canvas for true multi-touch split-screen drawing
+    pads.forEach((pad) => {
+      const canvas = pad.canvas;
+
+      canvas.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+        const pt = getCanvasPoint(canvas, e);
+        pad.activePointers.set(e.pointerId, pt);
+        drawDot(pad, pt);
+      });
+
+      canvas.addEventListener('pointermove', (e) => {
+        if (!pad.activePointers.has(e.pointerId)) return;
+        e.preventDefault();
+        const prev = pad.activePointers.get(e.pointerId);
+        const curr = getCanvasPoint(canvas, e);
+        drawSegment(pad, prev, curr);
+        pad.activePointers.set(e.pointerId, curr);
+      });
+
+      const endStroke = (e) => {
+        if (pad.activePointers.has(e.pointerId)) {
+          pad.activePointers.delete(e.pointerId);
+        }
+      };
+
+      canvas.addEventListener('pointerup', endStroke);
+      canvas.addEventListener('pointercancel', endStroke);
+    });
+
+    // Bottom Toolbar Actions
+    function selectPen(padIdx) {
+      sfxClick();
+      const pad = pads[padIdx];
+      pad.mode = 'pen';
+      pad.canvas.classList.remove('eraser-cursor');
+      document.getElementById(`pen-btn-${padIdx}`).classList.add('tool-active');
+      document.getElementById(`eraser-btn-${padIdx}`).classList.remove('tool-active');
+    }
+
+    function selectEraser(padIdx) {
+      sfxClick();
+      const pad = pads[padIdx];
+      pad.mode = 'eraser';
+      pad.canvas.classList.add('eraser-cursor');
+      document.getElementById(`eraser-btn-${padIdx}`).classList.add('tool-active');
+      document.getElementById(`pen-btn-${padIdx}`).classList.remove('tool-active');
+    }
+
+    function setColor(padIdx, hex, btnEl) {
+      sfxClick();
+      const pad = pads[padIdx];
+      pad.color = hex;
+      // Automatically switch back to pen when choosing a color
+      selectPen(padIdx);
+      document.querySelectorAll(`.swatch-${padIdx}`).forEach(el => el.classList.remove('swatch-active'));
+      if (btnEl) btnEl.classList.add('swatch-active');
+    }
+
+    function setSize(padIdx, sizeIdx, btnEl) {
+      sfxClick();
+      pads[padIdx].sizeIdx = sizeIdx;
+      document.querySelectorAll(`.size-${padIdx}`).forEach(el => el.classList.remove('size-active'));
+      if (btnEl) btnEl.classList.add('size-active');
+    }
+
+    function clearPad(padIdx) {
+      sfxClick();
+      const pad = pads[padIdx];
+      pad.ctx.clearRect(0, 0, pad.canvas.width, pad.canvas.height);
+    }
+
+    /* ===========================================================
+       7. CELEBRATORY CONFETTI ANIMATION FOR WINNER MODAL
+       =========================================================== */
+    const confettiCanvas = document.getElementById('confetti-canvas');
+    const confettiCtx = confettiCanvas.getContext('2d');
+    let confettiAnimId = null;
+    let confettiPieces = [];
+
+    function startConfetti() {
+      stopConfetti();
+      confettiCanvas.width = window.innerWidth;
+      confettiCanvas.height = window.innerHeight;
+      const colors = ['#ec4899', '#38bdf8', '#facc15', '#34d399', '#a855f7', '#fb7185', '#f97316'];
+      confettiPieces = Array.from({ length: 130 }, () => ({
+        x: Math.random() * confettiCanvas.width,
+        y: Math.random() * -confettiCanvas.height,
+        w: 8 + Math.random() * 8,
+        h: 6 + Math.random() * 10,
+        vx: (Math.random() - 0.5) * 3,
+        vy: 2.5 + Math.random() * 4.5,
+        rot: Math.random() * Math.PI * 2,
+        vrot: (Math.random() - 0.5) * 0.2,
+        color: colors[Math.floor(Math.random() * colors.length)]
+      }));
+
+      const animateConfetti = () => {
+        confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+        confettiPieces.forEach((p) => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.rot += p.vrot;
+          if (p.y > confettiCanvas.height + 20) {
+            p.y = -20;
+            p.x = Math.random() * confettiCanvas.width;
+          }
+          confettiCtx.save();
+          confettiCtx.translate(p.x, p.y);
+          confettiCtx.rotate(p.rot);
+          confettiCtx.fillStyle = p.color;
+          confettiCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          confettiCtx.restore();
+        });
+        confettiAnimId = requestAnimationFrame(animateConfetti);
+      };
+      confettiAnimId = requestAnimationFrame(animateConfetti);
+    }
+
+    function stopConfetti() {
+      if (confettiAnimId) {
+        cancelAnimationFrame(confettiAnimId);
+        confettiAnimId = null;
+      }
+      confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    }
+
+    /* ===========================================================
+       8. RESPONSIVE RESIZE HANDLER
+       =========================================================== */
+    window.addEventListener('resize', () => {
+      resizeBinocularCanvas();
+      if (!screenWhiteboard.classList.contains('hidden')) {
+        resizeWhiteboardCanvas(0);
+        resizeWhiteboardCanvas(1);
+      }
+      if (!modalWinner.classList.contains('hidden')) {
+        confettiCanvas.width = window.innerWidth;
+        confettiCanvas.height = window.innerHeight;
+      }
+    });
+  </script>
+</body>
+</html>
