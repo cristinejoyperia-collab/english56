@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Interactive Presentation Whiteboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* =========================================================
+       CLEAN CLASSROOM PRESENTATION WHITEBOARD THEME
+       ========================================================= */
+    :root {
+      --font-comic: "Comic Sans MS", "Comic Sans", "Chalkboard SE", "Marker Felt", cursive, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      font-family: var(--font-comic);
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #f1f5f9;
+    }
+
+    /* Drawing Canvas */
+    .draw-canvas {
+      touch-action: none;
+      cursor: crosshair;
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .draw-canvas.eraser-cursor {
+      cursor: cell;
+    }
+
+    /* Draggable Subject Card */
+    .subject-card {
+      touch-action: none;
+      cursor: grab;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+    }
+    .subject-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+    }
+    .subject-card.is-dragging {
+      cursor: grabbing;
+      transition: none !important;
+      box-shadow: 0 20px 38px rgba(15, 23, 42, 0.24) !important;
+      transform: scale(1.04);
+      z-index: 9999 !important;
+    }
+    .subject-card.on-board {
+      position: fixed;
+      width: 196px;
+      height: 176px;
+      border-width: 3px;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16);
+    }
+    @media (min-width: 1024px) {
+      .subject-card.on-board {
+        width: 230px;
+        height: 204px;
+      }
+    }
+
+    /* Side Dock Highlight when Returning a Card */
+    .dock-drop-active {
+      background-color: #e0f2fe !important;
+      border-color: #0284c7 !important;
+      box-shadow: inset 0 0 0 3px #38bdf8;
+    }
+
+    /* Toolbar Active States */
+    .tool-active {
+      background: linear-gradient(180deg, #fde047 0%, #f59e0b 100%) !important;
+      color: #1f2937 !important;
+      border-color: #b45309 !important;
+      box-shadow: 0 3px 0 #b45309;
+    }
+    .swatch-active {
+      outline: 3px solid #f59e0b;
+      outline-offset: 2px;
+      transform: scale(1.16);
+    }
+    .size-active {
+      background-color: #0284c7 !important;
+      color: #ffffff !important;
+      border-color: #0369a1 !important;
+    }
+
+    /* Subtle button press */
+    .btn-press {
+      transition: transform 0.08s ease, filter 0.12s ease;
+    }
+    .btn-press:active {
+      transform: translateY(2px);
+    }
+
+    /* Empty slot placeholder when card is dragged onto the board */
+    .dock-slot {
+      min-height: 76px;
+      border: 2px dashed #cbd5e1;
+      border-radius: 16px;
+      background-color: #f8fafc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+  </style>
+</head>
+<body class="w-screen h-screen flex flex-col p-2 sm:p-3 gap-2 text-slate-800">
+
+  <!-- =========================================================
+       MAIN PRESENTATION STAGE: SIDE DOCK + ONE WHOLE WHITEBOARD
+       ========================================================= -->
+  <div class="flex-1 min-h-0 flex flex-row gap-2.5 sm:gap-3">
+
+    <!-- LEFT SIDE DOCK: 8 DRAGGABLE SUBJECT PICTURES -->
+    <aside
+      id="side-dock"
+      class="w-36 sm:w-48 lg:w-56 shrink-0 bg-white rounded-3xl border-2 border-slate-200 shadow-lg p-2 sm:p-2.5 flex flex-col gap-2 transition-colors duration-150"
+    >
+      <!-- Dock Header -->
+      <div class="shrink-0 flex items-center justify-between px-1">
+        <span class="text-xs sm:text-sm font-bold text-slate-600 tracking-wide">
+          📚 Subjects
+        </span>
+        <button
+          onclick="returnAllCards()"
+          class="btn-press text-[11px] sm:text-xs font-bold px-2 py-1 rounded-lg bg-sky-100 hover:bg-sky-200 text-sky-800 border border-sky-300 cursor-pointer"
+          title="Return all pictures to the side"
+        >
+          ↩ Return All
+        </button>
+      </div>
+
+      <!-- 8 Picture Slots (2 Columns x 4 Rows on medium+, 1 Column scroll on tiny screens) -->
+      <div id="dock-grid" class="flex-1 min-h-0 grid grid-cols-1 sm:grid-cols-2 gap-2 overflow-y-auto pr-0.5 content-start">
+        <!-- Populated dynamically with 8 subject slots -->
+      </div>
+
+      <!-- Helper Hint -->
+      <div id="dock-hint" class="shrink-0 text-center text-[11px] text-slate-400 font-bold leading-tight px-1">
+        Drag to center to spell • Drag back here to return
+      </div>
+    </aside>
+
+    <!-- RIGHT MAIN AREA: ONE WHOLE 4-LINE HANDWRITING WHITEBOARD -->
+    <main
+      id="whiteboard-container"
+      class="flex-1 min-w-0 min-h-0 bg-white rounded-3xl border-4 border-sky-300 shadow-xl flex flex-col overflow-hidden relative"
+    >
+      <!-- Handwriting Surface + Guidelines + Canvas -->
+      <div id="board-surface" class="relative flex-1 min-h-0 bg-white overflow-hidden">
+
+        <!-- 4-Line Primary Handwriting Guidelines (SVG Layer Behind Canvas) -->
+        <svg id="guidelines-svg" class="absolute inset-0 w-full h-full pointer-events-none z-0" aria-hidden="true">
+          <!-- Rendered dynamically based on selected line mode (3 rows, 2 large rows, or blank) -->
+        </svg>
+
+        <!-- Transparent Multi-Touch / Mouse Drawing Canvas -->
+        <canvas id="main-canvas" class="draw-canvas relative z-10"></canvas>
+      </div>
+
+      <!-- BOTTOM PRESENTATION TOOLBAR -->
+      <footer class="shrink-0 bg-slate-50 border-t-2 border-slate-200 px-2.5 sm:px-4 py-2 flex flex-wrap items-center justify-between gap-2 z-20">
+
+        <!-- Left: Pen & Eraser -->
+        <div class="flex items-center gap-1.5">
+          <button id="btn-pen" onclick="selectPen()" class="btn-press tool-active px-3 py-1.5 rounded-xl bg-white border-2 border-slate-300 text-slate-800 font-bold text-xs sm:text-sm cursor-pointer">
+            ✏️ Pen
+          </button>
+          <button id="btn-eraser" onclick="selectEraser()" class="btn-press px-3 py-1.5 rounded-xl bg-white border-2 border-slate-300 text-slate-800 font-bold text-xs sm:text-sm cursor-pointer">
+            🧽 Eraser
+          </button>
+        </div>
+
+        <!-- Center-Left: 6 Color Swatches -->
+        <div class="flex items-center gap-1.5 sm:gap-2">
+          <button onclick="setColor('#1f2937', this)" class="swatch swatch-active w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-800 border-2 border-white shadow cursor-pointer" title="Black"></button>
+          <button onclick="setColor('#2563eb', this)" class="swatch w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-blue-600 border-2 border-white shadow cursor-pointer" title="Blue"></button>
+          <button onclick="setColor('#ef4444', this)" class="swatch w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-red-500 border-2 border-white shadow cursor-pointer" title="Red"></button>
+          <button onclick="setColor('#ec4899', this)" class="swatch w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-pink-500 border-2 border-white shadow cursor-pointer" title="Pink"></button>
+          <button onclick="setColor('#16a34a', this)" class="swatch w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-green-600 border-2 border-white shadow cursor-pointer" title="Green"></button>
+          <button onclick="setColor('#9333ea', this)" class="swatch w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-purple-600 border-2 border-white shadow cursor-pointer" title="Purple"></button>
+        </div>
+
+        <!-- Center-Right: Pen Sizes (S / M / L) -->
+        <div class="flex items-center gap-1">
+          <button onclick="setSize(0, this)" class="size-btn w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white border border-slate-300 text-slate-700 font-bold text-xs cursor-pointer" title="Small">S</button>
+          <button onclick="setSize(1, this)" class="size-btn size-active w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white border border-slate-300 text-slate-700 font-bold text-xs cursor-pointer" title="Medium">M</button>
+          <button onclick="setSize(2, this)" class="size-btn w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white border border-slate-300 text-slate-700 font-bold text-xs cursor-pointer" title="Large">L</button>
+        </div>
+
+        <!-- Right: Presentation Controls (Lines, Show/Hide Words, Undo, Clear) -->
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <button id="btn-lines" onclick="cycleLineMode()" class="btn-press px-2.5 py-1.5 rounded-xl bg-sky-100 hover:bg-sky-200 border border-sky-300 text-sky-900 font-bold text-xs sm:text-sm cursor-pointer" title="Change handwriting lines">
+            📏 Lines: 3 Rows
+          </button>
+          <button id="btn-labels" onclick="toggleGlobalLabels()" class="btn-press px-2.5 py-1.5 rounded-xl bg-amber-100 hover:bg-amber-200 border border-amber-300 text-amber-900 font-bold text-xs sm:text-sm cursor-pointer" title="Show or hide spelling words">
+            👁️ Words: Off
+          </button>
+          <button onclick="undoStroke()" class="btn-press px-2.5 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 border border-slate-300 text-slate-800 font-bold text-xs sm:text-sm cursor-pointer" title="Undo last stroke">
+            ↩ Undo
+          </button>
+          <button onclick="clearBoard()" class="btn-press px-2.5 py-1.5 rounded-xl bg-rose-100 hover:bg-rose-200 border-2 border-rose-300 text-rose-700 font-bold text-xs sm:text-sm cursor-pointer" title="Clear whiteboard ink">
+            🗑️ Clear
+          </button>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Layer for Floating Draggable Cards placed on the Whiteboard -->
+  <div id="floating-layer" class="fixed inset-0 pointer-events-none z-30"></div>
+
+  <script>
+    /* ===========================================================
+       1. THE 8 SCHOOL SUBJECTS WITH CRISP FULL-COLOR SVGS
+       =========================================================== */
+    const SUBJECTS = [
+      {
+        id: 'art',
+        label: 'Art',
+        accent: 'border-amber-300 bg-amber-50/40',
+        svg: `
+          <svg viewBox="0 0 420 320" class="w-full h-full">
+            <path d="M168 48 C82 48 28 106 34 178 C39 234 90 264 146 258 C176 255 188 232 180 212 C173 194 192 182 216 186 C264 194 298 164 294 120 C290 74 236 48 168 48 Z" fill="#f59e0b" stroke="#92400e" stroke-width="6"/>
+            <ellipse cx="92" cy="202" rx="20" ry="15" fill="#ffffff" stroke="#92400e" stroke-width="4"/>
+            <circle cx="98" cy="112" r="18" fill="#ef4444"/>
+            <circle cx="152" cy="86" r="18" fill="#3b82f6"/>
+            <circle cx="212" cy="92" r="18" fill="#22c55e"/>
+            <circle cx="252" cy="134" r="17" fill="#a855f7"/>
+            <circle cx="142" cy="148" r="14" fill="#ec4899"/>
+            <g transform="rotate(-34 252 168)">
+              <rect x="242" y="34" width="20" height="170" rx="9" fill="#b45309" stroke="#451a03" stroke-width="4"/>
+              <rect x="240" y="190" width="24" height="20" rx="3" fill="#cbd5e1" stroke="#475569" stroke-width="3"/>
+              <path d="M240 210 Q252 264 264 210 Z" fill="#ec4899" stroke="#451a03" stroke-width="4"/>
+            </g>
+            <g transform="rotate(14 338 228)">
+              <rect x="310" y="176" width="46" height="92" rx="8" fill="#ef4444" stroke="#991b1b" stroke-width="4"/>
+              <rect x="318" y="200" width="30" height="36" rx="4" fill="#ffffff"/>
+              <rect x="306" y="264" width="54" height="12" rx="4" fill="#b91c1c"/>
+              <rect x="323" y="160" width="20" height="16" rx="3" fill="#e2e8f0" stroke="#475569" stroke-width="3"/>
+            </g>
+          </svg>`
+      },
+      {
+        id: 'chinese',
+        label: 'Chinese',
+        accent: 'border-rose-300 bg-rose-50/40',
+        svg: `
+          <svg viewBox="0 0 420 320" class="w-full h-full">
+            <rect x="48" y="26" width="186" height="20" rx="9" fill="#92400e" stroke="#451a03" stroke-width="4"/>
+            <rect x="66" y="46" width="150" height="218" fill="#fef3c7" stroke="#92400e" stroke-width="5"/>
+            <rect x="48" y="262" width="186" height="20" rx="9" fill="#92400e" stroke="#451a03" stroke-width="4"/>
+            <text x="155" y="116" text-anchor="middle" font-family="serif" font-size="60" font-weight="900" fill="#111827">書</text>
+            <text x="155" y="186" text-anchor="middle" font-family="serif" font-size="60" font-weight="900" fill="#111827">法</text>
+            <text x="98" y="152" text-anchor="middle" font-family="serif" font-size="52" font-weight="900" fill="#111827">永</text>
+            <rect x="84" y="208" width="28" height="28" rx="4" fill="#dc2626"/>
+            <rect x="252" y="196" width="136" height="84" rx="18" fill="#334155" stroke="#0f172a" stroke-width="5"/>
+            <ellipse cx="320" cy="238" rx="46" ry="26" fill="#0f172a" stroke="#64748b" stroke-width="4"/>
+            <g transform="rotate(24 318 112)">
+              <rect x="308" y="20" width="20" height="145" rx="8" fill="#d97706" stroke="#78350f" stroke-width="4"/>
+              <path d="M305 164 Q318 228 331 164 Z" fill="#111827" stroke="#0f172a" stroke-width="4"/>
+            </g>
+          </svg>`
+      },
+      {
+        id: 'english',
+        label: 'English',
+        accent: 'border-sky-300 bg-sky-50/40',
+        svg: `
+          <svg viewBox="0 0 420 320" class="w-full h-full">
+            <g transform="rotate(-6 88 94)">
+              <rect x="42" y="44" width="92" height="92" rx="18" fill="#ef4444" stroke="#991b1b" stroke-width="5"/>
+              <text x="88" y="112" text-anchor="middle" font-size="62" font-weight="900" fill="#ffffff">A</text>
+            </g>
+            <g transform="rotate(4 210 88)">
+              <rect x="164" y="38" width="92" height="92" rx="18" fill="#f59e0b" stroke="#92400e" stroke-width="5"/>
+              <text x="210" y="106" text-anchor="middle" font-size="62" font-weight="900" fill="#ffffff">B</text>
+            </g>
+            <g transform="rotate(-5 332 94)">
+              <rect x="286" y="44" width="92" height="92" rx="18" fill="#10b981" stroke="#065f46" stroke-width="5"/>
+              <text x="332" y="112" text-anchor="middle" font-size="62" font-weight="900" fill="#ffffff">C</text>
+            </g>
+            <g transform="rotate(5 88 222)">
+              <rect x="42" y="174" width="92" height="92" rx="18" fill="#3b82f6" stroke="#1e3a8a" stroke-width="5"/>
+              <text x="88" y="238" text-anchor="middle" font-size="62" font-weight="900" fill="#ffffff">a</text>
+            </g>
+            <g transform="rotate(-4 210 226)">
+              <rect x="164" y="178" width="92" height="92" rx="18" fill="#a855f7" stroke="#581c87" stroke-width="5"/>
+              <text x="210" y="244" text-anchor="middle" font-size="62" font-weight="900" fill="#ffffff">b</text>
+            </g>
+            <g transform="rotate(6 332 222)">
+              <rect x="286" y="174" width="92" height="92" rx="18" fill="#ec4899" stroke="#9d174d" stroke-width="5"/>
+              <text x="332" y="238" text-anchor="middle" font-size="62" font-weight="900" fill="#ffffff">c</text>
+            </g>
+          </svg>`
+      },
+      {
+        id: 'math',
+        label: 'Math',
+        accent: 'border-indigo-300 bg-indigo-50/40',
+        svg: `
+          <svg viewBox="0 0 420 320" class="w-full h-full">
+            <text x="68" y="114" text-anchor="middle" font-size="84" font-weight="900" fill="#ef4444">1</text>
+            <text x="164" y="104" text-anchor="middle" font-size="84" font-weight="900" fill="#f59e0b">2</text>
+            <text x="260" y="116" text-anchor="middle" font-size="84" font-weight="900" fill="#10b981">3</text>
+            <text x="354" y="104" text-anchor="middle" font-size="84" font-weight="900" fill="#3b82f6">4</text>
+            <text x="72" y="244" text-anchor="middle" font-size="78" font-weight="900" fill="#db2777">+</text>
+            <text x="164" y="244" text-anchor="middle" font-size="78" font-weight="900" fill="#2563eb">−</text>
+            <text x="256" y="244" text-anchor="middle" font-size="78" font-weight="900" fill="#059669">×</text>
+            <text x="348" y="244" text-anchor="middle" font-size="78" font-weight="900" fill="#7c3aed">÷</text>
+          </svg>`
+      },
+      {
+        id: 'music',
+        label: 'Music',
+        accent: 'border-purple-300 bg-purple-50/40',
+        svg: `
+          <svg viewBox="0 0 420 320" class="w-full h-full">
+            <line x1="24" y1="95" x2="396" y2="95" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/>
+            <line x1="24" y1="125" x2="396" y2="125" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/>
+            <line x1="24" y1="155" x2="396" y2="155" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/>
+            <line x1="24" y1="185" x2="396" y2="185" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/>
+            <line x1="24" y1="215" x2="396" y2="215" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/>
+            <text x="68" y="220" text-anchor="middle" font-family="serif" font-size="185" fill="#ec4899">𝄞</text>
+            <rect x="158" y="72" width="11" height="114" rx="5" fill="#3b82f6"/>
+            <path d="M164 72 Q204 92 190 132 Q180 106 164 102 Z" fill="#3b82f6"/>
+            <ellipse cx="148" cy="186" rx="22" ry="15" transform="rotate(-20 148 186)" fill="#3b82f6"/>
+            <rect x="242" y="64" width="12" height="132" rx="5" fill="#a855f7"/>
+            <rect x="322" y="48" width="12" height="132" rx="5" fill="#a855f7"/>
+            <polygon points="242,64 334,44 334,68 242,88" fill="#a855f7"/>
+            <ellipse cx="230" cy="198" rx="22" ry="16" transform="rotate(-20 230 198)" fill="#a855f7"/>
+            <ellipse cx="310" cy="182" rx="22" ry="16" transform="rotate(-20 310 182)" fill="#a855f7"/>
+          </svg>`
+      },
+      {
+        id: 'pe',
+        label: 'PE',
+        accent: 'border-orange-300 bg-orange-50/40',
+        svg: `
+          <svg viewBox="0 0 420 320" class="w-full h-full">
+            <circle cx="106" cy="108" r="64" fill="#f97316" stroke="#9a3412" stroke-width="5"/>
+            <line x1="42" y1="108" x2="170" y2="108" stroke="#9a3412" stroke-width="5"/>
+            <line x1="106" y1="44" x2="106" y2="172" stroke="#9a3412" stroke-width="5"/>
+            <path d="M62 62 Q102 108 62 154" fill="none" stroke="#9a3412" stroke-width="5"/>
+            <path d="M150 62 Q110 108 150 154" fill="none" stroke="#9a3412" stroke-width="5"/>
+            <circle cx="118" cy="242" r="52" fill="#ffffff" stroke="#1e293b" stroke-width="6"/>
+            <polygon points="118,216 140,232 132,258 104,258 96,232" fill="#1e293b"/>
+            <line x1="118" y1="190" x2="118" y2="216" stroke="#1e293b" stroke-width="5"/>
+            <line x1="166" y1="226" x2="140" y2="232" stroke="#1e293b" stroke-width="5"/>
+            <line x1="70" y1="226" x2="96" y2="232" stroke="#1e293b" stroke-width="5"/>
+            <g transform="translate(208, 178)">
+              <path d="M16 42 L58 14 L88 38 L156 50 Q180 56 178 76 L16 76 Z" fill="#3b82f6" stroke="#1e3a8a" stroke-width="5"/>
+              <rect x="14" y="68" width="166" height="16" rx="7" fill="#ffffff" stroke="#1e3a8a" stroke-width="4"/>
+              <line x1="72" y1="28" x2="86" y2="44" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>
+              <line x1="92" y1="36" x2="104" y2="50" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>
+            </g>
+            <path d="M226 102 C226 24 374 24 374 102 C374 150 268 150 268 108" fill="none" stroke="#10b981" stroke-width="9" stroke-linecap="round"/>
+            <rect x="212" y="94" width="22" height="54" rx="8" fill="#ef4444" stroke="#991b1b" stroke-width="4"/>
+            <rect x="256" y="94" width="22" height="54" rx="8" fill="#ef4444" stroke="#991b1b" stroke-width="4"/>
+          </svg>`
+      },
+      {
+        id: 'science',
+        label: 'Science',
+        accent: 'border-emerald-300 bg-emerald-50/40',
+        svg: `
+          <svg viewBox="0 0 420 320" class="w-full h-full">
+            <path d="M94 84 L142 84 L142 140 L190 258 Q198 278 174 278 L62 278 Q38 278 46 258 L94 140 Z" fill="#38bdf8" stroke="#0369a1" stroke-width="5"/>
+            <rect x="84" y="72" width="68" height="16" rx="7" fill="#0284c7"/>
+            <path d="M70 206 L166 206 L182 260 Q184 266 172 266 L64 266 Q52 266 54 260 Z" fill="#22c55e"/>
+            <circle cx="102" cy="242" r="10" fill="#bbf7d0"/>
+            <circle cx="138" cy="230" r="8" fill="#bbf7d0"/>
+            <circle cx="112" cy="52" r="10" fill="#34d399"/>
+            <circle cx="132" cy="32" r="7" fill="#60a5fa"/>
+            <rect x="220" y="256" width="144" height="22" rx="6" fill="#b45309" stroke="#78350f" stroke-width="4"/>
+            <rect x="224" y="168" width="136" height="14" rx="5" fill="#d97706" stroke="#78350f" stroke-width="4"/>
+            <rect x="228" y="168" width="10" height="90" fill="#92400e"/>
+            <rect x="346" y="168" width="10" height="90" fill="#92400e"/>
+            <rect x="256" y="100" width="26" height="152" rx="13" fill="#e0f2fe" stroke="#0284c7" stroke-width="4"/>
+            <rect x="260" y="176" width="18" height="72" rx="9" fill="#ec4899"/>
+            <rect x="302" y="114" width="26" height="138" rx="13" fill="#e0f2fe" stroke="#0284c7" stroke-width="4"/>
+            <rect x="306" y="164" width="18" height="84" rx="9" fill="#f59e0b"/>
+          </svg>`
+      },
+      {
+        id: 'social-studies',
+        label: 'Social Studies',
+        accent: 'border-cyan-300 bg-cyan-50/40',
+        svg: `
+          <svg viewBox="0 0 420 320" class="w-full h-full">
+            <g transform="rotate(18 210 138)">
+              <path d="M210 22 A116 116 0 0 1 210 254" fill="none" stroke="#b45309" stroke-width="14" stroke-linecap="round"/>
+              <line x1="210" y1="18" x2="210" y2="38" stroke="#78350f" stroke-width="10" stroke-linecap="round"/>
+              <line x1="210" y1="238" x2="210" y2="258" stroke="#78350f" stroke-width="10" stroke-linecap="round"/>
+            </g>
+            <rect x="198" y="246" width="24" height="30" fill="#92400e"/>
+            <path d="M126 292 Q210 264 294 292 Z" fill="#78350f" stroke="#451a03" stroke-width="4"/>
+            <circle cx="210" cy="138" r="96" fill="#38bdf8" stroke="#0369a1" stroke-width="6"/>
+            <path d="M144 88 Q178 68 198 98 Q186 130 156 126 Q132 112 144 88 Z" fill="#22c55e"/>
+            <path d="M168 148 Q196 144 204 184 Q182 214 162 190 Z" fill="#22c55e"/>
+            <path d="M222 76 Q272 82 284 122 Q262 162 232 148 Q214 120 222 76 Z" fill="#22c55e"/>
+            <path d="M250 170 Q278 166 286 192 Q266 212 246 196 Z" fill="#22c55e"/>
+          </svg>`
+      }
+    ];
+
+    /* ===========================================================
+       2. DRAGGABLE SUBJECT CARDS (SIDE DOCK <-> WHITEBOARD)
+       =========================================================== */
+    const sideDock = document.getElementById('side-dock');
+    const dockGrid = document.getElementById('dock-grid');
+    const floatingLayer = document.getElementById('floating-layer');
+    const boardSurface = document.getElementById('board-surface');
+
+    let showGlobalLabels = false;
+    let topZIndex = 40;
+    const cardRegistry = new Map(); // id -> { subject, slotEl, cardEl, onBoard, individualReveal }
+
+    function buildDock() {
+      dockGrid.innerHTML = '';
+      SUBJECTS.forEach((subject) => {
+        // Home slot in the side dock
+        const slotEl = document.createElement('div');
+        slotEl.className = 'dock-slot aspect-square w-full';
+        slotEl.dataset.slotId = subject.id;
+
+        // Draggable Picture Card
+        const cardEl = document.createElement('div');
+        cardEl.className = `subject-card pointer-events-auto w-full h-full rounded-2xl border-2 ${subject.accent} bg-white shadow-sm p-1.5 flex flex-col items-center justify-center relative`;
+        cardEl.dataset.subjectId = subject.id;
+
+        cardEl.innerHTML = `
+          <!-- Quick Controls (Visible only when placed on the whiteboard) -->
+          <div class="card-controls hidden absolute -top-3 -right-3 flex items-center gap-1 z-20">
+            <button
+              type="button"
+              data-action="toggle-word"
+              class="w-8 h-8 rounded-full bg-amber-300 hover:bg-amber-400 border-2 border-white text-slate-900 font-bold text-sm shadow-md flex items-center justify-center cursor-pointer"
+              title="Show / Hide spelling"
+            >👁️</button>
+            <button
+              type="button"
+              data-action="return-card"
+              class="w-8 h-8 rounded-full bg-sky-500 hover:bg-sky-600 border-2 border-white text-white font-bold text-sm shadow-md flex items-center justify-center cursor-pointer"
+              title="Return to side"
+            >↩</button>
+          </div>
+
+          <!-- Picture SVG -->
+          <div class="w-full flex-1 min-h-0 flex items-center justify-center pointer-events-none p-0.5">
+            ${subject.svg}
+          </div>
+
+          <!-- Optional Spelling Word Label (Hidden by default for spelling quiz) -->
+          <div class="card-word hidden shrink-0 mt-1 px-2.5 py-0.5 rounded-full bg-slate-800 text-white text-xs sm:text-base font-bold tracking-wide pointer-events-none">
+            ${subject.label}
+          </div>
+        `;
+
+        slotEl.appendChild(cardEl);
+        dockGrid.appendChild(slotEl);
+
+        cardRegistry.set(subject.id, {
+          subject,
+          slotEl,
+          cardEl,
+          onBoard: false,
+          individualReveal: false
+        });
+
+        bindCardDrag(subject.id);
+      });
+    }
+
+    function updateCardWordVisibility(id) {
+      const entry = cardRegistry.get(id);
+      if (!entry) return;
+      const wordEl = entry.cardEl.querySelector('.card-word');
+      const shouldShow = showGlobalLabels || entry.individualReveal;
+      wordEl.classList.toggle('hidden', !shouldShow);
+    }
+
+    function toggleGlobalLabels() {
+      showGlobalLabels = !showGlobalLabels;
+      const btn = document.getElementById('btn-labels');
+      btn.textContent = showGlobalLabels ? '👁️ Words: On' : '👁️ Words: Off';
+      btn.classList.toggle('bg-amber-300', showGlobalLabels);
+      btn.classList.toggle('bg-amber-100', !showGlobalLabels);
+      cardRegistry.forEach((_, id) => updateCardWordVisibility(id));
+    }
+
+    function returnCardToDock(id) {
+      const entry = cardRegistry.get(id);
+      if (!entry) return;
+      const { cardEl, slotEl } = entry;
+
+      entry.onBoard = false;
+      entry.individualReveal = false;
+      cardEl.classList.remove('on-board', 'is-dragging');
+      cardEl.style.left = '';
+      cardEl.style.top = '';
+      cardEl.style.zIndex = '';
+      cardEl.querySelector('.card-controls').classList.add('hidden');
+
+      slotEl.appendChild(cardEl);
+      updateCardWordVisibility(id);
+    }
+
+    function returnAllCards() {
+      cardRegistry.forEach((_, id) => returnCardToDock(id));
+    }
+
+    function bindCardDrag(id) {
+      const entry = cardRegistry.get(id);
+      const cardEl = entry.cardEl;
+
+      // Handle quick action buttons inside the card without triggering drag
+      cardEl.addEventListener('pointerdown', (e) => {
+        const actionBtn = e.target.closest('button[data-action]');
+        if (actionBtn) {
+          e.stopPropagation();
+          e.preventDefault();
+          const action = actionBtn.dataset.action;
+          if (action === 'return-card') {
+            returnCardToDock(id);
+          } else if (action === 'toggle-word') {
+            entry.individualReveal = !entry.individualReveal;
+            updateCardWordVisibility(id);
+          }
+          return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Capture pointer for reliable smooth dragging on touch & mouse
+        try { cardEl.setPointerCapture(e.pointerId); } catch (err) {}
+
+        const startRect = cardEl.getBoundingClientRect();
+        const isDesktop = window.innerWidth >= 1024;
+        const targetW = isDesktop ? 230 : 196;
+        const targetH = isDesktop ? 204 : 176;
+
+        // If coming from the side dock, promote to floating presentation size centered under pointer
+        let offsetX, offsetY;
+        if (!entry.onBoard) {
+          entry.onBoard = true;
+          cardEl.classList.add('on-board');
+          cardEl.querySelector('.card-controls').classList.remove('hidden');
+          floatingLayer.appendChild(cardEl);
+
+          offsetX = targetW / 2;
+          offsetY = targetH / 2;
+          cardEl.style.left = `${e.clientX - offsetX}px`;
+          cardEl.style.top = `${e.clientY - offsetY}px`;
+        } else {
+          offsetX = e.clientX - startRect.left;
+          offsetY = e.clientY - startRect.top;
+        }
+
+        topZIndex++;
+        cardEl.style.zIndex = topZIndex;
+        cardEl.classList.add('is-dragging');
+
+        const onPointerMove = (moveEvent) => {
+          moveEvent.preventDefault();
+          const x = moveEvent.clientX - offsetX;
+          const y = moveEvent.clientY - offsetY;
+          cardEl.style.left = `${x}px`;
+          cardEl.style.top = `${y}px`;
+
+          // Highlight the side dock if the pointer is hovering back over it
+          const dockRect = sideDock.getBoundingClientRect();
+          const overDock = moveEvent.clientX <= dockRect.right + 16;
+          sideDock.classList.toggle('dock-drop-active', overDock);
+        };
+
+        const onPointerUp = (upEvent) => {
+          cardEl.classList.remove('is-dragging');
+          sideDock.classList.remove('dock-drop-active');
+          cardEl.removeEventListener('pointermove', onPointerMove);
+          cardEl.removeEventListener('pointerup', onPointerUp);
+          cardEl.removeEventListener('pointercancel', onPointerUp);
+
+          // Check if dropped back over the side dock -> snap cleanly home
+          const dockRect = sideDock.getBoundingClientRect();
+          if (upEvent.clientX <= dockRect.right + 16) {
+            returnCardToDock(id);
+            return;
+          }
+
+          // Otherwise keep neatly clamped within the visible viewport
+          const rect = cardEl.getBoundingClientRect();
+          const minX = dockRect.right + 8;
+          const maxX = Math.max(minX, window.innerWidth - rect.width - 12);
+          const minY = 12;
+          const maxY = Math.max(minY, window.innerHeight - rect.height - 64);
+
+          const clampedX = Math.min(Math.max(rect.left, minX), maxX);
+          const clampedY = Math.min(Math.max(rect.top, minY), maxY);
+          cardEl.style.left = `${clampedX}px`;
+          cardEl.style.top = `${clampedY}px`;
+        };
+
+        cardEl.addEventListener('pointermove', onPointerMove);
+        cardEl.addEventListener('pointerup', onPointerUp);
+        cardEl.addEventListener('pointercancel', onPointerUp);
+      });
+    }
+
+    /* ===========================================================
+       3. 4-LINE PRIMARY HANDWRITING GUIDELINES (SVG LAYER)
+       =========================================================== */
+    const guidelinesSvg = document.getElementById('guidelines-svg');
+    // Line Modes: 0 = 3 Rows (default), 1 = 2 Large Rows, 2 = Blank Whiteboard
+    const LINE_MODES = [
+      { name: '3 Rows', rows: [
+        { top: 9, mid: 16, base: 23, desc: 30 },
+        { top: 39.5, mid: 46.5, base: 53.5, desc: 60.5 },
+        { top: 70, mid: 77, base: 84, desc: 91 }
+      ]},
+      { name: '2 Big Rows', rows: [
+        { top: 14, mid: 24, base: 34, desc: 44 },
+        { top: 56, mid: 66, base: 76, desc: 86 }
+      ]},
+      { name: 'Blank', rows: [] }
+    ];
+    let currentLineMode = 0;
+
+    function renderGuidelines() {
+      const mode = LINE_MODES[currentLineMode];
+      document.getElementById('btn-lines').textContent = `📏 Lines: ${mode.name}`;
+
+      let markup = '';
+      mode.rows.forEach((r) => {
+        markup += `
+          <line x1="2.5%" y1="${r.top}%" x2="97.5%" y2="${r.top}%" stroke="#9ca3af" stroke-width="1.5" />
+          <line x1="2.5%" y1="${r.mid}%" x2="97.5%" y2="${r.mid}%" stroke="#757575" stroke-width="1.5" stroke-dasharray="2.5 4" />
+          <line x1="2.5%" y1="${r.base}%" x2="97.5%" y2="${r.base}%" stroke="#00b4f0" stroke-width="4" />
+          <line x1="2.5%" y1="${r.desc}%" x2="97.5%" y2="${r.desc}%" stroke="#9ca3af" stroke-width="1.5" />
+        `;
+      });
+      guidelinesSvg.innerHTML = markup;
+    }
+
+    function cycleLineMode() {
+      currentLineMode = (currentLineMode + 1) % LINE_MODES.length;
+      renderGuidelines();
+    }
+
+    /* ===========================================================
+       4. MULTI-TOUCH & MOUSE WHITEBOARD DRAWING + UNDO
+       =========================================================== */
+    const canvas = document.getElementById('main-canvas');
+    const ctx = canvas.getContext('2d');
+
+    const PEN_SIZES = [4, 8, 15];
+    const ERASER_SIZES = [20, 34, 52];
+
+    const drawState = {
+      mode: 'pen',       // 'pen' | 'eraser'
+      color: '#1f2937',
+      sizeIdx: 1,        // 0 = S, 1 = M, 2 = L
+      activePointers: new Map(),
+      history: []        // Canvas snapshots for Undo (up to 25 steps)
+    };
+
+    function saveHistorySnapshot() {
+      if (canvas.width <= 0 || canvas.height <= 0) return;
+      const snap = document.createElement('canvas');
+      snap.width = canvas.width;
+      snap.height = canvas.height;
+      snap.getContext('2d').drawImage(canvas, 0, 0);
+      drawState.history.push(snap);
+      if (drawState.history.length > 25) {
+        drawState.history.shift();
+      }
+    }
+
+    function undoStroke() {
+      if (drawState.history.length === 0) return;
+      const prevSnap = drawState.history.pop();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(prevSnap, 0, 0);
+    }
+
+    function clearBoard() {
+      saveHistorySnapshot();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function resizeCanvas() {
+      const rect = boardSurface.getBoundingClientRect();
+      const width = Math.max(1, Math.floor(rect.width));
+      const height = Math.max(1, Math.floor(rect.height));
+      if (canvas.width === width && canvas.height === height) return;
+
+      let snapshot = null;
+      if (canvas.width > 0 && canvas.height > 0) {
+        snapshot = document.createElement('canvas');
+        snapshot.width = canvas.width;
+        snapshot.height = canvas.height;
+        snapshot.getContext('2d').drawImage(canvas, 0, 0);
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+
+      if (snapshot) {
+        ctx.drawImage(snapshot, 0, 0);
+      }
+    }
+
+    function getCanvasPoint(e) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+    }
+
+    function drawDot(pt) {
+      ctx.save();
+      if (drawState.mode === 'eraser') {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.fillStyle = 'rgba(0,0,0,1)';
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, ERASER_SIZES[drawState.sizeIdx] / 2, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = drawState.color;
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, PEN_SIZES[drawState.sizeIdx] / 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawSegment(from, to) {
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      if (drawState.mode === 'eraser') {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.lineWidth = ERASER_SIZES[drawState.sizeIdx];
+        ctx.strokeStyle = 'rgba(0,0,0,1)';
+      } else {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.lineWidth = PEN_SIZES[drawState.sizeIdx];
+        ctx.strokeStyle = drawState.color;
+      }
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    canvas.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      if (drawState.activePointers.size === 0) {
+        saveHistorySnapshot();
+      }
+      try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+      const pt = getCanvasPoint(e);
+      drawState.activePointers.set(e.pointerId, pt);
+      drawDot(pt);
+    });
+
+    canvas.addEventListener('pointermove', (e) => {
+      if (!drawState.activePointers.has(e.pointerId)) return;
+      e.preventDefault();
+      const prev = drawState.activePointers.get(e.pointerId);
+      const curr = getCanvasPoint(e);
+      drawSegment(prev, curr);
+      drawState.activePointers.set(e.pointerId, curr);
+    });
+
+    const endStroke = (e) => {
+      if (drawState.activePointers.has(e.pointerId)) {
+        drawState.activePointers.delete(e.pointerId);
+      }
+    };
+    canvas.addEventListener('pointerup', endStroke);
+    canvas.addEventListener('pointercancel', endStroke);
+
+    // Toolbar controls
+    function selectPen() {
+      drawState.mode = 'pen';
+      canvas.classList.remove('eraser-cursor');
+      document.getElementById('btn-pen').classList.add('tool-active');
+      document.getElementById('btn-eraser').classList.remove('tool-active');
+    }
+
+    function selectEraser() {
+      drawState.mode = 'eraser';
+      canvas.classList.add('eraser-cursor');
+      document.getElementById('btn-eraser').classList.add('tool-active');
+      document.getElementById('btn-pen').classList.remove('tool-active');
+    }
+
+    function setColor(hex, btnEl) {
+      drawState.color = hex;
+      selectPen();
+      document.querySelectorAll('.swatch').forEach(el => el.classList.remove('swatch-active'));
+      if (btnEl) btnEl.classList.add('swatch-active');
+    }
+
+    function setSize(sizeIdx, btnEl) {
+      drawState.sizeIdx = sizeIdx;
+      document.querySelectorAll('.size-btn').forEach(el => el.classList.remove('size-active'));
+      if (btnEl) btnEl.classList.add('size-active');
+    }
+
+    /* ===========================================================
+       5. INITIALIZATION & RESPONSIVE RESIZE
+       =========================================================== */
+    window.addEventListener('load', () => {
+      buildDock();
+      renderGuidelines();
+      resizeCanvas();
+    });
+
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+    });
+  </script>
+</body>
+</html>
