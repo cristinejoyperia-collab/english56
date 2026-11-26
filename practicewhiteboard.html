@@ -116,14 +116,163 @@
       justify-content: center;
       position: relative;
     }
+
+    /* Spinning Wheel Button & Animations */
+    .btn-spin {
+      background: linear-gradient(180deg, #fb7185 0%, #e11d48 100%);
+      border: 4px solid #ffffff;
+      box-shadow: 0 7px 0 #9f1239, 0 14px 28px rgba(159, 18, 57, 0.32);
+      transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.15s ease;
+    }
+    .btn-spin:hover:not(:disabled) {
+      filter: brightness(1.06);
+      transform: translateY(-2px);
+    }
+    .btn-spin:active:not(:disabled) {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #9f1239, 0 6px 14px rgba(159, 18, 57, 0.3);
+    }
+    .btn-spin:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    @keyframes popIn {
+      0% { opacity: 0; transform: scale(0.84) translateY(12px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .animate-pop {
+      animation: popIn 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    .wheel-pointer {
+      transition: transform 0.06s ease-out;
+      transform-origin: 50% 15%;
+    }
+    .wheel-pointer.tick {
+      transform: rotate(-18deg);
+    }
   </style>
 </head>
 <body class="w-screen h-screen flex flex-col p-2 sm:p-3 gap-2 text-slate-800">
 
   <!-- =========================================================
-       MAIN PRESENTATION STAGE: SIDE DOCK + ONE WHOLE WHITEBOARD
+       SCREEN 1: BIG 8-SUBJECT SPINNING WHEEL (BEFORE WHITEBOARD)
        ========================================================= -->
-  <div class="flex-1 min-h-0 flex flex-row gap-2.5 sm:gap-3">
+  <section
+    id="screen-wheel"
+    class="flex-1 min-h-0 w-full bg-white rounded-3xl border-4 border-sky-300 shadow-xl flex flex-col items-center justify-between p-3 sm:p-5 relative overflow-hidden"
+  >
+    <!-- Top Bar: Title & Quick Teacher Controls -->
+    <header class="w-full flex flex-wrap items-center justify-between gap-2 z-10 shrink-0">
+      <div class="flex items-center gap-2">
+        <span class="text-2xl sm:text-3xl">🎡</span>
+        <h1 class="text-xl sm:text-3xl font-bold text-slate-800 tracking-wide">
+          Spin a Subject!
+        </h1>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button
+          id="btn-wheel-labels"
+          onclick="toggleWheelLabels()"
+          class="btn-press px-3 py-1.5 rounded-xl bg-amber-100 hover:bg-amber-200 border-2 border-amber-300 text-amber-900 font-bold text-xs sm:text-sm cursor-pointer"
+          title="Show or hide subject names on the wheel"
+        >
+          👁️ Names: On
+        </button>
+        <button
+          id="btn-wheel-mute"
+          onclick="toggleWheelMute()"
+          class="btn-press px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 border-2 border-slate-300 text-slate-800 font-bold text-xs sm:text-sm cursor-pointer"
+          title="Toggle Sound"
+        >
+          🔊 Sound
+        </button>
+        <button
+          onclick="showWhiteboardScreen(null)"
+          class="btn-press px-3.5 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs sm:text-sm shadow cursor-pointer"
+          title="Go directly to the whiteboard"
+        >
+          Whiteboard ➔
+        </button>
+      </div>
+    </header>
+
+    <!-- Center: Big Spinning Wheel + Top Pointer -->
+    <div id="wheel-stage" class="flex-1 min-h-0 w-full flex items-center justify-center relative my-1">
+      <div id="wheel-wrapper" class="relative flex items-center justify-center">
+        <!-- Top Pointer Arrow -->
+        <div
+          id="wheel-pointer"
+          class="wheel-pointer absolute -top-3 sm:-top-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none drop-shadow-md"
+        >
+          <svg width="46" height="52" viewBox="0 0 46 52">
+            <polygon points="23,50 4,8 42,8" fill="#ef4444" stroke="#ffffff" stroke-width="4" stroke-linejoin="round"/>
+            <circle cx="23" cy="12" r="7" fill="#fef08a" stroke="#b91c1c" stroke-width="3"/>
+          </svg>
+        </div>
+
+        <!-- Wheel Canvas -->
+        <canvas id="wheel-canvas" class="block cursor-pointer" onclick="spinWheel()"></canvas>
+      </div>
+    </div>
+
+    <!-- Bottom: Big SPIN Button -->
+    <div class="shrink-0 flex items-center justify-center pb-1 z-10">
+      <button
+        id="btn-spin"
+        onclick="spinWheel()"
+        class="btn-spin text-white text-2xl sm:text-3xl font-bold px-12 sm:px-16 py-3 sm:py-3.5 rounded-full tracking-wider cursor-pointer flex items-center gap-3"
+      >
+        <span>🎯</span>
+        <span>SPIN!</span>
+      </button>
+    </div>
+
+    <!-- Result Modal Overlay After Wheel Stops -->
+    <div
+      id="wheel-result-modal"
+      class="hidden fixed inset-0 z-50 items-center justify-center bg-slate-900/55 backdrop-blur-sm p-4"
+    >
+      <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center shadow-2xl border-4 border-sky-400 animate-pop relative">
+        <div class="inline-block px-3.5 py-1 rounded-full bg-amber-200 text-amber-900 font-bold text-xs uppercase tracking-wider mb-2">
+          🎉 Your Subject Is...
+        </div>
+
+        <!-- Chosen Subject Picture -->
+        <div
+          id="wheel-result-svg"
+          class="w-full h-48 sm:h-56 flex items-center justify-center bg-slate-50 rounded-2xl border-2 border-slate-200 p-3 mb-3"
+        ></div>
+
+        <!-- Optional Word Display (hidden if Names: Off) -->
+        <h2 id="wheel-result-title" class="text-3xl sm:text-4xl font-bold text-sky-600 mb-4">
+          Art
+        </h2>
+
+        <div class="flex flex-wrap items-center justify-center gap-3">
+          <button
+            onclick="closeWheelResultAndSpin()"
+            class="btn-press px-4 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-sm sm:text-base cursor-pointer"
+          >
+            🔄 Spin Again
+          </button>
+          <button
+            onclick="goToWhiteboardWithSpunSubject()"
+            class="btn-press px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-base sm:text-lg shadow-lg cursor-pointer"
+          >
+            ✏️ Write on Whiteboard ➔
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       SCREEN 2: MAIN PRESENTATION STAGE: SIDE DOCK + WHITEBOARD
+       ========================================================= -->
+  <div id="screen-whiteboard" class="hidden flex-1 min-h-0 flex-row gap-2.5 sm:gap-3">
 
     <!-- LEFT SIDE DOCK: 8 DRAGGABLE SUBJECT PICTURES -->
     <aside
@@ -199,11 +348,11 @@
         <div class="flex items-center gap-1">
           <button onclick="setSize(0, this)" class="size-btn w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white border border-slate-300 text-slate-700 font-bold text-xs cursor-pointer" title="Small">S</button>
           <button onclick="setSize(1, this)" class="size-btn size-active w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white border border-slate-300 text-slate-700 font-bold text-xs cursor-pointer" title="Medium">M</button>
-          <button onclick="setSize(2, this)" class="size-btn w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white border border-slate-300 text-slate-700 font-bold text-xs cursor-pointer" title="Large">L</button>
-        </div>
-
-        <!-- Right: Presentation Controls (Lines, Show/Hide Words, Undo, Clear) -->
+        <!-- Right: Presentation Controls (Wheel, Lines, Show/Hide Words, Undo, Clear) -->
         <div class="flex items-center gap-1.5 flex-wrap">
+          <button onclick="showWheelScreen()" class="btn-press px-2.5 py-1.5 rounded-xl bg-pink-100 hover:bg-pink-200 border border-pink-300 text-pink-900 font-bold text-xs sm:text-sm cursor-pointer" title="Return to the spinning wheel">
+            🎡 Spin Wheel
+          </button>
           <button id="btn-lines" onclick="cycleLineMode()" class="btn-press px-2.5 py-1.5 rounded-xl bg-sky-100 hover:bg-sky-200 border border-sky-300 text-sky-900 font-bold text-xs sm:text-sm cursor-pointer" title="Change handwriting lines">
             📏 Lines: 3 Rows
           </button>
@@ -222,7 +371,7 @@
   </div>
 
   <!-- Layer for Floating Draggable Cards placed on the Whiteboard -->
-  <div id="floating-layer" class="fixed inset-0 pointer-events-none z-30"></div>
+  <div id="floating-layer" class="hidden fixed inset-0 pointer-events-none z-30"></div>
 
   <script>
     /* ===========================================================
@@ -232,6 +381,8 @@
       {
         id: 'art',
         label: 'Art',
+        emoji: '🎨',
+        wheelColor: '#fbbf24',
         accent: 'border-amber-300 bg-amber-50/40',
         svg: `
           <svg viewBox="0 0 420 320" class="w-full h-full">
@@ -258,6 +409,8 @@
       {
         id: 'chinese',
         label: 'Chinese',
+        emoji: '🖌️',
+        wheelColor: '#fb7185',
         accent: 'border-rose-300 bg-rose-50/40',
         svg: `
           <svg viewBox="0 0 420 320" class="w-full h-full">
@@ -279,6 +432,8 @@
       {
         id: 'english',
         label: 'English',
+        emoji: '🔤',
+        wheelColor: '#38bdf8',
         accent: 'border-sky-300 bg-sky-50/40',
         svg: `
           <svg viewBox="0 0 420 320" class="w-full h-full">
@@ -311,6 +466,8 @@
       {
         id: 'math',
         label: 'Math',
+        emoji: '🔢',
+        wheelColor: '#818cf8',
         accent: 'border-indigo-300 bg-indigo-50/40',
         svg: `
           <svg viewBox="0 0 420 320" class="w-full h-full">
@@ -327,6 +484,8 @@
       {
         id: 'music',
         label: 'Music',
+        emoji: '🎵',
+        wheelColor: '#c084fc',
         accent: 'border-purple-300 bg-purple-50/40',
         svg: `
           <svg viewBox="0 0 420 320" class="w-full h-full">
@@ -349,6 +508,8 @@
       {
         id: 'pe',
         label: 'PE',
+        emoji: '🏀',
+        wheelColor: '#fb923c',
         accent: 'border-orange-300 bg-orange-50/40',
         svg: `
           <svg viewBox="0 0 420 320" class="w-full h-full">
@@ -376,6 +537,8 @@
       {
         id: 'science',
         label: 'Science',
+        emoji: '🧪',
+        wheelColor: '#34d399',
         accent: 'border-emerald-300 bg-emerald-50/40',
         svg: `
           <svg viewBox="0 0 420 320" class="w-full h-full">
@@ -399,6 +562,8 @@
       {
         id: 'social-studies',
         label: 'Social Studies',
+        emoji: '🌍',
+        wheelColor: '#22d3ee',
         accent: 'border-cyan-300 bg-cyan-50/40',
         svg: `
           <svg viewBox="0 0 420 320" class="w-full h-full">
@@ -417,6 +582,329 @@
           </svg>`
       }
     ];
+
+    /* ===========================================================
+       1B. SPINNING WHEEL LOGIC, PHYSICS & AUDIO EFFECTS
+       =========================================================== */
+    const screenWheel = document.getElementById('screen-wheel');
+    const screenWhiteboard = document.getElementById('screen-whiteboard');
+    const wheelStage = document.getElementById('wheel-stage');
+    const wheelCanvas = document.getElementById('wheel-canvas');
+    const wheelCtx = wheelCanvas.getContext('2d');
+    const wheelPointerEl = document.getElementById('wheel-pointer');
+    const wheelResultModal = document.getElementById('wheel-result-modal');
+    const btnSpin = document.getElementById('btn-spin');
+
+    let wheelAngle = 0;           // Current rotation in radians
+    let isSpinning = false;
+    let showWheelLabels = true;
+    let isWheelMuted = false;
+    let lastSpunSubjectId = null;
+    let wheelAudioCtx = null;
+
+    function playWheelSound(type) {
+      if (isWheelMuted) return;
+      try {
+        if (!wheelAudioCtx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) wheelAudioCtx = new AudioCtx();
+        }
+        if (!wheelAudioCtx) return;
+        if (wheelAudioCtx.state === 'suspended') wheelAudioCtx.resume();
+
+        const now = wheelAudioCtx.currentTime;
+        if (type === 'tick') {
+          const osc = wheelAudioCtx.createOscillator();
+          const gain = wheelAudioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(720, now);
+          osc.frequency.exponentialRampToValueAtTime(320, now + 0.035);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+          osc.connect(gain);
+          gain.connect(wheelAudioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.045);
+        } else if (type === 'win') {
+          [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
+            const osc = wheelAudioCtx.createOscillator();
+            const gain = wheelAudioCtx.createGain();
+            osc.type = 'triangle';
+            const t = now + idx * 0.08;
+            osc.frequency.setValueAtTime(freq, t);
+            gain.gain.setValueAtTime(0.001, t);
+            gain.gain.exponentialRampToValueAtTime(0.16, t + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+            osc.connect(gain);
+            gain.connect(wheelAudioCtx.destination);
+            osc.start(t);
+            osc.stop(t + 0.27);
+          });
+        }
+      } catch (err) {
+        // Ignore audio errors on restricted devices
+      }
+    }
+
+    function toggleWheelMute() {
+      isWheelMuted = !isWheelMuted;
+      document.getElementById('btn-wheel-mute').textContent = isWheelMuted ? '🔇 Muted' : '🔊 Sound';
+    }
+
+    function toggleWheelLabels() {
+      showWheelLabels = !showWheelLabels;
+      const btn = document.getElementById('btn-wheel-labels');
+      btn.textContent = showWheelLabels ? '👁️ Names: On' : '👁️ Names: Off';
+      btn.classList.toggle('bg-amber-300', !showWheelLabels);
+      btn.classList.toggle('bg-amber-100', showWheelLabels);
+      drawWheel();
+    }
+
+    function resizeWheelCanvas() {
+      if (screenWheel.classList.contains('hidden')) return;
+      const rect = wheelStage.getBoundingClientRect();
+      const size = Math.max(240, Math.min(rect.width - 16, rect.height - 12, 560));
+      const dpr = window.devicePixelRatio || 1;
+      wheelCanvas.style.width = `${size}px`;
+      wheelCanvas.style.height = `${size}px`;
+      wheelCanvas.width = Math.floor(size * dpr);
+      wheelCanvas.height = Math.floor(size * dpr);
+      wheelCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawWheel();
+    }
+
+    function drawWheel() {
+      const size = parseFloat(wheelCanvas.style.width) || 360;
+      const cx = size / 2;
+      const cy = size / 2;
+      const radius = size / 2 - 14;
+      const count = SUBJECTS.length;
+      const sliceAngle = (Math.PI * 2) / count;
+
+      wheelCtx.clearRect(0, 0, size, size);
+
+      // Outer decorative rim shadow & border
+      wheelCtx.save();
+      wheelCtx.beginPath();
+      wheelCtx.arc(cx, cy, radius + 8, 0, Math.PI * 2);
+      wheelCtx.fillStyle = '#0f172a';
+      wheelCtx.fill();
+      wheelCtx.lineWidth = 4;
+      wheelCtx.strokeStyle = '#38bdf8';
+      wheelCtx.stroke();
+      wheelCtx.restore();
+
+      // Draw 8 Subject Wedges
+      SUBJECTS.forEach((subject, i) => {
+        const startA = wheelAngle + i * sliceAngle;
+        const endA = startA + sliceAngle;
+        const midA = startA + sliceAngle / 2;
+
+        wheelCtx.save();
+        wheelCtx.beginPath();
+        wheelCtx.moveTo(cx, cy);
+        wheelCtx.arc(cx, cy, radius, startA, endA);
+        wheelCtx.closePath();
+        wheelCtx.fillStyle = subject.wheelColor;
+        wheelCtx.fill();
+        wheelCtx.lineWidth = 3;
+        wheelCtx.strokeStyle = '#ffffff';
+        wheelCtx.stroke();
+
+        // Draw Emoji & Subject Name along the slice radius
+        wheelCtx.translate(cx, cy);
+        wheelCtx.rotate(midA);
+        wheelCtx.textAlign = 'center';
+        wheelCtx.textBaseline = 'middle';
+
+        const emojiSize = Math.max(22, Math.round(radius * 0.17));
+        const fontSize = Math.max(12, Math.round(radius * 0.088));
+
+        if (showWheelLabels) {
+          wheelCtx.font = `${emojiSize}px "Comic Sans MS", sans-serif`;
+          wheelCtx.fillText(subject.emoji, radius * 0.72, 0);
+
+          wheelCtx.font = `bold ${fontSize}px "Comic Sans MS", "Chalkboard SE", cursive, sans-serif`;
+          wheelCtx.fillStyle = '#0f172a';
+          // Split "Social Studies" into 2 neat lines on the wedge
+          if (subject.label.includes(' ')) {
+            const parts = subject.label.split(' ');
+            wheelCtx.fillText(parts[0], radius * 0.43, -fontSize * 0.55);
+            wheelCtx.fillText(parts[1], radius * 0.43, fontSize * 0.6);
+          } else {
+            wheelCtx.fillText(subject.label, radius * 0.44, 0);
+          }
+        } else {
+          // Pure picture/emoji mode for spelling challenge
+          wheelCtx.font = `${Math.round(emojiSize * 1.45)}px "Comic Sans MS", sans-serif`;
+          wheelCtx.fillText(subject.emoji, radius * 0.62, 0);
+        }
+        wheelCtx.restore();
+
+        // Rim Peg Dot at each slice boundary
+        const pegX = cx + Math.cos(startA) * (radius + 2);
+        const pegY = cy + Math.sin(startA) * (radius + 2);
+        wheelCtx.beginPath();
+        wheelCtx.arc(pegX, pegY, 4.5, 0, Math.PI * 2);
+        wheelCtx.fillStyle = '#fef08a';
+        wheelCtx.fill();
+        wheelCtx.lineWidth = 1.5;
+        wheelCtx.strokeStyle = '#92400e';
+        wheelCtx.stroke();
+      });
+
+      // Center Hub Cap
+      wheelCtx.save();
+      wheelCtx.beginPath();
+      wheelCtx.arc(cx, cy, Math.max(24, radius * 0.16), 0, Math.PI * 2);
+      wheelCtx.fillStyle = '#ffffff';
+      wheelCtx.fill();
+      wheelCtx.lineWidth = 5;
+      wheelCtx.strokeStyle = '#0284c7';
+      wheelCtx.stroke();
+
+      wheelCtx.fillStyle = '#0284c7';
+      wheelCtx.font = `bold ${Math.max(12, Math.round(radius * 0.075))}px "Comic Sans MS", sans-serif`;
+      wheelCtx.textAlign = 'center';
+      wheelCtx.textBaseline = 'middle';
+      wheelCtx.fillText('SPIN', cx, cy);
+      wheelCtx.restore();
+    }
+
+    function getWinningIndex(angle) {
+      const count = SUBJECTS.length;
+      const sliceAngle = (Math.PI * 2) / count;
+      // Top pointer sits at -PI/2 (1.5 * PI)
+      const normalized = (1.5 * Math.PI - (angle % (Math.PI * 2)) + Math.PI * 4) % (Math.PI * 2);
+      return Math.floor(normalized / sliceAngle) % count;
+    }
+
+    function spinWheel() {
+      if (isSpinning) return;
+      isSpinning = true;
+      btnSpin.disabled = true;
+
+      const startAngle = wheelAngle;
+      // 6 to 9 full rotations + random landing offset
+      const extraSpins = (6 + Math.random() * 3) * Math.PI * 2;
+      const randomOffset = Math.random() * Math.PI * 2;
+      const totalDelta = extraSpins + randomOffset;
+      const duration = 4200; // 4.2 seconds
+      const startTime = performance.now();
+      let lastSliceIdx = getWinningIndex(wheelAngle);
+
+      function step(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(1, elapsed / duration);
+        // Smooth quartic ease-out
+        const eased = 1 - Math.pow(1 - progress, 4);
+        wheelAngle = startAngle + totalDelta * eased;
+        drawWheel();
+
+        // Trigger peg tick sound & pointer bounce whenever a slice boundary passes the top pointer
+        const currentSliceIdx = getWinningIndex(wheelAngle);
+        if (currentSliceIdx !== lastSliceIdx) {
+          lastSliceIdx = currentSliceIdx;
+          playWheelSound('tick');
+          wheelPointerEl.classList.add('tick');
+          setTimeout(() => wheelPointerEl.classList.remove('tick'), 55);
+        }
+
+        if (progress < 1) {
+          requestAnimationFrame(step);
+        } else {
+          wheelAngle = wheelAngle % (Math.PI * 2);
+          isSpinning = false;
+          btnSpin.disabled = false;
+          const winner = SUBJECTS[getWinningIndex(wheelAngle)];
+          showWheelResult(winner);
+        }
+      }
+
+      requestAnimationFrame(step);
+    }
+
+    function showWheelResult(subject) {
+      lastSpunSubjectId = subject.id;
+      playWheelSound('win');
+      document.getElementById('wheel-result-svg').innerHTML = subject.svg;
+      const titleEl = document.getElementById('wheel-result-title');
+      if (showWheelLabels) {
+        titleEl.textContent = subject.label;
+        titleEl.classList.remove('hidden');
+      } else {
+        titleEl.textContent = 'Spell this subject!';
+        titleEl.classList.remove('hidden');
+      }
+      wheelResultModal.classList.remove('hidden');
+      wheelResultModal.classList.add('flex');
+    }
+
+    function closeWheelResultAndSpin() {
+      wheelResultModal.classList.add('hidden');
+      wheelResultModal.classList.remove('flex');
+      spinWheel();
+    }
+
+    function goToWhiteboardWithSpunSubject() {
+      wheelResultModal.classList.add('hidden');
+      wheelResultModal.classList.remove('flex');
+      showWhiteboardScreen(lastSpunSubjectId);
+    }
+
+    function showWheelScreen() {
+      screenWhiteboard.classList.add('hidden');
+      screenWhiteboard.classList.remove('flex');
+      floatingLayer.classList.add('hidden');
+
+      wheelResultModal.classList.add('hidden');
+      wheelResultModal.classList.remove('flex');
+
+      screenWheel.classList.remove('hidden');
+      screenWheel.classList.add('flex');
+      requestAnimationFrame(() => resizeWheelCanvas());
+    }
+
+    function showWhiteboardScreen(autoPlaceSubjectId) {
+      screenWheel.classList.add('hidden');
+      screenWheel.classList.remove('flex');
+      wheelResultModal.classList.add('hidden');
+      wheelResultModal.classList.remove('flex');
+
+      screenWhiteboard.classList.remove('hidden');
+      screenWhiteboard.classList.add('flex');
+      floatingLayer.classList.remove('hidden');
+
+      requestAnimationFrame(() => {
+        resizeCanvas();
+        if (autoPlaceSubjectId) {
+          returnAllCards();
+          placeCardOnBoardCenter(autoPlaceSubjectId);
+        }
+      });
+    }
+
+    function placeCardOnBoardCenter(id) {
+      const entry = cardRegistry.get(id);
+      if (!entry) return;
+      const { cardEl } = entry;
+      const boardRect = boardSurface.getBoundingClientRect();
+      const isDesktop = window.innerWidth >= 1024;
+      const cardW = isDesktop ? 230 : 196;
+
+      entry.onBoard = true;
+      entry.individualReveal = false;
+      cardEl.classList.add('on-board');
+      cardEl.querySelector('.card-controls').classList.remove('hidden');
+      floatingLayer.appendChild(cardEl);
+
+      topZIndex++;
+      cardEl.style.zIndex = topZIndex;
+      // Place neatly at the top-center of the whiteboard so writing rows below stay clear
+      cardEl.style.left = `${Math.round(boardRect.left + (boardRect.width - cardW) / 2)}px`;
+      cardEl.style.top = `${Math.round(boardRect.top + 14)}px`;
+      updateCardWordVisibility(id);
+    }
 
     /* ===========================================================
        2. DRAGGABLE SUBJECT CARDS (SIDE DOCK <-> WHITEBOARD)
@@ -833,11 +1321,14 @@
     window.addEventListener('load', () => {
       buildDock();
       renderGuidelines();
-      resizeCanvas();
+      resizeWheelCanvas();
     });
 
     window.addEventListener('resize', () => {
-      resizeCanvas();
+      resizeWheelCanvas();
+      if (!screenWhiteboard.classList.contains('hidden')) {
+        resizeCanvas();
+      }
     });
   </script>
 </body>
