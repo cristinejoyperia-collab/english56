@@ -20,6 +20,11 @@
       font-family: var(--font-comic);
     }
 
+    textarea, input {
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
     html, body {
       margin: 0;
       padding: 0;
@@ -152,27 +157,220 @@
     .wheel-pointer.tick {
       transform: rotate(-18deg);
     }
+
+    /* Claw Machine Arcade Grab Button */
+    .btn-claw {
+      background: linear-gradient(180deg, #34d399 0%, #059669 100%);
+      border: 4px solid #ffffff;
+      box-shadow: 0 7px 0 #065f46, 0 14px 28px rgba(6, 95, 70, 0.32);
+      transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.15s ease;
+    }
+    .btn-claw:hover:not(:disabled) {
+      filter: brightness(1.06);
+      transform: translateY(-2px);
+    }
+    .btn-claw:active:not(:disabled) {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #065f46, 0 6px 14px rgba(6, 95, 70, 0.3);
+    }
+    .btn-claw:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body class="w-screen h-screen flex flex-col p-2 sm:p-3 gap-2 text-slate-800">
+
+  <!-- =========================================================
+       SCREEN 0: CLAW MACHINE NAME RANDOMIZER (28 EDITABLE NAMES)
+       ========================================================= -->
+  <section
+    id="screen-claw"
+    class="flex-1 min-h-0 w-full bg-white rounded-3xl border-4 border-pink-300 shadow-xl flex flex-col items-center justify-between p-3 sm:p-4 relative overflow-hidden"
+  >
+    <!-- Top Bar: Title & Teacher Controls -->
+    <header class="w-full flex flex-wrap items-center justify-between gap-2 z-10 shrink-0">
+      <div class="flex items-center gap-2">
+        <span class="text-2xl sm:text-3xl">🕹️</span>
+        <h1 class="text-xl sm:text-3xl font-bold text-slate-800 tracking-wide">
+          Name Claw Machine
+        </h1>
+        <span id="claw-count-badge" class="px-2.5 py-0.5 rounded-full bg-pink-100 border border-pink-300 text-pink-800 font-bold text-xs sm:text-sm">
+          28 left
+        </span>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+        <button
+          onclick="openEditNamesModal()"
+          class="btn-press px-3 py-1.5 rounded-xl bg-amber-100 hover:bg-amber-200 border-2 border-amber-300 text-amber-900 font-bold text-xs sm:text-sm cursor-pointer"
+          title="Edit student names list"
+        >
+          ✏️ Edit Names
+        </button>
+        <button
+          id="btn-claw-remove"
+          onclick="toggleRemovePicked()"
+          class="btn-press px-3 py-1.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 border-2 border-emerald-300 text-emerald-900 font-bold text-xs sm:text-sm cursor-pointer"
+          title="Automatically remove picked student so they aren't picked twice"
+        >
+          ✅ Remove Picked: On
+        </button>
+        <button
+          onclick="refillAllStudents()"
+          class="btn-press px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 border-2 border-slate-300 text-slate-800 font-bold text-xs sm:text-sm cursor-pointer"
+          title="Put all students back in the claw machine"
+        >
+          ♻️ Refill
+        </button>
+        <button
+          onclick="showWheelScreen()"
+          class="btn-press px-3.5 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs sm:text-sm shadow cursor-pointer"
+          title="Skip directly to the subject spinning wheel"
+        >
+          Spin Wheel ➔
+        </button>
+      </div>
+    </header>
+
+    <!-- Center: Interactive Claw Machine Arcade Cabinet -->
+    <div id="claw-stage" class="flex-1 min-h-0 w-full flex items-center justify-center relative my-1.5">
+      <div class="w-full max-w-4xl h-full rounded-3xl border-4 border-sky-400 bg-gradient-to-b from-sky-50 via-white to-pink-50 shadow-inner overflow-hidden relative flex flex-col">
+        <!-- Arcade Marquee Strip -->
+        <div class="shrink-0 bg-gradient-to-r from-pink-500 via-amber-400 to-sky-500 text-white text-center py-1 font-bold text-xs sm:text-sm tracking-widest uppercase shadow">
+          ★ ★ ★ WHO IS NEXT? ★ ★ ★
+        </div>
+        <!-- Claw Machine Canvas -->
+        <div id="claw-canvas-wrap" class="flex-1 min-h-0 w-full relative">
+          <canvas id="claw-canvas" class="block w-full h-full cursor-pointer" onclick="startClawGrab()"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom: Big GRAB Button -->
+    <div class="shrink-0 flex items-center justify-center pb-1 z-10 gap-3">
+      <button
+        id="btn-claw-grab"
+        onclick="startClawGrab()"
+        class="btn-claw text-white text-2xl sm:text-3xl font-bold px-12 sm:px-16 py-3 sm:py-3.5 rounded-full tracking-wider cursor-pointer flex items-center gap-3"
+      >
+        <span>🎯</span>
+        <span>GRAB A NAME!</span>
+      </button>
+    </div>
+
+    <!-- Modal: Picked Student Reveal -->
+    <div
+      id="claw-result-modal"
+      class="hidden fixed inset-0 z-50 items-center justify-center bg-slate-900/55 backdrop-blur-sm p-4"
+    >
+      <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center shadow-2xl border-4 border-pink-400 animate-pop relative">
+        <div class="inline-block px-3.5 py-1 rounded-full bg-amber-200 text-amber-900 font-bold text-xs uppercase tracking-wider mb-3">
+          🎉 Lucky Student!
+        </div>
+
+        <!-- Opened Capsule Visual -->
+        <div class="w-full py-6 px-4 bg-gradient-to-b from-sky-50 to-pink-50 rounded-2xl border-2 border-pink-200 mb-5 flex flex-col items-center justify-center">
+          <div id="claw-result-capsule" class="w-20 h-20 rounded-full border-4 border-white shadow-lg flex items-center justify-center text-4xl mb-3">
+            🌟
+          </div>
+          <h2 id="claw-result-name" class="text-3xl sm:text-5xl font-bold text-pink-600 break-words max-w-full">
+            Student 1
+          </h2>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-center gap-3">
+          <button
+            onclick="closeClawResultAndGrab()"
+            class="btn-press px-4 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-sm sm:text-base cursor-pointer"
+          >
+            🔄 Pick Another
+          </button>
+          <button
+            onclick="goToWheelWithStudent()"
+            class="btn-press px-6 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-base sm:text-lg shadow-lg cursor-pointer"
+          >
+            🎡 Spin Subject Wheel ➔
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Edit Student Names (28 Names) -->
+    <div
+      id="modal-edit-names"
+      class="hidden fixed inset-0 z-50 items-center justify-center bg-slate-900/55 backdrop-blur-sm p-4"
+    >
+      <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border-4 border-amber-400 animate-pop flex flex-col max-h-[90vh]">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-xl sm:text-2xl font-bold text-slate-800">✏️ Edit Student Names</h2>
+          <span id="edit-names-count" class="px-3 py-1 rounded-full bg-amber-100 text-amber-900 font-bold text-xs sm:text-sm">
+            28 names
+          </span>
+        </div>
+        <p class="text-xs sm:text-sm text-slate-500 font-bold mb-2">
+          Enter one student name per line (you can paste your 28 names directly):
+        </p>
+        <textarea
+          id="names-textarea"
+          rows="12"
+          class="w-full flex-1 min-h-[220px] p-3 rounded-2xl border-2 border-slate-300 focus:border-sky-500 focus:outline-none text-slate-800 font-bold text-sm sm:text-base leading-relaxed resize-none"
+          placeholder="Enter one name per line..."
+        ></textarea>
+
+        <div class="flex flex-wrap items-center justify-between gap-2 mt-4">
+          <button
+            onclick="resetDefault28Names()"
+            class="btn-press px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 font-bold text-xs sm:text-sm cursor-pointer"
+          >
+            Reset 28 Defaults
+          </button>
+          <div class="flex items-center gap-2">
+            <button
+              onclick="closeEditNamesModal()"
+              class="btn-press px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-sm cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              onclick="saveNamesFromModal()"
+              class="btn-press px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm sm:text-base shadow cursor-pointer"
+            >
+              💾 Save Names
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- =========================================================
        SCREEN 1: BIG 8-SUBJECT SPINNING WHEEL (BEFORE WHITEBOARD)
        ========================================================= -->
   <section
     id="screen-wheel"
-    class="flex-1 min-h-0 w-full bg-white rounded-3xl border-4 border-sky-300 shadow-xl flex flex-col items-center justify-between p-3 sm:p-5 relative overflow-hidden"
+    class="hidden flex-1 min-h-0 w-full bg-white rounded-3xl border-4 border-sky-300 shadow-xl flex-col items-center justify-between p-3 sm:p-5 relative overflow-hidden"
   >
     <!-- Top Bar: Title & Quick Teacher Controls -->
     <header class="w-full flex flex-wrap items-center justify-between gap-2 z-10 shrink-0">
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 flex-wrap">
         <span class="text-2xl sm:text-3xl">🎡</span>
         <h1 class="text-xl sm:text-3xl font-bold text-slate-800 tracking-wide">
           Spin a Subject!
         </h1>
+        <span id="wheel-student-badge" class="hidden px-3 py-1 rounded-full bg-pink-100 border-2 border-pink-300 text-pink-800 font-bold text-xs sm:text-base">
+          🙋 Student
+        </span>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+        <button
+          onclick="showClawScreen()"
+          class="btn-press px-3 py-1.5 rounded-xl bg-pink-100 hover:bg-pink-200 border-2 border-pink-300 text-pink-900 font-bold text-xs sm:text-sm cursor-pointer"
+          title="Back to Name Claw Machine"
+        >
+          🕹️ Pick Student
+        </button>
         <button
           id="btn-wheel-labels"
           onclick="toggleWheelLabels()"
@@ -312,6 +510,11 @@
       <!-- Handwriting Surface + Guidelines + Canvas -->
       <div id="board-surface" class="relative flex-1 min-h-0 bg-white overflow-hidden">
 
+        <!-- Optional Current Picked Student Pill Badge -->
+        <div id="board-student-badge" class="hidden absolute top-2 left-3 z-20 px-3 py-1 rounded-full bg-pink-100/95 border-2 border-pink-300 text-pink-800 font-bold text-xs sm:text-sm shadow-sm pointer-events-none">
+          🙋 Student
+        </div>
+
         <!-- 4-Line Primary Handwriting Guidelines (SVG Layer Behind Canvas) -->
         <svg id="guidelines-svg" class="absolute inset-0 w-full h-full pointer-events-none z-0" aria-hidden="true">
           <!-- Rendered dynamically based on selected line mode (3 rows, 2 large rows, or blank) -->
@@ -348,8 +551,14 @@
         <div class="flex items-center gap-1">
           <button onclick="setSize(0, this)" class="size-btn w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white border border-slate-300 text-slate-700 font-bold text-xs cursor-pointer" title="Small">S</button>
           <button onclick="setSize(1, this)" class="size-btn size-active w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white border border-slate-300 text-slate-700 font-bold text-xs cursor-pointer" title="Medium">M</button>
-        <!-- Right: Presentation Controls (Wheel, Lines, Show/Hide Words, Undo, Clear) -->
+          <button onclick="setSize(2, this)" class="size-btn w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white border border-slate-300 text-slate-700 font-bold text-xs cursor-pointer" title="Large">L</button>
+        </div>
+
+        <!-- Right: Presentation Controls (Claw, Wheel, Lines, Show/Hide Words, Undo, Clear) -->
         <div class="flex items-center gap-1.5 flex-wrap">
+          <button onclick="showClawScreen()" class="btn-press px-2.5 py-1.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 text-emerald-900 font-bold text-xs sm:text-sm cursor-pointer" title="Pick next student from claw machine">
+            🕹️ Pick Student
+          </button>
           <button onclick="showWheelScreen()" class="btn-press px-2.5 py-1.5 rounded-xl bg-pink-100 hover:bg-pink-200 border border-pink-300 text-pink-900 font-bold text-xs sm:text-sm cursor-pointer" title="Return to the spinning wheel">
             🎡 Spin Wheel
           </button>
@@ -586,6 +795,7 @@
     /* ===========================================================
        1B. SPINNING WHEEL LOGIC, PHYSICS & AUDIO EFFECTS
        =========================================================== */
+    const screenClaw = document.getElementById('screen-claw');
     const screenWheel = document.getElementById('screen-wheel');
     const screenWhiteboard = document.getElementById('screen-whiteboard');
     const wheelStage = document.getElementById('wheel-stage');
@@ -853,6 +1063,8 @@
     }
 
     function showWheelScreen() {
+      screenClaw.classList.add('hidden');
+      screenClaw.classList.remove('flex');
       screenWhiteboard.classList.add('hidden');
       screenWhiteboard.classList.remove('flex');
       floatingLayer.classList.add('hidden');
@@ -866,6 +1078,8 @@
     }
 
     function showWhiteboardScreen(autoPlaceSubjectId) {
+      screenClaw.classList.add('hidden');
+      screenClaw.classList.remove('flex');
       screenWheel.classList.add('hidden');
       screenWheel.classList.remove('flex');
       wheelResultModal.classList.add('hidden');
@@ -884,26 +1098,537 @@
       });
     }
 
-    function placeCardOnBoardCenter(id) {
-      const entry = cardRegistry.get(id);
-      if (!entry) return;
-      const { cardEl } = entry;
-      const boardRect = boardSurface.getBoundingClientRect();
-      const isDesktop = window.innerWidth >= 1024;
-      const cardW = isDesktop ? 230 : 196;
+    /* ===========================================================
+       1C. CLAW MACHINE NAME RANDOMIZER (28 EDITABLE NAMES)
+       =========================================================== */
+    const CLAW_STORAGE_KEY = 'classroom_claw_names_v1';
+    const CAPSULE_COLORS = [
+      '#fb7185', '#38bdf8', '#fbbf24', '#34d399',
+      '#c084fc', '#fb923c', '#22d3ee', '#818cf8'
+    ];
 
-      entry.onBoard = true;
-      entry.individualReveal = false;
-      cardEl.classList.add('on-board');
-      cardEl.querySelector('.card-controls').classList.remove('hidden');
-      floatingLayer.appendChild(cardEl);
+    const clawCanvasWrap = document.getElementById('claw-canvas-wrap');
+    const clawCanvas = document.getElementById('claw-canvas');
+    const clawCtx = clawCanvas.getContext('2d');
+    const btnClawGrab = document.getElementById('btn-claw-grab');
+    const clawResultModal = document.getElementById('claw-result-modal');
+    const modalEditNames = document.getElementById('modal-edit-names');
+    const namesTextarea = document.getElementById('names-textarea');
 
-      topZIndex++;
-      cardEl.style.zIndex = topZIndex;
-      // Place neatly at the top-center of the whiteboard so writing rows below stay clear
-      cardEl.style.left = `${Math.round(boardRect.left + (boardRect.width - cardW) / 2)}px`;
-      cardEl.style.top = `${Math.round(boardRect.top + 14)}px`;
-      updateCardWordVisibility(id);
+    let allStudentNames = [];
+    let remainingNames = [];
+    let removePickedEnabled = true;
+    let currentStudentName = '';
+
+    // Claw machine visual state
+    let clawW = 700;
+    let clawH = 420;
+    let clawBalls = [];
+    let clawAnimId = null;
+    let clawState = {
+      phase: 'idle', // 'idle' | 'scan' | 'drop' | 'grab' | 'lift' | 'done'
+      x: 350,
+      cableLen: 42,
+      openAmount: 0.25, // 0 = closed, 1 = wide open
+      targetBall: null,
+      grabbedBall: null,
+      phaseStart: 0,
+      scanWaypoints: [],
+      scanStartX: 350,
+      lastTickTime: 0
+    };
+
+    function getDefault28Names() {
+      return Array.from({ length: 28 }, (_, i) => `Student ${i + 1}`);
+    }
+
+    function loadStudentNames() {
+      try {
+        const saved = localStorage.getItem(CLAW_STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            allStudentNames = parsed;
+            remainingNames = [...allStudentNames];
+            return;
+          }
+        }
+      } catch (err) {}
+      allStudentNames = getDefault28Names();
+      remainingNames = [...allStudentNames];
+    }
+
+    function persistStudentNames() {
+      try {
+        localStorage.setItem(CLAW_STORAGE_KEY, JSON.stringify(allStudentNames));
+      } catch (err) {}
+    }
+
+    function updateClawCountBadge() {
+      const badge = document.getElementById('claw-count-badge');
+      badge.textContent = `${remainingNames.length} / ${allStudentNames.length} left`;
+      btnClawGrab.disabled = clawState.phase !== 'idle' || remainingNames.length === 0;
+    }
+
+    function updateStudentBadges() {
+      const wheelBadge = document.getElementById('wheel-student-badge');
+      const boardBadge = document.getElementById('board-student-badge');
+      if (currentStudentName) {
+        wheelBadge.textContent = `🙋 ${currentStudentName}`;
+        wheelBadge.classList.remove('hidden');
+        boardBadge.textContent = `🙋 ${currentStudentName}`;
+        boardBadge.classList.remove('hidden');
+      } else {
+        wheelBadge.classList.add('hidden');
+        boardBadge.classList.add('hidden');
+      }
+    }
+
+    function toggleRemovePicked() {
+      removePickedEnabled = !removePickedEnabled;
+      const btn = document.getElementById('btn-claw-remove');
+      btn.textContent = removePickedEnabled ? '✅ Remove Picked: On' : '🔁 Remove Picked: Off';
+      btn.classList.toggle('bg-emerald-100', removePickedEnabled);
+      btn.classList.toggle('bg-slate-100', !removePickedEnabled);
+    }
+
+    function refillAllStudents() {
+      if (clawState.phase !== 'idle') return;
+      remainingNames = [...allStudentNames];
+      initClawBalls();
+      updateClawCountBadge();
+      drawClawMachine();
+    }
+
+    function openEditNamesModal() {
+      if (clawState.phase !== 'idle') return;
+      namesTextarea.value = allStudentNames.join('\n');
+      updateEditNamesCount();
+      modalEditNames.classList.remove('hidden');
+      modalEditNames.classList.add('flex');
+      namesTextarea.focus();
+    }
+
+    function closeEditNamesModal() {
+      modalEditNames.classList.add('hidden');
+      modalEditNames.classList.remove('flex');
+    }
+
+    function updateEditNamesCount() {
+      const list = namesTextarea.value.split('\n').map(s => s.trim()).filter(Boolean);
+      document.getElementById('edit-names-count').textContent = `${list.length} name${list.length === 1 ? '' : 's'}`;
+    }
+
+    namesTextarea.addEventListener('input', updateEditNamesCount);
+
+    function resetDefault28Names() {
+      namesTextarea.value = getDefault28Names().join('\n');
+      updateEditNamesCount();
+    }
+
+    function saveNamesFromModal() {
+      const list = namesTextarea.value.split('\n').map(s => s.trim()).filter(Boolean);
+      if (list.length === 0) return;
+      allStudentNames = list;
+      remainingNames = [...allStudentNames];
+      persistStudentNames();
+      closeEditNamesModal();
+      initClawBalls();
+      updateClawCountBadge();
+      drawClawMachine();
+    }
+
+    function showClawScreen() {
+      screenWheel.classList.add('hidden');
+      screenWheel.classList.remove('flex');
+      screenWhiteboard.classList.add('hidden');
+      screenWhiteboard.classList.remove('flex');
+      floatingLayer.classList.add('hidden');
+      wheelResultModal.classList.add('hidden');
+      wheelResultModal.classList.remove('flex');
+
+      screenClaw.classList.remove('hidden');
+      screenClaw.classList.add('flex');
+      requestAnimationFrame(() => {
+        resizeClawCanvas();
+        if (remainingNames.length === 0 && allStudentNames.length > 0) {
+          refillAllStudents();
+        }
+      });
+    }
+
+    function initClawBalls() {
+      const count = remainingNames.length;
+      clawBalls = [];
+      if (count === 0) return;
+
+      const padX = Math.max(36, clawW * 0.06);
+      const usableW = Math.max(160, clawW - padX * 2);
+      const radius = Math.max(20, Math.min(34, Math.sqrt((usableW * clawH * 0.34) / Math.max(count, 8)) * 0.62));
+
+      // Arrange capsules in a natural layered arcade pile at the bottom
+      const cols = Math.max(4, Math.min(9, Math.floor(usableW / (radius * 1.92))));
+      const spacingX = usableW / cols;
+      const spacingY = radius * 1.56;
+      const bottomY = clawH - radius - 14;
+
+      remainingNames.forEach((name, idx) => {
+        const row = Math.floor(idx / cols);
+        const col = idx % cols;
+        const rowShift = (row % 2 === 1) ? spacingX * 0.45 : 0;
+        let bx = padX + spacingX * (col + 0.5) + rowShift + (Math.random() - 0.5) * 8;
+        bx = Math.max(padX + radius * 0.6, Math.min(clawW - padX - radius * 0.6, bx));
+        const by = Math.max(120, bottomY - row * spacingY + (Math.random() - 0.5) * 6);
+
+        clawBalls.push({
+          name,
+          x: bx,
+          y: by,
+          baseX: bx,
+          baseY: by,
+          r: radius,
+          color: CAPSULE_COLORS[idx % CAPSULE_COLORS.length],
+          tilt: (Math.random() - 0.5) * 0.45,
+          jiggle: 0
+        });
+      });
+    }
+
+    function resizeClawCanvas() {
+      if (screenClaw.classList.contains('hidden')) return;
+      const rect = clawCanvasWrap.getBoundingClientRect();
+      clawW = Math.max(280, Math.floor(rect.width));
+      clawH = Math.max(220, Math.floor(rect.height));
+      const dpr = window.devicePixelRatio || 1;
+      clawCanvas.width = Math.floor(clawW * dpr);
+      clawCanvas.height = Math.floor(clawH * dpr);
+      clawCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      if (clawState.phase === 'idle') {
+        clawState.x = clawW / 2;
+        initClawBalls();
+      }
+      drawClawMachine();
+    }
+
+    function drawSingleCapsule(b, isHighlighted) {
+      const ctx = clawCtx;
+      ctx.save();
+      ctx.translate(b.x, b.y + Math.sin(b.jiggle) * 3);
+      ctx.rotate(b.tilt);
+
+      // Soft drop shadow
+      ctx.beginPath();
+      ctx.arc(2, 4, b.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.14)';
+      ctx.fill();
+
+      // Top glossy white/translucent dome
+      ctx.beginPath();
+      ctx.arc(0, 0, b.r, Math.PI, 0);
+      ctx.closePath();
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+
+      // Bottom vibrant colored shell
+      ctx.beginPath();
+      ctx.arc(0, 0, b.r, 0, Math.PI);
+      ctx.closePath();
+      ctx.fillStyle = b.color;
+      ctx.fill();
+
+      // Center seam band
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+      ctx.fillRect(-b.r + 1, -2.5, b.r * 2 - 2, 5);
+
+      // Outer outline
+      ctx.beginPath();
+      ctx.arc(0, 0, b.r, 0, Math.PI * 2);
+      ctx.lineWidth = isHighlighted ? 3.5 : 2;
+      ctx.strokeStyle = isHighlighted ? '#f59e0b' : 'rgba(15, 23, 42, 0.25)';
+      ctx.stroke();
+
+      // Glass highlight glint
+      ctx.beginPath();
+      ctx.ellipse(-b.r * 0.32, -b.r * 0.36, b.r * 0.24, b.r * 0.13, -0.5, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+      ctx.fill();
+
+      // Student Name Pill across capsule
+      ctx.rotate(-b.tilt);
+      const fontSize = Math.max(9, Math.min(13, Math.round(b.r * 0.42)));
+      ctx.font = `bold ${fontSize}px "Comic Sans MS", sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const label = b.name.length > 9 ? b.name.slice(0, 8) + '…' : b.name;
+
+      // Subtle white halo for readability
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.92)';
+      ctx.strokeText(label, 0, 1);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillText(label, 0, 1);
+
+      ctx.restore();
+    }
+
+    function drawMechanicalClaw(x, cableLen, openAmount) {
+      const ctx = clawCtx;
+      const railY = 18;
+      const headY = railY + cableLen;
+
+      // Horizontal steel rail
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(10, railY - 6, clawW - 20, 12);
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(10, railY - 6, clawW - 20, 12);
+
+      // Trolley carriage on rail
+      ctx.fillStyle = '#0284c7';
+      ctx.beginPath();
+      ctx.roundRect(x - 26, railY - 12, 52, 24, 8);
+      ctx.fill();
+      ctx.strokeStyle = '#0369a1';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // Cable rope
+      ctx.beginPath();
+      ctx.moveTo(x, railY + 12);
+      ctx.lineTo(x, headY);
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      // Claw prongs (hinged left & right)
+      const spread = 0.22 + openAmount * 0.62; // radians
+      [-1, 1].forEach((dir) => {
+        ctx.save();
+        ctx.translate(x, headY + 6);
+        ctx.scale(dir, 1);
+        ctx.rotate(-spread);
+
+        ctx.beginPath();
+        ctx.moveTo(4, 0);
+        ctx.lineTo(26, 22);
+        ctx.lineTo(14, 46);
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 7;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.restore();
+      });
+
+      // Claw center hub
+      ctx.beginPath();
+      ctx.arc(x, headY + 4, 13, 0, Math.PI * 2);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#92400e';
+      ctx.stroke();
+    }
+
+    function drawClawMachine() {
+      const ctx = clawCtx;
+      ctx.clearRect(0, 0, clawW, clawH);
+
+      // Soft cabinet floor shelf
+      ctx.fillStyle = '#e0f2fe';
+      ctx.fillRect(0, clawH - 18, clawW, 18);
+      ctx.strokeStyle = '#7dd3fc';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, clawH - 18);
+      ctx.lineTo(clawW, clawH - 18);
+      ctx.stroke();
+
+      // Draw all capsules still in the pile (back rows first)
+      clawBalls.forEach((b) => {
+        if (b !== clawState.grabbedBall) {
+          drawSingleCapsule(b, false);
+        }
+      });
+
+      // Draw grabbed capsule right inside the claw prongs
+      if (clawState.grabbedBall) {
+        drawSingleCapsule(clawState.grabbedBall, true);
+      }
+
+      // Draw the overhead rail, cable & claw
+      drawMechanicalClaw(clawState.x, clawState.cableLen, clawState.openAmount);
+
+      // Subtle diagonal glass shine across cabinet
+      ctx.save();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.16)';
+      ctx.beginPath();
+      ctx.moveTo(clawW * 0.08, 0);
+      ctx.lineTo(clawW * 0.18, 0);
+      ctx.lineTo(clawW * 0.05, clawH);
+      ctx.lineTo(-clawW * 0.05, clawH);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function startClawGrab() {
+      if (clawState.phase !== 'idle') return;
+      if (remainingNames.length === 0) {
+        refillAllStudents();
+      }
+      if (clawBalls.length === 0) return;
+
+      btnClawGrab.disabled = true;
+      const targetIdx = Math.floor(Math.random() * clawBalls.length);
+      const targetBall = clawBalls[targetIdx];
+
+      // Build playful back-and-forth scan waypoints ending directly over targetBall.x
+      const leftStop = Math.max(70, clawW * 0.18);
+      const rightStop = Math.min(clawW - 70, clawW * 0.82);
+      const firstStop = clawState.x > clawW / 2 ? leftStop : rightStop;
+      const secondStop = firstStop === leftStop ? rightStop : leftStop;
+
+      clawState = {
+        phase: 'scan',
+        x: clawState.x,
+        cableLen: 42,
+        openAmount: 0.3,
+        targetBall,
+        grabbedBall: null,
+        phaseStart: performance.now(),
+        scanStartX: clawState.x,
+        scanWaypoints: [firstStop, secondStop, targetBall.x],
+        scanSegmentIdx: 0,
+        lastTickTime: 0
+      };
+
+      clawAnimId = requestAnimationFrame(stepClawAnimation);
+    }
+
+    function stepClawAnimation(now) {
+      const s = clawState;
+      const elapsed = now - s.phaseStart;
+
+      // Decay any capsule jiggle
+      clawBalls.forEach(b => { if (b.jiggle > 0) b.jiggle = Math.max(0, b.jiggle - 0.35); });
+
+      if (s.phase === 'scan') {
+        const segDur = 440;
+        const t = Math.min(1, elapsed / segDur);
+        const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        const targetX = s.scanWaypoints[s.scanSegmentIdx];
+        s.x = s.scanStartX + (targetX - s.scanStartX) * eased;
+        s.openAmount = 0.35 + Math.sin(now * 0.015) * 0.12;
+
+        if (now - s.lastTickTime > 120) {
+          s.lastTickTime = now;
+          playWheelSound('tick');
+        }
+
+        if (t >= 1) {
+          s.scanStartX = targetX;
+          s.scanSegmentIdx++;
+          s.phaseStart = now;
+          if (s.scanSegmentIdx >= s.scanWaypoints.length) {
+            s.phase = 'drop';
+          }
+        }
+      } else if (s.phase === 'drop') {
+        const dur = 680;
+        const t = Math.min(1, elapsed / dur);
+        const eased = 1 - Math.pow(1 - t, 2);
+        const targetCable = Math.max(46, s.targetBall.y - 44);
+        s.cableLen = 42 + (targetCable - 42) * eased;
+        s.openAmount = 0.35 + 0.65 * eased; // Open claws wide while descending
+
+        if (t >= 1) {
+          s.phase = 'grab';
+          s.phaseStart = now;
+          playWheelSound('tick');
+          // Jiggle nearby balls for physical feel
+          clawBalls.forEach(b => {
+            if (Math.hypot(b.x - s.targetBall.x, b.y - s.targetBall.y) < b.r * 3) {
+              b.jiggle = 6;
+            }
+          });
+        }
+      } else if (s.phase === 'grab') {
+        const dur = 340;
+        const t = Math.min(1, elapsed / dur);
+        s.openAmount = 1 - 0.85 * t; // Clamp shut onto the capsule!
+        if (t >= 1) {
+          s.grabbedBall = s.targetBall;
+          s.phase = 'lift';
+          s.phaseStart = now;
+          s.liftStartCable = s.cableLen;
+        }
+      } else if (s.phase === 'lift') {
+        const dur = 820;
+        const t = Math.min(1, elapsed / dur);
+        const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        s.cableLen = s.liftStartCable + (48 - s.liftStartCable) * eased;
+        s.openAmount = 0.15;
+
+        if (s.grabbedBall) {
+          s.grabbedBall.x = s.x;
+          s.grabbedBall.y = 18 + s.cableLen + 36;
+          s.grabbedBall.tilt = Math.sin(now * 0.02) * 0.14;
+        }
+
+        if (t >= 1) {
+          const picked = s.grabbedBall;
+          s.phase = 'idle';
+          s.grabbedBall = null;
+          s.targetBall = null;
+
+          if (removePickedEnabled && picked) {
+            const idx = remainingNames.indexOf(picked.name);
+            if (idx !== -1) remainingNames.splice(idx, 1);
+            initClawBalls();
+          } else {
+            initClawBalls();
+          }
+
+          updateClawCountBadge();
+          drawClawMachine();
+          if (picked) showClawResult(picked);
+          return;
+        }
+      }
+
+      drawClawMachine();
+      clawAnimId = requestAnimationFrame(stepClawAnimation);
+    }
+
+    function showClawResult(ball) {
+      currentStudentName = ball.name;
+      updateStudentBadges();
+      playWheelSound('win');
+
+      document.getElementById('claw-result-name').textContent = ball.name;
+      const capEl = document.getElementById('claw-result-capsule');
+      capEl.style.background = `linear-gradient(180deg, #ffffff 48%, ${ball.color} 52%)`;
+
+      clawResultModal.classList.remove('hidden');
+      clawResultModal.classList.add('flex');
+    }
+
+    function closeClawResultAndGrab() {
+      clawResultModal.classList.add('hidden');
+      clawResultModal.classList.remove('flex');
+      startClawGrab();
+    }
+
+    function goToWheelWithStudent() {
+      clawResultModal.classList.add('hidden');
+      clawResultModal.classList.remove('flex');
+      showWheelScreen();
     }
 
     /* ===========================================================
@@ -1319,13 +2044,20 @@
        5. INITIALIZATION & RESPONSIVE RESIZE
        =========================================================== */
     window.addEventListener('load', () => {
+      loadStudentNames();
+      updateClawCountBadge();
+      resizeClawCanvas();
       buildDock();
       renderGuidelines();
-      resizeWheelCanvas();
     });
 
     window.addEventListener('resize', () => {
-      resizeWheelCanvas();
+      if (!screenClaw.classList.contains('hidden')) {
+        resizeClawCanvas();
+      }
+      if (!screenWheel.classList.contains('hidden')) {
+        resizeWheelCanvas();
+      }
       if (!screenWhiteboard.classList.contains('hidden')) {
         resizeCanvas();
       }
