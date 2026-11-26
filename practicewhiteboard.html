@@ -446,7 +446,7 @@
 
         <!-- Optional Word Display (hidden if Names: Off) -->
         <h2 id="wheel-result-title" class="text-3xl sm:text-4xl font-bold text-sky-600 mb-4">
-          Art
+          art
         </h2>
 
         <div class="flex flex-wrap items-center justify-center gap-3">
@@ -589,7 +589,7 @@
     const SUBJECTS = [
       {
         id: 'art',
-        label: 'Art',
+        label: 'art',
         emoji: '🎨',
         wheelColor: '#fbbf24',
         accent: 'border-amber-300 bg-amber-50/40',
@@ -674,7 +674,7 @@
       },
       {
         id: 'math',
-        label: 'Math',
+        label: 'math',
         emoji: '🔢',
         wheelColor: '#818cf8',
         accent: 'border-indigo-300 bg-indigo-50/40',
@@ -692,7 +692,7 @@
       },
       {
         id: 'music',
-        label: 'Music',
+        label: 'music',
         emoji: '🎵',
         wheelColor: '#c084fc',
         accent: 'border-purple-300 bg-purple-50/40',
@@ -745,7 +745,7 @@
       },
       {
         id: 'science',
-        label: 'Science',
+        label: 'science',
         emoji: '🧪',
         wheelColor: '#34d399',
         accent: 'border-emerald-300 bg-emerald-50/40',
@@ -770,7 +770,7 @@
       },
       {
         id: 'social-studies',
-        label: 'Social Studies',
+        label: 'social studies',
         emoji: '🌍',
         wheelColor: '#22d3ee',
         accent: 'border-cyan-300 bg-cyan-50/40',
@@ -1735,6 +1735,26 @@
 
     function returnAllCards() {
       cardRegistry.forEach((_, id) => returnCardToDock(id));
+    }
+
+    function placeCardOnBoardCenter(id) {
+      const entry = cardRegistry.get(id);
+      if (!entry) return;
+      const { cardEl } = entry;
+      const boardRect = boardSurface.getBoundingClientRect();
+      const isDesktop = window.innerWidth >= 1024;
+      const cardW = isDesktop ? 230 : 196;
+
+      entry.onBoard = true;
+      cardEl.classList.add('on-board');
+      cardEl.querySelector('.card-controls').classList.remove('hidden');
+      floatingLayer.appendChild(cardEl);
+
+      topZIndex++;
+      cardEl.style.zIndex = topZIndex;
+      cardEl.style.left = `${Math.round(boardRect.left + (boardRect.width - cardW) / 2)}px`;
+      cardEl.style.top = `${Math.round(boardRect.top + 16)}px`;
+      updateCardWordVisibility(id);
     }
 
     function bindCardDrag(id) {
