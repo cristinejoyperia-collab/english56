@@ -1,0 +1,3093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Food Express – ESL Classroom Game</title>
+
+  <!-- Friendly kid-oriented rounded Google Fonts with Comic Sans fallback -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* =====================================================================
+       1. DESIGN TOKENS & BASE STYLES (Warm Cheerful Pastel Restaurant Theme)
+       ===================================================================== */
+    :root {
+      --bg-cream: #fff8ee;
+      --bg-peach: #ffe8d6;
+      --bg-mint: #dff7eb;
+      --bg-sky: #e0f4ff;
+      --bg-butter: #fff3c4;
+      --bg-pink: #ffe0ec;
+
+      --coral: #ff7b6b;
+      --coral-dark: #e05647;
+      --sunny: #ffbe3b;
+      --sunny-dark: #d99316;
+      --mint: #38c98a;
+      --mint-dark: #229e68;
+      --sky: #4db8ff;
+      --sky-dark: #228be6;
+      --berry: #a86bff;
+      --berry-dark: #7d42d9;
+      --cocoa: #4a3428;
+      --cocoa-soft: #755948;
+
+      --radius-sm: 14px;
+      --radius-md: 22px;
+      --radius-lg: 32px;
+      --shadow-card: 0 10px 26px rgba(74, 52, 40, 0.12);
+      --shadow-btn: 0 6px 0 rgba(74, 52, 40, 0.18);
+      --font-display: 'Comic Sans MS', 'Fredoka', 'Chalkboard SE', cursive, sans-serif;
+      --font-body: 'Comic Sans MS', 'Nunito', 'Trebuchet MS', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100vh;
+      font-family: var(--font-body);
+      color: var(--cocoa);
+      background-color: var(--bg-cream);
+      overflow-x: hidden;
+    }
+
+    /* Cozy pastel restaurant awning/wallpaper backdrop */
+    .restaurant-bg {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(255, 224, 236, 0.7) 0%, transparent 45%),
+        radial-gradient(circle at 85% 25%, rgba(223, 247, 235, 0.75) 0%, transparent 45%),
+        radial-gradient(circle at 50% 85%, rgba(255, 243, 196, 0.8) 0%, transparent 50%),
+        repeating-linear-gradient(
+          90deg,
+          #fff9f0 0px,
+          #fff9f0 48px,
+          #fff2e2 48px,
+          #fff2e2 96px
+        );
+    }
+
+    /* Optional custom background image layer */
+    .custom-bg-img {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      pointer-events: none;
+    }
+    .custom-bg-img.loaded {
+      opacity: 0.25;
+    }
+
+    /* Main app wrapper */
+    #app {
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 16px 24px;
+    }
+
+    /* Screen visibility */
+    .screen {
+      display: none;
+      width: 100%;
+      max-width: 1180px;
+      flex-direction: column;
+      align-items: center;
+      animation: fadeInUp 0.35s ease;
+    }
+    .screen.active {
+      display: flex;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* =====================================================================
+       2. KID-FRIENDLY BUBBLE BUTTONS & SHARED UI
+       ===================================================================== */
+    .btn {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: clamp(1rem, 1.8vw, 1.25rem);
+      padding: 12px 24px;
+      border: 3px solid rgba(255, 255, 255, 0.8);
+      border-radius: 999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: #ffffff;
+      background: linear-gradient(180deg, var(--coral) 0%, var(--coral-dark) 100%);
+      box-shadow: 0 6px 0 rgba(168, 52, 41, 0.35), 0 10px 18px rgba(74, 52, 40, 0.14);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.15s ease;
+      text-shadow: 0 2px 3px rgba(0, 0, 0, 0.16);
+      min-height: 48px;
+    }
+    .btn:hover:not(:disabled) {
+      filter: brightness(1.06);
+      transform: translateY(-2px);
+    }
+    .btn:active:not(:disabled) {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 rgba(168, 52, 41, 0.35);
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      filter: grayscale(0.3);
+    }
+
+    .btn-mint {
+      background: linear-gradient(180deg, var(--mint) 0%, var(--mint-dark) 100%);
+      box-shadow: 0 6px 0 rgba(21, 117, 75, 0.35), 0 10px 18px rgba(74, 52, 40, 0.12);
+    }
+    .btn-sunny {
+      background: linear-gradient(180deg, #ffd15c 0%, var(--sunny-dark) 100%);
+      color: #4a3428;
+      text-shadow: none;
+      box-shadow: 0 6px 0 rgba(166, 108, 12, 0.35), 0 10px 18px rgba(74, 52, 40, 0.12);
+    }
+    .btn-sky {
+      background: linear-gradient(180deg, var(--sky) 0%, var(--sky-dark) 100%);
+      box-shadow: 0 6px 0 rgba(21, 96, 166, 0.35), 0 10px 18px rgba(74, 52, 40, 0.12);
+    }
+    .btn-berry {
+      background: linear-gradient(180deg, var(--berry) 0%, var(--berry-dark) 100%);
+      box-shadow: 0 6px 0 rgba(90, 41, 166, 0.35), 0 10px 18px rgba(74, 52, 40, 0.12);
+    }
+    .btn-cream {
+      background: #ffffff;
+      color: var(--cocoa);
+      border: 3px solid #f0d7c2;
+      text-shadow: none;
+      box-shadow: 0 5px 0 #e6c6ab;
+    }
+    .btn-sm {
+      font-size: 0.98rem;
+      padding: 8px 16px;
+      min-height: 42px;
+    }
+    .btn-lg {
+      font-size: clamp(1.3rem, 2.5vw, 1.75rem);
+      padding: 16px 42px;
+      min-height: 62px;
+    }
+
+    /* Persistent Top Bar inside Levels */
+    .top-bar {
+      width: 100%;
+      max-width: 1180px;
+      display: none;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(8px);
+      border: 3px solid #f5dcc7;
+      border-radius: var(--radius-md);
+      padding: 10px 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 6px 18px rgba(74, 52, 40, 0.08);
+    }
+    .top-bar.visible {
+      display: flex;
+    }
+    .top-bar-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .level-badge {
+      font-family: var(--font-display);
+      font-size: clamp(1.05rem, 2vw, 1.35rem);
+      font-weight: 700;
+      color: var(--cocoa);
+      background: var(--bg-butter);
+      border: 2px solid #f2d06b;
+      padding: 6px 16px;
+      border-radius: 999px;
+    }
+
+    /* Collapsible Teacher Tip Banner */
+    .teacher-tip-box {
+      width: 100%;
+      max-width: 1180px;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      background: #fff9db;
+      border: 3px dashed #f5b942;
+      border-radius: var(--radius-sm);
+      padding: 12px 18px;
+      margin-bottom: 14px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #6b4714;
+      animation: fadeInUp 0.2s ease;
+    }
+    .teacher-tip-box.open {
+      display: flex;
+    }
+
+    /* Reusable Food Visual Container (supports real PNG + crisp SVG/Emoji fallback) */
+    .food-visual {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+    }
+    .food-visual .food-fallback {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .food-visual img.food-custom-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      pointer-events: none;
+    }
+    .food-visual img.food-custom-img.loaded {
+      opacity: 1;
+    }
+    .food-visual img.food-custom-img.loaded + .food-fallback {
+      opacity: 0;
+    }
+
+    /* =====================================================================
+       3. TITLE SCREEN
+       ===================================================================== */
+    .title-card {
+      width: 100%;
+      max-width: 780px;
+      background: rgba(255, 255, 255, 0.94);
+      border: 5px solid #ffd5b8;
+      border-radius: var(--radius-lg);
+      padding: clamp(20px, 4vw, 36px);
+      text-align: center;
+      box-shadow: var(--shadow-card);
+      margin-top: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Pastel striped awning at top of card */
+    .awning {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 22px;
+      background: repeating-linear-gradient(
+        90deg,
+        #ff8a7a 0px,
+        #ff8a7a 36px,
+        #fff8ee 36px,
+        #fff8ee 72px
+      );
+      border-bottom: 3px solid #f0cbb0;
+    }
+
+    .cover-stage {
+      position: relative;
+      width: 100%;
+      max-width: 560px;
+      height: clamp(200px, 34vw, 290px);
+      margin: 18px auto 18px;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 4px solid #ffe0c2;
+      background: linear-gradient(135deg, #ffe8d6 0%, #fff3c4 50%, #dff7eb 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 0 24px rgba(255, 160, 120, 0.2);
+    }
+
+    .cover-custom-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      z-index: 2;
+      transition: opacity 0.35s ease;
+    }
+    .cover-custom-img.loaded {
+      opacity: 1;
+    }
+
+    /* Animated fallback cover banner */
+    .cover-fallback {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 16px;
+      position: relative;
+    }
+    .cover-float-row {
+      display: flex;
+      gap: clamp(10px, 2.5vw, 22px);
+      align-items: center;
+      justify-content: center;
+    }
+    .cover-food-bubble {
+      width: clamp(60px, 11vw, 84px);
+      height: clamp(60px, 11vw, 84px);
+      background: #ffffff;
+      border-radius: 50%;
+      border: 3px solid #ffd4a8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+      box-shadow: 0 8px 16px rgba(74, 52, 40, 0.12);
+      animation: floatBob 2.8s ease-in-out infinite;
+    }
+    .cover-food-bubble:nth-child(2) { animation-delay: 0.3s; }
+    .cover-food-bubble:nth-child(3) { animation-delay: 0.6s; }
+    .cover-food-bubble:nth-child(4) { animation-delay: 0.9s; }
+    .cover-food-bubble:nth-child(5) { animation-delay: 1.2s; }
+
+    @keyframes floatBob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .cover-belt-strip {
+      width: 88%;
+      height: 16px;
+      border-radius: 999px;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffb78a 0px,
+        #ffb78a 20px,
+        #ff9b6a 20px,
+        #ff9b6a 40px
+      );
+      background-size: 40px 100%;
+      animation: beltScroll 1.2s linear infinite;
+      border: 2px solid #e88354;
+    }
+    @keyframes beltScroll {
+      from { background-position: 0 0; }
+      to { background-position: 40px 0; }
+    }
+
+    .game-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.2rem, 5.5vw, 3.6rem);
+      margin: 6px 0 6px;
+      color: var(--coral-dark);
+      text-shadow: 0 4px 0 #ffe0c2;
+      letter-spacing: 0.5px;
+    }
+    .game-subtitle {
+      font-size: clamp(1rem, 2.2vw, 1.28rem);
+      color: var(--cocoa-soft);
+      font-weight: 700;
+      margin: 0 0 22px;
+    }
+
+    /* =====================================================================
+       4. LEVEL SELECT HUB
+       ===================================================================== */
+    .hub-header {
+      text-align: center;
+      margin: 8px 0 20px;
+    }
+    .hub-header h2 {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      margin: 0 0 6px;
+      color: var(--cocoa);
+    }
+    .hub-grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 20px;
+    }
+    .level-card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: var(--radius-lg);
+      border: 4px solid #f3d7c1;
+      padding: 24px 20px;
+      text-align: center;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      cursor: pointer;
+    }
+    .level-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 16px 32px rgba(74, 52, 40, 0.16);
+    }
+    .level-card.l1 { border-color: #c7b8ff; background: linear-gradient(180deg, #ffffff 0%, #f5f0ff 100%); }
+    .level-card.l2 { border-color: #ffd08a; background: linear-gradient(180deg, #ffffff 0%, #fff7e6 100%); }
+    .level-card.l3 { border-color: #9be8c3; background: linear-gradient(180deg, #ffffff 0%, #edfdf5 100%); }
+
+    .level-icon-badge {
+      width: 86px;
+      height: 86px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.8rem;
+      background: #ffffff;
+      box-shadow: 0 6px 14px rgba(74, 52, 40, 0.1);
+      border: 3px solid rgba(74, 52, 40, 0.08);
+    }
+    .level-num {
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 4px 14px;
+      border-radius: 999px;
+      background: var(--bg-peach);
+      color: var(--cocoa);
+      font-weight: 700;
+    }
+    .level-card h3 {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      margin: 0;
+      color: var(--cocoa);
+    }
+    .level-card p {
+      margin: 0;
+      font-size: 1.02rem;
+      color: var(--cocoa-soft);
+      line-height: 1.45;
+    }
+
+    /* =====================================================================
+       5. LEVEL 1: FOOD HUNT (FLASHLIGHT HIDDEN OBJECTS)
+       ===================================================================== */
+    .l1-status-bar {
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.94);
+      border: 3px solid #e6d5ff;
+      border-radius: var(--radius-md);
+      padding: 10px 18px;
+      margin-bottom: 12px;
+    }
+    .l1-counter {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      color: var(--berry-dark);
+      font-weight: 700;
+    }
+    .l1-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .l1-mini-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: #f2eef7;
+      border: 2px solid #ddd2ee;
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: #8c7b9e;
+      transition: all 0.25s ease;
+    }
+    .l1-mini-badge.found {
+      background: var(--bg-mint);
+      border-color: var(--mint);
+      color: #166e46;
+      transform: scale(1.06);
+    }
+
+    .hunt-stage {
+      position: relative;
+      width: 100%;
+      height: clamp(380px, 60vh, 560px);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      border: 5px solid #ffd5b8;
+      box-shadow: var(--shadow-card);
+      background:
+        radial-gradient(circle at 20% 80%, #ffe6c9 0%, transparent 45%),
+        radial-gradient(circle at 80% 25%, #e2f5ea 0%, transparent 45%),
+        linear-gradient(180deg, #fff4e4 0%, #ffe2c6 62%, #f4caa4 62%, #e8b88c 100%);
+      touch-action: none;
+      cursor: none;
+    }
+
+    .hunt-bg-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+    .hunt-bg-img.loaded {
+      opacity: 1;
+    }
+
+    /* Cozy pastel restaurant room decorations for fallback background */
+    .hunt-decor {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.85;
+    }
+
+    .hunt-food-item {
+      position: absolute;
+      width: clamp(86px, 11vw, 122px);
+      height: clamp(86px, 11vw, 122px);
+      padding: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.88);
+      border: 4px solid #ffe0b5;
+      box-shadow: 0 8px 18px rgba(74, 52, 40, 0.2);
+      cursor: pointer;
+      transform: translate(-50%, -50%) scale(1);
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .hunt-food-item:hover {
+      transform: translate(-50%, -50%) scale(1.08);
+    }
+    .hunt-food-item.found {
+      border-color: var(--mint);
+      background: #ffffff;
+      box-shadow: 0 0 0 6px rgba(56, 201, 138, 0.35), 0 10px 24px rgba(0, 0, 0, 0.22);
+      z-index: 6;
+      animation: popFound 0.55s ease;
+    }
+    @keyframes popFound {
+      0% { transform: translate(-50%, -50%) scale(1); }
+      45% { transform: translate(-50%, -50%) scale(1.3); }
+      100% { transform: translate(-50%, -50%) scale(1.06); }
+    }
+
+    .hunt-food-label {
+      position: absolute;
+      bottom: -32px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--mint);
+      color: #ffffff;
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      padding: 3px 14px;
+      border-radius: 999px;
+      white-space: nowrap;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .hunt-food-item.found .hunt-food-label {
+      opacity: 1;
+    }
+
+    /* Flashlight dark overlay */
+    .flashlight-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      pointer-events: none;
+      background: radial-gradient(
+        circle 118px at var(--fx, 50%) var(--fy, 50%),
+        rgba(255, 250, 220, 0.04) 0%,
+        rgba(20, 14, 30, 0.15) 55%,
+        rgba(14, 10, 26, 0.96) 100%
+      );
+      transition: opacity 0.7s ease;
+    }
+    .flashlight-overlay.lights-on {
+      opacity: 0;
+    }
+
+    /* Ring indicator around flashlight */
+    .flashlight-ring {
+      position: absolute;
+      width: 230px;
+      height: 230px;
+      border-radius: 50%;
+      border: 3px dashed rgba(255, 238, 160, 0.45);
+      transform: translate(-50%, -50%);
+      left: var(--fx, 50%);
+      top: var(--fy, 50%);
+      z-index: 6;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+    .flashlight-ring.lights-on {
+      opacity: 0;
+    }
+
+    /* Big floating discovery banner */
+    .l1-toast {
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%) scale(0.85);
+      background: #ffffff;
+      border: 4px solid var(--sunny);
+      border-radius: 999px;
+      padding: 10px 28px;
+      font-family: var(--font-display);
+      font-size: clamp(1.3rem, 3vw, 1.9rem);
+      color: var(--cocoa);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+      z-index: 12;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .l1-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
+
+    /* Vocabulary Review Overlay */
+    .review-modal {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      background: rgba(255, 248, 238, 0.96);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      text-align: center;
+      overflow-y: auto;
+      animation: fadeInUp 0.35s ease;
+    }
+    .review-modal.show {
+      display: flex;
+    }
+    .review-modal h3 {
+      font-family: var(--font-display);
+      font-size: clamp(1.6rem, 3.2vw, 2.2rem);
+      color: var(--coral-dark);
+      margin: 0 0 6px;
+    }
+    .review-cards {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 14px;
+      margin: 16px 0 22px;
+      width: 100%;
+    }
+    .review-card {
+      width: clamp(120px, 16vw, 155px);
+      background: #ffffff;
+      border: 4px solid #ffd8b5;
+      border-radius: var(--radius-md);
+      padding: 14px 10px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 6px 14px rgba(74, 52, 40, 0.1);
+      transition: transform 0.18s ease, border-color 0.18s ease;
+    }
+    .review-card:hover {
+      transform: translateY(-5px) scale(1.03);
+      border-color: var(--sunny);
+    }
+    .review-card.speaking {
+      border-color: var(--mint);
+      background: var(--bg-mint);
+      transform: scale(1.08);
+    }
+    .review-card-img {
+      width: 74px;
+      height: 74px;
+    }
+    .review-card-word {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      color: var(--cocoa);
+    }
+
+    /* =====================================================================
+       6. LEVEL 2: RESTAURANT ORDERING
+       ===================================================================== */
+    .l2-layout {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 270px;
+      gap: 16px;
+      align-items: start;
+    }
+    @media (max-width: 880px) {
+      .l2-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .l2-stage-card {
+      background: rgba(255, 255, 255, 0.95);
+      border: 4px solid #ffd8a8;
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .dialogue-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .dialogue-row.customer-row {
+      flex-direction: row-reverse;
+    }
+
+    .char-avatar {
+      width: clamp(78px, 11vw, 108px);
+      height: clamp(78px, 11vw, 108px);
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: var(--bg-peach);
+      border: 4px solid #ffbe85;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      box-shadow: 0 6px 14px rgba(74, 52, 40, 0.1);
+    }
+    .customer-row .char-avatar {
+      background: var(--bg-sky);
+      border-color: #8fd0ff;
+    }
+
+    .speech-bubble {
+      flex: 1;
+      background: #fffaf2;
+      border: 3px solid #f5cba0;
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      position: relative;
+      transition: all 0.25s ease;
+    }
+    .customer-row .speech-bubble {
+      background: #f2faff;
+      border-color: #9ad4ff;
+    }
+    .speech-bubble.locked {
+      opacity: 0.55;
+      filter: grayscale(0.2);
+    }
+    .speech-bubble.speaking {
+      box-shadow: 0 0 0 5px rgba(56, 201, 138, 0.4);
+      border-color: var(--mint);
+    }
+
+    .speaker-tag {
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--coral-dark);
+      margin-bottom: 4px;
+      display: block;
+    }
+    .customer-row .speaker-tag {
+      color: var(--sky-dark);
+    }
+
+    .dialogue-text {
+      font-family: var(--font-display);
+      font-size: clamp(1.15rem, 2.2vw, 1.55rem);
+      line-height: 1.5;
+      color: var(--cocoa);
+    }
+
+    .blank-slot {
+      display: inline-block;
+      min-width: 105px;
+      padding: 2px 12px;
+      margin: 0 4px;
+      border-bottom: 4px dashed var(--coral);
+      background: #fff1dc;
+      border-radius: 10px;
+      text-align: center;
+      color: var(--coral-dark);
+      transition: all 0.2s ease;
+    }
+    .blank-slot.filled {
+      border-bottom-style: solid;
+      border-color: var(--mint);
+      background: var(--bg-mint);
+      color: #156e45;
+    }
+
+    .meal-choices {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .meal-btn {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      padding: 9px 20px;
+      border-radius: 999px;
+      border: 3px solid #f0c27b;
+      background: #ffffff;
+      color: var(--cocoa);
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.15s ease;
+      box-shadow: 0 4px 0 #e6c697;
+    }
+    .meal-btn:hover:not(:disabled) {
+      background: var(--bg-butter);
+      transform: translateY(-2px);
+    }
+    .meal-btn.correct {
+      background: var(--mint);
+      color: #ffffff;
+      border-color: var(--mint-dark);
+      box-shadow: 0 4px 0 var(--mint-dark);
+    }
+    .meal-btn.wrong {
+      animation: shake 0.35s ease;
+      background: #ffe0e0;
+      border-color: var(--coral);
+    }
+
+    .l2-feedback {
+      min-height: 36px;
+      border-radius: var(--radius-sm);
+      padding: 8px 14px;
+      font-weight: 800;
+      font-size: 1.02rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #fff5e6;
+      color: var(--cocoa-soft);
+      border: 2px solid #f3d7b5;
+    }
+    .l2-feedback.good {
+      background: var(--bg-mint);
+      color: #156e45;
+      border-color: var(--mint);
+    }
+    .l2-feedback.hint {
+      background: #fff0f0;
+      color: #b5382c;
+      border-color: #ff9c91;
+    }
+
+    /* Clock Panel */
+    .clock-panel {
+      background: rgba(255, 255, 255, 0.96);
+      border: 4px solid #ffd584;
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      text-align: center;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .clock-title {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      color: var(--cocoa);
+      margin: 0;
+    }
+    .digital-clock {
+      font-family: var(--font-display);
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #ffffff;
+      background: var(--cocoa);
+      padding: 6px 20px;
+      border-radius: 14px;
+      letter-spacing: 1px;
+      border: 3px solid #755948;
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+    .clock-legend {
+      width: 100%;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--cocoa-soft);
+      background: #fff9ee;
+      border-radius: 12px;
+      padding: 8px 10px;
+      text-align: left;
+      line-height: 1.5;
+      border: 2px solid #f5e2c4;
+    }
+
+    /* Interactive Food Menu & Tray */
+    .menu-section {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      border: 4px solid #c5ebd9;
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      margin-top: 14px;
+      box-shadow: var(--shadow-card);
+    }
+    .menu-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .menu-header h3 {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      margin: 0;
+      color: var(--cocoa);
+    }
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(100px, 1fr));
+      gap: 12px;
+    }
+    @media (max-width: 680px) {
+      .menu-grid {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      }
+    }
+    .menu-item-btn {
+      background: #fffcf7;
+      border: 3px solid #f0d7c2;
+      border-radius: var(--radius-md);
+      padding: 12px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.16s ease;
+      box-shadow: 0 5px 0 #ebd0b9;
+    }
+    .menu-item-btn:hover:not(:disabled) {
+      transform: translateY(-4px);
+      border-color: var(--sky);
+    }
+    .menu-item-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .menu-item-btn.selected {
+      background: var(--bg-mint);
+      border-color: var(--mint);
+      box-shadow: 0 5px 0 var(--mint-dark);
+      transform: translateY(-3px);
+    }
+    .menu-item-visual {
+      width: 66px;
+      height: 66px;
+    }
+    .menu-item-name {
+      font-family: var(--font-display);
+      font-size: 1.12rem;
+      color: var(--cocoa);
+    }
+
+    /* Serving Tray */
+    .serving-tray-bar {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      background: #fff6e8;
+      border: 3px dashed #e8ba84;
+      border-radius: var(--radius-md);
+      padding: 12px 18px;
+    }
+    .tray-visual {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .tray-plate {
+      min-width: 170px;
+      min-height: 68px;
+      background: linear-gradient(180deg, #ffffff 0%, #f5efe6 100%);
+      border: 4px solid #d4b89c;
+      border-radius: 999px;
+      padding: 6px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.06);
+    }
+    .tray-food-slot {
+      width: 52px;
+      height: 52px;
+      animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.3); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    /* =====================================================================
+       7. LEVEL 3: FOOD EXPRESS – TIMING STOP CHALLENGE
+       ===================================================================== */
+    .l3-controls-bar {
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.94);
+      border: 3px solid #a9e8c8;
+      border-radius: var(--radius-md);
+      padding: 10px 16px;
+      margin-bottom: 12px;
+    }
+    .l3-stats {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .stat-pill {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      padding: 6px 16px;
+      border-radius: 999px;
+      background: var(--bg-butter);
+      border: 2px solid #f0cb65;
+      color: var(--cocoa);
+    }
+    .stat-pill.streak {
+      background: var(--bg-pink);
+      border-color: #ff9ec4;
+    }
+    .speed-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .speed-label {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      color: var(--cocoa-soft);
+      margin-right: 4px;
+    }
+    .speed-btn {
+      font-family: var(--font-display);
+      font-size: 0.96rem;
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 2px solid #d8c3b0;
+      background: #ffffff;
+      color: var(--cocoa);
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .speed-btn.active {
+      background: var(--sky);
+      color: #ffffff;
+      border-color: var(--sky-dark);
+    }
+
+    .l3-top-stage {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    @media (max-width: 820px) {
+      .l3-top-stage {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Order Ticket (Single Target Order) */
+    .order-ticket {
+      background: #fffef9;
+      border: 4px solid #ffd584;
+      border-radius: var(--radius-lg);
+      padding: 14px 18px;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .ticket-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      border-bottom: 2px dashed #f0d7b8;
+      padding-bottom: 8px;
+    }
+    .ticket-title {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      color: var(--coral-dark);
+      margin: 0;
+    }
+    .order-target-card {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      background: #fff6e8;
+      border: 3px solid #f5d2a4;
+      border-radius: var(--radius-md);
+      padding: 10px 18px;
+    }
+    .order-target-pic {
+      width: 68px;
+      height: 68px;
+      flex-shrink: 0;
+    }
+    .order-target-card.hide-pic .order-target-pic {
+      display: none;
+    }
+    .order-target-text {
+      font-family: var(--font-display);
+      font-size: clamp(1.3rem, 2.5vw, 1.85rem);
+      color: var(--cocoa);
+    }
+    .order-target-word {
+      color: var(--coral-dark);
+      text-decoration: underline wavy #ffbe3b;
+      text-underline-offset: 5px;
+    }
+
+    /* Chef Panel */
+    .chef-panel {
+      background: rgba(255, 255, 255, 0.95);
+      border: 4px solid #ffb8b8;
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .chef-avatar {
+      width: 92px;
+      height: 92px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: #fff0e6;
+      border: 4px solid #ffb08a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .chef-bubble {
+      flex: 1;
+      background: #fff8ee;
+      border: 3px solid #ffd0a6;
+      border-radius: 18px;
+      padding: 12px 14px;
+      font-family: var(--font-display);
+      font-size: 1.12rem;
+      color: var(--cocoa);
+      min-height: 68px;
+      display: flex;
+      align-items: center;
+    }
+    .chef-bubble.happy {
+      background: var(--bg-mint);
+      border-color: var(--mint);
+      color: #146941;
+    }
+    .chef-bubble.oops {
+      background: #fff0f0;
+      border-color: var(--coral);
+      color: #b5382c;
+    }
+
+    /* Conveyor Belt Track + Center Catch Zone */
+    .conveyor-wrapper {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      border: 5px solid #ffd5b8;
+      border-radius: var(--radius-lg);
+      padding: 16px 0 22px;
+      box-shadow: var(--shadow-card);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .conveyor-label {
+      text-align: center;
+      font-family: var(--font-display);
+      font-size: 1.08rem;
+      color: var(--cocoa-soft);
+      margin-bottom: 10px;
+      padding: 0 12px;
+    }
+    .belt-track {
+      position: relative;
+      width: 100%;
+      height: 184px;
+      background: linear-gradient(180deg, #ffe9d6 0%, #ffe9d6 62%, #7d685c 62%, #635147 100%);
+      border-top: 4px solid #f0ccb0;
+      border-bottom: 8px solid #4a3b33;
+      overflow: hidden;
+    }
+    /* Moving belt slats */
+    .belt-slats {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 38%;
+      background: repeating-linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.16) 0px,
+        rgba(255, 255, 255, 0.16) 16px,
+        transparent 16px,
+        transparent 48px
+      );
+      pointer-events: none;
+    }
+
+    /* Glowing Center Catch Zone */
+    .catch-zone-frame {
+      position: absolute;
+      top: 6px;
+      bottom: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 152px;
+      border: 5px dashed #ff4d4d;
+      border-radius: 26px;
+      background: rgba(255, 235, 130, 0.28);
+      box-shadow: 0 0 24px rgba(255, 180, 50, 0.55), inset 0 0 18px rgba(255, 255, 255, 0.5);
+      z-index: 6;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 2px 0;
+      animation: pulseZone 1.4s ease-in-out infinite;
+    }
+    @keyframes pulseZone {
+      0%, 100% { box-shadow: 0 0 16px rgba(255, 120, 90, 0.45), inset 0 0 12px rgba(255, 255, 255, 0.4); }
+      50% { box-shadow: 0 0 30px rgba(255, 190, 59, 0.85), inset 0 0 20px rgba(255, 255, 255, 0.7); }
+    }
+    .catch-zone-tag {
+      background: #ff4d4d;
+      color: #ffffff;
+      font-family: var(--font-display);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      padding: 2px 10px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+    .catch-zone-arrow {
+      font-size: 1.2rem;
+      line-height: 1;
+      filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.25));
+    }
+
+    .belt-plate {
+      position: absolute;
+      top: 24px;
+      width: 126px;
+      height: 132px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      will-change: transform;
+      z-index: 4;
+      pointer-events: none;
+    }
+    .belt-plate-dish {
+      width: 108px;
+      height: 108px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #ffffff 0%, #fff6ec 65%, #ead8c5 100%);
+      border: 4px solid #ffd29d;
+      box-shadow: 0 10px 0 #c9b099, 0 14px 18px rgba(0, 0, 0, 0.22);
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .belt-plate.caught-highlight .belt-plate-dish {
+      border-color: #38c98a;
+      box-shadow: 0 0 0 6px rgba(56, 201, 138, 0.45), 0 10px 0 #229e68;
+      transform: scale(1.1);
+    }
+
+    /* Giant Tactile Red STOP Button */
+    .stop-control-area {
+      margin-top: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-stop-big {
+      font-family: var(--font-display);
+      font-size: clamp(1.6rem, 3.6vw, 2.3rem);
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #ffffff;
+      background: linear-gradient(180deg, #ff5959 0%, #d92626 100%);
+      border: 5px solid #ffffff;
+      border-radius: 999px;
+      padding: 16px 64px;
+      min-width: 240px;
+      cursor: pointer;
+      box-shadow: 0 10px 0 #991717, 0 16px 28px rgba(217, 38, 38, 0.35);
+      text-shadow: 0 3px 4px rgba(0, 0, 0, 0.25);
+      transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.15s ease;
+    }
+    .btn-stop-big:hover:not(:disabled) {
+      filter: brightness(1.08);
+      transform: translateY(-2px);
+    }
+    .btn-stop-big:active:not(:disabled) {
+      transform: translateY(7px);
+      box-shadow: 0 3px 0 #991717, 0 6px 12px rgba(217, 38, 38, 0.3);
+    }
+    .btn-stop-big:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+    .stop-hint {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--cocoa-soft);
+    }
+
+    /* Full-Screen Food Reveal Overlay (100vw x 100vh) */
+    .fullscreen-reveal {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: clamp(16px, 3vh, 32px) 20px;
+      background: radial-gradient(circle at center, #fffdf8 0%, #ffe8d6 100%);
+      text-align: center;
+      overflow-y: auto;
+      animation: popIn 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .fullscreen-reveal.show {
+      display: flex;
+    }
+    .fullscreen-reveal.is-correct {
+      background: radial-gradient(circle at center, #ffffff 0%, #dff7eb 75%, #b8efd4 100%);
+    }
+    .fullscreen-reveal.is-wrong {
+      background: radial-gradient(circle at center, #ffffff 0%, #ffe8e6 75%, #ffd0cc 100%);
+    }
+
+    .reveal-chef-banner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 4px solid #ffd584;
+      border-radius: 999px;
+      padding: 10px 26px;
+      max-width: 92vw;
+      box-shadow: 0 8px 20px rgba(74, 52, 40, 0.12);
+    }
+    .fullscreen-reveal.is-correct .reveal-chef-banner {
+      border-color: var(--mint);
+    }
+    .fullscreen-reveal.is-wrong .reveal-chef-banner {
+      border-color: var(--coral);
+    }
+    .reveal-feedback-text {
+      font-family: var(--font-display);
+      font-size: clamp(1.2rem, 2.8vw, 1.9rem);
+      color: var(--cocoa);
+      margin: 0;
+    }
+
+    .reveal-center-stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      flex: 1;
+      width: 100%;
+      padding: 10px 0;
+    }
+    .reveal-food-visual {
+      width: clamp(190px, 38vmin, 340px);
+      height: clamp(190px, 38vmin, 340px);
+      background: #ffffff;
+      border-radius: 50%;
+      border: 8px solid #ffd584;
+      padding: 24px;
+      box-shadow: 0 18px 40px rgba(74, 52, 40, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: floatBob 2.4s ease-in-out infinite;
+    }
+    .fullscreen-reveal.is-correct .reveal-food-visual {
+      border-color: var(--mint);
+    }
+    .fullscreen-reveal.is-wrong .reveal-food-visual {
+      border-color: var(--coral);
+    }
+
+    .reveal-word-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .reveal-food-name {
+      font-family: var(--font-display);
+      font-size: clamp(2.8rem, 8vw, 5.2rem);
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: var(--cocoa);
+      text-shadow: 0 5px 0 rgba(255, 255, 255, 0.9);
+      margin: 0;
+      line-height: 1.05;
+    }
+
+    .reveal-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      padding-bottom: 6px;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-8px) rotate(-4deg); }
+      40% { transform: translateX(8px) rotate(4deg); }
+      60% { transform: translateX(-6px) rotate(-3deg); }
+      80% { transform: translateX(6px) rotate(3deg); }
+    }
+
+    /* Confetti burst particles */
+    .confetti-piece {
+      position: fixed;
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      z-index: 120;
+      pointer-events: none;
+      animation: confettiFall 1.8s ease-out forwards;
+    }
+    @keyframes confettiFall {
+      0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(540deg); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Cozy pastel restaurant background + optional custom background image -->
+  <div class="restaurant-bg"></div>
+  <img id="globalBgImg" class="custom-bg-img" alt="" />
+
+  <div id="app">
+    <!-- ===============================================================
+         PERSISTENT TOP BAR (Shown inside Levels 1, 2, 3)
+         =============================================================== -->
+    <header id="topBar" class="top-bar">
+      <div class="top-bar-group">
+        <button id="btnHomeLevels" class="btn btn-cream btn-sm" type="button">🏠 Home / Levels</button>
+        <span id="topLevelBadge" class="level-badge">Level 1</span>
+      </div>
+      <div class="top-bar-group">
+        <button id="btnTeacherTip" class="btn btn-sunny btn-sm" type="button">💡 Teacher Tip</button>
+        <button id="btnSoundToggle" class="btn btn-sky btn-sm" type="button">🔊 Sound: ON</button>
+      </div>
+    </header>
+
+    <!-- Collapsible Classroom Tip Banner -->
+    <div id="teacherTipBox" class="teacher-tip-box" role="note">
+      <span style="font-size: 1.5rem;">👩‍🏫</span>
+      <span id="teacherTipText">Classroom Tip goes here.</span>
+    </div>
+
+    <!-- ===============================================================
+         SCREEN 0: TITLE SCREEN
+         =============================================================== -->
+    <section id="screenTitle" class="screen active">
+      <div class="title-card">
+        <div class="awning"></div>
+
+        <div class="cover-stage">
+          <!-- Custom cover GIF/image (automatically fades in if file exists) -->
+          <img id="coverCustomImg" class="cover-custom-img" alt="Food Express Cover" />
+
+          <!-- Cheerful animated pastel fallback cover -->
+          <div class="cover-fallback" id="coverFallback">
+            <div class="cover-float-row" id="coverFoodRow"></div>
+            <div class="cover-belt-strip"></div>
+            <div style="font-family: var(--font-display); font-size: 1.1rem; color: var(--cocoa-soft); margin-top: 4px;">
+              🍽️ Welcome to Our English Restaurant! 🍽️
+            </div>
+          </div>
+        </div>
+
+        <h1 class="game-title">Food Express</h1>
+        <p class="game-subtitle">Fun English Vocabulary, Restaurant Ordering &amp; Conveyor Challenge!</p>
+
+        <div style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
+          <button id="btnStartGame" class="btn btn-lg btn-mint" type="button">▶ Start Game</button>
+          <button id="btnTitleSound" class="btn btn-cream" type="button">🔊 Sound: ON</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===============================================================
+         SCREEN 1: LEVEL SELECT HUB
+         =============================================================== -->
+    <section id="screenHub" class="screen">
+      <div class="hub-header">
+        <h2>Choose a Level!</h2>
+        <p style="margin: 0; color: var(--cocoa-soft); font-weight: 700; font-size: 1.1rem;">
+          Tap any activity below to play with your class.
+        </p>
+      </div>
+
+      <div class="hub-grid">
+        <!-- Level 1 Card -->
+        <div class="level-card l1" data-level="1" role="button" tabindex="0">
+          <div class="level-icon-badge">🔦</div>
+          <span class="level-num">Level 1</span>
+          <h3>Food Hunt</h3>
+          <p>Explore the dark room with a flashlight to discover all 5 hidden foods and practice saying each word!</p>
+          <button class="btn btn-berry" type="button">Play Level 1</button>
+        </div>
+
+        <!-- Level 2 Card -->
+        <div class="level-card l2" data-level="2" role="button" tabindex="0">
+          <div class="level-icon-badge">🕒</div>
+          <span class="level-num">Level 2</span>
+          <h3>Restaurant Ordering</h3>
+          <p>Check the clock, guess breakfast, lunch, or dinner, and role-play ordering food with a partner!</p>
+          <button class="btn btn-sunny" type="button">Play Level 2</button>
+        </div>
+
+        <!-- Level 3 Card -->
+        <div class="level-card l3" data-level="3" role="button" tabindex="0">
+          <div class="level-icon-badge">👨‍🍳</div>
+          <span class="level-num">Level 3</span>
+          <h3>Food Express</h3>
+          <p>Watch the food zoom along the conveyor belt and hit the STOP button at the right moment to catch the order!</p>
+          <button class="btn btn-mint" type="button">Play Level 3</button>
+        </div>
+      </div>
+
+      <div style="margin-top: 22px;">
+        <button id="btnBackToTitle" class="btn btn-cream btn-sm" type="button">⬅ Back to Title</button>
+      </div>
+    </section>
+
+    <!-- ===============================================================
+         SCREEN 2: LEVEL 1 – FOOD HUNT
+         =============================================================== -->
+    <section id="screenLevel1" class="screen">
+      <div class="l1-status-bar">
+        <div id="l1Counter" class="l1-counter">Found: 0 / 5</div>
+        <div id="l1Badges" class="l1-badges"></div>
+        <button id="btnL1Reset" class="btn btn-cream btn-sm" type="button">🔄 Shuffle</button>
+      </div>
+
+      <div id="huntStage" class="hunt-stage">
+        <img id="huntBgImg" class="hunt-bg-img" alt="" />
+
+        <!-- Subtle pastel dining room SVG decor for fallback -->
+        <svg class="hunt-decor" viewBox="0 0 1000 560" preserveAspectRatio="none" aria-hidden="true">
+          <rect x="60" y="45" width="170" height="120" rx="18" fill="#dff4ff" stroke="#ffffff" stroke-width="8" />
+          <line x1="145" y1="45" x2="145" y2="165" stroke="#ffffff" stroke-width="6" />
+          <line x1="60" y1="105" x2="230" y2="105" stroke="#ffffff" stroke-width="6" />
+          <rect x="760" y="45" width="170" height="120" rx="18" fill="#dff4ff" stroke="#ffffff" stroke-width="8" />
+          <line x1="845" y1="45" x2="845" y2="165" stroke="#ffffff" stroke-width="6" />
+          <line x1="760" y1="105" x2="930" y2="105" stroke="#ffffff" stroke-width="6" />
+          <!-- Wooden dining counter -->
+          <rect x="120" y="345" width="760" height="24" rx="12" fill="#d9a16c" />
+        </svg>
+
+        <!-- Hidden food items injected by JS -->
+        <div id="huntItemsLayer"></div>
+
+        <!-- Dark Flashlight Overlay -->
+        <div id="flashlightOverlay" class="flashlight-overlay"></div>
+        <div id="flashlightRing" class="flashlight-ring"></div>
+
+        <!-- Floating discovery word toast -->
+        <div id="l1Toast" class="l1-toast">🍚 rice!</div>
+
+        <!-- Vocabulary Review Screen (shown when all 5 found) -->
+        <div id="l1ReviewModal" class="review-modal">
+          <h3>🎉 Awesome Detective Work!</h3>
+          <p style="margin: 0; font-weight: 700; color: var(--cocoa-soft); font-size: 1.08rem;">
+            Tap each food card to listen and say the word aloud together!
+          </p>
+          <div id="l1ReviewCards" class="review-cards"></div>
+          <div style="display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;">
+            <button id="btnL1PlayAgain" class="btn btn-cream" type="button">🔄 Play Again</button>
+            <button id="btnL1NextLevel" class="btn btn-mint" type="button">Next Level ➡</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===============================================================
+         SCREEN 3: LEVEL 2 – RESTAURANT ORDERING
+         =============================================================== -->
+    <section id="screenLevel2" class="screen">
+      <div class="l2-layout">
+        <!-- Left: Conversation Stage -->
+        <div class="l2-stage-card">
+          <!-- Waitress Row (Step 1) -->
+          <div class="dialogue-row">
+            <div class="char-avatar" aria-label="Waitress">
+              <!-- Cute SVG Waitress -->
+              <svg viewBox="0 0 100 100" width="90" height="90">
+                <circle cx="50" cy="42" r="24" fill="#ffdfc4" />
+                <path d="M26 38 Q30 14 50 14 Q70 14 74 38 Q68 24 50 24 Q32 24 26 38 Z" fill="#6b4226" />
+                <circle cx="42" cy="42" r="3" fill="#4a3428" />
+                <circle cx="58" cy="42" r="3" fill="#4a3428" />
+                <circle cx="35" cy="48" r="3.5" fill="#ff9e9e" opacity="0.6" />
+                <circle cx="65" cy="48" r="3.5" fill="#ff9e9e" opacity="0.6" />
+                <path d="M43 51 Q50 58 57 51" stroke="#c85a53" stroke-width="3" fill="none" stroke-linecap="round" />
+                <path d="M24 94 Q26 68 50 68 Q74 68 76 94 Z" fill="#ff7b6b" />
+                <path d="M38 68 L50 84 L62 68 Z" fill="#ffffff" />
+                <path d="M38 14 L62 14 L58 6 L42 6 Z" fill="#ffffff" stroke="#ff7b6b" stroke-width="2" />
+              </svg>
+            </div>
+            <div id="waitressBubble" class="speech-bubble">
+              <span class="speaker-tag">Step 1 · Waitress</span>
+              <div class="dialogue-text">
+                "What would you like for <span id="mealBlank" class="blank-slot">_____</span>?"
+              </div>
+              <div class="meal-choices" id="mealChoices">
+                <button class="meal-btn" data-meal="breakfast" type="button">🌅 breakfast</button>
+                <button class="meal-btn" data-meal="lunch" type="button">☀️ lunch</button>
+                <button class="meal-btn" data-meal="dinner" type="button">🌙 dinner</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Customer Row (Step 2) -->
+          <div class="dialogue-row customer-row">
+            <div class="char-avatar" aria-label="Customer">
+              <!-- Cute SVG Customer -->
+              <svg viewBox="0 0 100 100" width="90" height="90">
+                <circle cx="50" cy="43" r="24" fill="#ffe1c6" />
+                <path d="M25 40 Q28 16 50 15 Q72 16 75 40 Q66 26 50 26 Q34 26 25 40 Z" fill="#3b2f2f" />
+                <circle cx="42" cy="43" r="3" fill="#4a3428" />
+                <circle cx="58" cy="43" r="3" fill="#4a3428" />
+                <circle cx="35" cy="49" r="3.5" fill="#ff9e9e" opacity="0.6" />
+                <circle cx="65" cy="49" r="3.5" fill="#ff9e9e" opacity="0.6" />
+                <path d="M43 52 Q50 59 57 52" stroke="#c85a53" stroke-width="3" fill="none" stroke-linecap="round" />
+                <path d="M24 94 Q26 69 50 69 Q74 69 76 94 Z" fill="#4db8ff" />
+                <circle cx="50" cy="80" r="5" fill="#ffd15c" />
+              </svg>
+            </div>
+            <div id="customerBubble" class="speech-bubble locked">
+              <span class="speaker-tag">Step 2 · Customer</span>
+              <div class="dialogue-text">
+                "I would like some <span id="foodBlank1" class="blank-slot">_____</span> and <span id="foodBlank2" class="blank-slot">_____</span>."
+              </div>
+            </div>
+          </div>
+
+          <!-- Feedback strip -->
+          <div id="l2Feedback" class="l2-feedback">
+            👀 Look at the clock! Is it breakfast, lunch, or dinner?
+          </div>
+        </div>
+
+        <!-- Right: Analog + Digital Clock Panel -->
+        <div class="clock-panel">
+          <h3 class="clock-title">🕒 What time is it?</h3>
+          <svg id="analogClock" viewBox="0 0 160 160" width="150" height="150" aria-label="Analog Clock">
+            <circle cx="80" cy="80" r="72" fill="#fffdf8" stroke="#ffbe3b" stroke-width="8" />
+            <circle cx="80" cy="80" r="64" fill="none" stroke="#f5e1be" stroke-width="2" />
+            <!-- Clock numbers -->
+            <text x="80" y="30" text-anchor="middle" font-family="Fredoka, sans-serif" font-size="14" font-weight="700" fill="#4a3428">12</text>
+            <text x="132" y="85" text-anchor="middle" font-family="Fredoka, sans-serif" font-size="14" font-weight="700" fill="#4a3428">3</text>
+            <text x="80" y="140" text-anchor="middle" font-family="Fredoka, sans-serif" font-size="14" font-weight="700" fill="#4a3428">6</text>
+            <text x="28" y="85" text-anchor="middle" font-family="Fredoka, sans-serif" font-size="14" font-weight="700" fill="#4a3428">9</text>
+            <!-- Hour & Minute Hands -->
+            <line id="clockHourHand" x1="80" y1="80" x2="80" y2="44" stroke="#4a3428" stroke-width="6" stroke-linecap="round" />
+            <line id="clockMinHand" x1="80" y1="80" x2="80" y2="30" stroke="#ff7b6b" stroke-width="4" stroke-linecap="round" />
+            <circle cx="80" cy="80" r="6" fill="#4a3428" />
+          </svg>
+          <div id="digitalClock" class="digital-clock">8:30 AM</div>
+          <div class="clock-legend">
+            🌅 <strong>Breakfast:</strong> 7:00 – 10:00 AM<br />
+            ☀️ <strong>Lunch:</strong> 12:00 – 2:00 PM<br />
+            🌙 <strong>Dinner:</strong> 6:00 – 8:00 PM
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Food Menu & Tray -->
+      <div class="menu-section">
+        <div class="menu-header">
+          <h3>📋 Restaurant Menu (Pick 2 foods!)</h3>
+          <button id="btnL2ClearFoods" class="btn btn-cream btn-sm" type="button">✖ Clear Foods</button>
+        </div>
+
+        <div id="l2MenuGrid" class="menu-grid"></div>
+
+        <div class="serving-tray-bar">
+          <div class="tray-visual">
+            <span style="font-family: var(--font-display); font-size: 1.1rem; color: var(--cocoa);">🍽️ Your Tray:</span>
+            <div id="l2TrayPlate" class="tray-plate">
+              <span style="color: #b59a84; font-weight: 700; font-size: 0.95rem;">Empty</span>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+            <button id="btnL2ReadAll" class="btn btn-sky" type="button" disabled>🔊 Read Full Conversation</button>
+            <button id="btnL2NewRound" class="btn btn-sunny" type="button">🔄 New Round (Switch Roles)</button>
+            <button id="btnL2NextLevel" class="btn btn-mint" type="button">Next Level ➡</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===============================================================
+         SCREEN 4: LEVEL 3 – FOOD EXPRESS (TIMING STOP CHALLENGE)
+         =============================================================== -->
+    <section id="screenLevel3" class="screen">
+      <div class="l3-controls-bar">
+        <div class="l3-stats">
+          <span id="l3Score" class="stat-pill">⭐ Score: 0</span>
+          <span id="l3Streak" class="stat-pill streak">🔥 Streak: 0</span>
+        </div>
+
+        <div class="speed-group">
+          <span class="speed-label">Belt Speed:</span>
+          <button class="speed-btn active" data-speed="slow" type="button">🐢 Slow</button>
+          <button class="speed-btn" data-speed="average" type="button">🐇 Average</button>
+          <button class="speed-btn" data-speed="fast" type="button">🚀 Fast</button>
+        </div>
+      </div>
+
+      <div class="l3-top-stage">
+        <!-- Single Target Order Ticket -->
+        <div class="order-ticket">
+          <div class="ticket-header">
+            <h3 class="ticket-title">🧾 Current Order</h3>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button id="btnL3Listen" class="btn btn-sky btn-sm" type="button">🔊 Listen to Order</button>
+              <button id="btnL3HidePic" class="btn btn-cream btn-sm" type="button">🙈 Hide Picture</button>
+            </div>
+          </div>
+          <div id="l3OrderCard" class="order-target-card">
+            <div id="l3OrderPic" class="order-target-pic"></div>
+            <div class="order-target-text">
+              Catch the <span id="l3OrderWord" class="order-target-word">noodles</span>!
+            </div>
+          </div>
+        </div>
+
+        <!-- Friendly Chef Panel -->
+        <div class="chef-panel">
+          <div class="chef-avatar" aria-label="Friendly Chef">
+            <svg viewBox="0 0 100 100" width="88" height="88">
+              <path d="M26 32 Q22 14 38 16 Q46 6 58 14 Q74 12 74 32 Z" fill="#ffffff" stroke="#e2d3c5" stroke-width="2.5" />
+              <rect x="28" y="30" width="44" height="10" rx="4" fill="#ffffff" stroke="#e2d3c5" stroke-width="2" />
+              <circle cx="50" cy="54" r="21" fill="#ffdfc4" />
+              <circle cx="42" cy="52" r="3" fill="#4a3428" />
+              <circle cx="58" cy="52" r="3" fill="#4a3428" />
+              <circle cx="35" cy="58" r="3.5" fill="#ff9e9e" opacity="0.6" />
+              <circle cx="65" cy="58" r="3.5" fill="#ff9e9e" opacity="0.6" />
+              <path id="chefMouth" d="M42 62 Q50 70 58 62" stroke="#c85a53" stroke-width="3.2" fill="none" stroke-linecap="round" />
+              <path d="M24 96 Q28 74 50 74 Q72 74 76 96 Z" fill="#ffffff" stroke="#e2d3c5" stroke-width="2" />
+              <path d="M44 76 L50 86 L56 76 Z" fill="#ff7b6b" />
+            </svg>
+          </div>
+          <div id="chefBubble" class="chef-bubble">
+            "Wait for the right food in the Catch Zone, then hit STOP!"
+          </div>
+        </div>
+      </div>
+
+      <!-- Conveyor Belt Track + STOP Button -->
+      <div class="conveyor-wrapper">
+        <div class="conveyor-label">🎯 Stop the conveyor belt when the matching food is inside the glowing CATCH ZONE!</div>
+        <div id="beltTrack" class="belt-track">
+          <div id="beltSlats" class="belt-slats"></div>
+
+          <!-- Center Catch Zone Target Frame -->
+          <div class="catch-zone-frame" aria-hidden="true">
+            <span class="catch-zone-tag">▼ Catch Zone ▼</span>
+            <span class="catch-zone-arrow">⬆️</span>
+          </div>
+
+          <!-- Moving food plates injected by JS -->
+        </div>
+
+        <div class="stop-control-area">
+          <button id="btnL3Stop" class="btn-stop-big" type="button">🛑 STOP!</button>
+          <span class="stop-hint">Tip: You can also press the SPACEBAR to stop!</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Full-Screen Food Reveal Overlay (100vw x 100vh) -->
+  <div id="fullscreenReveal" class="fullscreen-reveal" role="dialog" aria-modal="true">
+    <div class="reveal-chef-banner">
+      <span style="font-size: 2.2rem;">👨‍🍳</span>
+      <p id="revealFeedbackText" class="reveal-feedback-text">Awesome! You caught the chicken!</p>
+    </div>
+
+    <div class="reveal-center-stage">
+      <div id="revealFoodVisual" class="reveal-food-visual"></div>
+      <div class="reveal-word-row">
+        <h2 id="revealFoodName" class="reveal-food-name">CHICKEN</h2>
+        <button id="btnRevealSpeak" class="btn btn-sky" type="button" aria-label="Hear pronunciation again">🔊 Say Word</button>
+      </div>
+    </div>
+
+    <div class="reveal-actions">
+      <button id="btnRevealTryAgain" class="btn btn-sunny btn-lg" type="button" style="display: none;">🔄 Try Again</button>
+      <button id="btnRevealNextOrder" class="btn btn-mint btn-lg" type="button">Next Order ➡️</button>
+    </div>
+  </div>
+
+  <script>
+    /* =====================================================================
+       CUSTOM ASSETS CONFIGURATION (EDIT FILENAMES HERE IF NEEDED)
+       Place your image files in the same folder as this HTML file.
+       If any file is missing, the game automatically uses built-in pastel
+       illustrations with zero broken image icons!
+       ===================================================================== */
+    const ASSETS = {
+      cover: 'foodexpress.gif',
+      background: 'foodexpress_bg.jpg',
+      foods: {
+        rice:    { file: 'rice.png',    label: 'rice',    emoji: '🍚', color: '#fff3d6' },
+        soup:    { file: 'soup.png',    label: 'soup',    emoji: '🍲', color: '#ffe2d6' },
+        noodles: { file: 'noodles.png', label: 'noodles', emoji: '🍜', color: '#fff0c2' },
+        bread:   { file: 'bread.png',   label: 'bread',   emoji: '🍞', color: '#fce4c4' },
+        chicken: { file: 'chicken.png', label: 'chicken', emoji: '🍗', color: '#ffd9cc' }
+      }
+    };
+
+    const FOOD_KEYS = Object.keys(ASSETS.foods);
+
+    /* =====================================================================
+       CLASSROOM TIPS PER LEVEL
+       ===================================================================== */
+    const LEVEL_INFO = {
+      1: {
+        badge: '🔦 Level 1: Food Hunt',
+        tip: 'Classroom Tip: Ask students to pronounce each food word aloud before moving on to the next picture.'
+      },
+      2: {
+        badge: '🕒 Level 2: Restaurant Ordering',
+        tip: 'Classroom Tip: Let students work in pairs. One student acts as the customer and the other as the waitress. Switch roles after each conversation.'
+      },
+      3: {
+        badge: '👨‍🍳 Level 3: Food Express',
+        tip: 'Classroom Tip: Start on Slow speed for beginners, then switch to Average or Fast as students get better at timing the STOP button!'
+      }
+    };
+
+    /* =====================================================================
+       RICH SVG FALLBACK ILLUSTRATIONS FOR EACH FOOD ITEM
+       ===================================================================== */
+    function getFoodFallbackSVG(key) {
+      const svgs = {
+        rice: `
+          <svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden="true">
+            <ellipse cx="50" cy="54" rx="34" ry="22" fill="#ffffff" stroke="#e8dfd5" stroke-width="3" />
+            <circle cx="38" cy="48" r="10" fill="#ffffff" />
+            <circle cx="50" cy="42" r="12" fill="#ffffff" />
+            <circle cx="62" cy="48" r="10" fill="#ffffff" />
+            <circle cx="44" cy="45" r="2" fill="#d9cbb8" />
+            <circle cx="55" cy="43" r="2" fill="#d9cbb8" />
+            <circle cx="49" cy="50" r="2" fill="#d9cbb8" />
+            <path d="M16 54 Q18 84 50 84 Q82 84 84 54 Z" fill="#4db8ff" stroke="#228be6" stroke-width="3" />
+            <path d="M24 62 Q50 70 76 62" stroke="#ffffff" stroke-width="3" fill="none" opacity="0.65" />
+          </svg>`,
+        soup: `
+          <svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden="true">
+            <path d="M36 22 Q32 14 38 10" stroke="#ffb38a" stroke-width="3" fill="none" stroke-linecap="round" />
+            <path d="M50 20 Q46 12 52 8" stroke="#ffb38a" stroke-width="3" fill="none" stroke-linecap="round" />
+            <path d="M64 22 Q60 14 66 10" stroke="#ffb38a" stroke-width="3" fill="none" stroke-linecap="round" />
+            <ellipse cx="50" cy="46" rx="36" ry="16" fill="#ff9e4a" stroke="#e07424" stroke-width="3" />
+            <circle cx="38" cy="46" r="5" fill="#4cd98b" />
+            <circle cx="56" cy="44" r="5" fill="#ff6b6b" />
+            <circle cx="48" cy="50" r="4" fill="#ffe066" />
+            <path d="M14 48 Q16 84 50 84 Q84 84 86 48 Z" fill="#ff7b6b" stroke="#d95345" stroke-width="3" />
+            <rect x="8" y="44" width="12" height="8" rx="4" fill="#d95345" />
+            <rect x="80" y="44" width="12" height="8" rx="4" fill="#d95345" />
+          </svg>`,
+        noodles: `
+          <svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden="true">
+            <line x1="58" y1="12" x2="88" y2="42" stroke="#b87333" stroke-width="5" stroke-linecap="round" />
+            <line x1="66" y1="10" x2="92" y2="34" stroke="#995c25" stroke-width="5" stroke-linecap="round" />
+            <ellipse cx="50" cy="48" rx="34" ry="17" fill="#ffd966" stroke="#e6a825" stroke-width="3" />
+            <path d="M26 48 Q38 38 50 48 T74 48" stroke="#e6a825" stroke-width="3.5" fill="none" />
+            <path d="M30 54 Q44 44 58 54 T72 52" stroke="#e6a825" stroke-width="3.5" fill="none" />
+            <circle cx="42" cy="44" r="6" fill="#ffffff" stroke="#ffbe3b" stroke-width="2" />
+            <circle cx="42" cy="44" r="3" fill="#ff9f1c" />
+            <path d="M16 50 Q18 84 50 84 Q82 84 84 50 Z" fill="#ffbe3b" stroke="#d99316" stroke-width="3" />
+          </svg>`,
+        bread: `
+          <svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden="true">
+            <path d="M18 46 Q14 22 36 22 Q50 18 64 22 Q86 22 82 46 L78 78 Q78 86 70 86 L30 86 Q22 86 22 78 Z"
+                  fill="#d98c45" stroke="#a65f21" stroke-width="3.5" />
+            <path d="M25 48 Q23 30 40 30 Q50 28 60 30 Q77 30 75 48 L72 76 Q72 80 66 80 L34 80 Q28 80 28 76 Z"
+                  fill="#fff2d6" />
+            <circle cx="40" cy="52" r="3" fill="#e6cfa3" />
+            <circle cx="58" cy="60" r="3.5" fill="#e6cfa3" />
+            <circle cx="47" cy="68" r="2.5" fill="#e6cfa3" />
+          </svg>`,
+        chicken: `
+          <svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden="true">
+            <ellipse cx="50" cy="76" rx="40" ry="14" fill="#ffffff" stroke="#e2d3c5" stroke-width="3" />
+            <path d="M62 56 L82 42" stroke="#fff6e8" stroke-width="10" stroke-linecap="round" />
+            <circle cx="84" cy="38" r="6" fill="#fff6e8" stroke="#e2d3c5" stroke-width="2" />
+            <circle cx="87" cy="45" r="6" fill="#fff6e8" stroke="#e2d3c5" stroke-width="2" />
+            <ellipse cx="44" cy="54" rx="28" ry="20" transform="rotate(-14 44 54)" fill="#e07a38" stroke="#a84e18" stroke-width="3" />
+            <ellipse cx="38" cy="46" rx="10" ry="5" transform="rotate(-14 38 46)" fill="#ffab6b" opacity="0.65" />
+          </svg>`
+      };
+      return svgs[key] || `<span style="font-size:2.4rem;">${ASSETS.foods[key]?.emoji || '🍽️'}</span>`;
+    }
+
+    /**
+     * Builds a food visual element that loads the custom image file if available,
+     * and seamlessly displays the rich SVG illustration otherwise.
+     */
+    function createFoodVisualEl(foodKey) {
+      const wrap = document.createElement('div');
+      wrap.className = 'food-visual';
+
+      const img = document.createElement('img');
+      img.className = 'food-custom-img';
+      img.alt = ASSETS.foods[foodKey].label;
+      img.src = ASSETS.foods[foodKey].file;
+      img.onload = () => img.classList.add('loaded');
+      img.onerror = () => img.remove();
+
+      const fallback = document.createElement('div');
+      fallback.className = 'food-fallback';
+      fallback.innerHTML = getFoodFallbackSVG(foodKey);
+
+      wrap.appendChild(img);
+      wrap.appendChild(fallback);
+      return wrap;
+    }
+
+    /* =====================================================================
+       AUDIO ENGINE (Web Audio API SFX + Web Speech API Pronunciation)
+       ===================================================================== */
+    const state = {
+      soundEnabled: true,
+      currentScreen: 'title',
+      currentLevel: null
+    };
+
+    let audioCtx = null;
+
+    function getAudioCtx() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) audioCtx = new AudioContextClass();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+      }
+      return audioCtx;
+    }
+
+    function playTone(freq, duration, type = 'sine', gainVal = 0.16, startDelay = 0) {
+      if (!state.soundEnabled) return;
+      try {
+        const ctx = getAudioCtx();
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + startDelay);
+
+        gain.gain.setValueAtTime(0.001, ctx.currentTime + startDelay);
+        gain.gain.exponentialRampToValueAtTime(gainVal, ctx.currentTime + startDelay + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startDelay + duration);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + startDelay);
+        osc.stop(ctx.currentTime + startDelay + duration + 0.03);
+      } catch (e) {
+        // Silently ignore audio errors
+      }
+    }
+
+    const SFX = {
+      pop: () => playTone(520, 0.1, 'triangle', 0.14),
+      stopClick: () => {
+        playTone(320, 0.08, 'square', 0.14, 0);
+        playTone(180, 0.1, 'triangle', 0.16, 0.05);
+      },
+      chime: () => {
+        playTone(587.33, 0.16, 'sine', 0.16, 0);
+        playTone(880, 0.28, 'sine', 0.16, 0.09);
+      },
+      wrong: () => {
+        playTone(230, 0.16, 'triangle', 0.15, 0);
+        playTone(185, 0.22, 'triangle', 0.14, 0.11);
+      },
+      fanfare: () => {
+        const notes = [523.25, 659.25, 783.99, 1046.5];
+        notes.forEach((n, idx) => playTone(n, 0.25, 'triangle', 0.16, idx * 0.11));
+      }
+    };
+
+    function speakText(text, onEndCallback = null) {
+      if (!state.soundEnabled || !('speechSynthesis' in window)) {
+        if (onEndCallback) setTimeout(onEndCallback, 250);
+        return;
+      }
+      try {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'en-US';
+        utter.rate = 0.9;
+        utter.pitch = 1.05;
+
+        let finished = false;
+        const done = () => {
+          if (finished) return;
+          finished = true;
+          if (onEndCallback) onEndCallback();
+        };
+
+        utter.onend = done;
+        utter.onerror = done;
+        window.speechSynthesis.speak(utter);
+
+        // Safety fallback in case a browser does not fire onend
+        if (onEndCallback) {
+          setTimeout(done, Math.max(1800, text.length * 95));
+        }
+      } catch (e) {
+        if (onEndCallback) onEndCallback();
+      }
+    }
+
+    function updateSoundButtons() {
+      const label = state.soundEnabled ? '🔊 Sound: ON' : '🔇 Sound: OFF';
+      document.getElementById('btnSoundToggle').textContent = label;
+      document.getElementById('btnTitleSound').textContent = label;
+    }
+
+    function toggleSound() {
+      state.soundEnabled = !state.soundEnabled;
+      if (!state.soundEnabled && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      updateSoundButtons();
+      if (state.soundEnabled) SFX.pop();
+    }
+
+    /* =====================================================================
+       NAVIGATION & SCREEN MANAGEMENT
+       ===================================================================== */
+    function showScreen(screenId, levelNum = null) {
+      // Stop Level 3 conveyor loop and close reveal overlay when leaving Level 3
+      if (screenId !== 'screenLevel3') {
+        stopConveyorLoop();
+        document.getElementById('fullscreenReveal').classList.remove('show');
+      }
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+
+      const topBar = document.getElementById('topBar');
+      const tipBox = document.getElementById('teacherTipBox');
+      tipBox.classList.remove('open');
+
+      if (levelNum) {
+        state.currentLevel = levelNum;
+        topBar.classList.add('visible');
+        document.getElementById('topLevelBadge').textContent = LEVEL_INFO[levelNum].badge;
+        document.getElementById('teacherTipText').textContent = LEVEL_INFO[levelNum].tip;
+      } else {
+        state.currentLevel = null;
+        topBar.classList.remove('visible');
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function launchLevel(levelNum) {
+      SFX.pop();
+      if (levelNum === 1) {
+        showScreen('screenLevel1', 1);
+        initLevel1();
+      } else if (levelNum === 2) {
+        showScreen('screenLevel2', 2);
+        initLevel2();
+      } else if (levelNum === 3) {
+        showScreen('screenLevel3', 3);
+        initLevel3();
+      }
+    }
+
+    /* =====================================================================
+       LEVEL 1: FOOD HUNT – FLASHLIGHT HIDDEN FOODS
+       ===================================================================== */
+    const l1State = {
+      foundSet: new Set(),
+      toastTimer: null,
+      fx: 0,
+      fy: 0
+    };
+
+    function initLevel1() {
+      l1State.foundSet.clear();
+      const stage = document.getElementById('huntStage');
+      const itemsLayer = document.getElementById('huntItemsLayer');
+      const overlay = document.getElementById('flashlightOverlay');
+      const ring = document.getElementById('flashlightRing');
+      const reviewModal = document.getElementById('l1ReviewModal');
+
+      overlay.classList.remove('lights-on');
+      ring.classList.remove('lights-on');
+      reviewModal.classList.remove('show');
+      itemsLayer.innerHTML = '';
+
+      // Center flashlight initially
+      const rect = stage.getBoundingClientRect();
+      setFlashlightPos(rect.width / 2, rect.height / 2);
+
+      // Render top mini badges
+      renderL1Progress();
+
+      // Generate non-overlapping random positions (percentages within safe margins)
+      const positions = [];
+      const minDist = 20; // minimum percentage distance between centers
+
+      FOOD_KEYS.forEach((key) => {
+        let px = 50, py = 50;
+        for (let attempt = 0; attempt < 80; attempt++) {
+          const candX = 14 + Math.random() * 72;
+          const candY = 20 + Math.random() * 62;
+          const tooClose = positions.some(p => Math.hypot(p.x - candX, p.y - candY) < minDist);
+          if (!tooClose) {
+            px = candX;
+            py = candY;
+            break;
+          }
+        }
+        positions.push({ x: px, y: py });
+
+        const itemBtn = document.createElement('button');
+        itemBtn.type = 'button';
+        itemBtn.className = 'hunt-food-item';
+        itemBtn.style.left = px + '%';
+        itemBtn.style.top = py + '%';
+        itemBtn.setAttribute('aria-label', ASSETS.foods[key].label);
+
+        itemBtn.appendChild(createFoodVisualEl(key));
+
+        const lbl = document.createElement('span');
+        lbl.className = 'hunt-food-label';
+        lbl.textContent = ASSETS.foods[key].label;
+        itemBtn.appendChild(lbl);
+
+        itemBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          handleHuntItemClick(key, itemBtn, e);
+        });
+
+        itemsLayer.appendChild(itemBtn);
+      });
+    }
+
+    function setFlashlightPos(x, y) {
+      const stage = document.getElementById('huntStage');
+      l1State.fx = x;
+      l1State.fy = y;
+      stage.style.setProperty('--fx', `${x}px`);
+      stage.style.setProperty('--fy', `${y}px`);
+    }
+
+    function handleHuntItemClick(key, el, event) {
+      // Move flashlight to tap/click point for smooth touch interaction
+      const stageRect = document.getElementById('huntStage').getBoundingClientRect();
+      if (event && typeof event.clientX === 'number') {
+        setFlashlightPos(event.clientX - stageRect.left, event.clientY - stageRect.top);
+      }
+
+      if (l1State.foundSet.has(key)) {
+        // Re-speak word if already found
+        speakText(ASSETS.foods[key].label);
+        return;
+      }
+
+      l1State.foundSet.add(key);
+      el.classList.add('found');
+      SFX.chime();
+      speakText(ASSETS.foods[key].label);
+      showL1Toast(`${ASSETS.foods[key].emoji} ${ASSETS.foods[key].label}!`);
+      renderL1Progress();
+
+      // Check completion
+      if (l1State.foundSet.size === FOOD_KEYS.length) {
+        setTimeout(() => {
+          document.getElementById('flashlightOverlay').classList.add('lights-on');
+          document.getElementById('flashlightRing').classList.add('lights-on');
+          SFX.fanfare();
+          setTimeout(openL1Review, 950);
+        }, 650);
+      }
+    }
+
+    function showL1Toast(msg) {
+      const toast = document.getElementById('l1Toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(l1State.toastTimer);
+      l1State.toastTimer = setTimeout(() => toast.classList.remove('show'), 1600);
+    }
+
+    function renderL1Progress() {
+      document.getElementById('l1Counter').textContent = `Found: ${l1State.foundSet.size} / ${FOOD_KEYS.length}`;
+      const badgesEl = document.getElementById('l1Badges');
+      badgesEl.innerHTML = '';
+      FOOD_KEYS.forEach(key => {
+        const found = l1State.foundSet.has(key);
+        const badge = document.createElement('span');
+        badge.className = 'l1-mini-badge' + (found ? ' found' : '');
+        badge.textContent = found ? `✅ ${ASSETS.foods[key].label}` : '❓ ???';
+        badgesEl.appendChild(badge);
+      });
+    }
+
+    function openL1Review() {
+      const container = document.getElementById('l1ReviewCards');
+      container.innerHTML = '';
+      FOOD_KEYS.forEach(key => {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'review-card';
+
+        const imgBox = document.createElement('div');
+        imgBox.className = 'review-card-img';
+        imgBox.appendChild(createFoodVisualEl(key));
+
+        const word = document.createElement('span');
+        word.className = 'review-card-word';
+        word.textContent = ASSETS.foods[key].label;
+
+        const speaker = document.createElement('span');
+        speaker.style.fontSize = '0.9rem';
+        speaker.style.color = 'var(--cocoa-soft)';
+        speaker.textContent = '🔊 Tap to hear';
+
+        card.appendChild(imgBox);
+        card.appendChild(word);
+        card.appendChild(speaker);
+
+        card.addEventListener('click', () => {
+          document.querySelectorAll('.review-card').forEach(c => c.classList.remove('speaking'));
+          card.classList.add('speaking');
+          SFX.pop();
+          speakText(ASSETS.foods[key].label, () => card.classList.remove('speaking'));
+        });
+
+        container.appendChild(card);
+      });
+
+      document.getElementById('l1ReviewModal').classList.add('show');
+    }
+
+    // Bind flashlight pointer & touch tracking
+    (function setupFlashlightListeners() {
+      const stage = document.getElementById('huntStage');
+      const updateFromClient = (clientX, clientY) => {
+        const rect = stage.getBoundingClientRect();
+        const x = Math.max(0, Math.min(rect.width, clientX - rect.left));
+        const y = Math.max(0, Math.min(rect.height, clientY - rect.top));
+        setFlashlightPos(x, y);
+      };
+
+      stage.addEventListener('mousemove', (e) => updateFromClient(e.clientX, e.clientY));
+      stage.addEventListener('touchstart', (e) => {
+        if (e.touches[0]) updateFromClient(e.touches[0].clientX, e.touches[0].clientY);
+      }, { passive: true });
+      stage.addEventListener('touchmove', (e) => {
+        if (e.touches[0]) updateFromClient(e.touches[0].clientX, e.touches[0].clientY);
+      }, { passive: true });
+    })();
+
+    /* =====================================================================
+       LEVEL 2: RESTAURANT ORDERING – CLOCK & ROLE-PLAY
+       ===================================================================== */
+    const MEAL_TIME_WINDOWS = [
+      {
+        meal: 'breakfast',
+        times: [
+          { h: 7, m: 0, ampm: 'AM' }, { h: 7, m: 30, ampm: 'AM' },
+          { h: 8, m: 0, ampm: 'AM' }, { h: 8, m: 15, ampm: 'AM' },
+          { h: 8, m: 30, ampm: 'AM' }, { h: 9, m: 0, ampm: 'AM' },
+          { h: 9, m: 30, ampm: 'AM' }, { h: 10, m: 0, ampm: 'AM' }
+        ]
+      },
+      {
+        meal: 'lunch',
+        times: [
+          { h: 12, m: 0, ampm: 'PM' }, { h: 12, m: 15, ampm: 'PM' },
+          { h: 12, m: 30, ampm: 'PM' }, { h: 1, m: 0, ampm: 'PM' },
+          { h: 1, m: 30, ampm: 'PM' }, { h: 2, m: 0, ampm: 'PM' }
+        ]
+      },
+      {
+        meal: 'dinner',
+        times: [
+          { h: 6, m: 0, ampm: 'PM' }, { h: 6, m: 30, ampm: 'PM' },
+          { h: 7, m: 0, ampm: 'PM' }, { h: 7, m: 15, ampm: 'PM' },
+          { h: 7, m: 30, ampm: 'PM' }, { h: 8, m: 0, ampm: 'PM' }
+        ]
+      }
+    ];
+
+    const l2State = {
+      targetMeal: 'breakfast',
+      lastMeal: null,
+      mealSolved: false,
+      selectedFoods: []
+    };
+
+    function initLevel2() {
+      buildL2Menu();
+      startNewL2Round();
+    }
+
+    function buildL2Menu() {
+      const grid = document.getElementById('l2MenuGrid');
+      grid.innerHTML = '';
+      FOOD_KEYS.forEach(key => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'menu-item-btn';
+        btn.dataset.food = key;
+
+        const vis = document.createElement('div');
+        vis.className = 'menu-item-visual';
+        vis.appendChild(createFoodVisualEl(key));
+
+        const name = document.createElement('span');
+        name.className = 'menu-item-name';
+        name.textContent = ASSETS.foods[key].label;
+
+        btn.appendChild(vis);
+        btn.appendChild(name);
+
+        btn.addEventListener('click', () => handleL2FoodPick(key));
+        grid.appendChild(btn);
+      });
+    }
+
+    function startNewL2Round() {
+      l2State.mealSolved = false;
+      l2State.selectedFoods = [];
+
+      // Choose a meal window (preferring a different one from last round)
+      const candidates = MEAL_TIME_WINDOWS.filter(w => w.meal !== l2State.lastMeal);
+      const chosenWindow = candidates[Math.floor(Math.random() * candidates.length)];
+      l2State.targetMeal = chosenWindow.meal;
+      l2State.lastMeal = chosenWindow.meal;
+
+      const timeObj = chosenWindow.times[Math.floor(Math.random() * chosenWindow.times.length)];
+      updateClockDisplay(timeObj.h, timeObj.m, timeObj.ampm);
+
+      // Reset UI
+      const mealBlank = document.getElementById('mealBlank');
+      mealBlank.textContent = '_____';
+      mealBlank.classList.remove('filled');
+
+      document.querySelectorAll('.meal-btn').forEach(b => {
+        b.disabled = false;
+        b.classList.remove('correct', 'wrong');
+      });
+
+      document.getElementById('customerBubble').classList.add('locked');
+      document.getElementById('waitressBubble').classList.remove('speaking');
+      document.getElementById('customerBubble').classList.remove('speaking');
+
+      setL2Feedback('👀 Step 1 (Waitress): Look at the clock! Is it breakfast, lunch, or dinner?', '');
+      updateL2CustomerUI();
+    }
+
+    function updateClockDisplay(hours, minutes, ampm) {
+      const minStr = minutes < 10 ? '0' + minutes : '' + minutes;
+      document.getElementById('digitalClock').textContent = `${hours}:${minStr} ${ampm}`;
+
+      // Analog hand angles
+      const minDeg = minutes * 6;
+      const hourDeg = ((hours % 12) + minutes / 60) * 30;
+
+      document.getElementById('clockHourHand').setAttribute('transform', `rotate(${hourDeg} 80 80)`);
+      document.getElementById('clockMinHand').setAttribute('transform', `rotate(${minDeg} 80 80)`);
+    }
+
+    function setL2Feedback(text, type) {
+      const el = document.getElementById('l2Feedback');
+      el.textContent = text;
+      el.className = 'l2-feedback' + (type ? ' ' + type : '');
+    }
+
+    function handleL2MealChoice(meal, btnEl) {
+      if (l2State.mealSolved) return;
+
+      if (meal === l2State.targetMeal) {
+        l2State.mealSolved = true;
+        SFX.chime();
+        btnEl.classList.add('correct');
+        document.querySelectorAll('.meal-btn').forEach(b => (b.disabled = true));
+
+        const blank = document.getElementById('mealBlank');
+        blank.textContent = meal;
+        blank.classList.add('filled');
+
+        document.getElementById('customerBubble').classList.remove('locked');
+        setL2Feedback(`🎉 Correct! It's ${meal} time! Now Customer: choose 2 foods from the menu below.`, 'good');
+
+        const wBubble = document.getElementById('waitressBubble');
+        wBubble.classList.add('speaking');
+        speakText(`What would you like for ${meal}?`, () => wBubble.classList.remove('speaking'));
+
+        updateL2CustomerUI();
+      } else {
+        SFX.wrong();
+        btnEl.classList.remove('wrong');
+        void btnEl.offsetWidth; // restart shake
+        btnEl.classList.add('wrong');
+        setL2Feedback('🕒 Almost! Check the clock: Breakfast is 7–10 AM, Lunch is 12–2 PM, Dinner is 6–8 PM.', 'hint');
+      }
+    }
+
+    function handleL2FoodPick(foodKey) {
+      if (!l2State.mealSolved) {
+        SFX.wrong();
+        setL2Feedback('☝️ First, help the Waitress guess breakfast, lunch, or dinner using the clock!', 'hint');
+        return;
+      }
+
+      const idx = l2State.selectedFoods.indexOf(foodKey);
+      if (idx !== -1) {
+        // Deselect if clicked again
+        l2State.selectedFoods.splice(idx, 1);
+        SFX.pop();
+      } else if (l2State.selectedFoods.length < 2) {
+        l2State.selectedFoods.push(foodKey);
+        SFX.chime();
+        speakText(ASSETS.foods[foodKey].label);
+      } else {
+        SFX.wrong();
+        setL2Feedback('🍽️ You already picked 2 foods! Click "Clear Foods" to choose different ones.', 'hint');
+        return;
+      }
+
+      updateL2CustomerUI();
+
+      if (l2State.selectedFoods.length === 2) {
+        const f1 = ASSETS.foods[l2State.selectedFoods[0]].label;
+        const f2 = ASSETS.foods[l2State.selectedFoods[1]].label;
+        setL2Feedback(`🌟 Great ordering! Say it together or tap "Read Full Conversation"!`, 'good');
+
+        const cBubble = document.getElementById('customerBubble');
+        cBubble.classList.add('speaking');
+        setTimeout(() => {
+          speakText(`I would like some ${f1} and ${f2}.`, () => cBubble.classList.remove('speaking'));
+        }, 420);
+      }
+    }
+
+    function updateL2CustomerUI() {
+      const b1 = document.getElementById('foodBlank1');
+      const b2 = document.getElementById('foodBlank2');
+
+      if (l2State.selectedFoods[0]) {
+        b1.textContent = ASSETS.foods[l2State.selectedFoods[0]].label;
+        b1.classList.add('filled');
+      } else {
+        b1.textContent = '_____';
+        b1.classList.remove('filled');
+      }
+
+      if (l2State.selectedFoods[1]) {
+        b2.textContent = ASSETS.foods[l2State.selectedFoods[1]].label;
+        b2.classList.add('filled');
+      } else {
+        b2.textContent = '_____';
+        b2.classList.remove('filled');
+      }
+
+      // Menu buttons state
+      document.querySelectorAll('.menu-item-btn').forEach(btn => {
+        const key = btn.dataset.food;
+        btn.disabled = !l2State.mealSolved;
+        btn.classList.toggle('selected', l2State.selectedFoods.includes(key));
+      });
+
+      // Serving tray
+      const tray = document.getElementById('l2TrayPlate');
+      tray.innerHTML = '';
+      if (l2State.selectedFoods.length === 0) {
+        tray.innerHTML = '<span style="color:#b59a84; font-weight:700; font-size:0.95rem;">Empty</span>';
+      } else {
+        l2State.selectedFoods.forEach(key => {
+          const slot = document.createElement('div');
+          slot.className = 'tray-food-slot';
+          slot.appendChild(createFoodVisualEl(key));
+          tray.appendChild(slot);
+        });
+      }
+
+      document.getElementById('btnL2ReadAll').disabled = !(l2State.mealSolved && l2State.selectedFoods.length === 2);
+    }
+
+    function readFullConversation() {
+      if (!l2State.mealSolved || l2State.selectedFoods.length < 2) return;
+      const wBubble = document.getElementById('waitressBubble');
+      const cBubble = document.getElementById('customerBubble');
+      const f1 = ASSETS.foods[l2State.selectedFoods[0]].label;
+      const f2 = ASSETS.foods[l2State.selectedFoods[1]].label;
+
+      wBubble.classList.add('speaking');
+      cBubble.classList.remove('speaking');
+
+      speakText(`What would you like for ${l2State.targetMeal}?`, () => {
+        wBubble.classList.remove('speaking');
+        cBubble.classList.add('speaking');
+        speakText(`I would like some ${f1} and ${f2}.`, () => {
+          cBubble.classList.remove('speaking');
+        });
+      });
+    }
+
+    /* =====================================================================
+       LEVEL 3: FOOD EXPRESS – TIMING STOP CHALLENGE
+       ===================================================================== */
+    const SPEED_MAP = {
+      slow: 240,    // pixels per second (brisk & beginner-friendly)
+      average: 440, // exciting classroom pace
+      fast: 700     // super-fast timing challenge!
+    };
+
+    const PLATE_WIDTH = 126;
+    const PLATE_SPACING = 200;
+
+    const l3State = {
+      score: 0,
+      streak: 0,
+      speedKey: 'slow',
+      hidePic: false,
+      targetKey: null,
+      lastTargetKey: null,
+      plates: [],
+      rafId: null,
+      lastTime: 0,
+      slatOffset: 0,
+      isStopped: false,
+      lastCaughtKey: null,
+      foodQueue: []
+    };
+
+    function initLevel3() {
+      l3State.score = 0;
+      l3State.streak = 0;
+      l3State.isStopped = false;
+      l3State.lastTargetKey = null;
+      l3State.foodQueue = [];
+
+      document.getElementById('fullscreenReveal').classList.remove('show');
+      document.getElementById('btnL3Stop').disabled = false;
+
+      updateL3Stats();
+      setChefMessage('Wait for the right food in the Catch Zone, then hit STOP!', '');
+      generateL3Order();
+      setupConveyorPlates();
+      startConveyorLoop();
+    }
+
+    function updateL3Stats() {
+      document.getElementById('l3Score').textContent = `⭐ Score: ${l3State.score}`;
+      document.getElementById('l3Streak').textContent = `🔥 Streak: ${l3State.streak}`;
+    }
+
+    function setChefMessage(msg, mood) {
+      const bubble = document.getElementById('chefBubble');
+      bubble.textContent = `"${msg}"`;
+      bubble.className = 'chef-bubble' + (mood ? ' ' + mood : '');
+    }
+
+    function generateL3Order() {
+      const candidates = FOOD_KEYS.filter(k => k !== l3State.lastTargetKey);
+      const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+      l3State.targetKey = chosen;
+      l3State.lastTargetKey = chosen;
+
+      renderL3OrderTicket();
+      speakCurrentOrder();
+    }
+
+    function renderL3OrderTicket() {
+      const card = document.getElementById('l3OrderCard');
+      const picEl = document.getElementById('l3OrderPic');
+      const wordEl = document.getElementById('l3OrderWord');
+
+      card.classList.toggle('hide-pic', l3State.hidePic);
+      picEl.innerHTML = '';
+      picEl.appendChild(createFoodVisualEl(l3State.targetKey));
+      wordEl.textContent = ASSETS.foods[l3State.targetKey].label;
+    }
+
+    function speakCurrentOrder() {
+      if (!l3State.targetKey) return;
+      const label = ASSETS.foods[l3State.targetKey].label;
+      speakText(`Catch the ${label}!`);
+    }
+
+    function getNextQueuedFoodKey() {
+      if (l3State.foodQueue.length === 0) {
+        l3State.foodQueue = [...FOOD_KEYS].sort(() => Math.random() - 0.5);
+      }
+      return l3State.foodQueue.pop();
+    }
+
+    function setupConveyorPlates() {
+      const track = document.getElementById('beltTrack');
+      track.querySelectorAll('.belt-plate').forEach(p => p.remove());
+      l3State.plates = [];
+
+      const trackWidth = track.clientWidth || 960;
+      const numPlates = Math.max(7, Math.ceil((trackWidth + 280) / PLATE_SPACING));
+
+      for (let i = 0; i < numPlates; i++) {
+        const key = getNextQueuedFoodKey();
+        const x = i * PLATE_SPACING;
+        const plateObj = createPlateObject(key, x);
+        track.appendChild(plateObj.el);
+        l3State.plates.push(plateObj);
+      }
+    }
+
+    function createPlateObject(foodKey, startX) {
+      const el = document.createElement('div');
+      el.className = 'belt-plate';
+      el.style.transform = `translateX(${startX}px)`;
+
+      const dish = document.createElement('div');
+      dish.className = 'belt-plate-dish';
+      dish.appendChild(createFoodVisualEl(foodKey));
+      el.appendChild(dish);
+
+      return { foodKey, x: startX, el };
+    }
+
+    function respawnPlateVisual(plateObj) {
+      plateObj.foodKey = getNextQueuedFoodKey();
+      plateObj.el.classList.remove('caught-highlight');
+      const dish = plateObj.el.querySelector('.belt-plate-dish');
+      dish.innerHTML = '';
+      dish.appendChild(createFoodVisualEl(plateObj.foodKey));
+    }
+
+    function handleL3Stop() {
+      if (l3State.isStopped || l3State.plates.length === 0) return;
+
+      l3State.isStopped = true;
+      stopConveyorLoop();
+      document.getElementById('btnL3Stop').disabled = true;
+      SFX.stopClick();
+
+      // Determine which plate is closest to the center of the Catch Zone
+      const track = document.getElementById('beltTrack');
+      const centerX = (track.clientWidth || 960) / 2;
+
+      let closestPlate = l3State.plates[0];
+      let smallestDist = Infinity;
+      l3State.plates.forEach(p => {
+        p.el.classList.remove('caught-highlight');
+        const plateCenter = p.x + PLATE_WIDTH / 2;
+        const dist = Math.abs(plateCenter - centerX);
+        if (dist < smallestDist) {
+          smallestDist = dist;
+          closestPlate = p;
+        }
+      });
+
+      closestPlate.el.classList.add('caught-highlight');
+      const caughtKey = closestPlate.foodKey;
+      l3State.lastCaughtKey = caughtKey;
+
+      // Brief pause so students see the frozen belt before the full-screen reveal pops up
+      setTimeout(() => openFullscreenReveal(caughtKey), 240);
+    }
+
+    function openFullscreenReveal(caughtKey) {
+      const overlay = document.getElementById('fullscreenReveal');
+      const visualEl = document.getElementById('revealFoodVisual');
+      const nameEl = document.getElementById('revealFoodName');
+      const feedbackEl = document.getElementById('revealFeedbackText');
+      const tryAgainBtn = document.getElementById('btnRevealTryAgain');
+
+      const caughtLabel = ASSETS.foods[caughtKey].label;
+      const targetLabel = ASSETS.foods[l3State.targetKey].label;
+      const isMatch = caughtKey === l3State.targetKey;
+
+      visualEl.innerHTML = '';
+      visualEl.appendChild(createFoodVisualEl(caughtKey));
+      nameEl.textContent = caughtLabel.toUpperCase();
+
+      overlay.classList.remove('is-correct', 'is-wrong');
+      overlay.classList.add('show', isMatch ? 'is-correct' : 'is-wrong');
+
+      if (isMatch) {
+        l3State.score += 100;
+        l3State.streak += 1;
+        updateL3Stats();
+
+        const cheers = [
+          `Awesome! You caught the ${caughtLabel}!`,
+          `Yummy! That's the ${caughtLabel}!`,
+          `Super timing! You got the ${caughtLabel}!`
+        ];
+        const msg = cheers[Math.floor(Math.random() * cheers.length)];
+        feedbackEl.textContent = msg;
+        setChefMessage(msg, 'happy');
+        tryAgainBtn.style.display = 'none';
+
+        SFX.chime();
+        spawnConfetti();
+        speakText(caughtLabel);
+      } else {
+        l3State.streak = 0;
+        updateL3Stats();
+
+        const msg = `Oops! That's ${caughtLabel}! The order was ${targetLabel}.`;
+        feedbackEl.textContent = msg;
+        setChefMessage(msg, 'oops');
+        tryAgainBtn.style.display = 'inline-flex';
+
+        SFX.wrong();
+        speakText(caughtLabel);
+      }
+    }
+
+    function resumeBeltAfterReveal(changeOrder) {
+      document.getElementById('fullscreenReveal').classList.remove('show');
+      l3State.plates.forEach(p => p.el.classList.remove('caught-highlight'));
+      l3State.isStopped = false;
+      document.getElementById('btnL3Stop').disabled = false;
+
+      if (changeOrder) {
+        setChefMessage('New order! Watch the Catch Zone and hit STOP!', '');
+        generateL3Order();
+      } else {
+        const targetLabel = ASSETS.foods[l3State.targetKey].label;
+        setChefMessage(`Try again! Catch the ${targetLabel}!`, '');
+        speakCurrentOrder();
+      }
+
+      startConveyorLoop();
+    }
+
+    function startConveyorLoop() {
+      stopConveyorLoop();
+      l3State.lastTime = performance.now();
+      const slats = document.getElementById('beltSlats');
+      const track = document.getElementById('beltTrack');
+
+      function tick(now) {
+        const dt = Math.min(0.05, (now - l3State.lastTime) / 1000);
+        l3State.lastTime = now;
+
+        const speed = SPEED_MAP[l3State.speedKey];
+        const trackWidth = track.clientWidth || 960;
+
+        // Animate belt slats
+        l3State.slatOffset = (l3State.slatOffset + speed * dt) % 48;
+        slats.style.backgroundPosition = `${l3State.slatOffset}px 0`;
+
+        // Move plates left-to-right
+        l3State.plates.forEach(p => {
+          p.x += speed * dt;
+          if (p.x > trackWidth + 40) {
+            const minX = Math.min(...l3State.plates.map(pl => pl.x));
+            p.x = Math.min(-PLATE_WIDTH, minX - PLATE_SPACING);
+            respawnPlateVisual(p);
+          }
+          p.el.style.transform = `translateX(${p.x}px)`;
+        });
+
+        l3State.rafId = requestAnimationFrame(tick);
+      }
+
+      l3State.rafId = requestAnimationFrame(tick);
+    }
+
+    function stopConveyorLoop() {
+      if (l3State.rafId) {
+        cancelAnimationFrame(l3State.rafId);
+        l3State.rafId = null;
+      }
+    }
+
+    function spawnConfetti() {
+      const colors = ['#ff7b6b', '#ffbe3b', '#38c98a', '#4db8ff', '#a86bff'];
+      for (let i = 0; i < 42; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left = Math.random() * 100 + 'vw';
+        piece.style.top = '-15px';
+        piece.style.backgroundColor = colors[i % colors.length];
+        piece.style.animationDelay = (Math.random() * 0.6) + 's';
+        piece.style.animationDuration = (1.4 + Math.random() * 1.1) + 's';
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 2600);
+      }
+    }
+
+    /* =====================================================================
+       INITIALIZATION & EVENT WIRING
+       ===================================================================== */
+    function loadCustomCoverAndBackground() {
+      // Cover image
+      const coverImg = document.getElementById('coverCustomImg');
+      coverImg.src = ASSETS.cover;
+      coverImg.onload = () => coverImg.classList.add('loaded');
+      coverImg.onerror = () => coverImg.remove();
+
+      // Global & Level 1 background image
+      const globalBg = document.getElementById('globalBgImg');
+      globalBg.src = ASSETS.background;
+      globalBg.onload = () => globalBg.classList.add('loaded');
+      globalBg.onerror = () => globalBg.remove();
+
+      const huntBg = document.getElementById('huntBgImg');
+      huntBg.src = ASSETS.background;
+      huntBg.onload = () => huntBg.classList.add('loaded');
+      huntBg.onerror = () => huntBg.remove();
+
+      // Populate fallback cover food bubbles
+      const row = document.getElementById('coverFoodRow');
+      FOOD_KEYS.forEach(key => {
+        const bubble = document.createElement('div');
+        bubble.className = 'cover-food-bubble';
+        bubble.appendChild(createFoodVisualEl(key));
+        row.appendChild(bubble);
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadCustomCoverAndBackground();
+      updateSoundButtons();
+
+      // Title & Hub navigation
+      document.getElementById('btnStartGame').addEventListener('click', () => {
+        SFX.pop();
+        showScreen('screenHub');
+      });
+      document.getElementById('btnBackToTitle').addEventListener('click', () => {
+        SFX.pop();
+        showScreen('screenTitle');
+      });
+      document.getElementById('btnHomeLevels').addEventListener('click', () => {
+        SFX.pop();
+        showScreen('screenHub');
+      });
+
+      // Sound toggles
+      document.getElementById('btnSoundToggle').addEventListener('click', toggleSound);
+      document.getElementById('btnTitleSound').addEventListener('click', toggleSound);
+
+      // Teacher Tip toggle
+      document.getElementById('btnTeacherTip').addEventListener('click', () => {
+        SFX.pop();
+        document.getElementById('teacherTipBox').classList.toggle('open');
+      });
+
+      // Level Select cards
+      document.querySelectorAll('.level-card').forEach(card => {
+        card.addEventListener('click', () => launchLevel(Number(card.dataset.level)));
+        card.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            launchLevel(Number(card.dataset.level));
+          }
+        });
+      });
+
+      // Level 1 buttons
+      document.getElementById('btnL1Reset').addEventListener('click', () => { SFX.pop(); initLevel1(); });
+      document.getElementById('btnL1PlayAgain').addEventListener('click', () => { SFX.pop(); initLevel1(); });
+      document.getElementById('btnL1NextLevel').addEventListener('click', () => launchLevel(2));
+
+      // Level 2 buttons
+      document.querySelectorAll('.meal-btn').forEach(btn => {
+        btn.addEventListener('click', () => handleL2MealChoice(btn.dataset.meal, btn));
+      });
+      document.getElementById('btnL2ClearFoods').addEventListener('click', () => {
+        SFX.pop();
+        l2State.selectedFoods = [];
+        updateL2CustomerUI();
+      });
+      document.getElementById('btnL2ReadAll').addEventListener('click', readFullConversation);
+      document.getElementById('btnL2NewRound').addEventListener('click', () => {
+        SFX.pop();
+        startNewL2Round();
+      });
+      document.getElementById('btnL2NextLevel').addEventListener('click', () => launchLevel(3));
+
+      // Level 3 buttons
+      document.querySelectorAll('.speed-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          SFX.pop();
+          l3State.speedKey = btn.dataset.speed;
+          document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        });
+      });
+      document.getElementById('btnL3Listen').addEventListener('click', () => {
+        SFX.pop();
+        speakCurrentOrder();
+      });
+      document.getElementById('btnL3HidePic').addEventListener('click', (e) => {
+        SFX.pop();
+        l3State.hidePic = !l3State.hidePic;
+        e.currentTarget.textContent = l3State.hidePic ? '👁️ Show Picture' : '🙈 Hide Picture';
+        renderL3OrderTicket();
+      });
+      document.getElementById('btnL3Stop').addEventListener('click', handleL3Stop);
+
+      // Full-screen reveal buttons
+      document.getElementById('btnRevealSpeak').addEventListener('click', () => {
+        if (l3State.lastCaughtKey) {
+          SFX.pop();
+          speakText(ASSETS.foods[l3State.lastCaughtKey].label);
+        }
+      });
+      document.getElementById('btnRevealNextOrder').addEventListener('click', () => {
+        SFX.pop();
+        resumeBeltAfterReveal(true);
+      });
+      document.getElementById('btnRevealTryAgain').addEventListener('click', () => {
+        SFX.pop();
+        resumeBeltAfterReveal(false);
+      });
+
+      // Spacebar shortcut to hit STOP on Level 3
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' && state.currentLevel === 3 && !l3State.isStopped) {
+          e.preventDefault();
+          handleL3Stop();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
