@@ -1,0 +1,4223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Thanksgiving Hidden Objects — Cozy Autumn Adventure</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --font-main: 'Fredoka', 'Nunito', 'Chalkboard SE', 'Comic Sans MS', ui-rounded, sans-serif;
+    --wood-dark: rgba(26, 14, 7, 0.82);
+    --wood-hover: rgba(48, 26, 12, 0.94);
+    --border-gold: rgba(236, 189, 108, 0.45);
+    --border-bright: rgba(255, 224, 138, 0.88);
+    --amber-bright: #ffd670;
+    --parchment-top: #fce7a8;
+    --parchment-bot: #e3b252;
+    --cream: #fff7e8;
+    --shadow-hud: 0 6px 22px rgba(10, 4, 1, 0.58);
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  html, body {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    background: #1a0d05;
+    font-family: var(--font-main);
+    color: var(--cream);
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    touch-action: manipulation;
+  }
+
+  /* Edge-to-Edge Full-Screen Canvas */
+  #gameCanvas {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    display: block;
+    cursor: crosshair;
+    touch-action: none;
+  }
+
+  /* =========================================================
+     COMPACT FLOATING TRANSLUCENT HUD
+     ========================================================= */
+  .hud-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--wood-dark);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1.5px solid var(--border-gold);
+    border-radius: 10px;
+    color: var(--cream);
+    box-shadow: var(--shadow-hud);
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.88rem;
+    padding: 7px 14px;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.14s ease;
+    white-space: nowrap;
+  }
+
+  button.hud-pill {
+    cursor: pointer;
+  }
+
+  button.hud-pill:hover {
+    background: var(--wood-hover);
+    border-color: var(--border-bright);
+    transform: translateY(-1px);
+  }
+
+  button.hud-pill:active {
+    transform: translateY(0) scale(0.97);
+  }
+
+  /* Top-Left: Level Badge */
+  .hud-top-left {
+    position: fixed;
+    top: max(12px, env(safe-area-inset-top));
+    left: max(14px, env(safe-area-inset-left));
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .level-pill {
+    font-size: 0.9rem;
+    letter-spacing: 0.2px;
+    padding: 7px 15px;
+  }
+
+  /* Top-Center: Target Icon + Found Counter */
+  .hud-top-center {
+    position: fixed;
+    top: max(10px, env(safe-area-inset-top));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+  }
+
+  .found-pill {
+    padding: 5px 18px 5px 11px;
+    border-radius: 12px;
+    gap: 10px;
+    background: rgba(24, 13, 6, 0.86);
+    border: 1.5px solid rgba(255, 214, 112, 0.58);
+  }
+
+  .target-mini-canvas {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.65));
+  }
+
+  .found-text {
+    font-size: 1.24rem;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    color: #fffaf0;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.65);
+  }
+
+  /* Top-Right: Active Timer, Score, Fullscreen */
+  .hud-top-right {
+    position: fixed;
+    top: max(12px, env(safe-area-inset-top));
+    right: max(14px, env(safe-area-inset-right));
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .timer-pill, .score-pill {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .score-pill {
+    color: var(--amber-bright);
+  }
+
+  .btn-fullscreen {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    font-size: 1.08rem;
+  }
+
+  /* Bottom-Right Only (Clean Bottom-Left, NO Hint / Reveal All) */
+  .hud-bottom-right {
+    position: fixed;
+    bottom: max(14px, env(safe-area-inset-bottom));
+    right: max(14px, env(safe-area-inset-right));
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    max-width: calc(100vw - 28px);
+  }
+
+  .btn-leaderboard {
+    background: linear-gradient(180deg, rgba(120, 62, 18, 0.9), rgba(66, 31, 9, 0.92));
+    border-color: rgba(255, 214, 112, 0.72);
+    color: #ffe8a3;
+  }
+
+  .btn-leaderboard:hover {
+    background: linear-gradient(180deg, rgba(146, 78, 22, 0.95), rgba(84, 40, 12, 0.96));
+    color: #fff8de;
+  }
+
+  .audio-strip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 11px;
+  }
+
+  .mini-toggle {
+    background: transparent;
+    border: none;
+    color: var(--cream);
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 2px 5px;
+    border-radius: 6px;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .mini-toggle:hover {
+    background: rgba(255, 214, 112, 0.16);
+    color: var(--amber-bright);
+  }
+
+  .vol-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: rgba(255, 244, 224, 0.86);
+  }
+
+  .vol-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 70px;
+    height: 5px;
+    border-radius: 999px;
+    background: rgba(255, 232, 185, 0.28);
+    outline: none;
+    cursor: pointer;
+  }
+
+  .vol-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--amber-bright);
+    border: 1.5px solid #4a2308;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  }
+
+  .vol-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--amber-bright);
+    border: 1.5px solid #4a2308;
+    cursor: pointer;
+  }
+
+  /* =========================================================
+     WARM LANTERN LOADING OVERLAY
+     ========================================================= */
+  .loading-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 50% 42%, rgba(62, 30, 12, 0.94), rgba(20, 9, 4, 0.98));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: opacity 0.35s ease;
+    padding: 20px;
+  }
+
+  .loading-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .loading-card {
+    background: linear-gradient(165deg, rgba(58, 28, 12, 0.95), rgba(30, 13, 5, 0.97));
+    border: 2px solid rgba(255, 214, 112, 0.68);
+    border-radius: 24px;
+    padding: 28px 34px;
+    max-width: 440px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.72);
+  }
+
+  .lantern-spinner {
+    width: 62px;
+    height: 62px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    border: 4px solid rgba(255, 214, 112, 0.2);
+    border-top-color: #ffd670;
+    border-right-color: #f08a24;
+    animation: spin 1s linear infinite;
+    box-shadow: 0 0 24px rgba(255, 190, 75, 0.34);
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .loading-kicker {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    color: var(--amber-bright);
+    font-weight: 800;
+    margin-bottom: 6px;
+  }
+
+  .loading-title {
+    font-family: var(--font-main);
+    font-size: 1.44rem;
+    color: var(--cream);
+    margin-bottom: 8px;
+  }
+
+  .loading-sub {
+    font-size: 0.9rem;
+    color: rgba(255, 240, 214, 0.8);
+    line-height: 1.45;
+  }
+
+  /* =========================================================
+     "STUDY THE PICTURE" 4-SECOND PREVIEW CARD
+     ========================================================= */
+  .preview-card {
+    position: fixed;
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+    left: 50%;
+    transform: translateX(-50%) translateY(0);
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: rgba(30, 15, 6, 0.9);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 2px solid rgba(255, 214, 112, 0.82);
+    border-radius: 20px;
+    padding: 13px 20px;
+    box-shadow: 0 16px 46px rgba(10, 4, 1, 0.72);
+    max-width: min(550px, 94vw);
+    transition: opacity 0.28s ease, transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .preview-card.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-50%) translateY(22px);
+  }
+
+  .preview-icon-wrap {
+    width: 72px;
+    height: 72px;
+    border-radius: 16px;
+    background: radial-gradient(circle at 35% 30%, rgba(255, 228, 165, 0.24), rgba(20, 9, 3, 0.68));
+    border: 1.5px solid rgba(255, 214, 112, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .preview-body {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .preview-kicker {
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 1.1px;
+    color: var(--amber-bright);
+    font-weight: 800;
+  }
+
+  .preview-title {
+    font-family: var(--font-main);
+    font-size: 1.16rem;
+    font-weight: 700;
+    color: var(--cream);
+  }
+
+  .preview-timer-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .preview-bar {
+    flex: 1;
+    height: 7px;
+    background: rgba(255, 246, 229, 0.16);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .preview-bar-fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #f08a24, #ffe070);
+    border-radius: 999px;
+    transition: width 0.08s linear;
+  }
+
+  .preview-sec {
+    font-size: 0.84rem;
+    font-weight: 800;
+    color: var(--amber-bright);
+    min-width: 26px;
+    text-align: right;
+  }
+
+  .btn-start-now {
+    margin-top: 3px;
+    align-self: flex-start;
+    background: linear-gradient(180deg, var(--parchment-top), var(--parchment-bot));
+    color: #2b1304;
+    border: 1.5px solid #fff2c4;
+    border-radius: 999px;
+    padding: 7px 17px;
+    font-weight: 800;
+    font-size: 0.86rem;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.42);
+    transition: transform 0.14s ease, filter 0.14s ease;
+    font-family: inherit;
+  }
+
+  .btn-start-now:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.06);
+  }
+
+  /* =========================================================
+     MODALS (Welcome, Level Complete, Levels, Leaderboard, Victory)
+     ========================================================= */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(14, 6, 2, 0.72);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    padding: 16px;
+    opacity: 1;
+    transition: opacity 0.25s ease;
+  }
+
+  .modal-backdrop.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .modal-card {
+    position: relative;
+    background: linear-gradient(165deg, rgba(56, 27, 11, 0.96), rgba(28, 12, 4, 0.98));
+    border: 2px solid var(--amber-bright);
+    border-radius: 24px;
+    padding: 24px 26px;
+    max-width: 540px;
+    width: 100%;
+    max-height: 92dvh;
+    overflow-y: auto;
+    box-shadow: 0 24px 64px rgba(8, 3, 1, 0.82);
+    text-align: center;
+    transform: scale(1);
+    transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .modal-backdrop.hidden .modal-card {
+    transform: scale(0.93);
+  }
+
+  .modal-card.wide {
+    max-width: 780px;
+  }
+
+  .modal-badge {
+    display: inline-block;
+    background: rgba(255, 214, 112, 0.16);
+    border: 1px solid rgba(255, 214, 112, 0.45);
+    color: var(--amber-bright);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+  }
+
+  .modal-title {
+    font-family: var(--font-main);
+    font-size: 1.68rem;
+    color: var(--cream);
+    margin-bottom: 8px;
+  }
+
+  .modal-sub {
+    font-size: 0.93rem;
+    color: rgba(255, 240, 214, 0.85);
+    margin-bottom: 16px;
+    line-height: 1.45;
+  }
+
+  .stats-row {
+    display: flex;
+    justify-content: center;
+    gap: 11px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+
+  .stat-box {
+    background: rgba(255, 246, 229, 0.08);
+    border: 1px solid rgba(255, 214, 112, 0.32);
+    border-radius: 14px;
+    padding: 10px 16px;
+    min-width: 108px;
+  }
+
+  .stat-val {
+    font-size: 1.24rem;
+    font-weight: 800;
+    color: var(--amber-bright);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stat-lbl {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    color: rgba(255, 240, 214, 0.72);
+    margin-top: 2px;
+  }
+
+  .modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  .btn-primary {
+    background: linear-gradient(180deg, var(--parchment-top), var(--parchment-bot));
+    color: #291103;
+    border: 1.5px solid #fff3c7;
+    border-radius: 999px;
+    padding: 10px 24px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+    transition: transform 0.14s ease, filter 0.14s ease;
+    font-family: inherit;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    filter: brightness(1.07);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.58;
+    cursor: not-allowed;
+  }
+
+  .btn-secondary {
+    background: rgba(255, 246, 229, 0.1);
+    color: var(--cream);
+    border: 1.5px solid rgba(255, 214, 112, 0.45);
+    border-radius: 999px;
+    padding: 9px 20px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.14s ease, transform 0.14s ease;
+    font-family: inherit;
+  }
+
+  .btn-secondary:hover {
+    background: rgba(255, 246, 229, 0.2);
+    transform: translateY(-1px);
+  }
+
+  .btn-danger {
+    background: linear-gradient(180deg, #ef4444, #b91c1c);
+    color: #fff;
+    border: 1.5px solid #fca5a5;
+    border-radius: 999px;
+    padding: 7px 16px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: filter 0.14s ease, transform 0.14s ease;
+  }
+
+  .btn-danger:hover {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+  }
+
+  .teacher-lock-btn {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    background: transparent;
+    border: none;
+    color: rgba(255, 232, 185, 0.42);
+    font-size: 1.15rem;
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 10px;
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+
+  .teacher-lock-btn:hover {
+    color: var(--amber-bright);
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .teacher-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    background: rgba(220, 38, 38, 0.18);
+    border: 1px solid rgba(248, 113, 113, 0.45);
+    border-radius: 14px;
+    padding: 8px 14px;
+    margin: 8px 0 10px;
+  }
+
+  .teacher-bar.hidden,
+  .teacher-col.hidden {
+    display: none;
+  }
+
+  .row-del-btn {
+    background: rgba(239, 68, 68, 0.85);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .row-del-btn:hover {
+    background: #dc2626;
+  }
+
+  /* Name Input & Form Controls */
+  .name-form-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 12px 0 14px;
+    flex-wrap: wrap;
+  }
+
+  .text-input {
+    background: rgba(18, 8, 3, 0.72);
+    border: 1.5px solid rgba(255, 214, 112, 0.5);
+    border-radius: 12px;
+    color: var(--cream);
+    font-family: var(--font-main);
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 9px 14px;
+    width: 220px;
+    max-width: 100%;
+    outline: none;
+    user-select: text;
+    -webkit-user-select: text;
+    -webkit-touch-callout: default;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .text-input:focus {
+    border-color: #ffe285;
+    box-shadow: 0 0 0 3px rgba(255, 214, 112, 0.2);
+  }
+
+  .status-msg {
+    font-size: 0.85rem;
+    min-height: 20px;
+    margin: 6px 0 8px;
+    color: var(--amber-bright);
+    font-weight: 700;
+  }
+
+  .status-msg.err {
+    color: #ff9c8a;
+  }
+
+  .status-msg.ok {
+    color: #a6f28d;
+  }
+
+  /* Leaderboard Table */
+  .lb-table-wrap {
+    margin: 10px 0 14px;
+    max-height: 44vh;
+    overflow-y: auto;
+    border: 1px solid rgba(255, 214, 112, 0.3);
+    border-radius: 14px;
+    background: rgba(18, 8, 3, 0.55);
+  }
+
+  .lb-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    text-align: left;
+  }
+
+  .lb-table th {
+    position: sticky;
+    top: 0;
+    background: rgba(46, 22, 9, 0.96);
+    color: var(--amber-bright);
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255, 214, 112, 0.32);
+  }
+
+  .lb-table td {
+    padding: 9px 12px;
+    border-bottom: 1px solid rgba(255, 240, 214, 0.08);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .lb-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .lb-table tr.highlight-row {
+    background: rgba(255, 214, 112, 0.2);
+  }
+
+  .rank-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 24px;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: 0.8rem;
+    background: rgba(255, 246, 229, 0.1);
+    color: var(--cream);
+  }
+
+  .rank-1 { background: linear-gradient(180deg, #ffe784, #d4951a); color: #2b1304; }
+  .rank-2 { background: linear-gradient(180deg, #eef2f5, #9aa5b1); color: #1a202c; }
+  .rank-3 { background: linear-gradient(180deg, #f3b584, #a85c28); color: #240e02; }
+
+  /* Discreet Teacher Lock Icon & Teacher Controls */
+  .btn-teacher-lock {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 214, 112, 0.22);
+    background: rgba(255, 246, 229, 0.05);
+    color: rgba(255, 232, 185, 0.52);
+    font-size: 0.82rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .btn-teacher-lock:hover {
+    background: rgba(255, 214, 112, 0.16);
+    color: var(--amber-bright);
+    border-color: rgba(255, 214, 112, 0.6);
+  }
+
+  .btn-teacher-lock.unlocked {
+    border-color: rgba(166, 242, 141, 0.55);
+    color: #a6f28d;
+    background: rgba(60, 176, 75, 0.18);
+  }
+
+  .teacher-panel {
+    margin: 8px 0 12px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    border: 1.5px dashed rgba(255, 168, 120, 0.55);
+    background: rgba(74, 24, 12, 0.58);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .teacher-panel.hidden {
+    display: none;
+  }
+
+  .teacher-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #ffd670;
+    letter-spacing: 0.3px;
+  }
+
+  .teacher-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .btn-danger {
+    background: linear-gradient(180deg, #d94136, #961e16);
+    color: #fff6f0;
+    border: 1.5px solid rgba(255, 190, 176, 0.7);
+    border-radius: 999px;
+    padding: 7px 14px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    font-family: var(--font-main);
+    cursor: pointer;
+    transition: transform 0.14s ease, filter 0.14s ease;
+  }
+
+  .btn-danger:hover:not(:disabled) {
+    transform: translateY(-1px);
+    filter: brightness(1.08);
+  }
+
+  .btn-danger:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .btn-row-del {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 156, 138, 0.55);
+    background: rgba(185, 36, 26, 0.35);
+    color: #ffd0c7;
+    font-size: 0.78rem;
+    font-weight: 700;
+    font-family: var(--font-main);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, transform 0.12s ease;
+  }
+
+  .btn-row-del:hover {
+    background: rgba(217, 65, 54, 0.85);
+    color: #ffffff;
+    transform: scale(1.08);
+  }
+
+  .teacher-pin-box,
+  .teacher-confirm-box {
+    margin: 8px 0 12px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1.5px solid rgba(255, 214, 112, 0.55);
+    background: rgba(22, 10, 4, 0.84);
+    text-align: center;
+  }
+
+  .teacher-pin-box.hidden,
+  .teacher-confirm-box.hidden {
+    display: none;
+  }
+
+  .teacher-confirm-text {
+    font-size: 0.9rem;
+    color: #ffe3d8;
+    margin-bottom: 10px;
+    line-height: 1.4;
+  }
+
+  .pin-input {
+    width: 140px;
+    text-align: center;
+    letter-spacing: 3px;
+  }
+
+  /* Level Select Grid */
+  .level-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
+    gap: 10px;
+    margin: 14px 0 18px;
+    max-height: 52vh;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+
+  .level-tile {
+    position: relative;
+    background: rgba(255, 246, 229, 0.08);
+    border: 1.5px solid rgba(255, 214, 112, 0.3);
+    border-radius: 15px;
+    padding: 11px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: transform 0.14s ease, background 0.14s ease, border-color 0.14s ease;
+    color: var(--cream);
+    font-family: inherit;
+  }
+
+  .level-tile:hover {
+    background: rgba(255, 214, 112, 0.18);
+    border-color: var(--amber-bright);
+    transform: translateY(-2px);
+  }
+
+  .level-tile.active {
+    border-color: #ffe070;
+    background: rgba(240, 160, 42, 0.24);
+  }
+
+  .level-tile.completed {
+    border-color: #9be87c;
+  }
+
+  .tile-stars {
+    position: absolute;
+    top: 6px;
+    right: 7px;
+    font-size: 0.76rem;
+    color: #ffe066;
+    letter-spacing: 1px;
+  }
+
+  .tile-num {
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--amber-bright);
+  }
+
+  .tile-icon {
+    width: 46px;
+    height: 46px;
+  }
+
+  .tile-item {
+    font-size: 0.83rem;
+    font-weight: 800;
+    color: var(--cream);
+  }
+
+  .tile-scene {
+    font-size: 0.69rem;
+    color: rgba(255, 240, 214, 0.74);
+    line-height: 1.2;
+  }
+
+  /* Toast Notification */
+  .toast {
+    position: fixed;
+    top: calc(66px + env(safe-area-inset-top, 0px));
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px);
+    background: rgba(28, 14, 6, 0.92);
+    border: 1.5px solid var(--amber-bright);
+    color: var(--amber-bright);
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    z-index: 70;
+    opacity: 0;
+    pointer-events: none;
+    max-width: min(92vw, 480px);
+    text-align: center;
+    transition: opacity 0.22s ease, transform 0.22s ease;
+    box-shadow: var(--shadow-hud);
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  @media (max-width: 820px) {
+    .found-text { font-size: 1.02rem; }
+    .target-mini-canvas { width: 28px; height: 28px; }
+    .hud-pill { padding: 6px 9px; font-size: 0.8rem; }
+    .vol-wrap { display: none; }
+    .hud-top-left { top: calc(8px + env(safe-area-inset-top, 0px)); left: calc(8px + env(safe-area-inset-left, 0px)); }
+    .hud-top-center { top: calc(8px + env(safe-area-inset-top, 0px)); }
+    .hud-top-right { top: calc(8px + env(safe-area-inset-top, 0px)); right: calc(8px + env(safe-area-inset-right, 0px)); gap: 5px; }
+    .hud-bottom-right { bottom: calc(10px + env(safe-area-inset-bottom, 0px)); right: calc(10px + env(safe-area-inset-right, 0px)); gap: 5px; }
+    .preview-card { bottom: calc(68px + env(safe-area-inset-bottom, 0px)); padding: 11px 14px; gap: 11px; }
+    .preview-icon-wrap { width: 58px; height: 58px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="gameCanvas" aria-label="Thanksgiving Hidden Objects Game Canvas"></canvas>
+
+<!-- Top-Left: Level Badge -->
+<div class="hud-top-left">
+  <div class="hud-pill level-pill" id="hudLevelNum">Level 1 / 10</div>
+</div>
+
+<!-- Top-Center: Drawn Target Icon + Found Counter -->
+<div class="hud-top-center">
+  <div class="hud-pill found-pill">
+    <canvas class="target-mini-canvas" id="hudTargetCanvas" width="76" height="76"></canvas>
+    <span class="found-text" id="hudFoundCount">Found: 0 / 10</span>
+  </div>
+</div>
+
+<!-- Top-Right: Active Timer, Score, Fullscreen -->
+<div class="hud-top-right">
+  <button class="hud-pill timer-pill" id="hudTimer" title="Toggle Timer Display">⏱ 00:00</button>
+  <div class="hud-pill score-pill" id="hudScore" title="Total Harvest Score">⭐ 0</div>
+  <button class="hud-pill btn-fullscreen" id="btnFullscreen" title="Toggle Fullscreen" aria-label="Toggle Fullscreen">⛶</button>
+</div>
+
+<!-- Toast Feedback -->
+<div class="toast" id="toastMsg"></div>
+
+<!-- Warm Lantern Loading Overlay -->
+<div class="loading-overlay hidden" id="loadingOverlay">
+  <div class="loading-card">
+    <div class="lantern-spinner"></div>
+    <div class="loading-kicker" id="loadingKicker">Level 1 of 10</div>
+    <h2 class="loading-title" id="loadingTitle">Painting Autumn Scene...</h2>
+    <p class="loading-sub" id="loadingSub">Blending golden-hour sunlight, weathered wood, glowing lanterns, and camouflaged Thanksgiving treasures...</p>
+  </div>
+</div>
+
+<!-- "Study the Picture" 4-Second Preview Card -->
+<section class="preview-card hidden" id="previewCard" aria-live="polite">
+  <div class="preview-icon-wrap">
+    <canvas id="previewIconCanvas" width="128" height="128" style="width:62px;height:62px;"></canvas>
+  </div>
+  <div class="preview-body">
+    <div class="preview-kicker" id="previewKicker">Study the Picture — Rustic Harvest Courtyard &amp; Pantry</div>
+    <div class="preview-title" id="previewTitle">Level 1: Find 10 Turkeys</div>
+    <div class="preview-timer-row">
+      <div class="preview-bar"><div class="preview-bar-fill" id="previewBarFill"></div></div>
+      <span class="preview-sec" id="previewSec">4s</span>
+    </div>
+    <button class="btn-start-now" id="btnStartNow">Start Searching Now</button>
+  </div>
+</section>
+
+<!-- Bottom-Right Controls Cluster (Clean Bottom-Left: NO Hint, NO Reveal All) -->
+<div class="hud-bottom-right">
+  <button class="hud-pill btn-leaderboard" id="btnLeaderboard" title="View Live Global Leaderboard">🏆 Leaderboard</button>
+
+  <div class="hud-pill audio-strip">
+    <button class="mini-toggle" id="btnSfx" title="Toggle Sound Effects">🔊</button>
+    <button class="mini-toggle" id="btnMusic" title="Toggle Cozy Autumn Harp Music">🎵 Off</button>
+    <label class="vol-wrap" title="Master Volume">
+      <span>Vol.</span>
+      <input type="range" class="vol-slider" id="volSlider" min="0" max="100" value="70">
+    </label>
+  </div>
+
+  <button class="hud-pill" id="btnLevels" title="Choose Level">Levels</button>
+  <button class="hud-pill" id="btnRestart" title="Restart Current Level">Restart</button>
+</div>
+
+<!-- Initial Welcome & Optional Player Name Overlay -->
+<div class="modal-backdrop" id="welcomeModal">
+  <div class="modal-card">
+    <div class="modal-badge">🍂 10-Level Cozy Autumn Challenge 🍂</div>
+    <h2 class="modal-title">Thanksgiving Hidden Objects</h2>
+    <p class="modal-sub">
+      Search 10 lush painterly autumn scenes for deeply camouflaged Thanksgiving treasures.
+      No hints, no shortcuts — just sharp eyes, warm lantern light, and a live global leaderboard!
+    </p>
+    <div class="name-form-row">
+      <input type="text" class="text-input" id="welcomeNameInput" maxlength="22" placeholder="Your Name (optional)" aria-label="Player Name">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="btnWelcomeLeaderboard">🏆 Leaderboard</button>
+      <button class="btn-primary" id="btnBeginAdventure">Begin Level 1 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Level Complete Modal -->
+<div class="modal-backdrop hidden" id="completeModal">
+  <div class="modal-card">
+    <div class="modal-badge" id="completeBadge">Level 1 Complete!</div>
+    <h2 class="modal-title" id="completeTitle">All 10 Turkeys Found!</h2>
+    <p class="modal-sub" id="completeSub">Sharp autumn eyes! You spotted every camouflaged treasure in the scene.</p>
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="stat-val" id="statTime">00:24</div>
+        <div class="stat-lbl">Level Time</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="statLevelScore">+1,450</div>
+        <div class="stat-lbl">Level Score</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="statStars">★★★</div>
+        <div class="stat-lbl">Rating</div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="btnReplayLevel">↺ Replay</button>
+      <button class="btn-primary" id="btnNextLevel">Next Level →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Level Selector Modal -->
+<div class="modal-backdrop hidden" id="levelsModal">
+  <div class="modal-card wide">
+    <div class="modal-badge">Thanksgiving Hidden Objects</div>
+    <h2 class="modal-title">Choose Your Cozy Autumn Scene</h2>
+    <p class="modal-sub">Find all 10 camouflaged treasures in each of the 10 painterly Thanksgiving illustrations.</p>
+    <div class="level-grid" id="levelGrid"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="btnCloseLevels">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Live Firebase Leaderboard Modal -->
+<div class="modal-backdrop hidden" id="leaderboardModal">
+  <div class="modal-card wide">
+    <button class="teacher-lock-btn" id="btnTeacherLock" title="Teacher Controls" aria-label="Teacher Controls">🔒</button>
+    <div class="modal-badge">🏆 Live Global Rankings 🏆</div>
+    <h2 class="modal-title">Harvest Champions Leaderboard</h2>
+    <p class="modal-sub">Ranked by Levels Completed, Total Score, and Fastest Time.</p>
+
+    <div class="name-form-row">
+      <input type="text" class="text-input" id="lbNameInput" maxlength="22" placeholder="Enter Player Name" aria-label="Leaderboard Player Name">
+      <button class="btn-primary" id="btnLbSubmit">Submit Current Score</button>
+      <button class="btn-secondary" id="btnLbRefresh">↻ Refresh</button>
+    </div>
+    <div class="status-msg" id="lbStatus"></div>
+
+    <div class="teacher-bar hidden" id="teacherBar">
+      <span style="font-size:0.86rem;font-weight:700;color:#fecaca;">🍎 Teacher Mode Active (This Device Only)</span>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn-danger" id="btnClearLeaderboard">🗑️ Clear All</button>
+        <button class="btn-secondary" style="padding:6px 12px;font-size:0.8rem;" id="btnLockTeacher">🔓 Lock</button>
+      </div>
+    </div>
+
+    <div class="lb-table-wrap">
+      <table class="lb-table" aria-label="Top 20 Players">
+        <thead>
+          <tr>
+            <th style="width:62px;">Rank</th>
+            <th>Player</th>
+            <th>Levels</th>
+            <th>Score</th>
+            <th>Time</th>
+            <th class="teacher-col hidden" style="width:46px;"></th>
+          </tr>
+        </thead>
+        <tbody id="lbTableBody">
+          <tr><td colspan="6" style="text-align:center;padding:18px;opacity:0.75;">Loading leaderboard...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" id="btnCloseLeaderboard">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Teacher PIN & Clear Confirmation Modal -->
+<div class="modal-backdrop hidden" id="pinModal">
+  <div class="modal-card" style="max-width:380px;">
+    <div class="modal-badge" id="pinBadge">🔒 Teacher Access</div>
+    <h2 class="modal-title" id="pinTitle">Enter Teacher PIN</h2>
+    <p class="modal-sub" id="pinSub">Unlock leaderboard reset controls on this device only.</p>
+    <div class="name-form-row" id="pinInputWrap">
+      <input type="password" inputmode="numeric" class="text-input" id="pinInput" maxlength="8" placeholder="PIN" style="text-align:center;letter-spacing:3px;width:160px;" aria-label="Teacher PIN">
+    </div>
+    <div class="status-msg" id="pinStatus"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="btnPinCancel">Cancel</button>
+      <button class="btn-primary" id="btnPinConfirm">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<!-- Grand Victory Modal (After Level 10) -->
+<div class="modal-backdrop hidden" id="victoryModal">
+  <div class="modal-card">
+    <div class="modal-badge">🍂 Happy Thanksgiving! 🍂</div>
+    <h2 class="modal-title">Grand Harvest Champion!</h2>
+    <p class="modal-sub">You conquered all 10 cozy Thanksgiving scenes without a single hint! Record your victory on the live leaderboard below.</p>
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="stat-val" id="vicTotalScore">0</div>
+        <div class="stat-lbl">Total Score</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="vicTotalTime">00:00</div>
+        <div class="stat-lbl">Total Time</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="vicLevelsDone">10 / 10</div>
+        <div class="stat-lbl">Levels</div>
+      </div>
+    </div>
+
+    <div class="name-form-row">
+      <input type="text" class="text-input" id="victoryNameInput" maxlength="22" placeholder="Your Player Name" aria-label="Victory Player Name">
+      <button class="btn-primary" id="btnVictorySubmit">Submit Score to Leaderboard</button>
+    </div>
+    <div class="status-msg" id="victoryStatus"></div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" id="btnVictoryLeaderboard">🏆 View Leaderboard</button>
+      <button class="btn-secondary" id="btnPlayAgain">Play Again from Level 1</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* =========================================================================
+     1. CONSTANTS, FIREBASE ENDPOINT & 10-LEVEL CONFIGURATION
+     ========================================================================= */
+  const WORLD_W = 1600;
+  const WORLD_H = 900;
+  const OUTLINE = '#381b0c';
+  const FIREBASE_LB_BASE = 'https://mission-2-ef712-default-rtdb.firebaseio.com/leaderboard';
+  const FIREBASE_LB_URL = `${FIREBASE_LB_BASE}.json`;
+  const PLAYER_NAME_KEY = 'tg_ho_player_name';
+  const TEACHER_DEVICE_KEY = 'thanksgiving_teacher_device';
+  const TEACHER_PIN = '2026';
+  // Optional: Paste a Google AI Studio Gemini API key here if you want live AI-generated
+  // backgrounds when hosting the downloaded file outside the preview window.
+  const GEMINI_API_KEY = '';
+  const STYLE_SUFFIX =
+    'Lush warm painterly digital illustration in the style of a hyper-detailed cozy autumn hidden-object adventure game, rich hand-painted brushwork, golden-hour sunlight, warm glowing amber lanterns, natural weathered textures, dense charming seasonal props, overflowing autumn foliage, shelves, baskets, pumpkins, inviting depth of field, vibrant autumn palette of burnt orange, amber gold, crimson, and warm wood. Absolutely NO text, NO words, NO letters, NO UI elements, NO watermarks.';
+
+  const LEVELS = [
+    {
+      id: 1,
+      sceneName: 'Rustic Harvest Courtyard & Pantry',
+      itemType: 'turkey',
+      itemPlural: 'Turkeys',
+      itemSingular: 'Turkey',
+      ambient: 'leaves',
+      prompt: `Cozy rustic autumn outdoor courtyard with a weathered golden wooden barn pantry open to reveal shelves filled with colorful glass mason jars, cobblestone courtyard floor covered in fallen maple leaves, rustic wooden picnic tables with woven runners and a folded patchwork quilt, glowing brass lanterns, galvanized buckets of sunflowers and orange mums, wooden crates of red and green apples, pumpkins, and a stone brick outdoor hearth oven under autumn apple trees. ${STYLE_SUFFIX}`,
+      spots: [
+        { x: 325, y: 492, s: 0.48, r: -0.18 },
+        { x: 518, y: 358, s: 0.45, r: 0.22 },
+        { x: 892, y: 376, s: 0.46, r: -0.14 },
+        { x: 1410, y: 252, s: 0.44, r: 0.26 },
+        { x: 1098, y: 498, s: 0.50, r: -0.24 },
+        { x: 1308, y: 632, s: 0.56, r: 0.16 },
+        { x: 525, y: 734, s: 0.58, r: -0.20 },
+        { x: 222, y: 318, s: 0.44, r: 0.25 },
+        { x: 762, y: 626, s: 0.54, r: -0.11 },
+        { x: 1185, y: 332, s: 0.45, r: 0.28 }
+      ]
+    },
+    {
+      id: 2,
+      sceneName: 'Cozy Farmhouse Bakery Kitchen',
+      itemType: 'bread',
+      itemPlural: 'Breads',
+      itemSingular: 'Bread',
+      ambient: 'warm',
+      prompt: `Warm sunlit country farmhouse bakery kitchen interior with a rustic stone hearth brick oven glowing warmly, wooden shelves loaded with linen flour sacks, hammered copper pots, ceramic pitchers, hanging bundles of drying herbs, weathered wooden kneading tables with red gingham cloths, wicker baskets, warm autumn sunbeams through paned windows, and glowing pendant lanterns. ${STYLE_SUFFIX}`,
+      spots: [
+        { x: 238, y: 266, s: 0.45, r: 0.22 },
+        { x: 282, y: 522, s: 0.52, r: -0.26 },
+        { x: 530, y: 622, s: 0.56, r: 0.17 },
+        { x: 785, y: 568, s: 0.54, r: -0.19 },
+        { x: 1042, y: 610, s: 0.53, r: 0.24 },
+        { x: 1352, y: 468, s: 0.50, r: -0.21 },
+        { x: 1326, y: 270, s: 0.44, r: 0.29 },
+        { x: 774, y: 356, s: 0.46, r: -0.25 },
+        { x: 642, y: 742, s: 0.60, r: 0.15 },
+        { x: 1172, y: 736, s: 0.58, r: -0.22 }
+      ]
+    },
+    {
+      id: 3,
+      sceneName: 'Sunlit Autumn Preserves Pantry',
+      itemType: 'cranberry',
+      itemPlural: 'Cranberry Sauces',
+      itemSingular: 'Cranberry Sauce',
+      ambient: 'warm',
+      prompt: `Sunlit farmhouse preserves pantry and harvest cellar with tall weathered wooden shelves packed with colorful glass preserve jars, woven wicker baskets, hanging braided garlic, dried red peppers and autumn herbs, wooden oak barrels, checkered curtains over a small cellar window, vintage ceramic crocks, and warm glowing candlelight. ${STYLE_SUFFIX}`,
+      spots: [
+        { x: 228, y: 252, s: 0.44, r: -0.20 },
+        { x: 462, y: 372, s: 0.47, r: 0.24 },
+        { x: 236, y: 532, s: 0.52, r: -0.18 },
+        { x: 798, y: 538, s: 0.55, r: 0.12 },
+        { x: 610, y: 568, s: 0.52, r: -0.24 },
+        { x: 996, y: 548, s: 0.52, r: 0.21 },
+        { x: 1340, y: 262, s: 0.45, r: -0.26 },
+        { x: 1188, y: 386, s: 0.48, r: 0.19 },
+        { x: 1352, y: 696, s: 0.58, r: -0.17 },
+        { x: 454, y: 734, s: 0.57, r: 0.22 }
+      ]
+    },
+    {
+      id: 4,
+      sceneName: 'Golden Harvest Barn Porch',
+      itemType: 'corn',
+      itemPlural: 'Corns',
+      itemSingular: 'Corn',
+      ambient: 'leaves',
+      prompt: `Golden-hour wrap-around harvest barn porch overlooking a glowing autumn apple orchard, wooden rocking chairs draped with cozy plaid blankets, rustic wooden crates overflowing with red apples and gourds, hanging dried autumn foliage, terracotta flower pots of orange and yellow mums, pumpkins on wooden steps, and glowing brass porch lanterns. ${STYLE_SUFFIX}`,
+      spots: [
+        { x: 245, y: 590, s: 0.54, r: -0.32 },
+        { x: 458, y: 482, s: 0.48, r: 0.28 },
+        { x: 792, y: 642, s: 0.58, r: -0.18 },
+        { x: 642, y: 382, s: 0.46, r: 0.34 },
+        { x: 954, y: 388, s: 0.47, r: -0.30 },
+        { x: 1164, y: 492, s: 0.50, r: 0.26 },
+        { x: 1360, y: 596, s: 0.55, r: -0.29 },
+        { x: 350, y: 738, s: 0.59, r: 0.31 },
+        { x: 1220, y: 734, s: 0.58, r: -0.27 },
+        { x: 798, y: 242, s: 0.44, r: 0.22 }
+      ]
+    },
+    {
+      id: 5,
+      sceneName: 'Fireside Cottage Dining Room',
+      itemType: 'potatoes',
+      itemPlural: 'Mashed Potatoes',
+      itemSingular: 'Mashed Potatoes',
+      ambient: 'warm',
+      prompt: `Cozy fireside cottage Thanksgiving dining room with a crackling stone fireplace, long polished oak dining table draped with a cream lace runner, antique wooden china cabinet filled with porcelain, glowing brass candlesticks, rich autumn floral centerpieces with sunflowers and maple leaves, braided rug, and a wide bay window showing golden maple trees outside. ${STYLE_SUFFIX}`,
+      spots: [
+        { x: 792, y: 642, s: 0.56, r: -0.14 },
+        { x: 242, y: 292, s: 0.44, r: -0.22 },
+        { x: 252, y: 518, s: 0.50, r: 0.20 },
+        { x: 502, y: 562, s: 0.52, r: -0.25 },
+        { x: 788, y: 362, s: 0.47, r: 0.18 },
+        { x: 1094, y: 552, s: 0.52, r: -0.19 },
+        { x: 1358, y: 442, s: 0.48, r: 0.24 },
+        { x: 1348, y: 696, s: 0.58, r: -0.21 },
+        { x: 425, y: 736, s: 0.57, r: 0.17 },
+        { x: 1058, y: 266, s: 0.44, r: -0.23 }
+      ]
+    },
+    {
+      id: 6,
+      sceneName: 'Country Bakehouse & Pie Stall',
+      itemType: 'pumpkinPie',
+      itemPlural: 'Pumpkin Pies',
+      itemSingular: 'Pumpkin Pie',
+      ambient: 'warm',
+      prompt: `Charming country bakehouse and rustic pie stall with thick wooden butcher block counters, shiny copper kettles, vintage ceramic mixing bowls, wooden spice racks, red-and-white checkered curtains, warm golden sunlight streaming through a garden window overlooking autumn trees, pumpkins, and rustic exposed wooden ceiling rafters. ${STYLE_SUFFIX}`,
+      spots: [
+        { x: 582, y: 558, s: 0.54, r: -0.20 },
+        { x: 848, y: 552, s: 0.56, r: 0.16 },
+        { x: 1098, y: 562, s: 0.54, r: -0.22 },
+        { x: 242, y: 312, s: 0.45, r: 0.25 },
+        { x: 252, y: 508, s: 0.50, r: -0.19 },
+        { x: 266, y: 702, s: 0.56, r: 0.18 },
+        { x: 1348, y: 332, s: 0.46, r: -0.24 },
+        { x: 1358, y: 558, s: 0.53, r: 0.21 },
+        { x: 752, y: 368, s: 0.47, r: -0.17 },
+        { x: 824, y: 742, s: 0.59, r: 0.19 }
+      ]
+    },
+    {
+      id: 7,
+      sceneName: 'Grand Lantern-Lit Barn Feast',
+      itemType: 'stuffing',
+      itemPlural: 'Stuffings',
+      itemSingular: 'Stuffing',
+      ambient: 'warm',
+      prompt: `Grand lantern-lit timber-frame autumn barn decorated for a cozy harvest feast with warm fairy string lights draped across heavy oak beams, golden hay bales, long wooden trestle tables with plaid tablecloths, hanging autumn leaf wreaths, oak barrels, pumpkins, sunflowers, and glowing amber brass lanterns. ${STYLE_SUFFIX}`,
+      spots: [
+        { x: 792, y: 618, s: 0.57, r: -0.13 },
+        { x: 512, y: 628, s: 0.54, r: -0.22 },
+        { x: 1088, y: 628, s: 0.54, r: 0.21 },
+        { x: 252, y: 322, s: 0.44, r: -0.26 },
+        { x: 1348, y: 322, s: 0.44, r: 0.25 },
+        { x: 236, y: 682, s: 0.56, r: 0.19 },
+        { x: 1358, y: 682, s: 0.56, r: -0.20 },
+        { x: 432, y: 468, s: 0.48, r: 0.22 },
+        { x: 1168, y: 468, s: 0.48, r: -0.23 },
+        { x: 798, y: 746, s: 0.59, r: 0.15 }
+      ]
+    },
+    {
+      id: 8,
+      sceneName: 'Autumn Cobblestone Town Square',
+      itemType: 'flag',
+      itemPlural: 'USA Flags',
+      itemSingular: 'USA Flag',
+      ambient: 'leaves',
+      prompt: `Picturesque historic New England autumn cobblestone town square at golden hour with warm brick colonial storefronts, a charming white wooden town gazebo in the center, cobblestone street covered in fallen golden leaves, vibrant orange and red maple trees, wooden harvest market stalls, glowing vintage iron streetlamps, and festive autumn garlands. ${STYLE_SUFFIX}`,
+      spots: [
+        { x: 792, y: 362, s: 0.52, r: 0.22 },
+        { x: 236, y: 382, s: 0.47, r: -0.28 },
+        { x: 442, y: 588, s: 0.53, r: 0.24 },
+        { x: 642, y: 512, s: 0.50, r: -0.21 },
+        { x: 958, y: 512, s: 0.50, r: 0.23 },
+        { x: 1178, y: 588, s: 0.53, r: -0.25 },
+        { x: 1362, y: 378, s: 0.47, r: 0.27 },
+        { x: 262, y: 726, s: 0.58, r: -0.19 },
+        { x: 1338, y: 726, s: 0.58, r: 0.20 },
+        { x: 808, y: 716, s: 0.57, r: -0.16 }
+      ]
+    },
+    {
+      id: 9,
+      sceneName: 'Rustic Apple Orchard Cider Mill',
+      itemType: 'applePie',
+      itemPlural: 'Apple Pies',
+      itemSingular: 'Apple Pie',
+      ambient: 'leaves',
+      prompt: `Rustic old weathered wooden cider mill and autumn apple orchard farm stand with traditional wooden apple presses, woven wicker baskets overflowing with glossy red and green apples, oak cider barrels, hanging brass lanterns, sunflowers, wooden shelves, and a colorful golden autumn hillside behind. ${STYLE_SUFFIX}`,
+      spots: [
+        { x: 792, y: 604, s: 0.56, r: -0.14 },
+        { x: 262, y: 548, s: 0.52, r: -0.24 },
+        { x: 492, y: 492, s: 0.49, r: 0.21 },
+        { x: 1098, y: 498, s: 0.49, r: -0.20 },
+        { x: 1348, y: 568, s: 0.52, r: 0.23 },
+        { x: 352, y: 736, s: 0.58, r: -0.19 },
+        { x: 1238, y: 736, s: 0.58, r: 0.22 },
+        { x: 236, y: 312, s: 0.45, r: 0.26 },
+        { x: 1354, y: 312, s: 0.45, r: -0.25 },
+        { x: 798, y: 352, s: 0.46, r: 0.18 }
+      ]
+    },
+    {
+      id: 10,
+      sceneName: 'Harvest Village Festival Market',
+      itemType: 'pilgrim',
+      itemPlural: 'Pilgrims',
+      itemSingular: 'Pilgrim',
+      ambient: 'leaves',
+      prompt: `Charming storybook autumn harvest village festival market at twilight golden hour with cozy timber-framed cottages with thatched roofs, winding cobblestone lanes, festive wooden market carts overflowing with pumpkins and gourds, glowing bonfires and warm hanging string lanterns, autumn garlands, and a majestic golden fall forest backdrop. ${STYLE_SUFFIX}`,
+      spots: [
+        { x: 246, y: 568, s: 0.53, r: -0.16 },
+        { x: 482, y: 512, s: 0.49, r: 0.18 },
+        { x: 792, y: 472, s: 0.51, r: -0.12 },
+        { x: 1118, y: 512, s: 0.49, r: -0.19 },
+        { x: 1358, y: 568, s: 0.53, r: 0.17 },
+        { x: 362, y: 726, s: 0.58, r: 0.15 },
+        { x: 642, y: 734, s: 0.58, r: -0.16 },
+        { x: 978, y: 734, s: 0.58, r: 0.15 },
+        { x: 1248, y: 726, s: 0.58, r: -0.17 },
+        { x: 798, y: 266, s: 0.44, r: 0.14 }
+      ]
+    }
+  ];
+
+  /* =========================================================================
+     2. GEMINI API PAINTERLY BACKGROUND GENERATOR + IN-MEMORY CACHE
+     ========================================================================= */
+  const imageCache = new Map();
+
+  async function fetchGeminiBackground(prompt) {
+    const apiKey = GEMINI_API_KEY;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${apiKey}`;
+    const payload = {
+      contents: [{
+        role: 'user',
+        parts: [{ text: prompt }]
+      }],
+      generationConfig: {
+        responseModalities: ['IMAGE'],
+        imageConfig: { aspectRatio: '16:9' }
+      }
+    };
+
+    const delays = [1000];
+    for (let attempt = 0; attempt <= delays.length; attempt++) {
+      const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      const timerId = controller ? setTimeout(() => controller.abort(), 9000) : null;
+      try {
+        const res = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          signal: controller ? controller.signal : undefined
+        });
+        if (timerId) clearTimeout(timerId);
+        // Fail fast on missing/invalid API key so downloaded files load instantaneously
+        if (res.status === 400 || res.status === 401 || res.status === 403) return null;
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const part = data?.candidates?.[0]?.content?.parts?.find(p => p.inlineData?.data);
+        if (part?.inlineData?.data) {
+          const mime = part.inlineData.mimeType || 'image/png';
+          return await loadImageFromSrc(`data:${mime};base64,${part.inlineData.data}`);
+        }
+        throw new Error('Missing image part');
+      } catch (_) {
+        if (timerId) clearTimeout(timerId);
+        if (attempt < delays.length) {
+          await new Promise(r => setTimeout(r, delays[attempt]));
+        }
+      }
+    }
+    return null;
+  }
+
+  function loadImageFromSrc(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+  }
+
+  /* =========================================================================
+     5. DETAILED PROCEDURAL FALLBACK PAINTER (Lush Hand-Illustrated Offline Art)
+     ========================================================================= */
+  function paintProceduralFallback(ctx, levelId) {
+    // Deterministic seeded RNG so every level has rich, consistent hand-painted detail
+    let seed = (levelId * 2654435761) >>> 0;
+    const rng = () => {
+      seed = (seed + 0x6D2B79F5) >>> 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+    const pick = (arr) => arr[Math.floor(rng() * arr.length)];
+
+    const isIndoor = [2, 3, 5, 6, 7].includes(levelId);
+    const leafPalette = ['#a82818', '#cc441b', '#e06d1b', '#eba224', '#f2c849', '#7d2014', '#b8531a'];
+
+    // --- Reusable Painterly Illustration Helpers ---
+    function drawSunbeams(originX, originY, alpha = 0.14) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      for (let i = 0; i < 6; i++) {
+        const x1 = originX + (i - 2.5) * 140;
+        const grad = ctx.createLinearGradient(x1, originY, x1 + 260, WORLD_H);
+        grad.addColorStop(0, `rgba(255, 224, 145, ${alpha})`);
+        grad.addColorStop(1, 'rgba(255, 190, 95, 0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.moveTo(x1 - 40, originY);
+        ctx.lineTo(x1 + 75, originY);
+        ctx.lineTo(x1 + 380, WORLD_H);
+        ctx.lineTo(x1 + 140, WORLD_H);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawLantern(ctx, x, y, scale = 1, hanging = false) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(scale, scale);
+
+      // Warm radial halo
+      const halo = ctx.createRadialGradient(0, 14, 6, 0, 14, 130);
+      halo.addColorStop(0, 'rgba(255, 232, 145, 0.72)');
+      halo.addColorStop(0.35, 'rgba(255, 168, 52, 0.28)');
+      halo.addColorStop(1, 'rgba(255, 130, 25, 0)');
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(0, 14, 130, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (hanging) {
+        ctx.strokeStyle = '#24140a';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(0, -52);
+        ctx.lineTo(0, -18);
+        ctx.stroke();
+      }
+
+      // Metal cap & base
+      ctx.fillStyle = '#2a180d';
+      ctx.strokeStyle = '#140a04';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-20, -14); ctx.lineTo(0, -28); ctx.lineTo(20, -14);
+      ctx.closePath();
+      ctx.fill(); ctx.stroke();
+
+      // Glowing glass panes
+      const glass = ctx.createRadialGradient(0, 12, 2, 0, 12, 24);
+      glass.addColorStop(0, '#fffce0');
+      glass.addColorStop(0.5, '#ffcf59');
+      glass.addColorStop(1, '#d9771c');
+      ctx.fillStyle = glass;
+      ctx.fillRect(-14, -14, 28, 46);
+
+      // Cage bars
+      ctx.strokeStyle = '#2a180d';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(-14, -14, 28, 46);
+      ctx.beginPath();
+      ctx.moveTo(0, -14); ctx.lineTo(0, 32);
+      ctx.stroke();
+
+      // Base
+      ctx.fillStyle = '#2a180d';
+      roundRectPath(ctx, -18, 30, 36, 9, 3);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawPumpkin(ctx, x, y, r, tint = '#de6b18') {
+      ctx.save();
+      ctx.translate(x, y);
+      // Ground shadow
+      ctx.fillStyle = 'rgba(20, 8, 2, 0.36)';
+      ctx.beginPath();
+      ctx.ellipse(3, r * 0.72, r * 1.2, r * 0.34, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Ribbed segments
+      const segs = [-0.55, 0.55, -0.28, 0.28, 0];
+      segs.forEach((off, idx) => {
+        const g = ctx.createRadialGradient(off * r - r * 0.15, -r * 0.25, r * 0.1, off * r, 0, r);
+        g.addColorStop(0, idx === 4 ? '#ffa03b' : '#f08224');
+        g.addColorStop(0.6, tint);
+        g.addColorStop(1, '#7a2b08');
+        ctx.fillStyle = g;
+        ctx.strokeStyle = '#4a1b06';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.ellipse(off * r, 0, r * 0.56, r * 0.78, 0, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
+      });
+
+      // Stem
+      ctx.strokeStyle = '#4d3317';
+      ctx.lineWidth = Math.max(4, r * 0.17);
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(0, -r * 0.68);
+      ctx.quadraticCurveTo(r * 0.12, -r * 1.12, r * 0.34, -r * 1.05);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawAppleCrate(ctx, x, y, w, h, appleColor = '#b8251e') {
+      ctx.save();
+      ctx.translate(x, y);
+      // Shadow
+      ctx.fillStyle = 'rgba(18, 7, 2, 0.38)';
+      ctx.fillRect(6, h - 6, w + 8, 14);
+
+      // Overflowing apples on top
+      for (let i = 0; i < 11; i++) {
+        const ax = 14 + (i % 6) * ((w - 28) / 5) + (rng() - 0.5) * 6;
+        const ay = (i < 6 ? 4 : -7) + (rng() - 0.5) * 4;
+        const ag = ctx.createRadialGradient(ax - 3, ay - 3, 2, ax, ay, 13);
+        ag.addColorStop(0, appleColor === '#7ba828' ? '#c8e858' : '#f25c49');
+        ag.addColorStop(1, appleColor);
+        ctx.fillStyle = ag;
+        ctx.strokeStyle = '#3d1508';
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.arc(ax, ay, 11.5, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
+      }
+
+      // Wooden slats
+      const slatCount = 3;
+      const sh = h / slatCount;
+      for (let s = 0; s < slatCount; s++) {
+        const wg = ctx.createLinearGradient(0, s * sh, 0, (s + 1) * sh);
+        wg.addColorStop(0, '#9e6232');
+        wg.addColorStop(1, '#6b3b18');
+        ctx.fillStyle = wg;
+        ctx.strokeStyle = '#361a08';
+        ctx.lineWidth = 2;
+        ctx.fillRect(0, s * sh + 2, w, sh - 4);
+        ctx.strokeRect(0, s * sh + 2, w, sh - 4);
+      }
+      // Corner posts
+      ctx.fillStyle = '#593014';
+      ctx.fillRect(0, 0, 12, h);
+      ctx.fillRect(w - 12, 0, 12, h);
+      ctx.strokeRect(0, 0, 12, h);
+      ctx.strokeRect(w - 12, 0, 12, h);
+      ctx.restore();
+    }
+
+    function drawFloralBucket(ctx, x, y, scale = 1, style = 'sunflowers') {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(scale, scale);
+
+      // Shadow
+      ctx.fillStyle = 'rgba(18, 8, 2, 0.35)';
+      ctx.beginPath();
+      ctx.ellipse(0, 48, 42, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Foliage backdrop
+      for (let i = 0; i < 18; i++) {
+        const ang = (i / 18) * Math.PI * 2;
+        ctx.fillStyle = pick(['#4d7324', '#6b8c29', '#b83c1c', '#d97824']);
+        ctx.beginPath();
+        ctx.ellipse(Math.cos(ang) * 38, -28 + Math.sin(ang) * 26, 16, 8, ang, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Flowers
+      if (style === 'sunflowers') {
+        [[-22, -40, 18], [16, -48, 21], [0, -24, 19], [32, -26, 16], [-32, -18, 15]].forEach(([fx, fy, fr]) => {
+          ctx.fillStyle = '#f5b81d';
+          for (let p = 0; p < 12; p++) {
+            const a = (p / 12) * Math.PI * 2;
+            ctx.beginPath();
+            ctx.ellipse(fx + Math.cos(a) * fr * 0.72, fy + Math.sin(a) * fr * 0.72, fr * 0.42, fr * 0.18, a, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.fillStyle = '#47210c';
+          ctx.beginPath();
+          ctx.arc(fx, fy, fr * 0.44, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      } else {
+        // Dense autumn mums / berries
+        for (let i = 0; i < 28; i++) {
+          const fx = (rng() - 0.5) * 74;
+          const fy = -32 + (rng() - 0.5) * 44;
+          ctx.fillStyle = style === 'mums'
+            ? pick(['#e86f1c', '#f59c24', '#d94d1a', '#ffbf3b'])
+            : pick(['#b81d38', '#d93855', '#f2798f', '#8c1428']);
+          ctx.beginPath();
+          ctx.arc(fx, fy, 7 + rng() * 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // Galvanized / wooden bucket
+      const bg = ctx.createLinearGradient(-32, 0, 32, 0);
+      bg.addColorStop(0, '#6e6a64');
+      bg.addColorStop(0.35, '#b5b0a8');
+      bg.addColorStop(1, '#524e49');
+      ctx.fillStyle = bg;
+      ctx.strokeStyle = '#2e2a26';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-34, -8); ctx.lineTo(-26, 46); ctx.lineTo(26, 46); ctx.lineTo(34, -8);
+      ctx.closePath();
+      ctx.fill(); ctx.stroke();
+
+      // Bucket rim
+      ctx.fillStyle = '#9e9990';
+      ctx.fillRect(-36, -12, 72, 7);
+      ctx.strokeRect(-36, -12, 72, 7);
+      ctx.restore();
+    }
+
+    function drawAutumnTree(ctx, x, y, scale = 1, withApples = true) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(scale, scale);
+
+      // Gnarled trunk & branches
+      const tg = ctx.createLinearGradient(-34, 0, 38, 0);
+      tg.addColorStop(0, '#361c0d');
+      tg.addColorStop(0.5, '#693c1e');
+      tg.addColorStop(1, '#2b1408');
+      ctx.fillStyle = tg;
+      ctx.beginPath();
+      ctx.moveTo(-42, 260);
+      ctx.quadraticCurveTo(-24, 90, -20, -40);
+      ctx.lineTo(-95, -130);
+      ctx.lineTo(-70, -142);
+      ctx.lineTo(-4, -65);
+      ctx.lineTo(80, -145);
+      ctx.lineTo(100, -126);
+      ctx.lineTo(24, -35);
+      ctx.quadraticCurveTo(32, 95, 50, 260);
+      ctx.closePath();
+      ctx.fill();
+
+      // Rich layered painterly foliage canopy
+      for (let i = 0; i < 110; i++) {
+        const ang = rng() * Math.PI * 2;
+        const rad = Math.sqrt(rng()) * 175;
+        const lx = Math.cos(ang) * rad * 1.2;
+        const ly = -120 + Math.sin(ang) * rad * 0.72;
+        ctx.fillStyle = pick(leafPalette);
+        ctx.globalAlpha = 0.72 + rng() * 0.25;
+        ctx.beginPath();
+        ctx.ellipse(lx, ly, 16 + rng() * 20, 10 + rng() * 14, rng() * Math.PI, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      if (withApples) {
+        for (let a = 0; a < 10; a++) {
+          const ax = (rng() - 0.5) * 260;
+          const ay = -165 + (rng() - 0.5) * 125;
+          ctx.fillStyle = '#c4211d';
+          ctx.beginPath();
+          ctx.arc(ax, ay, 7.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = 'rgba(255,220,200,0.55)';
+          ctx.beginPath();
+          ctx.arc(ax - 2.2, ay - 2.2, 2.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.restore();
+    }
+
+    function drawPantryShelves(ctx, x, y, w, h, withDoors = true) {
+      ctx.save();
+      ctx.translate(x, y);
+
+      // Dark wood interior
+      const bg = ctx.createLinearGradient(0, 0, 0, h);
+      bg.addColorStop(0, '#301709');
+      bg.addColorStop(1, '#1f0e05');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, w, h);
+
+      // 4 Shelves packed with colorful mason jars, crocks & baskets
+      const rows = 4;
+      const rowH = h / rows;
+      const jarColors = ['#c72c1c', '#e08b1b', '#7da324', '#a81c2e', '#d95b16', '#e6b830', '#8f341b'];
+      for (let r = 0; r < rows; r++) {
+        const sy = (r + 1) * rowH - 12;
+        // Shelf plank
+        ctx.fillStyle = '#75421d';
+        ctx.fillRect(0, sy, w, 12);
+        ctx.strokeStyle = '#291206';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(0, sy, w, 12);
+
+        if (r < 3) {
+          // Colorful preserve jars & crocks
+          const cols = Math.floor((w - 20) / 36);
+          for (let c = 0; c < cols; c++) {
+            const jx = 12 + c * 36 + (rng() - 0.5) * 4;
+            const jh = 34 + rng() * 14;
+            const jw = 24 + rng() * 5;
+            const col = pick(jarColors);
+            ctx.fillStyle = col;
+            roundRectPath(ctx, jx, sy - jh, jw, jh, 5);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(30,12,4,0.75)';
+            ctx.lineWidth = 1.4;
+            ctx.stroke();
+
+            // Glass highlight
+            ctx.fillStyle = 'rgba(255, 245, 220, 0.36)';
+            ctx.fillRect(jx + 4, sy - jh + 6, 4, jh - 12);
+
+            // Metal lid
+            ctx.fillStyle = '#c4a878';
+            ctx.fillRect(jx + 2, sy - jh - 5, jw - 4, 6);
+          }
+        } else {
+          // Bottom woven wicker baskets
+          for (let b = 0; b < 3; b++) {
+            const bx = 14 + b * (w / 3);
+            const bw = w / 3 - 22;
+            ctx.fillStyle = '#a86b32';
+            roundRectPath(ctx, bx, sy - 64, bw, 64, 8);
+            ctx.fill();
+            ctx.strokeStyle = '#522c0f';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            for (let wy = sy - 54; wy < sy; wy += 10) {
+              ctx.beginPath(); ctx.moveTo(bx, wy); ctx.lineTo(bx + bw, wy); ctx.stroke();
+            }
+          }
+        }
+      }
+
+      // Outer wooden frame
+      ctx.strokeStyle = '#47240d';
+      ctx.lineWidth = 10;
+      ctx.strokeRect(0, 0, w, h);
+
+      // Open X-braced barn doors
+      if (withDoors) {
+        const dw = 68;
+        [[-dw, 0], [w, 0]].forEach(([dx, dy]) => {
+          const dg = ctx.createLinearGradient(dx, dy, dx + dw, dy);
+          dg.addColorStop(0, '#c48b47');
+          dg.addColorStop(1, '#8c5624');
+          ctx.fillStyle = dg;
+          ctx.strokeStyle = '#3d1f0b';
+          ctx.lineWidth = 2.5;
+          ctx.fillRect(dx, dy, dw, h);
+          ctx.strokeRect(dx, dy, dw, h);
+          // Cross braces
+          ctx.strokeStyle = '#633814';
+          ctx.lineWidth = 7;
+          ctx.beginPath();
+          ctx.moveTo(dx + 8, dy + 12); ctx.lineTo(dx + dw - 8, dy + h / 2);
+          ctx.moveTo(dx + dw - 8, dy + 12); ctx.lineTo(dx + 8, dy + h / 2);
+          ctx.moveTo(dx + 8, dy + h / 2); ctx.lineTo(dx + dw - 8, dy + h - 12);
+          ctx.moveTo(dx + dw - 8, dy + h / 2); ctx.lineTo(dx + 8, dy + h - 12);
+          ctx.stroke();
+        });
+      }
+      ctx.restore();
+    }
+
+    function drawStoneHearthOven(ctx, x, y, w, h) {
+      ctx.save();
+      ctx.translate(x, y);
+
+      // Timber roof with wood shingles
+      ctx.fillStyle = '#4f331d';
+      ctx.strokeStyle = '#241307';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(-36, 26); ctx.lineTo(w * 0.55, -72); ctx.lineTo(w + 40, 26);
+      ctx.closePath();
+      ctx.fill(); ctx.stroke();
+
+      // Stone chimney
+      ctx.fillStyle = '#7d6958';
+      ctx.fillRect(w * 0.54, -125, 76, 95);
+      ctx.strokeRect(w * 0.54, -125, 76, 95);
+
+      // Stone masonry body
+      ctx.fillStyle = '#87725e';
+      ctx.fillRect(0, 22, w, h - 22);
+      ctx.strokeRect(0, 22, w, h - 22);
+
+      // Individual painted river stones
+      const stoneTones = ['#9e8772', '#75604d', '#b09a82', '#635040', '#8c7560'];
+      for (let sy = 30; sy < h - 14; sy += 24) {
+        for (let sx = 8; sx < w - 18; sx += 34) {
+          const jx = sx + (sy % 48 === 0 ? 12 : 0) + (rng() - 0.5) * 6;
+          ctx.fillStyle = pick(stoneTones);
+          roundRectPath(ctx, jx, sy, 28 + rng() * 10, 19, 6);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(38, 26, 16, 0.55)';
+          ctx.lineWidth = 1.4;
+          ctx.stroke();
+        }
+      }
+
+      // Arched Brick Firebox
+      const cx = w * 0.56;
+      const cy = h * 0.52;
+      ctx.fillStyle = '#1f0d05';
+      ctx.beginPath();
+      ctx.arc(cx, cy, 62, Math.PI, 0);
+      ctx.lineTo(cx + 62, cy + 56);
+      ctx.lineTo(cx - 62, cy + 56);
+      ctx.closePath();
+      ctx.fill();
+
+      // Glowing hearth fire
+      const fire = ctx.createRadialGradient(cx, cy + 28, 6, cx, cy + 16, 78);
+      fire.addColorStop(0, '#fff7b0');
+      fire.addColorStop(0.35, '#ff9824');
+      fire.addColorStop(0.75, 'rgba(204, 58, 12, 0.55)');
+      fire.addColorStop(1, 'rgba(180, 40, 8, 0)');
+      ctx.fillStyle = fire;
+      ctx.beginPath();
+      ctx.arc(cx, cy + 16, 78, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Brick arch rim
+      ctx.strokeStyle = '#9c4324';
+      ctx.lineWidth = 10;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 66, Math.PI, 0);
+      ctx.stroke();
+
+      // Wooden counter ledge + copper pot + hanging skillets
+      ctx.fillStyle = '#6e3d19';
+      ctx.fillRect(-16, cy + 54, w + 32, 22);
+      ctx.strokeStyle = '#2e1506';
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(-16, cy + 54, w + 32, 22);
+
+      // Copper pot on counter
+      const cg = ctx.createLinearGradient(28, 0, 90, 0);
+      cg.addColorStop(0, '#8c3d16');
+      cg.addColorStop(0.4, '#f29c52');
+      cg.addColorStop(1, '#6e2a0c');
+      ctx.fillStyle = cg;
+      roundRectPath(ctx, 28, cy + 8, 64, 46, 8);
+      ctx.fill(); ctx.stroke();
+
+      // Hanging cast-iron skillets
+      [34, 72, 108].forEach((px, idx) => {
+        ctx.strokeStyle = '#1f1612';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(px, 34); ctx.lineTo(px, 90 + idx * 6);
+        ctx.stroke();
+        ctx.fillStyle = '#261e1a';
+        ctx.beginPath();
+        ctx.arc(px, 104 + idx * 6, 16 + idx * 2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      ctx.restore();
+    }
+
+    function drawRusticTable(ctx, x, y, w, h, clothColor = '#a82c24', withQuilt = false) {
+      ctx.save();
+      ctx.translate(x, y);
+
+      // Floor shadow
+      ctx.fillStyle = 'rgba(18, 7, 2, 0.42)';
+      ctx.beginPath();
+      ctx.ellipse(w / 2, h + 20, w * 0.56, 26, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Heavy wooden trestle legs
+      ctx.fillStyle = '#522c12';
+      ctx.strokeStyle = '#261105';
+      ctx.lineWidth = 2.5;
+      ctx.fillRect(36, 26, 26, h);
+      ctx.strokeRect(36, 26, 26, h);
+      ctx.fillRect(w - 62, 26, 26, h);
+      ctx.strokeRect(w - 62, 26, 26, h);
+      ctx.fillRect(46, h - 22, w - 92, 16);
+      ctx.strokeRect(46, h - 22, w - 92, 16);
+
+      // Thick wood plank tabletop
+      const tg = ctx.createLinearGradient(0, 0, 0, 42);
+      tg.addColorStop(0, '#b5763c');
+      tg.addColorStop(0.55, '#8a5022');
+      tg.addColorStop(1, '#5e3212');
+      ctx.fillStyle = tg;
+      roundRectPath(ctx, 0, 0, w, 40, 8);
+      ctx.fill(); ctx.stroke();
+
+      // Wood grain lines
+      ctx.strokeStyle = 'rgba(42, 18, 5, 0.35)';
+      ctx.lineWidth = 1.6;
+      for (let gy = 10; gy < 34; gy += 9) {
+        ctx.beginPath(); ctx.moveTo(8, gy); ctx.lineTo(w - 8, gy); ctx.stroke();
+      }
+
+      // Woven plaid table runner
+      const rx = w * 0.24;
+      const rw = w * 0.42;
+      ctx.fillStyle = '#edd8b4';
+      ctx.fillRect(rx, 0, rw, 58);
+      ctx.strokeStyle = clothColor;
+      ctx.lineWidth = 4;
+      for (let sx = rx + 10; sx < rx + rw - 6; sx += 18) {
+        ctx.beginPath(); ctx.moveTo(sx, 0); ctx.lineTo(sx, 58); ctx.stroke();
+      }
+      ctx.strokeStyle = '#3b1c0a';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(rx, 0, rw, 58);
+
+      // Optional cozy patchwork quilt draped over front bench
+      if (withQuilt) {
+        const qx = w * 0.46;
+        const qy = 66;
+        const qw = 190;
+        const qh = 84;
+        const qColors = ['#9c2620', '#d99826', '#4a6b2c', '#f2dec0', '#b8501c'];
+        ctx.save();
+        roundRectPath(ctx, qx, qy, qw, qh, 12);
+        ctx.clip();
+        for (let r = 0; r < 4; r++) {
+          for (let c = 0; c < 8; c++) {
+            ctx.fillStyle = qColors[(r * 3 + c) % qColors.length];
+            ctx.fillRect(qx + c * 24, qy + r * 22, 24, 22);
+          }
+        }
+        ctx.restore();
+        ctx.strokeStyle = '#381a0a';
+        ctx.lineWidth = 2.5;
+        roundRectPath(ctx, qx, qy, qw, qh, 12);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    function drawAutumnWreath(ctx, x, y, r = 48) {
+      ctx.save();
+      ctx.translate(x, y);
+      for (let i = 0; i < 34; i++) {
+        const a = (i / 34) * Math.PI * 2;
+        ctx.fillStyle = pick(leafPalette);
+        ctx.beginPath();
+        ctx.ellipse(Math.cos(a) * r, Math.sin(a) * r, 15, 8, a + 0.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    // =========================================================
+    // BUILD FULL-SCENE COMPOSITION (INDOOR vs OUTDOOR LEVELS)
+    // =========================================================
+    if (!isIndoor) {
+      // --- OUTDOOR GOLDEN-HOUR AUTUMN COURTYARD / PORCH / TOWN / ORCHARD / VILLAGE ---
+      const sky = ctx.createLinearGradient(0, 0, 0, 520);
+      sky.addColorStop(0, levelId === 10 ? '#3c244f' : levelId === 8 ? '#6d92b8' : '#d67830');
+      sky.addColorStop(0.55, levelId === 10 ? '#a84b34' : '#f0b15b');
+      sky.addColorStop(1, '#f7d894');
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, WORLD_W, 540);
+
+      // Distant autumn hills & misty treeline
+      ctx.fillStyle = '#9e4c22';
+      ctx.beginPath();
+      ctx.moveTo(0, 480);
+      ctx.quadraticCurveTo(380, 320, 780, 420);
+      ctx.quadraticCurveTo(1220, 310, WORLD_W, 430);
+      ctx.lineTo(WORLD_W, 540);
+      ctx.lineTo(0, 540);
+      ctx.closePath();
+      ctx.fill();
+
+      // Background autumn forest silhouettes
+      for (let tx = 320; tx <= 1180; tx += 150) {
+        drawAutumnTree(ctx, tx + (rng() - 0.5) * 40, 360, 0.58 + rng() * 0.25, false);
+      }
+
+      // Cobblestone Courtyard Ground
+      const ground = ctx.createLinearGradient(0, 470, 0, WORLD_H);
+      ground.addColorStop(0, '#8f725c');
+      ground.addColorStop(0.5, '#735844');
+      ground.addColorStop(1, '#4a3323');
+      ctx.fillStyle = ground;
+      ctx.fillRect(0, 470, WORLD_W, WORLD_H - 470);
+
+      // Perspective Cobblestones
+      const cobbleTones = ['#a88c74', '#876c57', '#6e5645', '#b59a82', '#7a624f'];
+      for (let row = 0; row < 16; row++) {
+        const y = 478 + row * (row * 1.65 + 11);
+        if (y > WORLD_H + 20) break;
+        const sw = 28 + row * 3.5;
+        const sh = 10 + row * 1.5;
+        for (let x = -20; x < WORLD_W + 40; x += sw + 5) {
+          const jx = x + (row % 2 ? sw * 0.5 : 0) + (rng() - 0.5) * 4;
+          ctx.fillStyle = pick(cobbleTones);
+          ctx.globalAlpha = 0.65;
+          roundRectPath(ctx, jx, y, sw, sh, 6);
+          ctx.fill();
+        }
+      }
+      ctx.globalAlpha = 1;
+
+      // Left Weathered Golden Barn Wall + Open Pantry
+      const barnG = ctx.createLinearGradient(0, 0, 460, 0);
+      barnG.addColorStop(0, '#c47b27');
+      barnG.addColorStop(1, '#8c521b');
+      ctx.fillStyle = barnG;
+      ctx.fillRect(0, 0, 455, 535);
+      ctx.strokeStyle = 'rgba(54, 24, 6, 0.35)';
+      ctx.lineWidth = 2.5;
+      for (let bx = 24; bx < 455; bx += 38) {
+        ctx.beginPath(); ctx.moveTo(bx, 0); ctx.lineTo(bx, 535); ctx.stroke();
+      }
+      drawAutumnWreath(ctx, 295, 76, 46);
+      drawPantryShelves(ctx, 165, 165, 225, 345, true);
+      drawLantern(ctx, 118, 128, 0.85, true);
+
+      // Center Autumn Floral Archway & Wooden Fence
+      ctx.strokeStyle = '#633a1a';
+      ctx.lineWidth = 9;
+      ctx.beginPath();
+      ctx.arc(695, 295, 92, Math.PI, 0);
+      ctx.moveTo(603, 295); ctx.lineTo(603, 475);
+      ctx.moveTo(787, 295); ctx.lineTo(787, 475);
+      ctx.stroke();
+      for (let a = Math.PI; a <= Math.PI * 2; a += 0.14) {
+        ctx.fillStyle = pick(leafPalette);
+        ctx.beginPath();
+        ctx.arc(695 + Math.cos(a) * 95, 295 + Math.sin(a) * 95, 16 + rng() * 10, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      drawLantern(ctx, 695, 252, 0.55, true);
+
+      // Right Stone Outdoor Hearth Oven + Stone Wall
+      drawStoneHearthOven(ctx, 975, 165, 365, 340);
+
+      // Framing Foreground Autumn Apple Trees (Left & Right)
+      drawAutumnTree(ctx, 1490, 295, 1.38, true);
+      drawAutumnTree(ctx, 42, 185, 1.05, true);
+
+      // Midground & Foreground Rustic Picnic Tables
+      drawRusticTable(ctx, 735, 472, 310, 108, '#9e2620', false);
+      drawRusticTable(ctx, 295, 588, 575, 165, '#b83226', true);
+      drawRusticTable(ctx, 1085, 520, 255, 112, '#c9882c', false);
+
+      // Props: Floral Buckets, Apple Crates, Pumpkins & Glowing Lanterns
+      drawFloralBucket(ctx, 562, 540, 1.05, 'sunflowers');
+      drawLantern(ctx, 655, 558, 0.82, false);
+      drawFloralBucket(ctx, 1212, 475, 0.78, 'berries');
+      drawFloralBucket(ctx, 1345, 488, 0.84, 'mums');
+      drawAppleCrate(ctx, 18, 492, 136, 98, '#b8251e');
+      drawAppleCrate(ctx, 26, 616, 132, 92, '#7ba828');
+      drawFloralBucket(ctx, 198, 668, 0.92, 'mums');
+      drawPumpkin(ctx, 222, 818, 52, '#e06b16');
+      drawPumpkin(ctx, 922, 448, 32, '#de7a1c');
+      drawPumpkin(ctx, 1465, 815, 68, '#d96214');
+      drawLantern(ctx, 1418, 712, 1.1, false);
+      drawAppleCrate(ctx, 1245, 705, 145, 92, '#b8251e');
+
+      drawSunbeams(560, 0, 0.13);
+    } else {
+      // --- INDOOR COZY FARMHOUSE KITCHEN / PANTRY / DINING / BAKEHOUSE / BARN ---
+      const wall = ctx.createLinearGradient(0, 0, 0, 560);
+      wall.addColorStop(0, '#5e3218');
+      wall.addColorStop(0.55, '#8c5128');
+      wall.addColorStop(1, '#4f2811');
+      ctx.fillStyle = wall;
+      ctx.fillRect(0, 0, WORLD_W, 560);
+
+      // Vertical timber paneling & overhead rafters
+      ctx.strokeStyle = 'rgba(32, 14, 4, 0.35)';
+      ctx.lineWidth = 3;
+      for (let x = 0; x < WORLD_W; x += 68) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 560); ctx.stroke();
+      }
+      ctx.fillStyle = '#3b1c0b';
+      ctx.fillRect(0, 0, WORLD_W, 38);
+      for (let rx = 180; rx < WORLD_W; rx += 320) {
+        ctx.fillRect(rx, 0, 26, 560);
+      }
+
+      // Warm Hardwood Plank Floor
+      const floor = ctx.createLinearGradient(0, 540, 0, WORLD_H);
+      floor.addColorStop(0, '#6e3c1b');
+      floor.addColorStop(1, '#361909');
+      ctx.fillStyle = floor;
+      ctx.fillRect(0, 540, WORLD_W, 360);
+      ctx.strokeStyle = 'rgba(26, 10, 3, 0.45)';
+      ctx.lineWidth = 2.5;
+      for (let y = 556; y < WORLD_H; y += 34) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(WORLD_W, y); ctx.stroke();
+      }
+
+      // Sunlit Bay Window showing golden autumn trees outside
+      ctx.save();
+      roundRectPath(ctx, 575, 105, 450, 285, 12);
+      ctx.clip();
+      const wSky = ctx.createLinearGradient(575, 105, 575, 390);
+      wSky.addColorStop(0, '#f2b85c');
+      wSky.addColorStop(1, '#ffe6a3');
+      ctx.fillStyle = wSky;
+      ctx.fillRect(575, 105, 450, 285);
+      drawAutumnTree(ctx, 680, 320, 0.72, false);
+      drawAutumnTree(ctx, 915, 330, 0.78, false);
+      ctx.restore();
+      // Window mullions & checkered curtains
+      ctx.strokeStyle = '#3d1e0c';
+      ctx.lineWidth = 10;
+      roundRectPath(ctx, 575, 105, 450, 285, 12);
+      ctx.stroke();
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(800, 105); ctx.lineTo(800, 390);
+      ctx.moveTo(575, 248); ctx.lineTo(1025, 248);
+      ctx.stroke();
+
+      // Left Pantry Shelves + Right Glowing Stone Hearth / Brick Oven
+      drawPantryShelves(ctx, 90, 130, 360, 415, false);
+      drawStoneHearthOven(ctx, 1110, 155, 390, 390);
+
+      // Hanging glowing lanterns
+      drawLantern(ctx, 495, 135, 0.85, true);
+      drawLantern(ctx, 800, 118, 0.92, true);
+      drawLantern(ctx, 1075, 135, 0.85, true);
+
+      // Grand Center Farmhouse Feast Table + Side Props
+      drawRusticTable(ctx, 385, 565, 830, 178, '#b52d22', levelId === 5 || levelId === 7);
+      drawFloralBucket(ctx, 795, 520, 1.05, 'sunflowers');
+      drawLantern(ctx, 625, 530, 0.78, false);
+      drawLantern(ctx, 975, 530, 0.78, false);
+      drawAppleCrate(ctx, 58, 635, 152, 105, '#b8251e');
+      drawPumpkin(ctx, 255, 765, 48, '#e06b16');
+      drawPumpkin(ctx, 1365, 755, 58, '#d96214');
+      drawFloralBucket(ctx, 1455, 650, 0.92, 'mums');
+      drawAutumnWreath(ctx, 800, 72, 42);
+
+      drawSunbeams(760, 105, 0.16);
+    }
+
+    // Scattered Fallen Autumn Leaves across foreground & surfaces (organic, non-grid!)
+    for (let i = 0; i < 165; i++) {
+      const lx = rng() * WORLD_W;
+      const ly = (isIndoor ? 530 : 455) + rng() * (WORLD_H - 460);
+      ctx.save();
+      ctx.translate(lx, ly);
+      ctx.rotate(rng() * Math.PI * 2);
+      ctx.fillStyle = pick(leafPalette);
+      ctx.globalAlpha = 0.55 + rng() * 0.4;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 8 + rng() * 11, 4 + rng() * 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Cozy golden-hour atmospheric vignette
+    const vig = ctx.createRadialGradient(WORLD_W / 2, WORLD_H / 2, 360, WORLD_W / 2, WORLD_H / 2, 980);
+    vig.addColorStop(0, 'rgba(0, 0, 0, 0)');
+    vig.addColorStop(1, 'rgba(22, 9, 2, 0.42)');
+    ctx.fillStyle = vig;
+    ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+  }
+
+  /* =========================================================================
+     3. SYNTHESIZED WEB AUDIO ENGINE (SFX + Cozy Autumn Harp Music)
+     ========================================================================= */
+  const AudioEngine = (() => {
+    let ctx = null;
+    let masterGain = null;
+    let sfxMuted = false;
+    let musicOn = false;
+    let volume = 0.7;
+    let musicTimer = null;
+    let musicStep = 0;
+    const harpNotes = [
+      261.63, 329.63, 392.0, 440.0, 523.25, 440.0,
+      392.0, 329.63, 293.66, 349.23, 440.0, 523.25
+    ];
+
+    function ensureCtx() {
+      if (!ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        ctx = new AC();
+        masterGain = ctx.createGain();
+        masterGain.gain.value = volume;
+        masterGain.connect(ctx.destination);
+      }
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+      return ctx;
+    }
+
+    // Cleanly unlock Web Audio API on first touch/pointer gesture (iPadOS Safari)
+    function unlockAudio() {
+      const c = ensureCtx();
+      if (!c) return;
+      try {
+        if (c.state === 'suspended') c.resume().catch(() => {});
+        const buffer = c.createBuffer(1, 1, 22050);
+        const src = c.createBufferSource();
+        src.buffer = buffer;
+        src.connect(c.destination);
+        src.start(0);
+      } catch (_) {}
+    }
+
+    function playTone(freq, startOffset, duration, type = 'sine', gainVal = 0.16, slideTo = null, isMusic = false) {
+      if (!isMusic && sfxMuted) return;
+      if (isMusic && !musicOn) return;
+      const c = ensureCtx();
+      if (!c || !masterGain) return;
+
+      const now = c.currentTime + startOffset;
+      const osc = c.createOscillator();
+      const gain = c.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, now);
+      if (slideTo) {
+        osc.frequency.exponentialRampToValueAtTime(slideTo, now + duration);
+      }
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(gainVal, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      osc.connect(gain);
+      gain.connect(masterGain);
+      osc.start(now);
+      osc.stop(now + duration + 0.03);
+    }
+
+    function startMusicLoop() {
+      stopMusicLoop();
+      if (!musicOn) return;
+      ensureCtx();
+      musicTimer = setInterval(() => {
+        if (!musicOn) return;
+        const note = harpNotes[musicStep % harpNotes.length];
+        playTone(note, 0, 1.05, 'triangle', 0.055, null, true);
+        if (musicStep % 6 === 0) {
+          playTone(note * 0.5, 0, 1.6, 'sine', 0.04, null, true);
+        }
+        musicStep++;
+      }, 460);
+    }
+
+    function stopMusicLoop() {
+      if (musicTimer) {
+        clearInterval(musicTimer);
+        musicTimer = null;
+      }
+    }
+
+    return {
+      unlock() {
+        unlockAudio();
+      },
+      setVolume(val) {
+        volume = Math.max(0, Math.min(1, val));
+        if (masterGain && ctx) {
+          masterGain.gain.setTargetAtTime(volume, ctx.currentTime, 0.03);
+        }
+      },
+      toggleSfx() {
+        sfxMuted = !sfxMuted;
+        return sfxMuted;
+      },
+      toggleMusic() {
+        musicOn = !musicOn;
+        if (musicOn) startMusicLoop();
+        else stopMusicLoop();
+        return musicOn;
+      },
+      playFound(foundCount) {
+        const scale = [523.25, 587.33, 659.25, 698.46, 783.99, 880.0, 987.77, 1046.5, 1174.66, 1318.51];
+        const base = scale[Math.min(foundCount - 1, scale.length - 1)] || 523.25;
+        playTone(base, 0, 0.25, 'triangle', 0.18);
+        playTone(base * 1.25, 0.07, 0.29, 'sine', 0.14);
+        playTone(base * 1.5, 0.14, 0.35, 'sine', 0.11);
+      },
+      playMiss() {
+        // Subtle soft wooden tap
+        playTone(175, 0, 0.085, 'triangle', 0.075, 96);
+      },
+      playClick() {
+        playTone(430, 0, 0.05, 'triangle', 0.065, 510);
+      },
+      playLevelComplete() {
+        const notes = [523.25, 659.25, 783.99, 1046.5, 987.77, 1046.5];
+        const times = [0, 0.1, 0.2, 0.32, 0.48, 0.6];
+        notes.forEach((f, i) => {
+          playTone(f, times[i], i === notes.length - 1 ? 0.65 : 0.25, 'triangle', 0.16);
+          playTone(f * 0.5, times[i], 0.28, 'sine', 0.08);
+        });
+      },
+      playVictory() {
+        const notes = [523.25, 587.33, 659.25, 783.99, 659.25, 783.99, 1046.5, 1318.51];
+        notes.forEach((f, i) => {
+          playTone(f, i * 0.11, i === notes.length - 1 ? 0.9 : 0.28, 'triangle', 0.17);
+          playTone(f * 0.5, i * 0.11, 0.3, 'sine', 0.08);
+        });
+      }
+    };
+  })();
+
+  /* =========================================================================
+     4. DETAILED HIDDEN ITEM ARTWORK & DEEP CAMOUFLAGE SPRITE PIPELINE
+     ========================================================================= */
+  function roundRectPath(ctx, x, y, w, h, r) {
+    const rr = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rr);
+    ctx.arcTo(x + w, y + h, x, y + h, rr);
+    ctx.arcTo(x, y + h, x, y, rr);
+    ctx.arcTo(x, y, x + w, y, rr);
+    ctx.closePath();
+  }
+
+  function drawTargetItem(ctx, type, x, y, scale = 1, rot = 0) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    ctx.scale(scale, scale);
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+
+    switch (type) {
+      case 'turkey': drawItemTurkey(ctx); break;
+      case 'bread': drawItemBread(ctx); break;
+      case 'cranberry': drawItemCranberry(ctx); break;
+      case 'corn': drawItemCorn(ctx); break;
+      case 'potatoes': drawItemPotatoes(ctx); break;
+      case 'pumpkinPie': drawItemPumpkinPie(ctx); break;
+      case 'stuffing': drawItemStuffing(ctx); break;
+      case 'flag': drawItemFlag(ctx); break;
+      case 'applePie': drawItemApplePie(ctx); break;
+      case 'pilgrim': drawItemPilgrim(ctx); break;
+    }
+
+    ctx.restore();
+  }
+
+  function drawItemTurkey(ctx) {
+    ctx.fillStyle = '#efe0c8';
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2.1;
+    ctx.beginPath();
+    ctx.ellipse(0, 16, 38, 12.5, 0, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = '#538c2e';
+    [-25, -14, 15, 25].forEach(gx => {
+      ctx.beginPath();
+      ctx.arc(gx, 13, 6.8, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    const bg = ctx.createRadialGradient(-9, -8, 4, 0, 2, 31);
+    bg.addColorStop(0, '#f5ad45');
+    bg.addColorStop(0.5, '#c25d14');
+    bg.addColorStop(1, '#6e2a07');
+    ctx.fillStyle = bg;
+    ctx.beginPath();
+    ctx.ellipse(-2, 1, 26, 18.5, -0.05, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    const dg = ctx.createRadialGradient(14, 2, 2, 17, 5, 14);
+    dg.addColorStop(0, '#de7c23');
+    dg.addColorStop(1, '#7a3109');
+    ctx.fillStyle = dg;
+    ctx.beginPath();
+    ctx.ellipse(17, 5, 13.5, 8.8, -0.35, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = '#fff8eb';
+    ctx.beginPath();
+    ctx.moveTo(27, -2); ctx.lineTo(37, -11); ctx.lineTo(40, -6); ctx.lineTo(30, 3);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(37, -9, 6, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = 'rgba(255, 240, 196, 0.5)';
+    ctx.beginPath();
+    ctx.ellipse(-9, -7, 10, 4.5, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#c42720';
+    ctx.beginPath();
+    ctx.arc(-19, 15, 3.8, 0, Math.PI * 2);
+    ctx.arc(19, 15, 3.8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawItemBread(ctx) {
+    const g = ctx.createRadialGradient(-10, -10, 4, 0, 2, 35);
+    g.addColorStop(0, '#ffd275');
+    g.addColorStop(0.55, '#cf7922');
+    g.addColorStop(1, '#7a380a');
+    ctx.fillStyle = g;
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.moveTo(-33, 14);
+    ctx.quadraticCurveTo(-35, -16, 0, -18);
+    ctx.quadraticCurveTo(35, -16, 33, 14);
+    ctx.quadraticCurveTo(0, 21, -33, 14);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    ctx.strokeStyle = '#ffebb3';
+    ctx.lineWidth = 3;
+    [-15, 0, 15].forEach(sx => {
+      ctx.beginPath();
+      ctx.moveTo(sx - 6, -9);
+      ctx.quadraticCurveTo(sx, -2, sx + 7, 5);
+      ctx.stroke();
+    });
+
+    const rg = ctx.createRadialGradient(20, 8, 2, 22, 12, 13);
+    rg.addColorStop(0, '#ffdf91');
+    rg.addColorStop(1, '#ab5913');
+    ctx.fillStyle = rg;
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(22, 13, 12.5, 8.8, 0.1, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+  }
+
+  function drawItemCranberry(ctx) {
+    const bowlG = ctx.createLinearGradient(-28, 0, 28, 22);
+    bowlG.addColorStop(0, '#fff5e3');
+    bowlG.addColorStop(1, '#cbb191');
+    ctx.fillStyle = bowlG;
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2.1;
+    ctx.beginPath();
+    ctx.moveTo(-29, 0);
+    ctx.quadraticCurveTo(-27, 24, 0, 25);
+    ctx.quadraticCurveTo(27, 24, 29, 0);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = '#ebd6b7';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 29, 10, 0, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    const cg = ctx.createRadialGradient(-6, -8, 3, 0, -2, 25);
+    cg.addColorStop(0, '#f54868');
+    cg.addColorStop(0.5, '#ab0e2c');
+    cg.addColorStop(1, '#5c0416');
+    ctx.fillStyle = cg;
+    ctx.beginPath();
+    ctx.ellipse(0, -1, 24, 10.5, 0, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    [[-11, -5], [0, -9], [11, -5], [-5, 1], [7, 0]].forEach(([bx, by]) => {
+      ctx.fillStyle = '#c91234';
+      ctx.beginPath();
+      ctx.arc(bx, by, 5.2, 0, Math.PI * 2);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,220,230,0.7)';
+      ctx.beginPath();
+      ctx.arc(bx - 1.6, by - 1.6, 1.6, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    ctx.fillStyle = '#47942e';
+    ctx.beginPath();
+    ctx.ellipse(14, -10, 7.8, 3.8, -0.5, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+  }
+
+  function drawItemCorn(ctx) {
+    ctx.fillStyle = '#63962e';
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-29, 10);
+    ctx.quadraticCurveTo(-20, 25, 6, 18);
+    ctx.quadraticCurveTo(-8, 12, -14, 4);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = '#80b540';
+    ctx.beginPath();
+    ctx.moveTo(-29, 8);
+    ctx.quadraticCurveTo(-27, -14, -2, -16);
+    ctx.quadraticCurveTo(-12, -4, -12, 4);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    const cg = ctx.createLinearGradient(0, -14, 0, 14);
+    cg.addColorStop(0, '#ffe663');
+    cg.addColorStop(0.55, '#edae16');
+    cg.addColorStop(1, '#ba6d07');
+    ctx.fillStyle = cg;
+    ctx.beginPath();
+    ctx.ellipse(6, 0, 27, 11.5, -0.08, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(130, 68, 8, 0.55)';
+    ctx.lineWidth = 1.4;
+    for (let kx = -14; kx <= 24; kx += 7) {
+      ctx.beginPath(); ctx.moveTo(kx, -10); ctx.lineTo(kx + 1, 10); ctx.stroke();
+    }
+    ctx.beginPath();
+    ctx.moveTo(-18, -3); ctx.lineTo(30, -5);
+    ctx.moveTo(-17, 4); ctx.lineTo(29, 2);
+    ctx.stroke();
+
+    ctx.fillStyle = '#fff49c';
+    ctx.strokeStyle = '#b57f14';
+    ctx.lineWidth = 1.5;
+    roundRectPath(ctx, -2, -12, 14, 10, 3);
+    ctx.fill(); ctx.stroke();
+  }
+
+  function drawItemPotatoes(ctx) {
+    const bg = ctx.createLinearGradient(-28, 0, 28, 22);
+    bg.addColorStop(0, '#fff7e8');
+    bg.addColorStop(1, '#ccbba4');
+    ctx.fillStyle = bg;
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2.1;
+    ctx.beginPath();
+    ctx.moveTo(-30, 2);
+    ctx.quadraticCurveTo(-27, 24, 0, 25);
+    ctx.quadraticCurveTo(27, 24, 30, 2);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    ctx.strokeStyle = '#bf5d1e';
+    ctx.lineWidth = 2.8;
+    ctx.beginPath();
+    ctx.moveTo(-25, 12);
+    ctx.quadraticCurveTo(0, 18, 25, 12);
+    ctx.stroke();
+
+    ctx.fillStyle = '#fff3d4';
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(-14, -1, 12.5, 0, Math.PI * 2);
+    ctx.arc(14, -1, 12.5, 0, Math.PI * 2);
+    ctx.arc(0, -8, 15.5, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = '#944a14';
+    ctx.beginPath();
+    ctx.ellipse(0, -8, 14.5, 6.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#ffe052';
+    ctx.strokeStyle = '#ad7310';
+    ctx.lineWidth = 1.5;
+    roundRectPath(ctx, -7, -17, 14, 10, 3);
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = '#47942e';
+    [[-10, -4], [9, -5], [3, -12], [-4, -1]].forEach(([cx, cy]) => ctx.fillRect(cx, cy, 3.5, 2));
+  }
+
+  function drawItemPumpkinPie(ctx) {
+    ctx.fillStyle = '#de973c';
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2.1;
+    ctx.beginPath();
+    ctx.ellipse(0, 8, 33, 14.5, 0, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = '#ebad50';
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.arc(Math.cos(a) * 29, 5 + Math.sin(a) * 11.5, 5.2, 0, Math.PI * 2);
+      ctx.fill(); ctx.stroke();
+    }
+
+    const pg = ctx.createRadialGradient(-6, 1, 3, 0, 5, 27);
+    pg.addColorStop(0, '#f0821b');
+    pg.addColorStop(0.7, '#c4520b');
+    pg.addColorStop(1, '#8c3104');
+    ctx.fillStyle = pg;
+    ctx.beginPath();
+    ctx.ellipse(0, 5, 26, 10.8, 0, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = '#fffcf5';
+    ctx.strokeStyle = '#b0977e';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.ellipse(0, 1, 11.5, 5.8, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(0, -4, 7.6, 4.2, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-4, -6); ctx.quadraticCurveTo(1, -13, 5, -7); ctx.fill(); ctx.stroke();
+  }
+
+  function drawItemStuffing(ctx) {
+    ctx.fillStyle = '#bf5224';
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2.1;
+    ctx.beginPath();
+    ctx.arc(-31, 4, 6.8, 0, Math.PI * 2);
+    ctx.arc(31, 4, 6.8, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    const dg = ctx.createLinearGradient(-29, 0, 29, 22);
+    dg.addColorStop(0, '#d6622c');
+    dg.addColorStop(1, '#802b0d');
+    ctx.fillStyle = dg;
+    ctx.beginPath();
+    ctx.moveTo(-30, 2);
+    ctx.quadraticCurveTo(-27, 23, 0, 23);
+    ctx.quadraticCurveTo(27, 23, 30, 2);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    const sg = ctx.createRadialGradient(-5, -5, 4, 0, 0, 27);
+    sg.addColorStop(0, '#edba5c');
+    sg.addColorStop(1, '#9c5a18');
+    ctx.fillStyle = sg;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 27, 11.5, 0, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    [[-14, -3, '#e09d3d'], [-4, -8, '#cc7d24'], [8, -6, '#edbd60'], [15, -1, '#bf6e1b'], [-8, 3, '#e8b454'], [4, 2, '#d1842a']].forEach(([cx, cy, col]) => {
+      ctx.fillStyle = col;
+      ctx.strokeStyle = OUTLINE;
+      ctx.lineWidth = 1.3;
+      roundRectPath(ctx, cx - 4.8, cy - 3.8, 9.6, 7.6, 2);
+      ctx.fill(); ctx.stroke();
+    });
+
+    ctx.fillStyle = '#549130';
+    ctx.beginPath();
+    ctx.ellipse(-2, -10, 6.8, 3.4, -0.4, 0, Math.PI * 2);
+    ctx.ellipse(9, -9, 5.8, 2.8, 0.5, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+  }
+
+  function drawItemFlag(ctx) {
+    ctx.strokeStyle = '#633413';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(-18, 25); ctx.lineTo(-18, -25);
+    ctx.stroke();
+
+    ctx.fillStyle = '#f5c740';
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.arc(-18, -27, 4.6, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(-16, -22);
+    ctx.quadraticCurveTo(4, -27, 27, -20);
+    ctx.lineTo(27, 7);
+    ctx.quadraticCurveTo(4, 1, -16, 6);
+    ctx.closePath();
+    ctx.save();
+    ctx.clip();
+
+    ctx.fillStyle = '#fcf4e6';
+    ctx.fillRect(-18, -29, 48, 40);
+    ctx.fillStyle = '#bc2222';
+    for (let i = 0; i < 7; i++) ctx.fillRect(-18, -24 + i * 4.6, 48, 2.4);
+    ctx.fillStyle = '#1b3d7d';
+    ctx.fillRect(-16, -25, 19, 16);
+    ctx.fillStyle = '#ffffff';
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 3; c++) {
+        ctx.beginPath();
+        ctx.arc(-12 + c * 5.8, -21 + r * 4.8, 1.25, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawItemApplePie(ctx) {
+    ctx.fillStyle = '#e0d5c5';
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2.1;
+    ctx.beginPath();
+    ctx.ellipse(0, 10, 33, 13.5, 0, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    const ag = ctx.createRadialGradient(-5, 0, 4, 0, 4, 27);
+    ag.addColorStop(0, '#c25415');
+    ag.addColorStop(1, '#702506');
+    ctx.fillStyle = ag;
+    ctx.beginPath();
+    ctx.ellipse(0, 4, 28, 12.5, 0, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(0, 4, 27, 11.5, 0, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.strokeStyle = '#edb357';
+    ctx.lineWidth = 4.6;
+    for (let i = -24; i <= 24; i += 11) {
+      ctx.beginPath(); ctx.moveTo(i - 12, -12); ctx.lineTo(i + 12, 20); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(i + 12, -12); ctx.lineTo(i - 12, 20); ctx.stroke();
+    }
+    ctx.restore();
+
+    ctx.strokeStyle = '#de9834';
+    ctx.lineWidth = 4.8;
+    ctx.beginPath(); ctx.ellipse(0, 4, 28, 12.5, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 1.8;
+    ctx.beginPath(); ctx.ellipse(0, 4, 30.5, 14, 0, 0, Math.PI * 2); ctx.stroke();
+
+    ctx.fillStyle = '#cc3021';
+    ctx.beginPath(); ctx.arc(15, -2, 4.8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  }
+
+  function drawItemPilgrim(ctx) {
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2;
+
+    ctx.fillStyle = '#2e2927';
+    ctx.beginPath();
+    ctx.moveTo(-17, 23);
+    ctx.quadraticCurveTo(-15, 2, 0, 2);
+    ctx.quadraticCurveTo(15, 2, 17, 23);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = '#fcf8ef';
+    ctx.beginPath();
+    ctx.moveTo(-12, 5); ctx.lineTo(0, 14.5); ctx.lineTo(12, 5);
+    ctx.quadraticCurveTo(0, 2, -12, 5);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = '#fcd9bc';
+    ctx.beginPath();
+    ctx.arc(0, -6, 12.5, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = 'rgba(235, 112, 102, 0.48)';
+    ctx.beginPath();
+    ctx.arc(-6, -3.5, 2.8, 0, Math.PI * 2);
+    ctx.arc(6, -3.5, 2.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#261208';
+    ctx.beginPath();
+    ctx.arc(-4.2, -7, 1.9, 0, Math.PI * 2);
+    ctx.arc(4.2, -7, 1.9, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#632c17';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.arc(0, -4.5, 4, 0.2, Math.PI - 0.2);
+    ctx.stroke();
+
+    ctx.fillStyle = '#292422';
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(0, -16, 20, 5.2, 0, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(-11.5, -16); ctx.lineTo(-13.5, -35); ctx.lineTo(13.5, -35); ctx.lineTo(11.5, -16);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = '#734018';
+    ctx.fillRect(-11.5, -22, 23, 5);
+    ctx.fillStyle = '#f5c842';
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 1.3;
+    roundRectPath(ctx, -4.8, -23.5, 9.6, 7.8, 1.5);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#292422';
+    ctx.fillRect(-2, -21, 4, 3);
+  }
+
+  /**
+   * Samples the local background pixels at (x, y) on bgCtx, returning average RGB and luminance (0..1).
+   */
+  function sampleLocalBackground(bgContext, cx, cy) {
+    const patchSize = 44;
+    const sx = Math.max(0, Math.min(WORLD_W - patchSize, Math.round(cx - patchSize / 2)));
+    const sy = Math.max(0, Math.min(WORLD_H - patchSize, Math.round(cy - patchSize / 2)));
+    let rSum = 0, gSum = 0, bSum = 0, count = 0;
+
+    try {
+      const imgData = bgContext.getImageData(sx, sy, patchSize, patchSize).data;
+      for (let i = 0; i < imgData.length; i += 16) {
+        rSum += imgData[i];
+        gSum += imgData[i + 1];
+        bSum += imgData[i + 2];
+        count++;
+      }
+    } catch (_) {
+      return { r: 120, g: 76, b: 42, lum: 0.34 };
+    }
+
+    if (!count) return { r: 120, g: 76, b: 42, lum: 0.34 };
+    const r = Math.round(rSum / count);
+    const g = Math.round(gSum / count);
+    const b = Math.round(bSum / count);
+    const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return { r, g, b, lum };
+  }
+
+  /**
+   * Builds a deeply camouflaged offscreen sprite for an unfound item:
+   * - Desaturates slightly to match painted brushwork
+   * - Adjusts brightness/contrast to match local shadow/sunlight luminance
+   * - Applies 48%-56% local ambient color glazing (multiply + ambient tint)
+   * - Adds feathered edge shading & partial foreground camouflage in local background tones
+   */
+  function buildCamouflagedSprite(item, itemType, bgContext) {
+    const sample = sampleLocalBackground(bgContext, item.vx, item.vy);
+    item.bgSample = sample;
+
+    const size = 128;
+    const off = document.createElement('canvas');
+    off.width = size;
+    off.height = size;
+    const octx = off.getContext('2d');
+
+    // 1. Render crisp item centered in offscreen canvas
+    drawTargetItem(octx, itemType, size / 2, size / 2, 1.0, 0);
+
+    // 2. Pixel-level desaturation, local luminance matching, and ambient color glazing
+    const imgData = octx.getImageData(0, 0, size, size);
+    const d = imgData.data;
+
+    const lumGain = Math.max(0.50, Math.min(1.12, 0.56 + sample.lum * 0.64));
+    const glazeStrength = 0.52; // ~52% local ambient blend
+
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i + 3] === 0) continue;
+
+      let pr = d[i];
+      let pg = d[i + 1];
+      let pb = d[i + 2];
+
+      // Slight desaturation (~30%) so bright cartoon colors settle into the painting
+      const pLum = 0.299 * pr + 0.587 * pg + 0.114 * pb;
+      pr = pr * 0.70 + pLum * 0.30;
+      pg = pg * 0.70 + pLum * 0.30;
+      pb = pb * 0.70 + pLum * 0.30;
+
+      // Match local shadow / sunlit brightness
+      pr *= lumGain;
+      pg *= lumGain;
+      pb *= lumGain;
+
+      // Ambient color glazing: combine multiply-glaze + direct ambient tint
+      const multR = (pr * sample.r) / 255;
+      const multG = (pg * sample.g) / 255;
+      const multB = (pb * sample.b) / 255;
+
+      const keep = 1 - glazeStrength;
+      d[i]     = Math.max(0, Math.min(255, pr * keep + multR * (glazeStrength * 0.68) + sample.r * (glazeStrength * 0.32)));
+      d[i + 1] = Math.max(0, Math.min(255, pg * keep + multG * (glazeStrength * 0.68) + sample.g * (glazeStrength * 0.32)));
+      d[i + 2] = Math.max(0, Math.min(255, pb * keep + multB * (glazeStrength * 0.68) + sample.b * (glazeStrength * 0.32)));
+    }
+    octx.putImageData(imgData, 0, 0);
+
+    // 3. Feathered edge shading matching local background tone (clipped to sprite silhouette)
+    octx.save();
+    octx.globalCompositeOperation = 'source-atop';
+    const edgeGrad = octx.createRadialGradient(size / 2, size / 2, 16, size / 2, size / 2, 46);
+    edgeGrad.addColorStop(0, `rgba(${sample.r}, ${sample.g}, ${sample.b}, 0)`);
+    edgeGrad.addColorStop(1, `rgba(${sample.r}, ${sample.g}, ${sample.b}, 0.44)`);
+    octx.fillStyle = edgeGrad;
+    octx.fillRect(0, 0, size, size);
+
+    // Directional shadow falloff across one side to mimic tucked-away lighting
+    const sxDir = Math.cos(item.occAngle) * 38;
+    const syDir = Math.sin(item.occAngle) * 38;
+    const sideGrad = octx.createLinearGradient(size / 2 - sxDir, size / 2 - syDir, size / 2 + sxDir, size / 2 + syDir);
+    sideGrad.addColorStop(0, 'rgba(18, 7, 2, 0)');
+    sideGrad.addColorStop(0.55, 'rgba(18, 7, 2, 0.14)');
+    sideGrad.addColorStop(1, `rgba(${Math.round(sample.r * 0.38)}, ${Math.round(sample.g * 0.34)}, ${Math.round(sample.b * 0.30)}, 0.56)`);
+    octx.fillStyle = sideGrad;
+    octx.fillRect(0, 0, size, size);
+    octx.restore();
+
+    item.camoCanvas = off;
+  }
+
+  /**
+   * Draws a subtle partial foreground camouflage tuft (translucent painted leaf / wispy shadow)
+   * over one corner of an unfound item so it feels genuinely tucked behind props or foliage.
+   */
+  function drawPartialOcclusion(ctx, item) {
+    const s = item.bgSample || { r: 100, g: 60, b: 30, lum: 0.3 };
+    const rad = 22 * item.s;
+    const ox = item.vx + Math.cos(item.occAngle) * rad;
+    const oy = item.vy + Math.sin(item.occAngle) * rad;
+
+    ctx.save();
+    ctx.translate(ox, oy);
+    ctx.rotate(item.occAngle + 0.6);
+
+    // Soft wispy shadow / local tone veil over corner
+    const veil = ctx.createRadialGradient(0, 0, 2, 0, 0, 22 * item.s);
+    veil.addColorStop(0, `rgba(${Math.round(s.r * 0.72)}, ${Math.round(s.g * 0.68)}, ${Math.round(s.b * 0.62)}, 0.58)`);
+    veil.addColorStop(1, `rgba(${s.r}, ${s.g}, ${s.b}, 0)`);
+    ctx.fillStyle = veil;
+    ctx.beginPath();
+    ctx.arc(0, 0, 22 * item.s, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Small translucent painted autumn leaf overlapping the corner
+    ctx.fillStyle = `rgba(${Math.min(255, Math.round(s.r * 1.1 + 26))}, ${Math.round(s.g * 0.92 + 10)}, ${Math.round(s.b * 0.75)}, 0.62)`;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 13 * item.s, 6.2 * item.s, 0.25, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  /* =========================================================================
+     6. LIVE FIREBASE REALTIME DATABASE LEADERBOARD & TEACHER CONTROLS
+     ========================================================================= */
+  let lastSubmittedKey = null;
+  let isTeacherDevice = false;
+  let pendingClearConfirm = false;
+
+  try {
+    isTeacherDevice = localStorage.getItem(TEACHER_DEVICE_KEY) === 'true';
+  } catch (_) {}
+
+  function updateTeacherUI() {
+    const bar = document.getElementById('teacherBar');
+    if (bar) bar.classList.toggle('hidden', !isTeacherDevice);
+    document.querySelectorAll('.teacher-col').forEach(el => {
+      el.classList.toggle('hidden', !isTeacherDevice);
+    });
+  }
+
+  async function deleteLeaderboardEntry(entryKey) {
+    if (!isTeacherDevice || !entryKey) return;
+    const statusEl = document.getElementById('lbStatus');
+    try {
+      const res = await fetch(`${FIREBASE_LB_BASE}/${encodeURIComponent(entryKey)}.json`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      statusEl.className = 'status-msg ok';
+      statusEl.textContent = '✓ Entry removed from leaderboard.';
+      await refreshLeaderboardUI();
+    } catch (_) {
+      statusEl.className = 'status-msg err';
+      statusEl.textContent = 'Could not delete entry. Please check Firebase rules.';
+    }
+  }
+
+  async function clearAllLeaderboard() {
+    if (!isTeacherDevice) return;
+    const statusEl = document.getElementById('lbStatus');
+    try {
+      const res = await fetch(FIREBASE_LB_URL, { method: 'DELETE' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      lastSubmittedKey = null;
+      statusEl.className = 'status-msg ok';
+      statusEl.textContent = '✓ All leaderboard scores cleared.';
+      await refreshLeaderboardUI();
+    } catch (_) {
+      statusEl.className = 'status-msg err';
+      statusEl.textContent = 'Could not clear leaderboard. Please check Firebase rules.';
+    }
+  }
+
+  function getSavedPlayerName() {
+    try {
+      return localStorage.getItem(PLAYER_NAME_KEY) || '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  function savePlayerName(name) {
+    const clean = (name || '').trim().slice(0, 22);
+    try {
+      localStorage.setItem(PLAYER_NAME_KEY, clean);
+    } catch (_) {}
+    document.getElementById('welcomeNameInput').value = clean;
+    document.getElementById('lbNameInput').value = clean;
+    document.getElementById('victoryNameInput').value = clean;
+    return clean;
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  async function fetchLeaderboardEntries() {
+    const res = await fetch(FIREBASE_LB_URL, { method: 'GET' });
+    if (!res.ok) throw new Error(`Server returned ${res.status}`);
+    const data = await res.json();
+    if (!data || typeof data !== 'object') return [];
+
+    const rows = Object.entries(data)
+      .map(([key, val]) => ({
+        key,
+        name: (val && val.name ? String(val.name).trim() : 'Anonymous Pilgrim').slice(0, 22),
+        score: Number(val?.score) || 0,
+        levelsCompleted: Number(val?.levelsCompleted) || 0,
+        timeSeconds: Math.max(0, Number(val?.timeSeconds) || 0),
+        createdAt: Number(val?.createdAt) || 0
+      }))
+      .filter(r => r.score > 0 || r.levelsCompleted > 0);
+
+    // Sort: levelsCompleted DESC, score DESC, timeSeconds ASC
+    rows.sort((a, b) => {
+      if (b.levelsCompleted !== a.levelsCompleted) return b.levelsCompleted - a.levelsCompleted;
+      if (b.score !== a.score) return b.score - a.score;
+      return a.timeSeconds - b.timeSeconds;
+    });
+
+    return rows.slice(0, 20);
+  }
+
+  async function submitScoreToFirebase(nameInputVal) {
+    const cleanName = savePlayerName(nameInputVal) || 'Autumn Explorer';
+    const payload = {
+      name: cleanName,
+      score: getTotalScore(),
+      levelsCompleted: state.levelBestScores.size,
+      timeSeconds: Math.round(state.totalActiveSeconds),
+      createdAt: Date.now()
+    };
+
+    const res = await fetch(FIREBASE_LB_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error(`Upload failed (${res.status})`);
+    const result = await res.json();
+    if (result && result.name) {
+      lastSubmittedKey = result.name;
+    }
+    return payload;
+  }
+
+  async function refreshLeaderboardUI() {
+    const tbody = document.getElementById('lbTableBody');
+    const statusEl = document.getElementById('lbStatus');
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:18px;opacity:0.75;">Fetching live rankings...</td></tr>';
+
+    try {
+      const entries = await fetchLeaderboardEntries();
+      if (entries.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:18px;opacity:0.75;">No scores recorded yet. Be the first Harvest Champion!</td></tr>';
+        updateTeacherUI();
+        return;
+      }
+
+      tbody.innerHTML = entries.map((row, idx) => {
+        const rank = idx + 1;
+        const badgeCls = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
+        const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
+        const hl = row.key === lastSubmittedKey ? 'highlight-row' : '';
+        return `
+          <tr class="${hl}">
+            <td><span class="rank-badge ${badgeCls}">${medal}</span></td>
+            <td style="font-weight:700;">${escapeHtml(row.name)}</td>
+            <td>${row.levelsCompleted} / 10</td>
+            <td style="color:#ffd670;font-weight:800;">${row.score.toLocaleString()}</td>
+            <td>${formatTime(row.timeSeconds)}</td>
+            <td class="teacher-col ${isTeacherDevice ? '' : 'hidden'}">
+              <button class="row-del-btn" data-key="${escapeHtml(row.key)}" title="Delete Entry">✕</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.querySelectorAll('.row-del-btn').forEach(btn => {
+        btn.addEventListener('click', () => deleteLeaderboardEntry(btn.dataset.key));
+      });
+      updateTeacherUI();
+    } catch (_) {
+      statusEl.className = 'status-msg err';
+      statusEl.textContent = 'Could not reach Firebase right now. Please check your connection or try Refresh.';
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:18px;color:#ff9c8a;">Unable to load live rankings.</td></tr>';
+    }
+  }
+
+  /* =========================================================================
+     7. GAME STATE, VIEWPORT MAPPING & INTERACTION ENGINE
+     ========================================================================= */
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+
+  const bgCanvas = document.createElement('canvas');
+  bgCanvas.width = WORLD_W;
+  bgCanvas.height = WORLD_H;
+  const bgCtx = bgCanvas.getContext('2d');
+
+  // DOM References
+  const hudLevelNum = document.getElementById('hudLevelNum');
+  const hudTargetCanvas = document.getElementById('hudTargetCanvas');
+  const hudFoundCount = document.getElementById('hudFoundCount');
+  const hudTimer = document.getElementById('hudTimer');
+  const hudScore = document.getElementById('hudScore');
+
+  const loadingOverlay = document.getElementById('loadingOverlay');
+  const loadingKicker = document.getElementById('loadingKicker');
+  const loadingTitle = document.getElementById('loadingTitle');
+
+  const previewCard = document.getElementById('previewCard');
+  const previewIconCanvas = document.getElementById('previewIconCanvas');
+  const previewKicker = document.getElementById('previewKicker');
+  const previewTitle = document.getElementById('previewTitle');
+  const previewBarFill = document.getElementById('previewBarFill');
+  const previewSec = document.getElementById('previewSec');
+  const toastEl = document.getElementById('toastMsg');
+
+  const welcomeModal = document.getElementById('welcomeModal');
+  const completeModal = document.getElementById('completeModal');
+  const levelsModal = document.getElementById('levelsModal');
+  const leaderboardModal = document.getElementById('leaderboardModal');
+  const pinModal = document.getElementById('pinModal');
+  const victoryModal = document.getElementById('victoryModal');
+  const levelGrid = document.getElementById('levelGrid');
+
+  const state = {
+    started: false,
+    levelIdx: 0,
+    loadToken: 0,
+    bgReady: false,
+    phase: 'welcome', // 'welcome' | 'loading' | 'preview' | 'playing' | 'complete'
+    previewRemaining: 4.0,
+    timerVisible: true,
+    items: [],
+    foundCount: 0,
+    levelActiveSeconds: 0,
+    totalActiveSeconds: 0,
+    currentLevelScore: 0,
+    levelBestScores: new Map(), // levelIdx -> bestScore
+    completedStars: new Map(),  // levelIdx -> 1..3
+    lastMissTime: 0,
+    ripples: [],
+    sparkles: [],
+    popups: [],
+    confetti: [],
+    ambientParticles: [],
+    vw: window.innerWidth,
+    vh: window.innerHeight,
+    dpr: Math.min(window.devicePixelRatio || 1, 2),
+    scale: 1,
+    offsetX: 0,
+    offsetY: 0
+  };
+
+  let toastTimeout = null;
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => toastEl.classList.remove('show'), 2200);
+  }
+
+  function isAnyModalOpen() {
+    return (
+      !welcomeModal.classList.contains('hidden') ||
+      !completeModal.classList.contains('hidden') ||
+      !levelsModal.classList.contains('hidden') ||
+      !leaderboardModal.classList.contains('hidden') ||
+      !pinModal.classList.contains('hidden') ||
+      !victoryModal.classList.contains('hidden')
+    );
+  }
+
+  function getTotalScore() {
+    let total = 0;
+    for (const [idx, best] of state.levelBestScores.entries()) {
+      if (idx !== state.levelIdx) total += best;
+    }
+    const curBest = state.levelBestScores.get(state.levelIdx) || 0;
+    total += Math.max(curBest, state.currentLevelScore);
+    return total;
+  }
+
+  function updateScoreHud() {
+    hudScore.textContent = `⭐ ${getTotalScore().toLocaleString()}`;
+  }
+
+  function formatTime(sec) {
+    const sTotal = Math.max(0, Math.floor(sec));
+    const m = Math.floor(sTotal / 60);
+    const s = sTotal % 60;
+    return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+  }
+
+  function resizeCanvas() {
+    state.vw = window.innerWidth;
+    state.vh = window.innerHeight;
+    state.dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(state.vw * state.dpr);
+    canvas.height = Math.round(state.vh * state.dpr);
+
+    const scaleX = state.vw / WORLD_W;
+    const scaleY = state.vh / WORLD_H;
+    state.scale = Math.max(scaleX, scaleY);
+    state.offsetX = (state.vw - WORLD_W * state.scale) / 2;
+    state.offsetY = (state.vh - WORLD_H * state.scale) / 2;
+
+    clampItemsToViewport();
+    if (state.bgReady && state.items.length > 0) {
+      rebuildAllCamoSprites();
+    }
+  }
+
+  function clampItemsToViewport() {
+    const padX = 56 / state.scale;
+    const padTop = 92 / state.scale;
+    const padBot = 90 / state.scale;
+    const minX = Math.max(66, -state.offsetX / state.scale + padX);
+    const maxX = Math.min(WORLD_W - 66, (state.vw - state.offsetX) / state.scale - padX);
+    const minY = Math.max(102, -state.offsetY / state.scale + padTop);
+    const maxY = Math.min(WORLD_H - 92, (state.vh - state.offsetY) / state.scale - padBot);
+
+    state.items.forEach(item => {
+      item.vx = Math.max(minX, Math.min(maxX, item.bx));
+      item.vy = Math.max(minY, Math.min(maxY, item.by));
+    });
+  }
+
+  function rebuildAllCamoSprites() {
+    const lvl = LEVELS[state.levelIdx];
+    for (const item of state.items) {
+      buildCamouflagedSprite(item, lvl.itemType, bgCtx);
+    }
+  }
+
+  function screenToWorld(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (clientX - rect.left - state.offsetX) / state.scale,
+      y: (clientY - rect.top - state.offsetY) / state.scale
+    };
+  }
+
+  function renderMiniIcon(targetCanvas, itemType, iconScale = 0.88) {
+    const c = targetCanvas.getContext('2d');
+    const w = targetCanvas.width;
+    const h = targetCanvas.height;
+    c.clearRect(0, 0, w, h);
+    drawTargetItem(c, itemType, w / 2, h / 2 + 3, (w / 92) * iconScale, 0);
+  }
+
+  function initAmbientParticles(mode) {
+    state.ambientParticles = [];
+    const count = mode === 'leaves' ? 16 : 20;
+    for (let i = 0; i < count; i++) {
+      state.ambientParticles.push({
+        x: Math.random() * WORLD_W,
+        y: Math.random() * WORLD_H,
+        vx: mode === 'leaves' ? 14 + Math.random() * 18 : (Math.random() - 0.5) * 9,
+        vy: mode === 'leaves' ? 14 + Math.random() * 16 : -6 - Math.random() * 9,
+        size: mode === 'leaves' ? 5.5 + Math.random() * 4.5 : 2 + Math.random() * 2.4,
+        phase: Math.random() * Math.PI * 2,
+        color: mode === 'leaves'
+          ? ['#d95c1e', '#e8961c', '#b53124', '#f2c252'][i % 4]
+          : 'rgba(255, 224, 140, 0.45)'
+      });
+    }
+  }
+
+  async function loadLevel(idx) {
+    const token = ++state.loadToken;
+    state.levelIdx = idx;
+    state.bgReady = false;
+    const lvl = LEVELS[idx];
+
+    completeModal.classList.add('hidden');
+    victoryModal.classList.add('hidden');
+    levelsModal.classList.add('hidden');
+    previewCard.classList.add('hidden');
+
+    // Create 10 deeply camouflaged hidden items with realistic smaller scale & natural rotations
+    state.items = lvl.spots.map((sp, i) => ({
+      id: i,
+      bx: sp.x,
+      by: sp.y,
+      vx: sp.x,
+      vy: sp.y,
+      s: sp.s,
+      r: sp.r,
+      opacity: 0.77 + ((i * 37) % 11) * 0.01, // 0.77 .. 0.87
+      occAngle: ((i * 1.93) % (Math.PI * 2)),
+      camoCanvas: null,
+      bgSample: null,
+      found: false,
+      foundAnim: 0
+    }));
+    clampItemsToViewport();
+
+    state.foundCount = 0;
+    state.levelActiveSeconds = 0;
+    state.currentLevelScore = 0;
+    state.ripples = [];
+    state.sparkles = [];
+    state.popups = [];
+    state.confetti = [];
+
+    initAmbientParticles(lvl.ambient);
+
+    hudLevelNum.textContent = `Level ${lvl.id} / ${LEVELS.length}`;
+    hudFoundCount.textContent = `Found: 0 / 10`;
+    updateScoreHud();
+    renderMiniIcon(hudTargetCanvas, lvl.itemType, 0.92);
+    renderMiniIcon(previewIconCanvas, lvl.itemType, 0.94);
+
+    let img = imageCache.get(lvl.id);
+    if (!img) {
+      state.phase = 'loading';
+      loadingKicker.textContent = `Level ${lvl.id} of ${LEVELS.length}`;
+      loadingTitle.textContent = `Painting ${lvl.sceneName}...`;
+      loadingOverlay.classList.remove('hidden');
+
+      img = await fetchGeminiBackground(lvl.prompt);
+      if (token !== state.loadToken) return;
+
+      if (img) imageCache.set(lvl.id, img);
+      loadingOverlay.classList.add('hidden');
+    }
+
+    // Paint background to 1600x900 offscreen canvas
+    bgCtx.clearRect(0, 0, WORLD_W, WORLD_H);
+    if (img) {
+      const ir = img.width / img.height;
+      const wr = WORLD_W / WORLD_H;
+      let dw = WORLD_W, dh = WORLD_H, dx = 0, dy = 0;
+      if (ir > wr) {
+        dw = WORLD_H * ir;
+        dx = (WORLD_W - dw) / 2;
+      } else {
+        dh = WORLD_W / ir;
+        dy = (WORLD_H - dh) / 2;
+      }
+      bgCtx.drawImage(img, dx, dy, dw, dh);
+    } else {
+      paintProceduralFallback(bgCtx, lvl.id);
+    }
+
+    state.bgReady = true;
+
+    // Sample local background pixels and pre-bake deeply camouflaged sprites
+    rebuildAllCamoSprites();
+
+    // Start 4-second "Study the Picture" preview phase (timer paused)
+    state.phase = 'preview';
+    state.previewRemaining = 4.0;
+    previewKicker.textContent = `Study the Picture — ${lvl.sceneName}`;
+    previewTitle.textContent = `Level ${lvl.id}: Find 10 ${lvl.itemPlural}`;
+    previewSec.textContent = '4s';
+    previewBarFill.style.width = '100%';
+    previewCard.classList.remove('hidden');
+  }
+
+  function startPlayingNow() {
+    if (state.phase !== 'preview') return;
+    state.phase = 'playing';
+    previewCard.classList.add('hidden');
+  }
+
+  function spawnSparkles(x, y, count = 20) {
+    const colors = ['#ffe066', '#ff9f1c', '#ffffff', '#ffd369', '#9be87c'];
+    for (let i = 0; i < count; i++) {
+      const ang = (Math.PI * 2 * i) / count + Math.random() * 0.35;
+      const spd = 60 + Math.random() * 135;
+      state.sparkles.push({
+        x, y,
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd - 20,
+        life: 0.65 + Math.random() * 0.4,
+        maxLife: 1.05,
+        size: 2.8 + Math.random() * 4,
+        color: colors[i % colors.length]
+      });
+    }
+  }
+
+  function spawnConfetti(count = 110) {
+    const colors = ['#ffbe4f', '#e86825', '#cc2929', '#8be071', '#fff5d6', '#f2a52c'];
+    for (let i = 0; i < count; i++) {
+      state.confetti.push({
+        x: Math.random() * WORLD_W,
+        y: -20 - Math.random() * 260,
+        vx: (Math.random() - 0.5) * 140,
+        vy: 145 + Math.random() * 215,
+        rot: Math.random() * Math.PI * 2,
+        vrot: (Math.random() - 0.5) * 9,
+        w: 10 + Math.random() * 8,
+        h: 6 + Math.random() * 5,
+        color: colors[i % colors.length]
+      });
+    }
+  }
+
+  function onLevelComplete() {
+    state.phase = 'complete';
+    const lvl = LEVELS[state.levelIdx];
+
+    // Level Clear Bonus (+250) + Speed Bonus (up to +300)
+    const speedBonus = Math.max(0, Math.round(300 - state.levelActiveSeconds * 3));
+    const clearBonus = 250 + speedBonus;
+    state.currentLevelScore += clearBonus;
+
+    const prevBest = state.levelBestScores.get(state.levelIdx) || 0;
+    state.levelBestScores.set(state.levelIdx, Math.max(prevBest, state.currentLevelScore));
+
+    const stars = state.levelActiveSeconds <= 45 ? 3 : state.levelActiveSeconds <= 90 ? 2 : 1;
+    state.completedStars.set(state.levelIdx, Math.max(stars, state.completedStars.get(state.levelIdx) || 0));
+    updateScoreHud();
+
+    spawnConfetti(110);
+
+    if (state.levelIdx === LEVELS.length - 1) {
+      AudioEngine.playVictory();
+      setTimeout(() => {
+        document.getElementById('vicTotalScore').textContent = getTotalScore().toLocaleString();
+        document.getElementById('vicTotalTime').textContent = formatTime(state.totalActiveSeconds);
+        document.getElementById('vicLevelsDone').textContent = `${state.levelBestScores.size} / 10`;
+        document.getElementById('victoryNameInput').value = getSavedPlayerName();
+        document.getElementById('victoryStatus').textContent = '';
+        document.getElementById('btnVictorySubmit').disabled = false;
+        victoryModal.classList.remove('hidden');
+      }, 650);
+    } else {
+      AudioEngine.playLevelComplete();
+      setTimeout(() => {
+        document.getElementById('completeBadge').textContent = `Level ${lvl.id} Complete!`;
+        document.getElementById('completeTitle').textContent = `All 10 ${lvl.itemPlural} Found!`;
+        document.getElementById('completeSub').textContent =
+          `Splendid! You spotted every camouflaged ${lvl.itemSingular.toLowerCase()} in ${lvl.sceneName} (+${clearBonus} clear & speed bonus).`;
+        document.getElementById('statTime').textContent = formatTime(state.levelActiveSeconds);
+        document.getElementById('statLevelScore').textContent = `+${state.currentLevelScore.toLocaleString()}`;
+        document.getElementById('statStars').textContent = '★'.repeat(stars) + '☆'.repeat(3 - stars);
+        completeModal.classList.remove('hidden');
+      }, 650);
+    }
+  }
+  function handleCanvasTap(clientX, clientY, isTouch = false) {
+    AudioEngine.unlock();
+    if (isAnyModalOpen()) return;
+    if (state.phase === 'preview') {
+      startPlayingNow();
+    }
+    if (state.phase !== 'playing') return;
+
+    const pt = screenToWorld(clientX, clientY);
+    let hitItem = null;
+    let bestDist = Infinity;
+
+    // Fair, forgiving hitbox around smaller camouflaged items (extra padding for iPad touch taps)
+    const touchPad = isTouch ? 14 : 0;
+    for (const item of state.items) {
+      if (item.found) continue;
+      const dist = Math.hypot(pt.x - item.vx, pt.y - item.vy);
+      const hitRadius = Math.max(30, 56 * item.s) + touchPad;
+      if (dist <= hitRadius && dist < bestDist) {
+        bestDist = dist;
+        hitItem = item;
+      }
+    }
+
+    if (hitItem) {
+      hitItem.found = true;
+      hitItem.foundAnim = 0.01;
+      state.foundCount++;
+      state.currentLevelScore += 100;
+      hudFoundCount.textContent = `Found: ${state.foundCount} / 10`;
+      updateScoreHud();
+
+      spawnSparkles(hitItem.vx, hitItem.vy, 22);
+      state.popups.push({ x: hitItem.vx, y: hitItem.vy - 24, text: '+100', life: 0.9, maxLife: 0.9 });
+      AudioEngine.playFound(state.foundCount);
+
+      if (state.foundCount >= 10) {
+        onLevelComplete();
+      }
+    } else {
+      // 220ms anti-spam cooldown on miss clicks
+      const now = performance.now();
+      if (now - state.lastMissTime < 220) return;
+      state.lastMissTime = now;
+      AudioEngine.playMiss();
+      state.ripples.push({ x: pt.x, y: pt.y, r: 7, alpha: 0.52 });
+    }
+  }
+
+  /* =========================================================================
+     8. RENDERING LOOP (60fps High-DPI Canvas)
+     ========================================================================= */
+  function drawFoundBadge(ctx, x, y, animT) {
+    const scale = animT < 1 ? 0.5 + 0.62 * Math.sin(animT * Math.PI * 0.72) : 1;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(scale, scale);
+
+    ctx.strokeStyle = '#ffe066';
+    ctx.lineWidth = 3.6;
+    ctx.beginPath();
+    ctx.arc(0, 0, 32, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = '#3cb04b';
+    ctx.strokeStyle = '#fff9e6';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.arc(22, -20, 12.5, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(16.5, -20); ctx.lineTo(20.5, -16); ctx.lineTo(27.5, -24);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  let lastTime = performance.now();
+  function gameLoop(now) {
+    const dt = Math.min(0.05, (now - lastTime) / 1000);
+    lastTime = now;
+    const timeSec = now / 1000;
+    const modalOpen = isAnyModalOpen();
+
+    // Preview countdown (paused if a modal is open)
+    if (state.phase === 'preview' && !modalOpen) {
+      state.previewRemaining -= dt;
+      if (state.previewRemaining <= 0) {
+        startPlayingNow();
+      } else {
+        previewSec.textContent = `${Math.ceil(state.previewRemaining)}s`;
+        previewBarFill.style.width = `${(state.previewRemaining / 4.0) * 100}%`;
+      }
+    }
+
+    // Active gameplay timer (paused during previews and modals)
+    if (state.phase === 'playing' && !modalOpen) {
+      state.levelActiveSeconds += dt;
+      state.totalActiveSeconds += dt;
+      hudTimer.textContent = state.timerVisible ? `⏱ ${formatTime(state.totalActiveSeconds)}` : '⏱ Off';
+    }
+
+    // Render full-screen canvas with high-DPI scaling
+    ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+    ctx.clearRect(0, 0, state.vw, state.vh);
+
+    ctx.save();
+    ctx.translate(state.offsetX, state.offsetY);
+    ctx.scale(state.scale, state.scale);
+
+    // 1. Background illustration
+    if (state.bgReady) {
+      ctx.drawImage(bgCanvas, 0, 0, WORLD_W, WORLD_H);
+    }
+
+    // 2. Ambient falling leaves / cozy golden motes
+    const lvl = LEVELS[state.levelIdx];
+    for (const p of state.ambientParticles) {
+      p.x += (p.vx + Math.sin(timeSec * 1.4 + p.phase) * 10) * dt;
+      p.y += p.vy * dt;
+      if (p.x > WORLD_W + 24) p.x = -24;
+      if (p.x < -24) p.x = WORLD_W + 24;
+      if (p.y > WORLD_H + 24) p.y = -24;
+      if (p.y < -24) p.y = WORLD_H + 24;
+
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.fillStyle = p.color;
+      if (lvl.ambient === 'leaves') {
+        ctx.rotate(timeSec * 0.9 + p.phase);
+        ctx.globalAlpha = 0.72;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, p.size, p.size * 0.48, 0, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.globalAlpha = 0.35 + 0.25 * Math.sin(timeSec * 2 + p.phase);
+        ctx.beginPath();
+        ctx.arc(0, 0, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    // 3. Hidden & Found Items
+    if (state.bgReady && state.items.length > 0) {
+      for (const item of state.items) {
+        if (!item.found) {
+          if (item.camoCanvas) {
+            ctx.save();
+            ctx.translate(item.vx, item.vy);
+            ctx.rotate(item.r);
+            ctx.globalAlpha = item.opacity;
+            const drawSize = 128 * item.s;
+            ctx.drawImage(item.camoCanvas, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+            ctx.restore();
+            drawPartialOcclusion(ctx, item);
+          } else {
+            ctx.save();
+            ctx.globalAlpha = item.opacity;
+            drawTargetItem(ctx, lvl.itemType, item.vx, item.vy, item.s, item.r);
+            ctx.restore();
+          }
+        } else {
+          if (item.foundAnim < 1) {
+            item.foundAnim = Math.min(1, item.foundAnim + dt * 2.8);
+          }
+          const popScale = item.s * (1.16 + Math.sin(item.foundAnim * Math.PI) * 0.22);
+          drawTargetItem(ctx, lvl.itemType, item.vx, item.vy, popScale, item.r);
+          drawFoundBadge(ctx, item.vx, item.vy, item.foundAnim);
+        }
+      }
+    }
+
+    // Faint miss ripples
+    for (let i = state.ripples.length - 1; i >= 0; i--) {
+      const rp = state.ripples[i];
+      rp.r += dt * 64;
+      rp.alpha -= dt * 1.5;
+      if (rp.alpha <= 0) state.ripples.splice(i, 1);
+      else {
+        ctx.strokeStyle = `rgba(255, 240, 210, ${rp.alpha})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    // Sparkles
+    for (let i = state.sparkles.length - 1; i >= 0; i--) {
+      const sp = state.sparkles[i];
+      sp.x += sp.vx * dt;
+      sp.y += sp.vy * dt;
+      sp.vy += 205 * dt;
+      sp.life -= dt;
+      if (sp.life <= 0) state.sparkles.splice(i, 1);
+      else {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, sp.life / sp.maxLife);
+        ctx.fillStyle = sp.color;
+        ctx.beginPath();
+        ctx.arc(sp.x, sp.y, sp.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // Floating +100 score popups
+    for (let i = state.popups.length - 1; i >= 0; i--) {
+      const pop = state.popups[i];
+      pop.y -= dt * 42;
+      pop.life -= dt;
+      if (pop.life <= 0) state.popups.splice(i, 1);
+      else {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, pop.life / pop.maxLife);
+        ctx.font = '800 22px "Fredoka", "Nunito", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.strokeStyle = '#2b1204';
+        ctx.lineWidth = 4.2;
+        ctx.strokeText(pop.text, pop.x, pop.y);
+        ctx.fillStyle = '#ffe066';
+        ctx.fillText(pop.text, pop.x, pop.y);
+        ctx.restore();
+      }
+    }
+
+    // Celebration confetti
+    for (let i = state.confetti.length - 1; i >= 0; i--) {
+      const cf = state.confetti[i];
+      cf.x += cf.vx * dt;
+      cf.y += cf.vy * dt;
+      cf.rot += cf.vrot * dt;
+      if (cf.y > WORLD_H + 40) state.confetti.splice(i, 1);
+      else {
+        ctx.save();
+        ctx.translate(cf.x, cf.y);
+        ctx.rotate(cf.rot);
+        ctx.fillStyle = cf.color;
+        ctx.fillRect(-cf.w / 2, -cf.h / 2, cf.w, cf.h);
+        ctx.restore();
+      }
+    }
+
+    ctx.restore();
+    requestAnimationFrame(gameLoop);
+  }
+
+  /* =========================================================================
+     9. UI CONTROLS, LEVEL SELECTOR & LEADERBOARD EVENT LISTENERS
+     ========================================================================= */
+  function buildLevelSelectGrid() {
+    levelGrid.innerHTML = '';
+    LEVELS.forEach((lvl, idx) => {
+      const tile = document.createElement('button');
+      tile.className = 'level-tile';
+      if (idx === state.levelIdx) tile.classList.add('active');
+      const stars = state.completedStars.get(idx) || 0;
+      if (stars > 0) tile.classList.add('completed');
+
+      const iconCanv = document.createElement('canvas');
+      iconCanv.width = 92;
+      iconCanv.height = 92;
+      iconCanv.className = 'tile-icon';
+      renderMiniIcon(iconCanv, lvl.itemType, 0.90);
+
+      tile.innerHTML = `
+        ${stars > 0 ? `<span class="tile-stars">${'★'.repeat(stars)}</span>` : ''}
+        <span class="tile-num">Level ${lvl.id}</span>
+      `;
+      tile.appendChild(iconCanv);
+
+      const itemSpan = document.createElement('span');
+      itemSpan.className = 'tile-item';
+      itemSpan.textContent = `10 ${lvl.itemPlural}`;
+      const sceneSpan = document.createElement('span');
+      sceneSpan.className = 'tile-scene';
+      sceneSpan.textContent = lvl.sceneName;
+      tile.appendChild(itemSpan);
+      tile.appendChild(sceneSpan);
+
+      tile.addEventListener('click', () => {
+        AudioEngine.playClick();
+        state.started = true;
+        welcomeModal.classList.add('hidden');
+        loadLevel(idx);
+      });
+      levelGrid.appendChild(tile);
+    });
+  }
+
+  function openLeaderboardModal() {
+    document.getElementById('lbNameInput').value = getSavedPlayerName();
+    document.getElementById('lbStatus').textContent = '';
+    leaderboardModal.classList.remove('hidden');
+    updateTeacherUI();
+    refreshLeaderboardUI();
+  }
+
+  canvas.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    handleCanvasTap(e.clientX, e.clientY, e.pointerType === 'touch');
+  });
+
+  // Unlock iPadOS Safari Web Audio on first gesture anywhere
+  window.addEventListener('pointerdown', () => AudioEngine.unlock(), { once: true });
+
+  // Toggleable Active Timer
+  hudTimer.addEventListener('click', () => {
+    AudioEngine.playClick();
+    state.timerVisible = !state.timerVisible;
+    hudTimer.textContent = state.timerVisible ? `⏱ ${formatTime(state.totalActiveSeconds)}` : '⏱ Off';
+  });
+
+  // Welcome Modal Controls
+  document.getElementById('btnBeginAdventure').addEventListener('click', () => {
+    AudioEngine.playClick();
+    savePlayerName(document.getElementById('welcomeNameInput').value);
+    welcomeModal.classList.add('hidden');
+    state.started = true;
+    loadLevel(0);
+  });
+
+  document.getElementById('btnWelcomeLeaderboard').addEventListener('click', () => {
+    AudioEngine.playClick();
+    savePlayerName(document.getElementById('welcomeNameInput').value);
+    openLeaderboardModal();
+  });
+
+  document.getElementById('btnStartNow').addEventListener('click', () => {
+    AudioEngine.playClick();
+    startPlayingNow();
+  });
+
+  // Leaderboard Modal Controls
+  document.getElementById('btnLeaderboard').addEventListener('click', () => {
+    AudioEngine.playClick();
+    openLeaderboardModal();
+  });
+
+  document.getElementById('btnCloseLeaderboard').addEventListener('click', () => {
+    AudioEngine.playClick();
+    leaderboardModal.classList.add('hidden');
+  });
+
+  document.getElementById('btnLbRefresh').addEventListener('click', () => {
+    AudioEngine.playClick();
+    document.getElementById('lbStatus').textContent = '';
+    refreshLeaderboardUI();
+  });
+
+  document.getElementById('btnLbSubmit').addEventListener('click', async () => {
+    const btn = document.getElementById('btnLbSubmit');
+    const statusEl = document.getElementById('lbStatus');
+    AudioEngine.playClick();
+    btn.disabled = true;
+    statusEl.className = 'status-msg';
+    statusEl.textContent = 'Submitting score...';
+    try {
+      await submitScoreToFirebase(document.getElementById('lbNameInput').value);
+      statusEl.className = 'status-msg ok';
+      statusEl.textContent = '✓ Score recorded on the live leaderboard!';
+      await refreshLeaderboardUI();
+    } catch (_) {
+      statusEl.className = 'status-msg err';
+      statusEl.textContent = 'Could not submit score. Check internet or Firebase rules.';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  // Teacher PIN & Clear All Controls
+  document.getElementById('btnTeacherLock').addEventListener('click', () => {
+    AudioEngine.playClick();
+    if (isTeacherDevice) {
+      showToast('🍎 Teacher Mode is already unlocked on this device.');
+      return;
+    }
+    pendingClearConfirm = false;
+    document.getElementById('pinBadge').textContent = '🔒 Teacher Access';
+    document.getElementById('pinTitle').textContent = 'Enter Teacher PIN';
+    document.getElementById('pinSub').textContent = 'Unlock leaderboard reset controls on this device only.';
+    document.getElementById('pinInputWrap').style.display = 'flex';
+    document.getElementById('pinInput').value = '';
+    document.getElementById('pinStatus').textContent = '';
+    document.getElementById('btnPinConfirm').textContent = 'Unlock';
+    pinModal.classList.remove('hidden');
+    setTimeout(() => document.getElementById('pinInput').focus(), 50);
+  });
+
+  document.getElementById('btnClearLeaderboard').addEventListener('click', () => {
+    AudioEngine.playClick();
+    pendingClearConfirm = true;
+    document.getElementById('pinBadge').textContent = '⚠️ Confirm Reset';
+    document.getElementById('pinTitle').textContent = 'Clear All Scores?';
+    document.getElementById('pinSub').textContent = 'This will permanently delete all student scores from Firebase.';
+    document.getElementById('pinInputWrap').style.display = 'none';
+    document.getElementById('pinStatus').textContent = '';
+    document.getElementById('btnPinConfirm').textContent = 'Yes, Clear All';
+    pinModal.classList.remove('hidden');
+  });
+
+  document.getElementById('btnLockTeacher').addEventListener('click', () => {
+    AudioEngine.playClick();
+    isTeacherDevice = false;
+    try { localStorage.removeItem(TEACHER_DEVICE_KEY); } catch (_) {}
+    updateTeacherUI();
+    showToast('🔒 Teacher Mode locked.');
+  });
+
+  document.getElementById('btnPinCancel').addEventListener('click', () => {
+    AudioEngine.playClick();
+    pinModal.classList.add('hidden');
+  });
+
+  function confirmTeacherPinAction() {
+    AudioEngine.playClick();
+    if (pendingClearConfirm) {
+      pinModal.classList.add('hidden');
+      clearAllLeaderboard();
+      return;
+    }
+    const entered = document.getElementById('pinInput').value.trim();
+    const statusEl = document.getElementById('pinStatus');
+    if (entered === TEACHER_PIN) {
+      isTeacherDevice = true;
+      try { localStorage.setItem(TEACHER_DEVICE_KEY, 'true'); } catch (_) {}
+      pinModal.classList.add('hidden');
+      updateTeacherUI();
+      showToast('🍎 Teacher Mode unlocked on this device.');
+    } else {
+      AudioEngine.playMiss();
+      statusEl.className = 'status-msg err';
+      statusEl.textContent = 'Incorrect PIN. Please try again.';
+    }
+  }
+
+  document.getElementById('btnPinConfirm').addEventListener('click', confirmTeacherPinAction);
+  document.getElementById('pinInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') confirmTeacherPinAction();
+  });
+
+  // Victory Modal Controls
+  document.getElementById('btnVictorySubmit').addEventListener('click', async () => {
+    const btn = document.getElementById('btnVictorySubmit');
+    const statusEl = document.getElementById('victoryStatus');
+    AudioEngine.playClick();
+    btn.disabled = true;
+    statusEl.className = 'status-msg';
+    statusEl.textContent = 'Submitting victory score...';
+    try {
+      await submitScoreToFirebase(document.getElementById('victoryNameInput').value);
+      statusEl.className = 'status-msg ok';
+      statusEl.textContent = '✓ Victory score saved to the live leaderboard!';
+    } catch (_) {
+      statusEl.className = 'status-msg err';
+      statusEl.textContent = 'Could not submit score. Please try again.';
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById('btnVictoryLeaderboard').addEventListener('click', () => {
+    AudioEngine.playClick();
+    openLeaderboardModal();
+  });
+
+  document.getElementById('btnPlayAgain').addEventListener('click', () => {
+    AudioEngine.playClick();
+    state.totalActiveSeconds = 0;
+    state.levelBestScores.clear();
+    state.completedStars.clear();
+    hudTimer.textContent = state.timerVisible ? '⏱ 00:00' : '⏱ Off';
+    updateScoreHud();
+    loadLevel(0);
+  });
+
+  // Audio Controls
+  document.getElementById('btnSfx').addEventListener('click', (e) => {
+    const muted = AudioEngine.toggleSfx();
+    e.currentTarget.textContent = muted ? '🔇' : '🔊';
+    if (!muted) AudioEngine.playClick();
+  });
+
+  document.getElementById('btnMusic').addEventListener('click', (e) => {
+    const on = AudioEngine.toggleMusic();
+    e.currentTarget.textContent = on ? '🎵 On' : '🎵 Off';
+  });
+
+  document.getElementById('volSlider').addEventListener('input', (e) => {
+    AudioEngine.setVolume(Number(e.target.value) / 100);
+  });
+
+  // Levels, Restart, Fullscreen
+  document.getElementById('btnLevels').addEventListener('click', () => {
+    AudioEngine.playClick();
+    buildLevelSelectGrid();
+    levelsModal.classList.remove('hidden');
+  });
+
+  document.getElementById('btnCloseLevels').addEventListener('click', () => {
+    AudioEngine.playClick();
+    levelsModal.classList.add('hidden');
+  });
+
+  document.getElementById('btnRestart').addEventListener('click', () => {
+    AudioEngine.playClick();
+    if (!state.started) {
+      welcomeModal.classList.add('hidden');
+      state.started = true;
+    }
+    loadLevel(state.levelIdx);
+  });
+
+  document.getElementById('btnFullscreen').addEventListener('click', () => {
+    AudioEngine.playClick();
+    try {
+      if (!document.fullscreenElement) {
+        if (document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen().catch(() => {
+            showToast('On iPad, tap Share → Add to Home Screen for full screen.');
+          });
+        } else {
+          showToast('On iPad, tap Share → Add to Home Screen for full screen.');
+        }
+      } else if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+    } catch (_) {
+      showToast('On iPad, tap Share → Add to Home Screen for full screen.');
+    }
+  });
+
+  document.getElementById('btnReplayLevel').addEventListener('click', () => {
+    AudioEngine.playClick();
+    loadLevel(state.levelIdx);
+  });
+
+  document.getElementById('btnNextLevel').addEventListener('click', () => {
+    AudioEngine.playClick();
+    loadLevel(Math.min(LEVELS.length - 1, state.levelIdx + 1));
+  });
+
+  window.addEventListener('resize', resizeCanvas);
+  window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 120));
+
+  window.addEventListener('load', () => {
+    const startApp = () => {
+      const savedName = getSavedPlayerName();
+      document.getElementById('welcomeNameInput').value = savedName;
+      document.getElementById('lbNameInput').value = savedName;
+      document.getElementById('victoryNameInput').value = savedName;
+
+      // Paint initial fallback backdrop behind the welcome modal
+      paintProceduralFallback(bgCtx, 1);
+      state.bgReady = true;
+      renderMiniIcon(hudTargetCanvas, LEVELS[0].itemType, 0.92);
+
+      resizeCanvas();
+      requestAnimationFrame(gameLoop);
+    };
+
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(startApp).catch(startApp);
+    } else {
+      startApp();
+    }
+  });
+})();
+</script>
+</body>
+</html>
