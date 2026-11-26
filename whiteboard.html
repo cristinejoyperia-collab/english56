@@ -302,6 +302,21 @@
         </button>
       </div>
 
+      <!-- RIGHT: TEAM 2 SCORE -->
+      <div class="flex items-center gap-1.5 sm:gap-2 bg-pink-100 border-2 border-pink-300 rounded-xl px-2 py-1">
+        <input
+          id="team2-name"
+          type="text"
+          value="Team 2"
+          aria-label="Team 2 Name"
+          class="team-input text-pink-900 font-bold text-sm sm:text-base w-20 sm:w-24 px-1.5 py-0.5"
+        />
+        <button onclick="adjustScore(2, -1)" class="btn-3d w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-rose-400 hover:bg-rose-500 text-white font-bold text-lg flex items-center justify-center shadow cursor-pointer" title="Subtract 1">−</button>
+        <span id="score-2" class="text-pink-900 font-bold text-xl sm:text-3xl min-w-[28px] sm:min-w-[38px] text-center">0</span>
+        <button onclick="adjustScore(2, 1)" class="btn-3d w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-lg flex items-center justify-center shadow cursor-pointer" title="Add 1">+</button>
+      </div>
+    </header>
+
     <!-- MIDDLE AREA: SPLIT-SCREEN 4-LINE HANDWRITING WHITEBOARDS -->
     <main class="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3">
 
