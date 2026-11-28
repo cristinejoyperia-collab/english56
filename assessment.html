@@ -33,10 +33,13 @@
   <!-- SheetJS (XLSX) via cdnjs for .xlsx/.xls Import, Template & Multi-Sheet Export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
+  <!-- Chart.js for Interactive Score Histogram & Item Quality Scatter Plot -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
   <style>
     body {
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background-color: #F8F7F4;
+      background-color: #F8FAFC;
       color: #0F172A;
     }
 
@@ -117,6 +120,9 @@
         display: block !important;
         margin-bottom: 12px;
       }
+      .print-chart-box {
+        max-height: 280px !important;
+      }
     }
   </style>
 </head>
@@ -160,17 +166,7 @@
 
             <button
               onclick="openAiSettingsModal()"
-              class="no-print inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-200 transition-colors cursor-pointer"
-              title="Configure Gemini API Key &amp; Engine Settings"
-            >
-              <i data-lucide="settings" class="w-4 h-4 text-indigo-400"></i>
-              <span class="hidden md:inline">AI Settings</span>
-              <span id="header-key-dot" class="w-2 h-2 rounded-full bg-emerald-400" title="AI Engine Ready"></span>
-            </button>
-          </div>
-        </div>
-
-        <!-- 3-Tab Navigation Bar -->
+        <!-- 4-Tab Navigation Bar -->
         <nav class="no-print flex items-center gap-1.5 bg-slate-800/90 p-1 rounded-xl border border-slate-700/80 overflow-x-auto" aria-label="Main Tabs">
           <button
             id="tab-btn-build"
@@ -187,7 +183,7 @@
             class="flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer"
           >
             <span class="w-5 h-5 rounded-full text-[11px] font-bold flex items-center justify-center bg-white/15">2</span>
-            <span>Interactive Assessment &amp; Item Detective</span>
+            <span>Item Detective &amp; Preview</span>
             <span id="nav-badge-count" class="ml-0.5 px-2 py-0.5 text-[11px] font-bold rounded-full bg-indigo-500 text-white">0</span>
           </button>
 
@@ -198,6 +194,16 @@
           >
             <span class="w-5 h-5 rounded-full text-[11px] font-bold flex items-center justify-center bg-white/15">3</span>
             <span>Validation Report &amp; TOS</span>
+          </button>
+
+          <button
+            id="tab-btn-analytics"
+            onclick="switchTab('analytics')"
+            class="flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer"
+          >
+            <span class="w-5 h-5 rounded-full text-[11px] font-bold flex items-center justify-center bg-white/15">4</span>
+            <span>Class Data &amp; Item Analysis</span>
+            <span id="nav-students-badge" class="hidden ml-0.5 px-2 py-0.5 text-[11px] font-bold rounded-full bg-emerald-500 text-white">0</span>
           </button>
         </nav>
       </div>
@@ -849,6 +855,479 @@
       </div>
     </section>
 
+    <!-- ================================================================ -->
+    <!-- TAB 4: CLASS DATA & ITEM ANALYSIS                                -->
+    <!-- ================================================================ -->
+    <section id="panel-analytics" class="hidden space-y-6">
+      <!-- Print-only Document Title -->
+      <div class="hidden print-only-header">
+        <h1 class="text-lg font-bold text-center uppercase tracking-wide">Class Performance &amp; Item Analysis Report</h1>
+        <p class="text-xs text-center text-slate-600 mt-0.5">Central Tendency, Variability, Score Distribution &amp; Upper/Lower 27% Item Analysis</p>
+      </div>
+
+      <!-- 1. Upload Student Scores & Templates Panel -->
+      <div class="no-print bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-6 space-y-5">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <div class="flex flex-wrap items-center gap-2 mb-1">
+              <h2 class="text-lg sm:text-xl font-bold text-slate-900">Class Data &amp; Psychometric Item Analysis</h2>
+              <span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">Upper/Lower 27% &bull; KR-20 &bull; Histogram</span>
+            </div>
+            <p class="text-sm text-slate-600">
+              Upload student scores in Excel (<code>.xlsx</code>, <code>.xls</code>) or <code>.csv</code> format to compute Central Tendency, Variability, Score Histogram, Item Difficulty ($p$), Discrimination ($D$), and Distractor Analysis.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+            <button
+              onclick="downloadScoreTemplate()"
+              class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm transition-colors cursor-pointer"
+            >
+              <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+              <span>Download Excel Score Template (.xlsx)</span>
+            </button>
+            <button
+              onclick="loadSampleClassData()"
+              class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition-colors cursor-pointer"
+            >
+              <i data-lucide="users" class="w-4 h-4"></i>
+              <span>Load Sample Class Data (30 Students)</span>
+            </button>
+            <button
+              onclick="clearClassData()"
+              class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 text-sm font-semibold transition-colors cursor-pointer"
+              title="Clear uploaded class scores"
+            >
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+              <span>Clear</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Dropzone + Settings Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+          <div class="lg:col-span-8">
+            <div
+              id="score-dropzone"
+              class="h-full border-2 border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/30 rounded-2xl p-5 text-center transition-all cursor-pointer flex flex-col items-center justify-center"
+              onclick="document.getElementById('score-file-input').click()"
+            >
+              <input
+                type="file"
+                id="score-file-input"
+                accept=".xlsx,.xls,.csv"
+                class="hidden"
+                onchange="handleScoreFileSelect(event)"
+              />
+              <div class="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-2.5">
+                <i data-lucide="upload-cloud" class="w-5 h-5"></i>
+              </div>
+              <p class="text-sm font-semibold text-slate-800">
+                Drag &amp; drop student score sheet here, or <span class="text-indigo-600 underline">browse files</span>
+              </p>
+              <p class="text-xs text-slate-500 mt-1">
+                Auto-detects: <strong>Format A</strong> (Binary 1/0 Matrix) &bull; <strong>Format B</strong> (Letter Responses A–D + Answer Key) &bull; <strong>Format C</strong> (Total Scores Only)
+              </p>
+            </div>
+          </div>
+
+          <div class="lg:col-span-4 bg-slate-50 rounded-2xl border border-slate-200/80 p-4 flex flex-col justify-between gap-3">
+            <div class="space-y-3">
+              <div>
+                <label for="passing-threshold-input" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                  Passing / Mastery Threshold (%)
+                </label>
+                <div class="flex items-center gap-2">
+                  <input
+                    type="number"
+                    id="passing-threshold-input"
+                    min="1"
+                    max="100"
+                    value="75"
+                    onchange="updatePassingThreshold(this.value)"
+                    class="w-24 rounded-xl border border-slate-300 bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 px-3 py-2 text-sm font-bold text-slate-800 outline-none"
+                  />
+                  <span class="text-xs text-slate-500">Default: 75% mastery cut-off</span>
+                </div>
+              </div>
+
+              <!-- Shown only for Format C (Total Scores Only) -->
+              <div id="total-points-control" class="hidden">
+                <label for="total-points-input" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                  Total Possible Points
+                </label>
+                <div class="flex items-center gap-2">
+                  <input
+                    type="number"
+                    id="total-points-input"
+                    min="1"
+                    max="1000"
+                    value="20"
+                    onchange="updateTotalPossiblePoints(this.value)"
+                    class="w-24 rounded-xl border border-slate-300 bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 px-3 py-2 text-sm font-bold text-slate-800 outline-none"
+                  />
+                  <span class="text-xs text-slate-500">Used to compute MPS %</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Export & Print Buttons -->
+            <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200/80">
+              <button
+                onclick="exportClassAnalysisExcel()"
+                class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+              >
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                <span>Export Analysis (.xlsx)</span>
+              </button>
+              <button
+                onclick="window.print()"
+                class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+              >
+                <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                <span>Print</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inline Upload Confirmation Banner -->
+        <div id="score-import-banner" class="hidden p-3.5 rounded-xl border text-xs flex items-start justify-between gap-2.5">
+          <div id="score-import-content" class="flex items-start gap-2.5"></div>
+          <button
+            onclick="document.getElementById('score-import-banner').classList.add('hidden')"
+            class="text-slate-400 hover:text-slate-700 cursor-pointer shrink-0"
+            title="Dismiss"
+          >
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- Inline Editable Answer Key Bar (For Format B: Letter Responses) -->
+        <div id="answer-key-bar" class="hidden bg-indigo-50/70 border border-indigo-200 rounded-2xl p-4 space-y-2.5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <i data-lucide="key-round" class="w-4 h-4 text-indigo-600"></i>
+              <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-950">Answer Key (Letter Response Mode — Editable)</h3>
+            </div>
+            <button
+              onclick="syncAnswerKeyFromTab1()"
+              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white hover:bg-indigo-100 border border-indigo-200 text-indigo-700 text-xs font-semibold transition-colors cursor-pointer self-start sm:self-auto"
+            >
+              <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+              <span>Sync Keys from Tab 1</span>
+            </button>
+          </div>
+          <div id="answer-key-inputs" class="flex flex-wrap gap-2">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State (Shown before scores are loaded) -->
+      <div id="analytics-empty-state" class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-10 text-center">
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4">
+          <i data-lucide="bar-chart-2" class="w-8 h-8"></i>
+        </div>
+        <h3 class="text-base font-bold text-slate-900">No Class Score Data Loaded Yet</h3>
+        <p class="text-sm text-slate-600 mt-1.5 max-w-lg mx-auto">
+          Upload an Excel or CSV score sheet above to calculate Mean, Median, Mode, Standard Deviation, Variance, IQR, KR-20 Reliability, Score Histogram, and Upper/Lower 27% Item Analysis.
+        </p>
+        <div class="flex flex-wrap justify-center gap-3 mt-5">
+          <button
+            onclick="loadSampleClassData()"
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm cursor-pointer"
+          >
+            <i data-lucide="users" class="w-4 h-4"></i>
+            <span>Load Sample Class Data (30 Students)</span>
+          </button>
+          <button
+            onclick="downloadScoreTemplate()"
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-sm font-semibold cursor-pointer"
+          >
+            <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
+            <span>Download Excel Score Template</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Analytics Dashboard Content (Shown once data is loaded) -->
+      <div id="analytics-dashboard-content" class="hidden space-y-6">
+
+        <!-- 2. Central Tendency & Variability Dashboard -->
+        <div class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5">
+            <!-- Card 1: Total Students & Items -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 flex flex-col justify-between">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Class Size (N / K)</span>
+                <span class="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
+                  <i data-lucide="users" class="w-4 h-4"></i>
+                </span>
+              </div>
+              <div class="mt-2.5">
+                <div class="text-2xl font-extrabold text-slate-900"><span id="stat-n">0</span> <span class="text-xs font-semibold text-slate-400">students</span></div>
+                <p class="text-xs text-slate-500 mt-0.5"><span id="stat-k" class="font-semibold text-slate-700">0</span> total pts / items</p>
+              </div>
+            </div>
+
+            <!-- Card 2: Mean & MPS -->
+            <div class="bg-white rounded-2xl border border-indigo-200/80 shadow-sm p-4 flex flex-col justify-between">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-600">Mean (x̄) &amp; MPS</span>
+                <span class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                  <i data-lucide="sigma" class="w-4 h-4"></i>
+                </span>
+              </div>
+              <div class="mt-2.5">
+                <div class="text-2xl font-extrabold text-indigo-700" id="stat-mean">0.00</div>
+                <p class="text-xs text-slate-600 mt-0.5">MPS: <strong id="stat-mps" class="text-indigo-700">0.0%</strong></p>
+              </div>
+            </div>
+
+            <!-- Card 3: Median & Mode -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 flex flex-col justify-between">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Median &amp; Mode</span>
+                <span class="w-7 h-7 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center">
+                  <i data-lucide="align-center" class="w-4 h-4"></i>
+                </span>
+              </div>
+              <div class="mt-2.5">
+                <div class="text-2xl font-extrabold text-slate-900" id="stat-median">0.00</div>
+                <p class="text-xs text-slate-600 mt-0.5 truncate" id="stat-mode-wrap">Mode: <strong id="stat-mode" class="text-slate-800">—</strong></p>
+              </div>
+            </div>
+
+            <!-- Card 4: SD & Variance -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 flex flex-col justify-between">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700">SD &amp; Variance</span>
+                <span class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <i data-lucide="activity" class="w-4 h-4"></i>
+                </span>
+              </div>
+              <div class="mt-2.5">
+                <div class="text-2xl font-extrabold text-slate-900" id="stat-sd">0.00</div>
+                <p class="text-xs text-slate-600 mt-0.5">Variance (s²): <strong id="stat-variance" class="text-slate-800">0.00</strong></p>
+              </div>
+            </div>
+
+            <!-- Card 5: Range & IQR -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 flex flex-col justify-between">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Range &amp; IQR</span>
+                <span class="w-7 h-7 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center">
+                  <i data-lucide="arrow-left-right" class="w-4 h-4"></i>
+                </span>
+              </div>
+              <div class="mt-2.5">
+                <div class="text-2xl font-extrabold text-slate-900" id="stat-range">0</div>
+                <p class="text-[11px] text-slate-600 mt-0.5" id="stat-minmax">Min 0 – Max 0</p>
+                <p class="text-[11px] text-slate-500" id="stat-iqr">IQR: 0.0 (Q1: 0, Q3: 0)</p>
+              </div>
+            </div>
+
+            <!-- Card 6: Mastery Rate & KR-20 -->
+            <div class="bg-white rounded-2xl border border-emerald-200/80 shadow-sm p-4 flex flex-col justify-between">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Mastery &amp; KR-20</span>
+                <span class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <i data-lucide="award" class="w-4 h-4"></i>
+                </span>
+              </div>
+              <div class="mt-2.5">
+                <div class="text-2xl font-extrabold text-emerald-700" id="stat-mastery-pct">0%</div>
+                <p class="text-[11px] text-slate-600" id="stat-mastery-sub">0/0 passed (&ge;75%)</p>
+                <div class="mt-1" id="stat-kr20-wrap"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Distribution Interpretation Banner -->
+          <div id="skewness-banner" class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 flex items-start gap-3">
+            <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 mt-0.5">
+              <i data-lucide="trending-up" class="w-5 h-5"></i>
+            </div>
+            <div class="text-sm text-slate-700 leading-relaxed">
+              <div class="flex flex-wrap items-center gap-2 mb-0.5">
+                <strong class="text-slate-900">Distribution Interpretation</strong>
+                <span id="skewness-badge" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">Skewness: 0.00</span>
+              </div>
+              <p id="skewness-text" class="text-xs sm:text-sm text-slate-600"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Interactive Score Histogram & Item Quality Scatter Plot -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <!-- Score Histogram -->
+          <div id="histogram-card" class="lg:col-span-7 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-6 flex flex-col">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+              <div>
+                <h3 class="text-base font-bold text-slate-900">Score Distribution Histogram</h3>
+                <p class="text-xs text-slate-500">Frequency of student raw scores (emerald = meets passing cut-off)</p>
+              </div>
+              <div class="no-print inline-flex p-1 rounded-xl bg-slate-100 border border-slate-200 self-start sm:self-auto">
+                <button
+                  id="hist-btn-exact"
+                  onclick="setHistogramMode('exact')"
+                  class="px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                >Exact Scores</button>
+                <button
+                  id="hist-btn-bins"
+                  onclick="setHistogramMode('bins')"
+                  class="px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                >Grouped Bins</button>
+              </div>
+            </div>
+
+            <!-- Indicator Pills for Mean, Median & Passing Cut-off -->
+            <div class="flex flex-wrap items-center gap-2 mb-4 text-xs">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold">
+                <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
+                Mean (x̄): <strong id="hist-pill-mean">0.00</strong>
+              </span>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-sky-50 text-sky-700 border border-sky-200 font-semibold">
+                <span class="w-2 h-2 rounded-full bg-sky-500"></span>
+                Median (Mdn): <strong id="hist-pill-median">0.00</strong>
+              </span>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
+                <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+                Passing Cut-off: <strong id="hist-pill-cutoff">0.0</strong>
+              </span>
+            </div>
+
+            <div class="relative h-72 print-chart-box w-full">
+              <canvas id="score-histogram-canvas"></canvas>
+            </div>
+          </div>
+
+          <!-- Item Quality Scatter Plot (Hidden in Format C: Total Scores Only) -->
+          <div id="scatter-card" class="lg:col-span-5 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-6 flex flex-col">
+            <div class="mb-3">
+              <h3 class="text-base font-bold text-slate-900">Item Quality Map (p vs. D)</h3>
+              <p class="text-xs text-slate-500">Difficulty Index (X) vs. Discrimination Index (Y) by decision</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 mb-4 text-xs">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>Retain
+              </span>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-semibold">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>Revise
+              </span>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200 font-semibold">
+                <span class="w-2 h-2 rounded-full bg-rose-500"></span>Reject
+              </span>
+            </div>
+            <div class="relative h-72 print-chart-box w-full">
+              <canvas id="item-scatter-canvas"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Format C Notice Banner (Shown only when Total Scores Only uploaded) -->
+        <div id="totals-only-notice" class="hidden bg-amber-50/80 border border-amber-200 rounded-2xl p-4 flex items-start gap-3 text-sm text-amber-950">
+          <i data-lucide="info" class="w-5 h-5 text-amber-600 shrink-0 mt-0.5"></i>
+          <div>
+            <strong>Total Scores Only Detected:</strong> Central Tendency, Variability, Mastery Rate, and the Score Histogram are ready above. To unlock <strong>KR-20 Reliability</strong>, <strong>Item Difficulty (p)</strong>, <strong>Discrimination (D)</strong>, and <strong>Distractor Analysis</strong>, upload an item-by-item Excel matrix (<code>1</code>/<code>0</code> or <code>A</code>–<code>D</code> responses).
+          </div>
+        </div>
+
+        <!-- 4. Item Analysis Table (Upper 27% vs. Lower 27% Method) -->
+        <div id="item-analysis-section" class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-6 space-y-4">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            <div>
+              <h3 class="text-base font-bold text-slate-900">Item Analysis (Upper 27% vs. Lower 27% Method)</h3>
+              <p id="item-analysis-group-strip" class="text-xs text-slate-600 mt-1">
+                Upper Group (Top 27%): 0 students &bull; Lower Group (Bottom 27%): 0 students
+              </p>
+            </div>
+
+            <!-- Item Analysis Filter Pills -->
+            <div class="no-print flex flex-wrap items-center gap-1.5">
+              <button onclick="setItemAnalysisFilter('all')" data-ia-filter="all" class="ia-filter-pill px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors cursor-pointer">All</button>
+              <button onclick="setItemAnalysisFilter('Retain')" data-ia-filter="Retain" class="ia-filter-pill px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors cursor-pointer">Retain</button>
+              <button onclick="setItemAnalysisFilter('Revise')" data-ia-filter="Revise" class="ia-filter-pill px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors cursor-pointer">Revise</button>
+              <button onclick="setItemAnalysisFilter('Reject')" data-ia-filter="Reject" class="ia-filter-pill px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors cursor-pointer">Reject</button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead>
+                <tr class="border-b border-slate-200 bg-slate-50/90 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  <th class="py-2.5 px-3 min-w-[150px]">Item No.</th>
+                  <th class="py-2.5 px-2.5 text-center">Total Correct</th>
+                  <th class="py-2.5 px-2.5 text-center">Upper (U)</th>
+                  <th class="py-2.5 px-2.5 text-center">Lower (L)</th>
+                  <th class="py-2.5 px-3 text-center">Difficulty (p)</th>
+                  <th class="py-2.5 px-3 text-center">Discrimination (D)</th>
+                  <th class="py-2.5 px-2.5 text-center">Decision</th>
+                  <th id="ia-distractor-th" class="no-print py-2.5 px-2.5 text-center">Distractors</th>
+                </tr>
+              </thead>
+              <tbody id="item-analysis-tbody" class="divide-y divide-slate-100">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 5. Class Roster & Student Scores Table -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-6 space-y-4">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <h3 class="text-base font-bold text-slate-900">Class Roster &amp; Student Scores</h3>
+              <p class="text-xs text-slate-500">Ranked scores with Z-Scores, Upper/Lower 27% grouping, and mastery status</p>
+            </div>
+
+            <div class="no-print flex flex-wrap items-center gap-2.5">
+              <div class="relative">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                <input
+                  type="text"
+                  id="roster-search-input"
+                  oninput="updateRosterSearch(this.value)"
+                  placeholder="Search student..."
+                  class="pl-9 pr-3 py-2 rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 text-xs sm:text-sm outline-none w-48 sm:w-56"
+                />
+              </div>
+              <select
+                id="roster-sort-select"
+                onchange="updateRosterSort(this.value)"
+                class="rounded-xl border border-slate-300 bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 px-3 py-2 text-xs sm:text-sm font-medium text-slate-700 outline-none"
+              >
+                <option value="rank-asc">Sort: Rank / Score High–Low</option>
+                <option value="score-asc">Sort: Score Low–High</option>
+                <option value="name-asc">Sort: Name A–Z</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead>
+                <tr class="border-b border-slate-200 bg-slate-50/90 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  <th class="py-2.5 px-3 w-16 text-center">Rank</th>
+                  <th class="py-2.5 px-3">Student Name</th>
+                  <th class="py-2.5 px-3 text-center">Raw Score</th>
+                  <th class="py-2.5 px-3 text-center">Percentage</th>
+                  <th class="py-2.5 px-3 text-center">Z-Score</th>
+                  <th class="py-2.5 px-3 text-center">Group</th>
+                  <th class="py-2.5 px-3 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody id="class-roster-tbody" class="divide-y divide-slate-100">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
   </main>
 
   <!-- ==================== FOOTER ==================== -->
@@ -960,7 +1439,12 @@
     // CONSTANTS & BTL TAXONOMY MAPPINGS
     // =========================================================================
     const STORAGE_KEY = 'item_detective_validation_v4';
+    const CLASS_DATA_STORAGE_KEY = 'item_detective_class_data_v1';
     const API_KEY_STORAGE = 'item_detective_custom_gemini_key';
+
+    // Chart.js instances
+    let histogramChartInstance = null;
+    let scatterChartInstance = null;
 
     // LOTS = R, U | HOTS = Ap, An, E, C
     const BTL_LIST = [
@@ -990,7 +1474,7 @@
     // Main reactive application state
     let state = {
       items: [],
-      activeTab: 'build',         // 'build' | 'detective' | 'report'
+      activeTab: 'build',         // 'build' | 'detective' | 'report' | 'analytics'
       detectiveMode: 'detective', // 'detective' | 'student'
       activeFilter: 'all',        // 'all' | 'Retain' | 'Revise' | 'Reject' | 'Unaudited'
       studentAnswers: {},
@@ -998,7 +1482,21 @@
       auditingIds: new Set(),
       isBatchAuditing: false,
       formImageDataUrl: '',
-      pendingImageItemId: null
+      pendingImageItemId: null,
+      classData: {
+        fileName: '',
+        formatType: '',           // 'binary' | 'letters' | 'totals' | ''
+        passingThreshold: 75,
+        totalPossiblePoints: 10,
+        itemLabels: [],
+        answerKey: [],
+        students: [],             // [{ id, name, rawScore, responses: [] }]
+        histogramMode: 'exact',   // 'exact' | 'bins'
+        itemFilter: 'all',        // 'all' | 'Retain' | 'Revise' | 'Reject'
+        expandedDistractorIdx: null,
+        rosterSearch: '',
+        rosterSort: 'rank-asc'
+      }
     };
 
     // =========================================================================
@@ -1072,237 +1570,33 @@
       } catch (err) {
         console.warn('Could not load saved items:', err);
       }
-    }
 
-    function showToast(message, type = 'info') {
-      const container = document.getElementById('toast-container');
-      const styles = {
-        success: 'bg-emerald-900 text-white border-emerald-700',
-        error: 'bg-rose-900 text-white border-rose-700',
-        warning: 'bg-amber-900 text-amber-50 border-amber-600',
-        info: 'bg-slate-900 text-white border-slate-700'
-      };
-      const icons = {
-        success: 'check-circle-2',
-        error: 'x-circle',
-        warning: 'zap',
-        info: 'info'
-      };
-
-      const toast = document.createElement('div');
-      toast.className = `toast-enter pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl border shadow-lg text-xs sm:text-sm font-medium ${styles[type] || styles.info}`;
-      toast.innerHTML = `
-        <i data-lucide="${icons[type] || 'info'}" class="w-4 h-4 shrink-0"></i>
-        <span class="flex-1">${escapeHtml(message)}</span>
-      `;
-      container.appendChild(toast);
-      refreshIcons(toast);
-
-      setTimeout(() => {
-        toast.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateY(8px)';
-        setTimeout(() => toast.remove(), 260);
-      }, 4000);
-    }
-
-    // Compress uploaded diagram images to keep UI fast and localStorage friendly
-    function compressImageFile(file, maxWidth = 720) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onerror = reject;
-        reader.onload = (e) => {
-          const img = new Image();
-          img.onerror = reject;
-          img.onload = () => {
-            const scale = img.width > maxWidth ? maxWidth / img.width : 1;
-            const canvas = document.createElement('canvas');
-            canvas.width = Math.round(img.width * scale);
-            canvas.height = Math.round(img.height * scale);
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            resolve(canvas.toDataURL('image/jpeg', 0.84));
-          };
-          img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-
-    // =========================================================================
-    // NAVIGATION & MODALS (AI SETTINGS + CLEAR ALL)
-    // =========================================================================
-    function switchTab(tabName) {
-      state.activeTab = tabName;
-      ['build', 'detective', 'report'].forEach(t => {
-        const panel = document.getElementById(`panel-${t}`);
-        const btn = document.getElementById(`tab-btn-${t}`);
-        if (t === tabName) {
-          panel.classList.remove('hidden');
-          btn.className = 'flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer bg-indigo-600 text-white shadow-sm';
-        } else {
-          panel.classList.add('hidden');
-          btn.className = 'flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer text-slate-300 hover:text-white hover:bg-slate-700/60';
+      try {
+        const rawClass = localStorage.getItem(CLASS_DATA_STORAGE_KEY);
+        if (rawClass) {
+          const parsedClass = JSON.parse(rawClass);
+          if (parsedClass && Array.isArray(parsedClass.students)) {
+            state.classData = { ...state.classData, ...parsedClass };
+          }
         }
-      });
-      renderAll();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function setDetectiveMode(mode) {
-      state.detectiveMode = mode;
-      renderDetectiveTab();
-    }
-
-    function setFilter(filterKey) {
-      state.activeFilter = filterKey;
-      renderDetectiveTab();
-    }
-
-    function openAiSettingsModal() {
-      document.getElementById('custom-api-key-input').value = getSavedCustomApiKey();
-      document.getElementById('ai-settings-modal').classList.remove('hidden');
-      refreshIcons();
-    }
-
-    function closeAiSettingsModal() {
-      document.getElementById('ai-settings-modal').classList.add('hidden');
-    }
-
-    function saveCustomApiKey() {
-      const val = document.getElementById('custom-api-key-input').value.trim();
-      try {
-        if (val) {
-          localStorage.setItem(API_KEY_STORAGE, val);
-          showToast('Custom Gemini API key saved locally.', 'success');
-        } else {
-          localStorage.removeItem(API_KEY_STORAGE);
-          showToast('Using default environment Gemini API key.', 'info');
-        }
-      } catch (e) {
-        showToast('Could not save settings to localStorage.', 'warning');
-      }
-      updateKeyIndicator();
-      closeAiSettingsModal();
-    }
-
-    function clearCustomApiKey() {
-      try {
-        localStorage.removeItem(API_KEY_STORAGE);
-      } catch (e) {}
-      document.getElementById('custom-api-key-input').value = '';
-      updateKeyIndicator();
-      showToast('Custom API key cleared.', 'info');
-    }
-
-    function updateKeyIndicator() {
-      const dot = document.getElementById('header-key-dot');
-      if (!dot) return;
-      const hasCustom = Boolean(getSavedCustomApiKey());
-      dot.className = hasCustom
-        ? 'w-2 h-2 rounded-full bg-sky-400'
-        : 'w-2 h-2 rounded-full bg-emerald-400';
-      dot.title = hasCustom ? 'Custom Gemini API Key Saved' : 'Default Environment AI + Built-in Engine Ready';
-    }
-
-    function openClearModal() {
-      if (state.items.length === 0) {
-        showToast('Your item bank is already empty.', 'info');
-        return;
-      }
-      document.getElementById('clear-modal').classList.remove('hidden');
-    }
-
-    function closeClearModal() {
-      document.getElementById('clear-modal').classList.add('hidden');
-    }
-
-    function confirmClearAll() {
-      state.items = [];
-      state.studentAnswers = {};
-      state.studentSubmitted = false;
-      saveToStorage();
-      closeClearModal();
-      renderAll();
-      showToast('All test items cleared.', 'info');
-    }
-
-    // =========================================================================
-    // TEMPLATES & SAMPLE FLAWED TEST
-    // =========================================================================
-    function downloadValidationTemplate() {
-      if (typeof XLSX === 'undefined') {
-        showToast('Excel library (SheetJS) is still loading. Please try again.', 'error');
-        return;
-      }
-      try {
-        const rows = [
-          ['No.', 'Test Items', 'BTL', 'Retain', 'Reject', 'Revise', 'REMARKS'],
-          [
-            1,
-            '1. What is the ratio of number of apples to the number of bananas?\nA. 2 : 4\nB. 2 : 5\nC. 2 : 6\nD. 5 : 2',
-            'R',
-            '',
-            '',
-            '',
-            ''
-          ],
-          [
-            2,
-            '2. Based on the given in item no. 1, what is the ratio of number of bananas to the total number of fruits?\nA. 5 : 2\nB. 2 : 5\nC. 5 : 7\nD. 2 : 7',
-            'R',
-            '',
-            '',
-            '',
-            ''
-          ],
-          [
-            3,
-            '3. What mathematical term describes a statement indicating that two ratios are equal?\nA. Difference\nB. Fraction\nC. Percent\nD. Proportion',
-            'R',
-            '',
-            '',
-            '',
-            ''
-          ],
-          [
-            4,
-            '4. If the ratio of cats to dogs is 3:2 and there are 12 cats, how many dogs are there?\nA. 6\nB. 10\nC. 18\nD. 8',
-            'U',
-            '',
-            '',
-            '',
-            ''
-          ]
-        ];
-
-        const ws = XLSX.utils.aoa_to_sheet(rows);
-        ws['!cols'] = [
-          { wch: 6 },
-          { wch: 58 },
-          { wch: 8 },
-          { wch: 10 },
-          { wch: 10 },
-          { wch: 10 },
-          { wch: 36 }
-        ];
-        ws['!rows'] = [
-          { hpt: 24 },
-          { hpt: 96 },
-          { hpt: 96 },
-          { hpt: 96 },
-          { hpt: 96 }
-        ];
-
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Validation Sheet');
-        XLSX.writeFile(wb, 'Item_Validation_Template.xlsx');
-        showToast('Downloaded Item_Validation_Template.xlsx (7-Column Format)!', 'success');
       } catch (err) {
-        console.error('Template error:', err);
-        showToast('Could not generate Excel template.', 'error');
+        console.warn('Could not load saved class data:', err);
+      }
+    }
+
+    function saveClassDataToStorage() {
+      try {
+        localStorage.setItem(CLASS_DATA_STORAGE_KEY, JSON.stringify({
+          fileName: state.classData.fileName,
+          formatType: state.classData.formatType,
+          passingThreshold: state.classData.passingThreshold,
+          totalPossiblePoints: state.classData.totalPossiblePoints,
+          itemLabels: state.classData.itemLabels,
+          answerKey: state.classData.answerKey,
+          students: state.classData.students
+        }));
+      } catch (err) {
+        console.warn('Could not save class data:', err);
       }
     }
 
@@ -1409,27 +1703,24 @@
     }
 
     // =========================================================================
-    // EXCEL & FILE UPLOAD PARSING (AUTO-DETECTING FORMAT A & FORMAT B)
+    // NAVIGATION & MODALS (AI SETTINGS + CLEAR ALL)
     // =========================================================================
-    function setupDropzone() {
-      const dz = document.getElementById('dropzone');
-      if (!dz) return;
-      ['dragenter', 'dragover'].forEach(evt => {
-        dz.addEventListener(evt, e => {
-          e.preventDefault();
-          dz.classList.add('border-indigo-500', 'bg-indigo-50/50');
-        });
+    function switchTab(tabName) {
+      state.activeTab = tabName;
+      ['build', 'detective', 'report', 'analytics'].forEach(t => {
+        const panel = document.getElementById(`panel-${t}`);
+        const btn = document.getElementById(`tab-btn-${t}`);
+        if (!panel || !btn) return;
+        if (t === tabName) {
+          panel.classList.remove('hidden');
+          btn.className = 'flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer bg-indigo-600 text-white shadow-sm';
+        } else {
+          panel.classList.add('hidden');
+          btn.className = 'flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer text-slate-300 hover:text-white hover:bg-slate-700/60';
+        }
       });
-      ['dragleave', 'drop'].forEach(evt => {
-        dz.addEventListener(evt, e => {
-          e.preventDefault();
-          dz.classList.remove('border-indigo-500', 'bg-indigo-50/50');
-        });
-      });
-      dz.addEventListener('drop', e => {
-        const file = e.dataTransfer.files?.[0];
-        if (file) processUploadedFile(file);
-      });
+      renderAll();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function handleFileSelect(event) {
@@ -2205,7 +2496,7 @@
 
     async function callGeminiAudit(item, itemIndex) {
       const apiKey = getSavedCustomApiKey() || "";
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
       const systemPrompt = `You are "Item Detective", an expert psychometrician and multiple-choice test validator.
 Analyze the given multiple-choice item against these 10 psychometric flaw categories:
@@ -2797,6 +3088,7 @@ Image Attached: ${item.imageDataUrl ? 'Yes (see attached image)' : 'No image att
       renderBuildTable();
       if (state.activeTab === 'detective') renderDetectiveTab();
       if (state.activeTab === 'report') renderReportTab();
+      if (state.activeTab === 'analytics') renderAnalyticsTab();
       refreshIcons();
     }
 
@@ -2807,794 +3099,16 @@ Image Attached: ${item.imageDataUrl ? 'Yes (see attached image)' : 'No image att
       document.getElementById('header-audited-count').textContent = audited;
       document.getElementById('nav-badge-count').textContent = total;
       document.getElementById('build-item-count').textContent = total;
-    }
 
-    function getVerdictBadgeHtml(item) {
-      if (state.auditingIds.has(item.id)) {
-        return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-          <span class="w-3 h-3 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></span>
-          Auditing...
-        </span>`;
-      }
-      const v = item.verdict;
-      if (v === 'Retain') {
-        return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-          <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>Retain
-        </span>`;
-      }
-      if (v === 'Revise') {
-        return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-          <i data-lucide="pencil-line" class="w-3.5 h-3.5"></i>Revise
-        </span>`;
-      }
-      if (v === 'Reject') {
-        return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-          <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>Reject
-        </span>`;
-      }
-      return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-        <i data-lucide="clock" class="w-3.5 h-3.5"></i>Unaudited
-      </span>`;
-    }
-
-    function getEngineSourceBadgeHtml(audit) {
-      if (!audit) return '';
-      if (audit.engineSource === 'gemini') {
-        return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-violet-50 text-violet-700 border border-violet-200">✨ Gemini AI</span>`;
-      }
-      return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">⚡ Built-in Psychometric Engine</span>`;
-    }
-
-    // ---------- TAB 1: LIVE ITEM BANK PREVIEW TABLE ----------
-    function renderBuildTable() {
-      const container = document.getElementById('build-table-container');
-      if (state.items.length === 0) {
-        container.innerHTML = `
-          <div class="text-center py-10 px-4 rounded-2xl bg-slate-50 border border-dashed border-slate-200">
-            <div class="w-12 h-12 mx-auto rounded-2xl bg-white shadow-xs border border-slate-200 text-slate-400 flex items-center justify-center mb-3">
-              <i data-lucide="inbox" class="w-6 h-6"></i>
-            </div>
-            <p class="text-sm font-semibold text-slate-700">No test items loaded yet</p>
-            <p class="text-xs text-slate-500 mt-1">Upload your 7-column Excel validation sheet, download our template, or click <strong>"Load Sample Flawed Test"</strong>.</p>
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = `
-        <table class="w-full text-left border-collapse text-sm">
-          <thead>
-            <tr class="border-b border-slate-200 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-              <th class="py-2.5 px-3 w-12 text-center">No.</th>
-              <th class="py-2.5 px-3 min-w-[300px]">Test Items</th>
-              <th class="py-2.5 px-3 w-24 text-center">BTL</th>
-              <th class="py-2.5 px-3 w-28 text-center">Verdict</th>
-              <th class="py-2.5 px-3 w-36 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100">
-            ${state.items.map((item, idx) => `
-              <tr class="hover:bg-slate-50/70 align-top">
-                <td class="py-3.5 px-3 text-center font-bold text-slate-700">${idx + 1}</td>
-                <td class="py-3.5 px-3 space-y-2">
-                  <p class="font-semibold text-slate-900 leading-snug">${escapeHtml(item.stem)}</p>
-                  ${item.imageDataUrl ? `
-                    <div class="inline-flex items-start gap-2 p-1.5 rounded-lg border border-slate-200 bg-white">
-                      <img src="${item.imageDataUrl}" alt="Item diagram" class="max-h-20 rounded object-contain" />
-                      <button onclick="removeItemImage('${item.id}')" class="text-slate-400 hover:text-rose-600 cursor-pointer" title="Remove diagram">
-                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
-                      </button>
-                    </div>
-                  ` : ''}
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs text-slate-600">
-                    ${['A', 'B', 'C', 'D'].map(l => `
-                      <div class="${item.answer === l ? 'text-emerald-700 font-semibold' : ''}">
-                        <span class="font-bold">${l}.</span> ${escapeHtml(item.choices[l])} ${item.answer === l ? '<span class="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded ml-1">Key</span>' : ''}
-                      </div>
-                    `).join('')}
-                  </div>
-                </td>
-                <td class="py-3.5 px-3 text-center">
-                  ${item.targetBtl
-                    ? `<span class="inline-block px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200" title="${escapeHtml(BTL_CODE_TO_NAME[item.targetBtl] || '')}">${escapeHtml(item.targetBtl)}</span>`
-                    : `<span class="text-xs text-slate-400">—</span>`
-                  }
-                </td>
-                <td class="py-3.5 px-3 text-center">${getVerdictBadgeHtml(item)}</td>
-                <td class="py-3.5 px-3 text-right">
-                  <div class="inline-flex items-center gap-1">
-                    <button onclick="triggerQuickImageAttach('${item.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer" title="Add/Change Diagram Image">
-                      <i data-lucide="image-plus" class="w-4 h-4"></i>
-                    </button>
-                    <button onclick="editItemInForm('${item.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors cursor-pointer" title="Edit Item">
-                      <i data-lucide="pencil" class="w-4 h-4"></i>
-                    </button>
-                    <button onclick="deleteItem('${item.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer" title="Delete Item">
-                      <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      `;
-    }
-
-    // ---------- TAB 2: INTERACTIVE ASSESSMENT & ITEM DETECTIVE ----------
-    function renderDetectiveTab() {
-      const detBtn = document.getElementById('mode-btn-detective');
-      const stuBtn = document.getElementById('mode-btn-student');
-      const detActions = document.getElementById('detective-toolbar-actions');
-      const stuActions = document.getElementById('student-toolbar-actions');
-      const filtersBar = document.getElementById('detective-filters');
-      const studentBanner = document.getElementById('student-result-banner');
-
-      if (state.detectiveMode === 'detective') {
-        detBtn.className = 'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer bg-white text-indigo-700 shadow-xs';
-        stuBtn.className = 'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer text-slate-600 hover:text-slate-900';
-        detActions.classList.remove('hidden'); detActions.classList.add('flex');
-        stuActions.classList.add('hidden'); stuActions.classList.remove('flex');
-        filtersBar.classList.remove('hidden');
-        studentBanner.classList.add('hidden');
-      } else {
-        stuBtn.className = 'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer bg-white text-indigo-700 shadow-xs';
-        detBtn.className = 'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer text-slate-600 hover:text-slate-900';
-        stuActions.classList.remove('hidden'); stuActions.classList.add('flex');
-        detActions.classList.add('hidden'); detActions.classList.remove('flex');
-        filtersBar.classList.add('hidden');
-      }
-
-      const counts = {
-        all: state.items.length,
-        Retain: state.items.filter(i => i.verdict === 'Retain').length,
-        Revise: state.items.filter(i => i.verdict === 'Revise').length,
-        Reject: state.items.filter(i => i.verdict === 'Reject').length,
-        Unaudited: state.items.filter(i => !i.verdict).length
-      };
-
-      document.querySelectorAll('.filter-pill').forEach(btn => {
-        const f = btn.dataset.filter;
-        const label = f === 'all' ? 'All' : f;
-        btn.textContent = `${label} (${counts[f] ?? 0})`;
-        if (f === state.activeFilter) {
-          btn.className = 'filter-pill px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors cursor-pointer bg-slate-900 text-white border-slate-900';
+      const stuBadge = document.getElementById('nav-students-badge');
+      if (stuBadge) {
+        const n = state.classData.students.length;
+        if (n > 0) {
+          stuBadge.textContent = n;
+          stuBadge.classList.remove('hidden');
         } else {
-          btn.className = 'filter-pill px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors cursor-pointer bg-white text-slate-600 border-slate-200 hover:bg-slate-50';
+          stuBadge.classList.add('hidden');
         }
-      });
-
-      const container = document.getElementById('detective-cards-container');
-
-      if (state.items.length === 0) {
-        studentBanner.classList.add('hidden');
-        container.innerHTML = `
-          <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-10 text-center">
-            <div class="w-14 h-14 mx-auto rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4">
-              <i data-lucide="search-check" class="w-7 h-7"></i>
-            </div>
-            <h3 class="text-base font-bold text-slate-900">Your Validation Bank is Empty</h3>
-            <p class="text-sm text-slate-600 mt-1 max-w-md mx-auto">Upload your 7-column Excel validation sheet or load our 5-item sample flawed test to begin auditing.</p>
-            <div class="flex flex-wrap justify-center gap-3 mt-5">
-              <button onclick="switchTab('build')" class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold cursor-pointer">Go to Upload &amp; Build</button>
-              <button onclick="loadSampleFlawedTest()" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold cursor-pointer">Load Sample Flawed Test</button>
-            </div>
-          </div>
-        `;
-        refreshIcons();
-        return;
-      }
-
-      if (state.detectiveMode === 'student') {
-        renderStudentPreviewCards(container);
-      } else {
-        renderItemDetectiveCards(container);
-      }
-      refreshIcons();
-    }
-
-    function renderStudentPreviewCards(container) {
-      let answeredCount = 0;
-      let correctCount = 0;
-      const keyedItems = state.items.filter(i => i.answer);
-
-      state.items.forEach(item => {
-        const chosen = state.studentAnswers[item.id];
-        if (chosen) {
-          answeredCount++;
-          if (item.answer && chosen === item.answer) correctCount++;
-        }
-      });
-
-      document.getElementById('student-answered-count').textContent = answeredCount;
-      document.getElementById('student-total-count').textContent = state.items.length;
-      document.getElementById('student-score-count').textContent = state.studentSubmitted
-        ? (keyedItems.length > 0 ? `${correctCount}/${keyedItems.length}` : 'Submitted')
-        : '—';
-
-      const submitBtn = document.getElementById('submit-quiz-btn');
-      const resultBanner = document.getElementById('student-result-banner');
-
-      if (state.studentSubmitted) {
-        submitBtn.classList.add('hidden');
-        resultBanner.classList.remove('hidden');
-        if (keyedItems.length > 0) {
-          const pct = Math.round((correctCount / keyedItems.length) * 100);
-          document.getElementById('student-result-title').textContent = `Student Preview Score: ${correctCount} / ${keyedItems.length} (${pct}%)`;
-          const unkeyedNote = keyedItems.length < state.items.length
-            ? ` (${state.items.length - keyedItems.length} item(s) have no answer key set.)`
-            : '';
-          document.getElementById('student-result-desc').textContent = `Review each item below to experience how students read your test.${unkeyedNote}`;
-        } else {
-          document.getElementById('student-result-title').textContent = 'Student Preview Completed';
-          document.getElementById('student-result-desc').textContent = 'Add answer keys in Tab 1 (or apply AI revisions) to enable automatic scoring.';
-        }
-      } else {
-        submitBtn.classList.remove('hidden');
-        resultBanner.classList.add('hidden');
-      }
-
-      container.innerHTML = state.items.map((item, idx) => {
-        const chosen = state.studentAnswers[item.id];
-        const hasKey = Boolean(item.answer);
-        const isCorrect = hasKey && chosen === item.answer;
-
-        const choicesHtml = ['A', 'B', 'C', 'D'].map(letter => {
-          let cls = 'border-slate-200 bg-white hover:border-indigo-400 hover:bg-indigo-50/40 text-slate-800';
-          let iconHtml = '';
-
-          if (state.studentSubmitted && hasKey) {
-            if (letter === item.answer) {
-              cls = 'border-emerald-500 bg-emerald-50 text-emerald-950 ring-1 ring-emerald-500';
-              iconHtml = `<i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600 shrink-0"></i>`;
-            } else if (letter === chosen && chosen !== item.answer) {
-              cls = 'border-rose-400 bg-rose-50 text-rose-950 ring-1 ring-rose-400';
-              iconHtml = `<i data-lucide="x-circle" class="w-4 h-4 text-rose-600 shrink-0"></i>`;
-            } else {
-              cls = 'border-slate-200 bg-slate-50/50 text-slate-400';
-            }
-          } else if (chosen === letter) {
-            cls = 'border-indigo-600 bg-indigo-50 text-indigo-950 ring-1 ring-indigo-600';
-            iconHtml = `<i data-lucide="check" class="w-4 h-4 text-indigo-600 shrink-0"></i>`;
-          }
-
-          return `
-            <button
-              onclick="selectStudentChoice('${item.id}', '${letter}')"
-              class="w-full text-left flex items-center justify-between gap-3 p-3.5 rounded-xl border transition-all ${state.studentSubmitted ? 'cursor-default' : 'cursor-pointer'} ${cls}"
-            >
-              <div class="flex items-start gap-3">
-                <span class="w-6 h-6 rounded-lg bg-slate-900/5 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">${letter}</span>
-                <span class="text-sm font-medium">${escapeHtml(item.choices[letter])}</span>
-              </div>
-              ${iconHtml}
-            </button>
-          `;
-        }).join('');
-
-        let statusPill = `<span class="text-xs text-slate-400">${chosen ? `Selected: ${chosen}` : 'Select an answer'}</span>`;
-        if (state.studentSubmitted) {
-          if (!hasKey) {
-            statusPill = `<span class="text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full">No Key Set</span>`;
-          } else if (!chosen) {
-            statusPill = `<span class="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">Unanswered — Key: ${escapeHtml(item.answer)}</span>`;
-          } else if (isCorrect) {
-            statusPill = `<span class="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">Correct!</span>`;
-          } else {
-            statusPill = `<span class="text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-full">Incorrect — Key: ${escapeHtml(item.answer)}</span>`;
-          }
-        }
-
-        return `
-          <article class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-6">
-            <div class="flex items-center justify-between gap-2 mb-3">
-              <span class="text-xs font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg">Item #${idx + 1} of ${state.items.length}</span>
-              ${statusPill}
-            </div>
-            <p class="text-base font-semibold text-slate-900 leading-relaxed mb-3">${escapeHtml(item.stem)}</p>
-            ${item.imageDataUrl ? `
-              <div class="mb-4 p-2.5 rounded-xl border border-slate-200 bg-slate-50 inline-block">
-                <img src="${item.imageDataUrl}" alt="Item diagram" class="max-h-48 rounded-lg object-contain" />
-              </div>
-            ` : ''}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              ${choicesHtml}
-            </div>
-          </article>
-        `;
-      }).join('');
-    }
-
-    function renderItemDetectiveCards(container) {
-      const filtered = state.items.filter(item => {
-        if (state.activeFilter === 'all') return true;
-        if (state.activeFilter === 'Unaudited') return !item.verdict;
-        return item.verdict === state.activeFilter;
-      });
-
-      if (filtered.length === 0) {
-        container.innerHTML = `
-          <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-8 text-center">
-            <p class="text-sm font-semibold text-slate-700">No items match the "${escapeHtml(state.activeFilter)}" filter.</p>
-            <button onclick="setFilter('all')" class="mt-3 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer">Show All Items</button>
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = filtered.map(item => {
-        const idx = state.items.indexOf(item) + 1;
-        const audit = item.audit;
-        const isAuditing = state.auditingIds.has(item.id);
-
-        let borderAccent = 'border-l-slate-300';
-        if (item.verdict === 'Retain') borderAccent = 'border-l-emerald-500';
-        else if (item.verdict === 'Revise') borderAccent = 'border-l-amber-500';
-        else if (item.verdict === 'Reject') borderAccent = 'border-l-rose-500';
-
-        const btlMismatch = item.targetBtl && audit?.detectedBtl && item.targetBtl !== audit.detectedBtl;
-
-        const choicesHtml = ['A', 'B', 'C', 'D'].map(letter => {
-          const isKey = item.answer === letter;
-          return `
-            <div class="flex items-start gap-2.5 p-3 rounded-xl border ${isKey ? 'bg-emerald-50/70 border-emerald-300 text-emerald-950' : 'bg-slate-50/70 border-slate-200/80 text-slate-700'}">
-              <span class="w-6 h-6 rounded-lg text-xs font-bold flex items-center justify-center shrink-0 ${isKey ? 'bg-emerald-600 text-white' : 'bg-white border border-slate-300 text-slate-600'}">${letter}</span>
-              <span class="text-sm ${isKey ? 'font-semibold' : 'font-medium'} flex-1">${escapeHtml(item.choices[letter])}</span>
-              ${isKey ? `<span class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md shrink-0">Key</span>` : ''}
-            </div>
-          `;
-        }).join('');
-
-        const verdictToggleHtml = `
-          <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
-            ${['Retain', 'Revise', 'Reject'].map(v => {
-              const active = item.verdict === v;
-              const activeCls = v === 'Retain'
-                ? 'bg-emerald-600 text-white shadow-xs'
-                : (v === 'Revise' ? 'bg-amber-500 text-white shadow-xs' : 'bg-rose-600 text-white shadow-xs');
-              return `
-                <button
-                  onclick="setItemVerdict('${item.id}', '${v}')"
-                  class="px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${active ? activeCls : 'text-slate-600 hover:text-slate-900'}"
-                >
-                  ${v}
-                </button>
-              `;
-            }).join('')}
-          </div>
-        `;
-
-        let auditSectionHtml = '';
-        if (audit) {
-          const flagsHtml = audit.flags && audit.flags.length > 0
-            ? `<div class="space-y-2.5">
-                ${audit.flags.map(flag => {
-                  const sevCls = flag.severity === 'High'
-                    ? 'bg-rose-50/75 border-rose-200 text-rose-950'
-                    : (flag.severity === 'Medium' ? 'bg-amber-50/75 border-amber-200 text-amber-950' : 'bg-sky-50/75 border-sky-200 text-sky-950');
-                  const pillCls = flag.severity === 'High'
-                    ? 'bg-rose-600 text-white'
-                    : (flag.severity === 'Medium' ? 'bg-amber-500 text-white' : 'bg-sky-600 text-white');
-                  return `
-                    <div class="p-3.5 rounded-xl border ${sevCls}">
-                      <div class="flex flex-wrap items-center gap-2 mb-1">
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${pillCls}">${escapeHtml(flag.severity)}</span>
-                        <span class="text-xs font-bold">${escapeHtml(flag.category)}</span>
-                      </div>
-                      <p class="text-sm opacity-90 leading-relaxed">${escapeHtml(flag.explanation)}</p>
-                    </div>
-                  `;
-                }).join('')}
-              </div>`
-            : `<div class="flex items-center gap-3 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm">
-                <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 shrink-0"></i>
-                <span><strong>No design flaws detected.</strong> This item meets psychometric quality guidelines.</span>
-              </div>`;
-
-          const rev = audit.suggestedRevision;
-          const revisionHtml = rev ? `
-            <div class="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-200/90 space-y-3">
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div class="flex items-center gap-2">
-                  <span class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0">
-                    <i data-lucide="sparkles" class="w-4 h-4"></i>
-                  </span>
-                  <h4 class="text-sm font-bold text-indigo-950">Suggested Revision</h4>
-                </div>
-                <button
-                  onclick="applySuggestedRevision('${item.id}')"
-                  class="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
-                >
-                  <i data-lucide="check" class="w-3.5 h-3.5"></i>
-                  <span>Apply Revision</span>
-                </button>
-              </div>
-              <div class="bg-white rounded-xl border border-indigo-100 p-3.5 space-y-2">
-                <p class="text-sm font-semibold text-slate-900">${escapeHtml(rev.stem)}</p>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
-                  ${['A', 'B', 'C', 'D'].map(l => `
-                    <div class="px-2.5 py-1.5 rounded-lg border ${l === rev.correctAnswer ? 'bg-emerald-50 border-emerald-300 text-emerald-900 font-semibold' : 'bg-slate-50 border-slate-200 text-slate-700'}">
-                      <span class="font-bold mr-1">${l}.</span> ${escapeHtml(rev.choices[l])}
-                    </div>
-                  `).join('')}
-                </div>
-              </div>
-            </div>
-          ` : '';
-
-          auditSectionHtml = `
-            <div class="mt-5 pt-4 border-t border-slate-100 space-y-4">
-              <div class="flex flex-wrap items-center justify-between gap-2">
-                <div class="flex flex-wrap items-center gap-2">
-                  <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
-                    Psychometric Findings
-                  </h4>
-                  ${getEngineSourceBadgeHtml(audit)}
-                </div>
-                <span class="text-xs text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg">
-                  <strong>BTL Check:</strong> ${escapeHtml(audit.btlAlignment)}
-                </span>
-              </div>
-
-              <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-                <div class="lg:col-span-6 space-y-3">
-                  ${flagsHtml}
-                </div>
-                <div class="lg:col-span-6">
-                  ${revisionHtml}
-                </div>
-              </div>
-            </div>
-          `;
-        }
-
-        return `
-          <article class="bg-white rounded-2xl border border-slate-200/80 border-l-4 ${borderAccent} shadow-sm p-5 sm:p-6 transition-all">
-            <!-- Card Header -->
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-4">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="px-2.5 py-1 rounded-lg bg-slate-900 text-white text-xs font-bold">No. ${idx}</span>
-                ${item.targetBtl
-                  ? `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">Target BTL: ${escapeHtml(item.targetBtl)}</span>`
-                  : `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-500">Target BTL: —</span>`
-                }
-                ${audit?.detectedBtl
-                  ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border ${btlMismatch ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}">
-                      <i data-lucide="${btlMismatch ? 'alert-triangle' : 'brain'}" class="w-3.5 h-3.5"></i>
-                      Detected BTL: ${escapeHtml(audit.detectedBtl)} (${escapeHtml(BTL_CODE_TO_NAME[audit.detectedBtl] || '')})
-                    </span>`
-                  : ''
-                }
-                ${item.revised ? `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">Revised</span>` : ''}
-              </div>
-
-              <div class="flex flex-wrap items-center gap-2">
-                ${verdictToggleHtml}
-                <button
-                  onclick="triggerQuickImageAttach('${item.id}')"
-                  class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-semibold cursor-pointer"
-                  title="Attach diagram image"
-                >
-                  <i data-lucide="image-plus" class="w-3.5 h-3.5"></i>
-                  <span class="hidden sm:inline">${item.imageDataUrl ? 'Change Image' : 'Add Image'}</span>
-                </button>
-                <button
-                  onclick="auditSingleItem('${item.id}')"
-                  ${isAuditing ? 'disabled' : ''}
-                  class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
-                >
-                  ${isAuditing
-                    ? `<span class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span><span>Auditing...</span>`
-                    : `<i data-lucide="search" class="w-3.5 h-3.5"></i><span>${audit ? 'Re-Audit' : 'Audit This Item'}</span>`
-                  }
-                </button>
-              </div>
-            </div>
-
-            <!-- Stem & Optional Diagram -->
-            <p class="text-base font-semibold text-slate-900 leading-relaxed mb-3">${escapeHtml(item.stem)}</p>
-
-            ${item.imageDataUrl ? `
-              <div class="mb-4 inline-flex items-start gap-2 p-2 rounded-xl border border-slate-200 bg-slate-50">
-                <img src="${item.imageDataUrl}" alt="Attached diagram" class="max-h-44 rounded-lg object-contain" />
-                <button onclick="removeItemImage('${item.id}')" class="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer" title="Remove diagram">
-                  <i data-lucide="x" class="w-4 h-4"></i>
-                </button>
-              </div>
-            ` : ''}
-
-            <!-- Choices -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-              ${choicesHtml}
-            </div>
-
-            <!-- Editable Validation Remarks (Synced with Excel REMARKS column) -->
-            <div class="mt-4 pt-3 border-t border-slate-100">
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                Validation Remarks <span class="font-normal normal-case text-slate-400">(Editable — exported directly to Excel REMARKS column)</span>
-              </label>
-              <textarea
-                rows="2"
-                oninput="updateItemRemarks('${item.id}', this.value)"
-                placeholder="Audit remarks will appear here after running an audit, or type your own validation remarks..."
-                class="w-full rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 px-3 py-2 text-sm text-slate-800 bg-slate-50/50 outline-none transition-all"
-              >${escapeHtml(item.remarks || '')}</textarea>
-            </div>
-
-            ${auditSectionHtml}
-          </article>
-        `;
-      }).join('');
-    }
-
-    // ---------- TAB 3: VALIDATION REPORT & TOS ----------
-    function renderReportTab() {
-      const total = state.items.length;
-      const retainCount = state.items.filter(i => i.verdict === 'Retain').length;
-      const reviseCount = state.items.filter(i => i.verdict === 'Revise').length;
-      const rejectCount = state.items.filter(i => i.verdict === 'Reject').length;
-      const unauditedCount = state.items.filter(i => !i.verdict).length;
-      const validatedCount = total - unauditedCount;
-
-      const healthScore = validatedCount > 0
-        ? Math.round(((retainCount * 100) + (reviseCount * 55) + (rejectCount * 15)) / validatedCount)
-        : null;
-
-      const circumference = 251.2;
-      const ringEl = document.getElementById('health-ring-progress');
-      const scoreEl = document.getElementById('kpi-health-score');
-
-      if (healthScore !== null) {
-        scoreEl.textContent = `${healthScore}%`;
-        ringEl.style.strokeDashoffset = circumference - (healthScore / 100) * circumference;
-        ringEl.style.stroke = healthScore >= 80 ? '#10B981' : (healthScore >= 55 ? '#F59E0B' : '#F43F5E');
-        document.getElementById('kpi-health-sub').textContent =
-          healthScore >= 80 ? 'Strong assessment quality' :
-          healthScore >= 55 ? 'Moderate — revisions needed' :
-          'High priority flaws detected';
-      } else {
-        scoreEl.textContent = '—';
-        ringEl.style.strokeDashoffset = circumference;
-        ringEl.style.stroke = '#94A3B8';
-        document.getElementById('kpi-health-sub').textContent = 'Run audit to score';
-      }
-
-      document.getElementById('kpi-audited-sub').textContent = `${validatedCount} of ${total} validated`;
-      document.getElementById('kpi-retain-count').textContent = retainCount;
-      document.getElementById('kpi-revise-count').textContent = reviseCount;
-      document.getElementById('kpi-reject-count').textContent = rejectCount;
-      document.getElementById('kpi-unaudited-count').textContent = unauditedCount;
-
-      // Top Flagged Design Flaws (10 categories)
-      const flawCounts = {};
-      FLAW_CATEGORIES.forEach(cat => flawCounts[cat] = 0);
-      let totalFlags = 0;
-
-      state.items.forEach(item => {
-        (item.audit?.flags || []).forEach(f => {
-          const cat = normalizeCategoryName(f.category);
-          if (flawCounts[cat] !== undefined) {
-            flawCounts[cat]++;
-            totalFlags++;
-          }
-        });
-      });
-
-      const flawContainer = document.getElementById('flaw-breakdown-container');
-      flawContainer.innerHTML = FLAW_CATEGORIES.map(cat => {
-        const count = flawCounts[cat];
-        const pct = totalFlags > 0 ? Math.round((count / totalFlags) * 100) : 0;
-        const barColor = count === 0 ? 'bg-slate-200' : 'bg-rose-500';
-        return `
-          <div>
-            <div class="flex items-center justify-between text-xs font-semibold mb-1">
-              <span class="text-slate-700">${escapeHtml(cat)}</span>
-              <span class="text-slate-500">${count} flag${count === 1 ? '' : 's'}${totalFlags > 0 ? ` (${pct}%)` : ''}</span>
-            </div>
-            <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-              <div class="h-full ${barColor} rounded-full transition-all duration-500" style="width: ${pct}%"></div>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      // TOS Summary: LOTS (R, U) vs HOTS (Ap, An, E, C)
-      const buckets = {};
-      BTL_LIST.forEach(b => buckets[b.code] = []);
-      let classifiedTotal = 0;
-      let hotsCount = 0;
-
-      state.items.forEach((item, idx) => {
-        const code = item.audit?.detectedBtl || item.targetBtl;
-        if (code && buckets[code]) {
-          buckets[code].push(idx + 1);
-          classifiedTotal++;
-          if (['Ap', 'An', 'E', 'C'].includes(code)) hotsCount++;
-        }
-      });
-
-      const hotsPct = classifiedTotal > 0 ? Math.round((hotsCount / classifiedTotal) * 100) : 0;
-      const lotsPct = classifiedTotal > 0 ? (100 - hotsPct) : 0;
-
-      document.getElementById('tos-hots-badge').textContent = `LOTS: ${lotsPct}% | HOTS: ${hotsPct}%`;
-      document.getElementById('tos-lots-bar').style.width = `${lotsPct}%`;
-      document.getElementById('tos-hots-bar').style.width = `${hotsPct}%`;
-      document.getElementById('tos-lots-text').textContent = `${lotsPct}%`;
-      document.getElementById('tos-hots-text').textContent = `${hotsPct}%`;
-
-      document.getElementById('tos-table-body').innerHTML = BTL_LIST.map(b => {
-        const nums = buckets[b.code];
-        const pct = classifiedTotal > 0 ? Math.round((nums.length / classifiedTotal) * 100) : 0;
-        const isHots = b.order === 'HOTS';
-        return `
-          <tr>
-            <td class="py-2.5 pr-2 font-semibold text-slate-800 whitespace-nowrap">
-              <span class="inline-block w-2 h-2 rounded-full mr-2 ${isHots ? 'bg-indigo-600' : 'bg-sky-500'}"></span>
-              <span class="font-bold text-indigo-700">${b.code}</span> — ${b.name}
-            </td>
-            <td class="py-2.5 px-2 text-xs text-slate-500 font-mono">${nums.length ? nums.join(', ') : '—'}</td>
-            <td class="py-2.5 px-2 text-center font-bold text-slate-700">${nums.length}</td>
-            <td class="py-2.5 pl-2 text-right text-slate-600">${pct}%</td>
-          </tr>
-        `;
-      }).join('');
-
-      // 7-Column Validation Sheet Preview Table
-      const previewBody = document.getElementById('validation-sheet-preview-body');
-      if (state.items.length === 0) {
-        previewBody.innerHTML = `<tr><td colspan="7" class="border border-slate-300 py-8 text-center text-slate-500 text-sm">No test items loaded.</td></tr>`;
-      } else {
-        previewBody.innerHTML = state.items.map((item, idx) => {
-          const btlCode = item.audit?.detectedBtl || item.targetBtl || '';
-          return `
-            <tr class="align-top print-break-inside-avoid">
-              <td class="border border-slate-300 py-3 px-2.5 text-center font-semibold text-slate-800">${idx + 1}</td>
-              <td class="border border-slate-300 py-3 px-3 text-slate-900 space-y-1.5">
-                <p class="font-medium leading-snug">${idx + 1}. ${escapeHtml(item.stem)}</p>
-                ${item.imageDataUrl ? `<img src="${item.imageDataUrl}" alt="Item diagram" class="max-h-28 my-1.5 rounded object-contain" />` : ''}
-                <div class="text-xs sm:text-sm space-y-0.5 pl-0.5 text-slate-800">
-                  <div>A. ${escapeHtml(item.choices.A)}</div>
-                  <div>B. ${escapeHtml(item.choices.B)}</div>
-                  <div>C. ${escapeHtml(item.choices.C)}</div>
-                  <div>D. ${escapeHtml(item.choices.D)}</div>
-                </div>
-              </td>
-              <td class="border border-slate-300 py-3 px-2 text-center font-bold text-slate-800">${escapeHtml(btlCode)}</td>
-              <td class="border border-slate-300 py-3 px-2 text-center font-bold text-emerald-700 text-base">${item.verdict === 'Retain' ? '✓' : ''}</td>
-              <td class="border border-slate-300 py-3 px-2 text-center font-bold text-rose-700 text-base">${item.verdict === 'Reject' ? '✓' : ''}</td>
-              <td class="border border-slate-300 py-3 px-2 text-center font-bold text-amber-700 text-base">${item.verdict === 'Revise' ? '✓' : ''}</td>
-              <td class="border border-slate-300 py-3 px-3 text-xs text-slate-700 leading-relaxed">${escapeHtml(item.remarks || '')}</td>
-            </tr>
-          `;
-        }).join('');
-      }
-
-      refreshIcons();
-    }
-
-    // =========================================================================
-    // EXPORT UTILITIES (2-SHEET VALIDATION EXCEL, TXT DOWNLOAD & CLIPBOARD)
-    // =========================================================================
-    function buildRevisedTestPlainText() {
-      return state.items.map((item, idx) => {
-        const btl = item.audit?.detectedBtl || item.targetBtl;
-        const lines = [
-          `${idx + 1}. ${item.stem}`,
-          `A. ${item.choices.A}`,
-          `B. ${item.choices.B}`,
-          `C. ${item.choices.C}`,
-          `D. ${item.choices.D}`
-        ];
-        if (item.answer) lines.push(`Answer: ${item.answer}`);
-        if (btl) lines.push(`BTL: ${btl} (${BTL_CODE_TO_NAME[btl] || btl})`);
-        if (item.verdict) lines.push(`Verdict: ${item.verdict}`);
-        if (item.remarks) lines.push(`Remarks: ${item.remarks}`);
-        return lines.join('\n');
-      }).join('\n\n');
-    }
-
-    function exportValidationSheetExcel() {
-      if (state.items.length === 0) {
-        showToast('There are no items to export.', 'warning');
-        return;
-      }
-      if (typeof XLSX === 'undefined') {
-        showToast('SheetJS library is not available.', 'error');
-        return;
-      }
-
-      try {
-        // Sheet 1: Exact 7-Column Validation Sheet
-        const sheet1Rows = [
-          ['No.', 'Test Items', 'BTL', 'Retain', 'Reject', 'Revise', 'REMARKS']
-        ];
-        const rowHeights = [{ hpt: 24 }];
-
-        state.items.forEach((item, idx) => {
-          const itemNum = idx + 1;
-          const multiLineText = [
-            `${itemNum}. ${item.stem}`,
-            `A. ${item.choices.A}`,
-            `B. ${item.choices.B}`,
-            `C. ${item.choices.C}`,
-            `D. ${item.choices.D}`
-          ].join('\n');
-
-          const btlCode = item.audit?.detectedBtl || item.targetBtl || '';
-          sheet1Rows.push([
-            itemNum,
-            multiLineText,
-            btlCode,
-            item.verdict === 'Retain' ? '✓' : '',
-            item.verdict === 'Reject' ? '✓' : '',
-            item.verdict === 'Revise' ? '✓' : '',
-            (item.remarks || '').trim()
-          ]);
-          rowHeights.push({ hpt: 98 });
-        });
-
-        const ws1 = XLSX.utils.aoa_to_sheet(sheet1Rows);
-        ws1['!cols'] = [
-          { wch: 6 },
-          { wch: 58 },
-          { wch: 8 },
-          { wch: 10 },
-          { wch: 10 },
-          { wch: 10 },
-          { wch: 44 }
-        ];
-        ws1['!rows'] = rowHeights;
-
-        // Sheet 2: TOS Summary (LOTS: R, U | HOTS: Ap, An, E, C)
-        const buckets = {};
-        BTL_LIST.forEach(b => buckets[b.code] = []);
-        let classifiedTotal = 0;
-        let hotsCount = 0;
-
-        state.items.forEach((item, idx) => {
-          const code = item.audit?.detectedBtl || item.targetBtl;
-          if (code && buckets[code]) {
-            buckets[code].push(idx + 1);
-            classifiedTotal++;
-            if (['Ap', 'An', 'E', 'C'].includes(code)) hotsCount++;
-          }
-        });
-
-        const lotsCount = classifiedTotal - hotsCount;
-        const hotsPct = classifiedTotal > 0 ? Math.round((hotsCount / classifiedTotal) * 100) : 0;
-        const lotsPct = classifiedTotal > 0 ? (100 - hotsPct) : 0;
-
-        const sheet2Rows = [
-          ['BTL Code', "Bloom's Taxonomy Level", 'Order', 'Item Numbers', 'Count', 'Percentage'],
-          ...BTL_LIST.map(b => {
-            const nums = buckets[b.code];
-            const pct = classifiedTotal > 0 ? `${Math.round((nums.length / classifiedTotal) * 100)}%` : '0%';
-            return [b.code, b.name, b.order, nums.join(', ') || '—', nums.length, pct];
-          }),
-          [],
-          ['Summary Metric', 'Count', 'Percentage'],
-          ['LOTS (R, U)', lotsCount, `${lotsPct}%`],
-          ['HOTS (Ap, An, E, C)', hotsCount, `${hotsPct}%`],
-          ['Total Items', state.items.length, '100%'],
-          ['Retain', state.items.filter(i => i.verdict === 'Retain').length, ''],
-          ['Revise', state.items.filter(i => i.verdict === 'Revise').length, ''],
-          ['Reject', state.items.filter(i => i.verdict === 'Reject').length, '']
-        ];
-
-        const ws2 = XLSX.utils.aoa_to_sheet(sheet2Rows);
-        ws2['!cols'] = [
-          { wch: 18 }, { wch: 26 }, { wch: 12 }, { wch: 24 }, { wch: 10 }, { wch: 14 }
-        ];
-
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws1, 'Validation Sheet');
-        XLSX.utils.book_append_sheet(wb, ws2, 'TOS Summary');
-        XLSX.writeFile(wb, 'Item_Validation_Report.xlsx');
-        showToast('Exported Item_Validation_Report.xlsx (Validation Sheet + TOS Summary)!', 'success');
-      } catch (err) {
-        console.error('Excel export error:', err);
-        showToast('Could not export Excel validation report.', 'error');
       }
     }
 
@@ -3638,11 +3152,1215 @@ Image Attached: ${item.imageDataUrl ? 'Yes (see attached image)' : 'No image att
     }
 
     // =========================================================================
+    // TAB 4: CLASS DATA & ITEM ANALYSIS (UPLOAD, STATS, CHARTS & EXPORT)
+    // =========================================================================
+    function setupScoreDropzone() {
+      const dz = document.getElementById('score-dropzone');
+      if (!dz) return;
+      ['dragenter', 'dragover'].forEach(evt => {
+        dz.addEventListener(evt, e => {
+          e.preventDefault();
+          dz.classList.add('border-indigo-500', 'bg-indigo-50/50');
+        });
+      });
+      ['dragleave', 'drop'].forEach(evt => {
+        dz.addEventListener(evt, e => {
+          e.preventDefault();
+          dz.classList.remove('border-indigo-500', 'bg-indigo-50/50');
+        });
+      });
+      dz.addEventListener('drop', e => {
+        const file = e.dataTransfer.files?.[0];
+        if (file) processScoreFile(file);
+      });
+    }
+
+    function handleScoreFileSelect(event) {
+      const file = event.target.files?.[0];
+      if (file) {
+        processScoreFile(file);
+        event.target.value = '';
+      }
+    }
+
+    function showScoreImportBanner(htmlMessage, type = 'success') {
+      const banner = document.getElementById('score-import-banner');
+      const content = document.getElementById('score-import-content');
+      const styles = {
+        success: 'bg-emerald-50 border-emerald-200 text-emerald-950',
+        warning: 'bg-amber-50 border-amber-200 text-amber-950',
+        error: 'bg-rose-50 border-rose-200 text-rose-950'
+      };
+      const iconName = type === 'success' ? 'check-circle-2' : (type === 'warning' ? 'alert-triangle' : 'x-circle');
+      banner.className = `p-3.5 rounded-xl border text-xs flex items-start justify-between gap-2.5 ${styles[type] || styles.success}`;
+      content.innerHTML = `
+        <i data-lucide="${iconName}" class="w-4 h-4 shrink-0 mt-0.5"></i>
+        <div class="leading-relaxed">${htmlMessage}</div>
+      `;
+      refreshIcons(banner);
+    }
+
+    function downloadScoreTemplate() {
+      if (typeof XLSX === 'undefined') {
+        showToast('Excel library (SheetJS) is still loading. Please try again.', 'error');
+        return;
+      }
+      try {
+        // Sheet 1: Binary (1/0) Item Matrix
+        const binaryRows = [
+          ['Student Name', 'Item 1', 'Item 2', 'Item 3', 'Item 4', 'Item 5', 'Item 6', 'Item 7', 'Item 8', 'Item 9', 'Item 10'],
+          ['Alvarez, Mia',     1, 1, 1, 1, 1, 1, 1, 0, 1, 1],
+          ['Bautista, Liam',   1, 1, 1, 1, 0, 1, 1, 0, 1, 0],
+          ['Cruz, Sofia',      1, 1, 0, 1, 1, 0, 1, 1, 0, 0],
+          ['Dela Cruz, Noah',  1, 0, 1, 0, 1, 0, 0, 1, 0, 0],
+          ['Estrada, Chloe',   1, 0, 0, 0, 0, 0, 0, 1, 0, 0]
+        ];
+        const ws1 = XLSX.utils.aoa_to_sheet(binaryRows);
+        ws1['!cols'] = [{ wch: 22 }, ...Array(10).fill({ wch: 9 })];
+
+        // Sheet 2: Letter Responses (A-D) with Answer Key Row
+        const letterRows = [
+          ['Student Name', 'Item 1', 'Item 2', 'Item 3', 'Item 4', 'Item 5', 'Item 6', 'Item 7', 'Item 8', 'Item 9', 'Item 10'],
+          ['Answer Key',      'B', 'C', 'D', 'A', 'B', 'C', 'A', 'D', 'B', 'C'],
+          ['Alvarez, Mia',    'B', 'C', 'D', 'A', 'B', 'C', 'A', 'B', 'B', 'C'],
+          ['Bautista, Liam',  'B', 'C', 'D', 'A', 'C', 'C', 'A', 'B', 'B', 'A'],
+          ['Cruz, Sofia',     'B', 'C', 'A', 'A', 'B', 'D', 'A', 'D', 'C', 'D'],
+          ['Dela Cruz, Noah', 'B', 'A', 'D', 'C', 'B', 'A', 'B', 'D', 'A', 'B'],
+          ['Estrada, Chloe',  'B', 'D', 'B', 'C', 'D', 'A', 'C', 'D', 'D', 'A']
+        ];
+        const ws2 = XLSX.utils.aoa_to_sheet(letterRows);
+        ws2['!cols'] = [{ wch: 22 }, ...Array(10).fill({ wch: 9 })];
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws1, 'Binary (1-0) Matrix');
+        XLSX.utils.book_append_sheet(wb, ws2, 'Letter Responses (A-D)');
+        XLSX.writeFile(wb, 'Class_Scores_Template.xlsx');
+        showToast('Downloaded Class_Scores_Template.xlsx (2 sheets: Binary & Letter formats)!', 'success');
+      } catch (err) {
+        console.error('Score template error:', err);
+        showToast('Could not generate Excel score template.', 'error');
+      }
+    }
+
+    function loadSampleClassData() {
+      const answerKey = ['B', 'C', 'D', 'A', 'B', 'C', 'A', 'D', 'B', 'C'];
+      const itemLabels = answerKey.map((_, i) => `Item ${i + 1}`);
+      // 30 realistic students engineered to demonstrate:
+      // Item 1: Very Easy (p ~0.94), Item 2: Easy/Good, Items 3-6: Moderate/Ideal with strong D,
+      // Item 7: Difficult with good D, Item 8: Negatively discriminating (misleading distractor B!),
+      // Item 9: Marginal D, Item 10: Very Difficult
+      const sampleRows = [
+        ['Alvarez, Mia',      ['B','C','D','A','B','C','A','B','B','C']],
+        ['Bautista, Liam',    ['B','C','D','A','B','C','A','B','B','C']],
+        ['Castillo, Sofia',   ['B','C','D','A','B','C','A','B','B','A']],
+        ['Dela Cruz, Noah',   ['B','C','D','A','B','C','A','D','B','C']],
+        ['Estrada, Chloe',    ['B','C','D','A','B','C','A','B','B','A']],
+        ['Fernandez, Lucas',  ['B','C','D','A','B','C','A','B','C','C']],
+        ['Garcia, Hannah',    ['B','C','D','A','B','C','C','B','B','B']],
+        ['Hernandez, Ethan',  ['B','C','D','A','B','C','A','B','A','A']],
+        ['Ignacio, Zoe',      ['B','C','D','A','B','D','A','B','B','A']],
+        ['Jimenez, Mateo',    ['B','C','D','A','B','C','B','D','B','A']],
+        ['Katrina, Reyes',    ['B','C','D','A','C','C','A','B','B','B']],
+        ['Lopez, Gabriel',    ['B','C','D','A','B','A','C','C','B','A']],
+        ['Mendoza, Aria',     ['B','C','D','C','B','C','A','B','B','D']],
+        ['Navarro, Daniel',   ['B','C','D','A','B','B','B','B','C','C']],
+        ['Ocampo, Camille',   ['B','C','A','A','B','C','B','D','B','A']],
+        ['Pascual, Julian',   ['B','C','D','A','A','C','C','A','B','B']],
+        ['Quintero, Elena',   ['B','C','D','B','B','D','A','B','C','A']],
+        ['Ramos, Nathan',     ['B','C','B','A','B','A','B','D','B','A']],
+        ['Santos, Isabella',  ['B','C','D','C','A','C','B','B','A','D']],
+        ['Torres, Adrian',    ['B','A','D','A','B','D','C','D','C','A']],
+        ['Uy, Clarissa',      ['B','C','A','B','B','A','B','D','B','B']],
+        ['Valdez, Caleb',     ['B','C','B','A','C','B','C','D','B','A']],
+        ['Villanueva, Maya',  ['B','A','C','B','B','A','D','D','B','A']],
+        ['Yabut, Owen',       ['B','C','A','C','C','B','B','D','C','D']],
+        ['Zamora, Bianca',    ['B','D','B','B','A','D','C','D','B','A']],
+        ['Aquino, Marco',     ['B','A','A','C','C','A','B','D','A','B']],
+        ['Bernardo, Tessa',   ['B','D','B','B','A','B','C','A','B','D']],
+        ['Corpuz, Vince',     ['A','B','C','C','D','A','B','D','C','A']],
+        ['Dizon, Audrey',     ['B','D','A','B','C','B','D','D','A','B']],
+        ['Enriquez, Paolo',   ['C','A','B','D','A','D','C','C','B','A']]
+      ];
+
+      state.classData = {
+        ...state.classData,
+        fileName: 'Sample_Class_30_Students.xlsx',
+        formatType: 'letters',
+        totalPossiblePoints: answerKey.length,
+        itemLabels,
+        answerKey,
+        students: sampleRows.map(([name, responses]) => ({
+          id: generateId(),
+          name,
+          rawScore: 0,
+          responses
+        })),
+        expandedDistractorIdx: null
+      };
+
+      saveClassDataToStorage();
+      showScoreImportBanner(
+        `Loaded <strong>30 students</strong> across <strong>10 items</strong> &bull; Detected: <span class="px-1.5 py-0.5 rounded bg-indigo-100 font-bold text-indigo-900">Format B: Letter Responses (A–D)</span> with Answer Key &amp; Distractor Analysis enabled.`,
+        'success'
+      );
+      renderAll();
+      showToast('Loaded 30-student sample class dataset!', 'success');
+    }
+
+    function clearClassData() {
+      if (state.classData.students.length === 0) {
+        showToast('No class score data to clear.', 'info');
+        return;
+      }
+      state.classData.fileName = '';
+      state.classData.formatType = '';
+      state.classData.itemLabels = [];
+      state.classData.answerKey = [];
+      state.classData.students = [];
+      state.classData.expandedDistractorIdx = null;
+      saveClassDataToStorage();
+      document.getElementById('score-import-banner').classList.add('hidden');
+      renderAll();
+      showToast('Class score data cleared.', 'info');
+    }
+
+    function processScoreFile(file) {
+      if (typeof XLSX === 'undefined') {
+        showToast('SheetJS library failed to load.', 'error');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const wb = XLSX.read(e.target.result, { type: 'array' });
+          const sheetName = wb.SheetNames[0];
+          const ws = wb.Sheets[sheetName];
+          const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+          const nonEmptyRows = rows.filter(r => Array.isArray(r) && r.some(c => String(c).trim() !== ''));
+          if (nonEmptyRows.length < 2) {
+            showScoreImportBanner(`Could not find enough rows in <strong>${escapeHtml(file.name)}</strong>. Include a header row plus student rows.`, 'warning');
+            return;
+          }
+
+          const headers = nonEmptyRows[0].map(c => String(c ?? '').trim());
+          const normHeaders = headers.map(normalizeHeader);
+
+          // Identify Student Name column
+          let nameColIdx = normHeaders.findIndex(h => ['student name', 'name', 'student', 'learner', 'learner name', 'id', 'student id', 'full name'].includes(h));
+          if (nameColIdx === -1) nameColIdx = 0;
+
+          // Identify summary columns to exclude from item columns
+          const summaryAliases = ['total', 'score', 'raw score', 'total score', 'points', '%', 'percent', 'percentage', 'mps', 'grade', 'remarks', 'rank', 'status', 'no', 'no.', '#'];
+          const itemColIndices = [];
+          const scoreColIndices = [];
+
+          for (let c = 0; c < headers.length; c++) {
+            if (c === nameColIdx) continue;
+            const nh = normHeaders[c];
+            if (!nh) continue;
+            if (summaryAliases.includes(nh) || /^(total|score|raw score|percent|grade|remarks|rank)/.test(nh)) {
+              if (/^(total|score|raw score|points)/.test(nh)) scoreColIndices.push(c);
+            } else {
+              itemColIndices.push(c);
+            }
+          }
+
+          const dataRows = nonEmptyRows.slice(1);
+
+          // Decide Format A (Binary), Format B (Letters), or Format C (Total Scores Only)
+          if (itemColIndices.length >= 2) {
+            // Inspect sample values across item columns
+            let letterHits = 0;
+            let binaryHits = 0;
+            let totalNonEmpty = 0;
+
+            for (let r = 0; r < Math.min(dataRows.length, 15); r++) {
+              for (const c of itemColIndices) {
+                const v = String(dataRows[r][c] ?? '').trim().toUpperCase();
+                if (!v) continue;
+                totalNonEmpty++;
+                if (/^[A-E]$/.test(v)) letterHits++;
+                else if (['0', '1', 'TRUE', 'FALSE', '✓', '✔', 'X'].includes(v)) binaryHits++;
+              }
+            }
+
+            const isLetters = totalNonEmpty > 0 && (letterHits / totalNonEmpty) >= 0.5;
+            const itemLabels = itemColIndices.map((c, idx) => headers[c] || `Item ${idx + 1}`);
+
+            if (isLetters) {
+              // Check if first row is an Answer Key row
+              let answerKey = [];
+              let startIdx = 0;
+              const firstRowName = normalizeHeader(dataRows[0][nameColIdx]);
+              if (['answer key', 'key', 'correct', 'correct answer', 'correct answers', 'solution'].includes(firstRowName)) {
+                answerKey = itemColIndices.map(c => {
+                  const v = String(dataRows[0][c] ?? '').trim().toUpperCase();
+                  return /^[A-E]$/.test(v) ? v : 'A';
+                });
+                startIdx = 1;
+              } else {
+                // Match answer keys from Tab 1 if available, otherwise default 'A'
+                answerKey = itemColIndices.map((_, idx) => (state.items[idx]?.answer || 'A'));
+              }
+
+              const students = [];
+              for (let r = startIdx; r < dataRows.length; r++) {
+                const row = dataRows[r];
+                const name = String(row[nameColIdx] ?? '').trim();
+                if (!name) continue;
+                const responses = itemColIndices.map(c => String(row[c] ?? '').trim().toUpperCase());
+                students.push({ id: generateId(), name, rawScore: 0, responses });
+              }
+
+              if (students.length === 0) {
+                showScoreImportBanner(`No student rows found in <strong>${escapeHtml(file.name)}</strong>.`, 'warning');
+                return;
+              }
+
+              state.classData = {
+                ...state.classData,
+                fileName: file.name,
+                formatType: 'letters',
+                totalPossiblePoints: itemLabels.length,
+                itemLabels,
+                answerKey,
+                students,
+                expandedDistractorIdx: null
+              };
+              saveClassDataToStorage();
+              showScoreImportBanner(
+                `Imported <strong>${students.length} students</strong> &times; <strong>${itemLabels.length} items</strong> from <strong>${escapeHtml(file.name)}</strong> &bull; Detected: <span class="px-1.5 py-0.5 rounded bg-indigo-100 font-bold text-indigo-900">Format B: Letter Responses (A–D)</span>.${startIdx === 1 ? ' Answer Key row auto-loaded.' : ' Verify the Answer Key bar below.'}`,
+                'success'
+              );
+              renderAll();
+              showToast(`Imported ${students.length} students (Letter Responses)!`, 'success');
+              return;
+            } else {
+              // Format A: Binary 1/0 Matrix
+              const students = [];
+              for (let r = 0; r < dataRows.length; r++) {
+                const row = dataRows[r];
+                const name = String(row[nameColIdx] ?? '').trim();
+                if (!name || ['answer key', 'key', 'average', 'mean', 'total'].includes(normalizeHeader(name))) continue;
+                const responses = itemColIndices.map(c => {
+                  const raw = String(row[c] ?? '').trim().toLowerCase();
+                  if (raw === '1' || raw === 'true' || raw === '✓' || raw === '✔' || raw === 'yes') return 1;
+                  const num = parseFloat(raw);
+                  return !isNaN(num) && num > 0 ? 1 : 0;
+                });
+                const rawScore = responses.reduce((a, b) => a + b, 0);
+                students.push({ id: generateId(), name, rawScore, responses });
+              }
+
+              if (students.length === 0) {
+                showScoreImportBanner(`No valid student rows found in <strong>${escapeHtml(file.name)}</strong>.`, 'warning');
+                return;
+              }
+
+              state.classData = {
+                ...state.classData,
+                fileName: file.name,
+                formatType: 'binary',
+                totalPossiblePoints: itemLabels.length,
+                itemLabels,
+                answerKey: [],
+                students,
+                expandedDistractorIdx: null
+              };
+              saveClassDataToStorage();
+              showScoreImportBanner(
+                `Imported <strong>${students.length} students</strong> &times; <strong>${itemLabels.length} items</strong> from <strong>${escapeHtml(file.name)}</strong> &bull; Detected: <span class="px-1.5 py-0.5 rounded bg-emerald-100 font-bold text-emerald-900">Format A: Binary (1/0) Item Matrix</span>.`,
+                'success'
+              );
+              renderAll();
+              showToast(`Imported ${students.length} students (Binary 1/0 Matrix)!`, 'success');
+              return;
+            }
+          }
+
+          // Format C: Total Scores Only
+          const targetScoreCol = scoreColIndices.length > 0 ? scoreColIndices[0] : (itemColIndices[0] ?? 1);
+          const students = [];
+          let maxObserved = 0;
+
+          for (let r = 0; r < dataRows.length; r++) {
+            const row = dataRows[r];
+            const name = String(row[nameColIdx] ?? '').trim();
+            const val = parseFloat(String(row[targetScoreCol] ?? '').replace(/[^\d.\-]/g, ''));
+            if (!name || isNaN(val)) continue;
+            if (val > maxObserved) maxObserved = val;
+            students.push({ id: generateId(), name, rawScore: val, responses: [] });
+          }
+
+          if (students.length === 0) {
+            showScoreImportBanner(`Could not find valid student scores in <strong>${escapeHtml(file.name)}</strong>.`, 'warning');
+            return;
+          }
+
+          // Guess total possible points from header or max observed score
+          const headerMaxMatch = String(headers[targetScoreCol] || '').match(/(\d+)/);
+          let guessedTotal = headerMaxMatch ? parseInt(headerMaxMatch[1], 10) : Math.max(10, Math.ceil(maxObserved / 5) * 5);
+          if (guessedTotal < maxObserved) guessedTotal = Math.ceil(maxObserved);
+
+          state.classData = {
+            ...state.classData,
+            fileName: file.name,
+            formatType: 'totals',
+            totalPossiblePoints: guessedTotal,
+            itemLabels: [],
+            answerKey: [],
+            students,
+            expandedDistractorIdx: null
+          };
+          saveClassDataToStorage();
+          showScoreImportBanner(
+            `Imported <strong>${students.length} students</strong> from <strong>${escapeHtml(file.name)}</strong> &bull; Detected: <span class="px-1.5 py-0.5 rounded bg-amber-100 font-bold text-amber-900">Format C: Total Scores Only</span> (Total Points set to ${guessedTotal} — editable on the right).`,
+            'warning'
+          );
+          renderAll();
+          showToast(`Imported ${students.length} student total scores.`, 'success');
+        } catch (err) {
+          console.error('Score file parse error:', err);
+          showScoreImportBanner(`Could not read <strong>${escapeHtml(file.name)}</strong>. Ensure it is a valid Excel or CSV file.`, 'error');
+          showToast('Failed to parse score file.', 'error');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function updatePassingThreshold(val) {
+      const num = Math.min(100, Math.max(1, parseFloat(val) || 75));
+      state.classData.passingThreshold = num;
+      saveClassDataToStorage();
+      renderAnalyticsTab();
+    }
+
+    function updateTotalPossiblePoints(val) {
+      const num = Math.max(1, parseFloat(val) || 10);
+      state.classData.totalPossiblePoints = num;
+      saveClassDataToStorage();
+      renderAnalyticsTab();
+    }
+
+    function updateAnswerKeyLetter(itemIdx, letter) {
+      state.classData.answerKey[itemIdx] = letter;
+      saveClassDataToStorage();
+      renderAnalyticsTab();
+    }
+
+    function syncAnswerKeyFromTab1() {
+      if (state.items.length === 0) {
+        showToast('No items with answer keys found in Tab 1.', 'warning');
+        return;
+      }
+      let synced = 0;
+      state.classData.answerKey = state.classData.answerKey.map((curr, idx) => {
+        if (state.items[idx]?.answer) {
+          synced++;
+          return state.items[idx].answer;
+        }
+        return curr;
+      });
+      saveClassDataToStorage();
+      renderAnalyticsTab();
+      showToast(`Synced ${synced} answer key(s) from Tab 1.`, 'success');
+    }
+
+    function setHistogramMode(mode) {
+      state.classData.histogramMode = mode;
+      renderAnalyticsTab();
+    }
+
+    function setItemAnalysisFilter(filter) {
+      state.classData.itemFilter = filter;
+      renderAnalyticsTab();
+    }
+
+    function toggleDistractorRow(itemIdx) {
+      state.classData.expandedDistractorIdx = state.classData.expandedDistractorIdx === itemIdx ? null : itemIdx;
+      renderAnalyticsTab();
+    }
+
+    function updateRosterSearch(val) {
+      state.classData.rosterSearch = val;
+      renderRosterTableOnly();
+    }
+
+    function updateRosterSort(val) {
+      state.classData.rosterSort = val;
+      renderRosterTableOnly();
+    }
+
+    // =========================================================================
+    // PSYCHOMETRIC & STATISTICAL COMPUTATION ENGINE
+    // =========================================================================
+    function computePercentile(sortedArr, p) {
+      if (sortedArr.length === 0) return 0;
+      if (sortedArr.length === 1) return sortedArr[0];
+      const pos = (sortedArr.length - 1) * p;
+      const base = Math.floor(pos);
+      const rest = pos - base;
+      if (sortedArr[base + 1] !== undefined) {
+        return sortedArr[base] + rest * (sortedArr[base + 1] - sortedArr[base]);
+      }
+      return sortedArr[base];
+    }
+
+    function computeClassAnalytics() {
+      const cd = state.classData;
+      const N = cd.students.length;
+      if (N === 0) return null;
+
+      const isItemLevel = cd.formatType === 'binary' || cd.formatType === 'letters';
+      const K = isItemLevel ? cd.itemLabels.length : Math.max(1, cd.totalPossiblePoints);
+      const threshold = cd.passingThreshold || 75;
+
+      // Score every student cleanly
+      const scoredStudents = cd.students.map(s => {
+        let binaryResp = [];
+        let rawScore = s.rawScore;
+
+        if (cd.formatType === 'letters') {
+          binaryResp = cd.answerKey.map((key, idx) => {
+            const ans = String(s.responses[idx] || '').trim().toUpperCase();
+            return ans && ans === key ? 1 : 0;
+          });
+          rawScore = binaryResp.reduce((a, b) => a + b, 0);
+        } else if (cd.formatType === 'binary') {
+          binaryResp = s.responses.map(v => (v ? 1 : 0));
+          rawScore = binaryResp.reduce((a, b) => a + b, 0);
+        }
+
+        const pct = (rawScore / K) * 100;
+        return {
+          ...s,
+          rawScore,
+          pct,
+          binaryResp,
+          passed: pct >= threshold
+        };
+      });
+
+      const scores = scoredStudents.map(s => s.rawScore);
+      const sortedScores = [...scores].sort((a, b) => a - b);
+
+      // Central Tendency
+      const sum = scores.reduce((a, b) => a + b, 0);
+      const mean = sum / N;
+      const mps = (mean / K) * 100;
+      const median = computePercentile(sortedScores, 0.5);
+
+      // Mode
+      const freqMap = new Map();
+      scores.forEach(sc => freqMap.set(sc, (freqMap.get(sc) || 0) + 1));
+      let maxFreq = 0;
+      freqMap.forEach(f => { if (f > maxFreq) maxFreq = f; });
+      let modeText = 'None';
+      if (maxFreq > 1) {
+        const modes = [...freqMap.entries()]
+          .filter(([, f]) => f === maxFreq)
+          .map(([sc]) => sc)
+          .sort((a, b) => a - b);
+        modeText = modes.length <= 3 ? `${modes.join(', ')} (×${maxFreq})` : `Multimodal (×${maxFreq})`;
+      }
+
+      // Variability
+      const sumSqDiff = scores.reduce((acc, sc) => acc + Math.pow(sc - mean, 2), 0);
+      const sampleVariance = N > 1 ? sumSqDiff / (N - 1) : 0;
+      const popVariance = sumSqDiff / N;
+      const sd = Math.sqrt(sampleVariance);
+
+      const min = sortedScores[0];
+      const max = sortedScores[N - 1];
+      const range = max - min;
+      const q1 = computePercentile(sortedScores, 0.25);
+      const q3 = computePercentile(sortedScores, 0.75);
+      const iqr = q3 - q1;
+
+      // Skewness (Adjusted Fisher-Pearson sample skewness)
+      let skewness = 0;
+      if (N >= 3 && sd > 0) {
+        const sumCubed = scores.reduce((acc, sc) => acc + Math.pow((sc - mean) / sd, 3), 0);
+        skewness = (N / ((N - 1) * (N - 2))) * sumCubed;
+      } else if (sd > 0) {
+        skewness = (3 * (mean - median)) / sd;
+      }
+
+      let skewnessLabel = 'Approximately Symmetric';
+      let skewnessDesc = 'Scores are fairly balanced around the class mean, indicating a well-spread assessment across ability levels.';
+      if (skewness <= -0.5) {
+        skewnessLabel = 'Negatively Skewed (Left-Skewed)';
+        skewnessDesc = 'Most students clustered at the upper end of the score distribution, suggesting strong class mastery or a relatively easy test.';
+      } else if (skewness >= 0.5) {
+        skewnessLabel = 'Positively Skewed (Right-Skewed)';
+        skewnessDesc = 'Most students clustered toward the lower end of the score distribution, indicating a challenging test or a need for targeted remediation.';
+      }
+
+      // Passing / Mastery
+      const passedCount = scoredStudents.filter(s => s.passed).length;
+      const masteryPct = (passedCount / N) * 100;
+
+      // Upper 27% & Lower 27% Grouping
+      const rankedDesc = [...scoredStudents].sort((a, b) => b.rawScore - a.rawScore || a.name.localeCompare(b.name));
+      const nGroup = N >= 2 ? Math.min(Math.floor(N / 2), Math.max(1, Math.round(N * 0.27))) : 0;
+      const upperSet = new Set(rankedDesc.slice(0, nGroup).map(s => s.id));
+      const lowerSet = new Set(rankedDesc.slice(N - nGroup).map(s => s.id));
+
+      // Competition ranking + Z-Score + Group label
+      let prevScore = null;
+      let prevRank = 1;
+      const roster = rankedDesc.map((s, i) => {
+        const rank = (prevScore !== null && s.rawScore === prevScore) ? prevRank : (i + 1);
+        prevScore = s.rawScore;
+        prevRank = rank;
+        const zScore = sd > 0 ? (s.rawScore - mean) / sd : 0;
+        const group = upperSet.has(s.id) ? 'Upper 27%' : (lowerSet.has(s.id) ? 'Lower 27%' : 'Middle');
+        return { ...s, rank, zScore, group };
+      });
+
+      // Item Analysis & KR-20 (Only for Format A & B)
+      let kr20 = null;
+      let kr20Label = '';
+      let itemStats = [];
+
+      if (isItemLevel && K > 0) {
+        const upperStudents = rankedDesc.slice(0, nGroup);
+        const lowerStudents = rankedDesc.slice(N - nGroup);
+        let sumPQ = 0;
+
+        itemStats = cd.itemLabels.map((label, j) => {
+          const totalCorrect = scoredStudents.reduce((acc, s) => acc + (s.binaryResp[j] || 0), 0);
+          const pAll = totalCorrect / N;
+          sumPQ += pAll * (1 - pAll);
+
+          const U = upperStudents.reduce((acc, s) => acc + (s.binaryResp[j] || 0), 0);
+          const L = lowerStudents.reduce((acc, s) => acc + (s.binaryResp[j] || 0), 0);
+
+          const p = nGroup > 0 ? (U + L) / (2 * nGroup) : pAll;
+          const D = nGroup > 0 ? (U - L) / nGroup : 0;
+
+          // Difficulty Interpretation
+          let diffInterp = 'Moderate / Ideal';
+          if (p >= 0.81) diffInterp = 'Very Easy';
+          else if (p >= 0.61) diffInterp = 'Easy';
+          else if (p >= 0.41) diffInterp = 'Moderate / Ideal';
+          else if (p >= 0.21) diffInterp = 'Difficult';
+          else diffInterp = 'Very Difficult';
+
+          // Discrimination Interpretation (Ebel)
+          let discInterp = 'Poor';
+          if (D >= 0.40) discInterp = 'Very Good';
+          else if (D >= 0.30) discInterp = 'Good';
+          else if (D >= 0.20) discInterp = 'Marginal';
+          else discInterp = 'Poor';
+
+          // Decision
+          let decision = 'Revise';
+          if (D >= 0.30 && p >= 0.21 && p <= 0.80) {
+            decision = 'Retain';
+          } else if (D < 0.10 || (D < 0.20 && (p > 0.85 || p < 0.15))) {
+            decision = 'Reject';
+          }
+
+          // Distractor Analysis (Format B only)
+          let distractors = null;
+          if (cd.formatType === 'letters') {
+            const key = cd.answerKey[j] || 'A';
+            const opts = ['A', 'B', 'C', 'D'];
+            distractors = opts.map(opt => {
+              const uCount = upperStudents.filter(s => s.responses[j] === opt).length;
+              const lCount = lowerStudents.filter(s => s.responses[j] === opt).length;
+              const allCount = scoredStudents.filter(s => s.responses[j] === opt).length;
+              const allPct = (allCount / N) * 100;
+
+              let status = 'Functioning';
+              if (opt === key) status = 'Correct Key';
+              else if (uCount > lCount) status = 'Misleading (U > L)';
+              else if (allPct < 5) status = 'Non-Functioning (<5%)';
+
+              return { option: opt, isKey: opt === key, uCount, lCount, allCount, allPct, status };
+            });
+          }
+
+          return {
+            index: j,
+            label,
+            stemPreview: state.items[j]?.stem || '',
+            totalCorrect,
+            totalCorrectPct: pAll * 100,
+            U,
+            L,
+            p,
+            diffInterp,
+            D,
+            discInterp,
+            decision,
+            distractors
+          };
+        });
+
+        if (K > 1 && popVariance > 0) {
+          const rawKr20 = (K / (K - 1)) * (1 - (sumPQ / popVariance));
+          kr20 = Math.max(-1, Math.min(1, rawKr20));
+          if (kr20 >= 0.80) kr20Label = 'Excellent';
+          else if (kr20 >= 0.70) kr20Label = 'Good';
+          else if (kr20 >= 0.60) kr20Label = 'Acceptable';
+          else kr20Label = 'Needs Improvement';
+        }
+      }
+
+      return {
+        N, K, threshold, isItemLevel, nGroup,
+        mean, mps, median, modeText,
+        sd, sampleVariance, min, max, range, q1, q3, iqr,
+        skewness, skewnessLabel, skewnessDesc,
+        passedCount, masteryPct,
+        kr20, kr20Label,
+        roster,
+        itemStats
+      };
+    }
+
+    // =========================================================================
+    // RENDER TAB 4: CLASS DATA & ITEM ANALYSIS
+    // =========================================================================
+    let latestAnalyticsCache = null;
+
+    function renderAnalyticsTab() {
+      const cd = state.classData;
+      const emptyEl = document.getElementById('analytics-empty-state');
+      const dashEl = document.getElementById('analytics-dashboard-content');
+      const keyBar = document.getElementById('answer-key-bar');
+      const totalPtsCtrl = document.getElementById('total-points-control');
+
+      document.getElementById('passing-threshold-input').value = cd.passingThreshold;
+      document.getElementById('total-points-input').value = cd.totalPossiblePoints;
+
+      if (cd.formatType === 'totals') totalPtsCtrl.classList.remove('hidden');
+      else totalPtsCtrl.classList.add('hidden');
+
+      if (cd.formatType === 'letters' && cd.answerKey.length > 0) {
+        keyBar.classList.remove('hidden');
+        document.getElementById('answer-key-inputs').innerHTML = cd.answerKey.map((k, idx) => `
+          <div class="inline-flex items-center gap-1 bg-white border border-indigo-200 rounded-lg px-2 py-1 text-xs">
+            <span class="font-bold text-slate-600">#${idx + 1}</span>
+            <select
+              onchange="updateAnswerKeyLetter(${idx}, this.value)"
+              class="font-bold text-indigo-700 bg-transparent outline-none cursor-pointer"
+            >
+              ${['A', 'B', 'C', 'D'].map(opt => `<option value="${opt}" ${k === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+            </select>
+          </div>
+        `).join('');
+      } else {
+        keyBar.classList.add('hidden');
+      }
+
+      const analytics = computeClassAnalytics();
+      latestAnalyticsCache = analytics;
+
+      if (!analytics) {
+        emptyEl.classList.remove('hidden');
+        dashEl.classList.add('hidden');
+        if (histogramChartInstance) { histogramChartInstance.destroy(); histogramChartInstance = null; }
+        if (scatterChartInstance) { scatterChartInstance.destroy(); scatterChartInstance = null; }
+        refreshIcons();
+        return;
+      }
+
+      emptyEl.classList.add('hidden');
+      dashEl.classList.remove('hidden');
+
+      // 1. Populate KPI Cards
+      document.getElementById('stat-n').textContent = analytics.N;
+      document.getElementById('stat-k').textContent = analytics.K;
+      document.getElementById('stat-mean').textContent = analytics.mean.toFixed(2);
+      document.getElementById('stat-mps').textContent = `${analytics.mps.toFixed(1)}%`;
+      document.getElementById('stat-median').textContent = analytics.median.toFixed(2);
+      document.getElementById('stat-mode').textContent = analytics.modeText;
+      document.getElementById('stat-sd').textContent = analytics.sd.toFixed(2);
+      document.getElementById('stat-variance').textContent = analytics.sampleVariance.toFixed(2);
+      document.getElementById('stat-range').textContent = analytics.range % 1 === 0 ? analytics.range : analytics.range.toFixed(1);
+      document.getElementById('stat-minmax').textContent = `Min ${analytics.min} – Max ${analytics.max}`;
+      document.getElementById('stat-iqr').textContent = `IQR: ${analytics.iqr.toFixed(1)} (Q1: ${analytics.q1.toFixed(1)}, Q3: ${analytics.q3.toFixed(1)})`;
+
+      document.getElementById('stat-mastery-pct').textContent = `${analytics.masteryPct.toFixed(1)}%`;
+      document.getElementById('stat-mastery-sub').textContent = `${analytics.passedCount}/${analytics.N} passed (≥${analytics.threshold}%)`;
+
+      const kr20Wrap = document.getElementById('stat-kr20-wrap');
+      if (analytics.kr20 !== null) {
+        const krCls = analytics.kr20 >= 0.80
+          ? 'bg-emerald-100 text-emerald-800'
+          : (analytics.kr20 >= 0.70 ? 'bg-sky-100 text-sky-800' : (analytics.kr20 >= 0.60 ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'));
+        kr20Wrap.innerHTML = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${krCls}">KR-20: ${analytics.kr20.toFixed(2)} (${analytics.kr20Label})</span>`;
+      } else {
+        kr20Wrap.innerHTML = `<span class="text-[10px] text-slate-400">KR-20: N/A (Item data needed)</span>`;
+      }
+
+      // Skewness Banner
+      document.getElementById('skewness-badge').textContent = `${analytics.skewnessLabel} (g₁ = ${analytics.skewness.toFixed(2)})`;
+      document.getElementById('skewness-text').textContent = analytics.skewnessDesc;
+
+      // 2. Histogram Mode Toggle & Chart
+      const exactBtn = document.getElementById('hist-btn-exact');
+      const binsBtn = document.getElementById('hist-btn-bins');
+      if (cd.histogramMode === 'exact') {
+        exactBtn.className = 'px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer bg-white text-indigo-700 shadow-xs';
+        binsBtn.className = 'px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer text-slate-600 hover:text-slate-900';
+      } else {
+        binsBtn.className = 'px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer bg-white text-indigo-700 shadow-xs';
+        exactBtn.className = 'px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer text-slate-600 hover:text-slate-900';
+      }
+
+      const passingRaw = (analytics.threshold / 100) * analytics.K;
+      document.getElementById('hist-pill-mean').textContent = analytics.mean.toFixed(2);
+      document.getElementById('hist-pill-median').textContent = analytics.median.toFixed(2);
+      document.getElementById('hist-pill-cutoff').textContent = `${passingRaw.toFixed(1)} (${analytics.threshold}%)`;
+
+      const histCard = document.getElementById('histogram-card');
+      const scatterCard = document.getElementById('scatter-card');
+      const totalsNotice = document.getElementById('totals-only-notice');
+      const iaSection = document.getElementById('item-analysis-section');
+
+      if (analytics.isItemLevel) {
+        histCard.classList.remove('lg:col-span-12');
+        histCard.classList.add('lg:col-span-7');
+        scatterCard.classList.remove('hidden');
+        totalsNotice.classList.add('hidden');
+        iaSection.classList.remove('hidden');
+      } else {
+        histCard.classList.remove('lg:col-span-7');
+        histCard.classList.add('lg:col-span-12');
+        scatterCard.classList.add('hidden');
+        totalsNotice.classList.remove('hidden');
+        iaSection.classList.add('hidden');
+      }
+
+      renderHistogramChart(analytics, passingRaw);
+      if (analytics.isItemLevel) {
+        renderScatterChart(analytics);
+        renderItemAnalysisTable(analytics);
+      }
+      renderRosterTableOnly();
+      refreshIcons();
+    }
+
+    function renderHistogramChart(analytics, passingRaw) {
+      const canvas = document.getElementById('score-histogram-canvas');
+      if (!canvas || typeof Chart === 'undefined') return;
+      if (histogramChartInstance) histogramChartInstance.destroy();
+
+      const scores = analytics.roster.map(s => s.rawScore);
+      let labels = [];
+      let counts = [];
+      let barColors = [];
+
+      if (state.classData.histogramMode === 'exact' && analytics.K <= 40) {
+        const minInt = Math.min(0, Math.floor(analytics.min));
+        const maxInt = Math.max(Math.ceil(analytics.K), Math.ceil(analytics.max));
+        for (let v = minInt; v <= maxInt; v++) {
+          labels.push(String(v));
+          const c = scores.filter(s => Math.round(s) === v).length;
+          counts.push(c);
+          barColors.push(v >= passingRaw ? 'rgba(16, 185, 129, 0.85)' : 'rgba(99, 102, 241, 0.78)');
+        }
+      } else {
+        // Grouped Bins (5–6 intervals)
+        const numBins = 5;
+        const binSize = Math.max(1, Math.ceil((analytics.K + 0.01) / numBins));
+        for (let start = 0; start <= analytics.K; start += binSize) {
+          const end = Math.min(analytics.K, start + binSize - 1);
+          if (start > analytics.K) break;
+          labels.push(start === end ? `${start}` : `${start}–${end}`);
+          const c = scores.filter(s => s >= start && s <= end + 0.999 && (end === analytics.K ? s <= analytics.K : s < start + binSize)).length;
+          counts.push(c);
+          const mid = (start + end) / 2;
+          barColors.push(mid >= passingRaw ? 'rgba(16, 185, 129, 0.85)' : 'rgba(99, 102, 241, 0.78)');
+          if (end >= analytics.K) break;
+        }
+      }
+
+      histogramChartInstance = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Students',
+            data: counts,
+            backgroundColor: barColors,
+            borderRadius: 6,
+            borderSkipped: false
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                title: (items) => `Score: ${items[0].label} / ${analytics.K}`,
+                label: (ctx) => {
+                  const val = ctx.parsed.y;
+                  const pct = ((val / analytics.N) * 100).toFixed(1);
+                  return ` ${val} student${val === 1 ? '' : 's'} (${pct}% of class)`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              title: { display: true, text: 'Raw Score', font: { size: 11, weight: 'bold' }, color: '#64748B' },
+              grid: { display: false }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: { stepSize: 1, precision: 0 },
+              title: { display: true, text: 'Number of Students', font: { size: 11, weight: 'bold' }, color: '#64748B' },
+              grid: { color: '#F1F5F9' }
+            }
+          }
+        }
+      });
+    }
+
+    function renderScatterChart(analytics) {
+      const canvas = document.getElementById('item-scatter-canvas');
+      if (!canvas || typeof Chart === 'undefined') return;
+      if (scatterChartInstance) scatterChartInstance.destroy();
+
+      const groups = { Retain: [], Revise: [], Reject: [] };
+      analytics.itemStats.forEach(it => {
+        groups[it.decision].push({
+          x: Number(it.p.toFixed(2)),
+          y: Number(it.D.toFixed(2)),
+          label: it.label,
+          decision: it.decision
+        });
+      });
+
+      scatterChartInstance = new Chart(canvas.getContext('2d'), {
+        type: 'scatter',
+        data: {
+          datasets: [
+            { label: 'Retain', data: groups.Retain, backgroundColor: '#10B981', pointRadius: 7, pointHoverRadius: 9 },
+            { label: 'Revise', data: groups.Revise, backgroundColor: '#F59E0B', pointRadius: 7, pointHoverRadius: 9 },
+            { label: 'Reject', data: groups.Reject, backgroundColor: '#F43F5E', pointRadius: 7, pointHoverRadius: 9 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => {
+                  const pt = ctx.raw;
+                  return ` ${pt.label}: p = ${pt.x.toFixed(2)}, D = ${pt.y.toFixed(2)} (${pt.decision})`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              min: 0,
+              max: 1,
+              title: { display: true, text: 'Difficulty Index (p)', font: { size: 11, weight: 'bold' }, color: '#64748B' },
+              grid: { color: '#F1F5F9' }
+            },
+            y: {
+              min: -0.5,
+              max: 1,
+              title: { display: true, text: 'Discrimination Index (D)', font: { size: 11, weight: 'bold' }, color: '#64748B' },
+              grid: { color: '#F1F5F9' }
+            }
+          }
+        }
+      });
+    }
+
+    function renderItemAnalysisTable(analytics) {
+      const items = analytics.itemStats;
+      const retainCount = items.filter(i => i.decision === 'Retain').length;
+      const reviseCount = items.filter(i => i.decision === 'Revise').length;
+      const rejectCount = items.filter(i => i.decision === 'Reject').length;
+
+      document.getElementById('item-analysis-group-strip').innerHTML = `
+        Upper Group (Top 27%): <strong>${analytics.nGroup}</strong> students &bull;
+        Lower Group (Bottom 27%): <strong>${analytics.nGroup}</strong> students &bull;
+        <span class="text-emerald-700 font-semibold">${retainCount} Retain</span> &middot;
+        <span class="text-amber-700 font-semibold">${reviseCount} Revise</span> &middot;
+        <span class="text-rose-700 font-semibold">${rejectCount} Reject</span>
+      `;
+
+      const counts = { all: items.length, Retain: retainCount, Revise: reviseCount, Reject: rejectCount };
+      document.querySelectorAll('.ia-filter-pill').forEach(btn => {
+        const f = btn.dataset.iaFilter;
+        const label = f === 'all' ? 'All' : f;
+        btn.textContent = `${label} (${counts[f] ?? 0})`;
+        if (f === state.classData.itemFilter) {
+          btn.className = 'ia-filter-pill px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors cursor-pointer bg-slate-900 text-white border-slate-900';
+        } else {
+          btn.className = 'ia-filter-pill px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors cursor-pointer bg-white text-slate-600 border-slate-200 hover:bg-slate-50';
+        }
+      });
+
+      const showDistractors = state.classData.formatType === 'letters';
+      const distTh = document.getElementById('ia-distractor-th');
+      if (showDistractors) distTh.classList.remove('hidden');
+      else distTh.classList.add('hidden');
+
+      const filtered = items.filter(i => state.classData.itemFilter === 'all' || i.decision === state.classData.itemFilter);
+      const tbody = document.getElementById('item-analysis-tbody');
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="${showDistractors ? 8 : 7}" class="py-6 text-center text-xs text-slate-500">No items match this filter.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(it => {
+        const decCls = it.decision === 'Retain'
+          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+          : (it.decision === 'Revise' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-rose-50 text-rose-700 border-rose-200');
+        const discCls = it.D >= 0.30
+          ? 'text-emerald-700 bg-emerald-50'
+          : (it.D >= 0.20 ? 'text-amber-700 bg-amber-50' : 'text-rose-700 bg-rose-50');
+        const isExpanded = showDistractors && state.classData.expandedDistractorIdx === it.index;
+
+        let distractorRowHtml = '';
+        if (isExpanded && it.distractors) {
+          distractorRowHtml = `
+            <tr class="bg-indigo-50/40">
+              <td colspan="8" class="px-4 py-3.5">
+                <div class="text-xs font-bold uppercase tracking-wider text-indigo-900 mb-2 flex items-center gap-1.5">
+                  <i data-lucide="pie-chart" class="w-3.5 h-3.5 text-indigo-600"></i>
+                  Distractor Analysis for ${escapeHtml(it.label)} (Upper ${analytics.nGroup} vs. Lower ${analytics.nGroup})
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                  ${it.distractors.map(d => {
+                    const cardCls = d.isKey
+                      ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
+                      : (d.status.startsWith('Misleading')
+                          ? 'bg-rose-50 border-rose-300 text-rose-950'
+                          : (d.status.startsWith('Non-Functioning')
+                              ? 'bg-amber-50 border-amber-200 text-amber-950'
+                              : 'bg-white border-slate-200 text-slate-800'));
+                    return `
+                      <div class="p-3 rounded-xl border ${cardCls} text-xs space-y-1">
+                        <div class="flex items-center justify-between">
+                          <span class="font-extrabold text-sm">Option ${d.option}</span>
+                          <span class="font-bold px-1.5 py-0.5 rounded bg-white/70 border border-black/5 text-[10px]">${escapeHtml(d.status)}</span>
+                        </div>
+                        <div class="flex items-center justify-between text-[11px] pt-1">
+                          <span>Upper: <strong>${d.uCount}</strong></span>
+                          <span>Lower: <strong>${d.lCount}</strong></span>
+                          <span>Total: <strong>${d.allCount}</strong> (${d.allPct.toFixed(0)}%)</span>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </td>
+            </tr>
+          `;
+        }
+
+        return `
+          <tr class="hover:bg-slate-50/70">
+            <td class="py-3 px-3">
+              <div class="font-bold text-slate-900">${escapeHtml(it.label)}</div>
+              ${it.stemPreview ? `<div class="text-[11px] text-slate-500 truncate max-w-[220px]" title="${escapeHtml(it.stemPreview)}">${escapeHtml(it.stemPreview)}</div>` : ''}
+            </td>
+            <td class="py-3 px-2.5 text-center font-medium text-slate-700 whitespace-nowrap">
+              ${it.totalCorrect}/${analytics.N} <span class="text-xs text-slate-400">(${it.totalCorrectPct.toFixed(0)}%)</span>
+            </td>
+            <td class="py-3 px-2.5 text-center font-semibold text-indigo-700">${it.U}</td>
+            <td class="py-3 px-2.5 text-center font-semibold text-slate-600">${it.L}</td>
+            <td class="py-3 px-3 text-center whitespace-nowrap">
+              <div class="font-bold text-slate-900">${it.p.toFixed(2)}</div>
+              <span class="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">${it.diffInterp}</span>
+            </td>
+            <td class="py-3 px-3 text-center whitespace-nowrap">
+              <div class="font-bold text-slate-900">${it.D.toFixed(2)}</div>
+              <span class="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full ${discCls}">${it.discInterp}</span>
+            </td>
+            <td class="py-3 px-2.5 text-center">
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${decCls}">${it.decision}</span>
+            </td>
+            ${showDistractors ? `
+              <td class="no-print py-3 px-2.5 text-center">
+                <button
+                  onclick="toggleDistractorRow(${it.index})"
+                  class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs font-semibold transition-colors cursor-pointer ${isExpanded ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white hover:bg-indigo-50 text-indigo-700 border-indigo-200'}"
+                >
+                  <span>${isExpanded ? 'Hide' : 'Inspect'}</span>
+                  <i data-lucide="${isExpanded ? 'chevron-up' : 'chevron-down'}" class="w-3.5 h-3.5"></i>
+                </button>
+              </td>
+            ` : ''}
+          </tr>
+          ${distractorRowHtml}
+        `;
+      }).join('');
+    }
+
+    function renderRosterTableOnly() {
+      const analytics = latestAnalyticsCache;
+      if (!analytics) return;
+
+      const query = (state.classData.rosterSearch || '').trim().toLowerCase();
+      let list = analytics.roster.filter(s => !query || s.name.toLowerCase().includes(query));
+
+      const sortMode = state.classData.rosterSort;
+      if (sortMode === 'score-asc') {
+        list = [...list].sort((a, b) => a.rawScore - b.rawScore || a.name.localeCompare(b.name));
+      } else if (sortMode === 'name-asc') {
+        list = [...list].sort((a, b) => a.name.localeCompare(b.name));
+      }
+
+      const tbody = document.getElementById('class-roster-tbody');
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-xs text-slate-500">No students match "${escapeHtml(state.classData.rosterSearch)}".</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map(s => {
+        const grpCls = s.group === 'Upper 27%'
+          ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+          : (s.group === 'Lower 27%' ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-slate-100 text-slate-600 border-slate-200');
+        const statusCls = s.passed
+          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+          : 'bg-rose-50 text-rose-700 border-rose-200';
+        return `
+          <tr class="hover:bg-slate-50/70">
+            <td class="py-2.5 px-3 text-center font-bold text-slate-700">#${s.rank}</td>
+            <td class="py-2.5 px-3 font-semibold text-slate-900">${escapeHtml(s.name)}</td>
+            <td class="py-2.5 px-3 text-center font-bold text-slate-800">${s.rawScore} <span class="text-xs font-normal text-slate-400">/ ${analytics.K}</span></td>
+            <td class="py-2.5 px-3 text-center font-semibold text-slate-700">${s.pct.toFixed(1)}%</td>
+            <td class="py-2.5 px-3 text-center font-mono text-xs ${s.zScore >= 0 ? 'text-emerald-700' : 'text-rose-700'}">${s.zScore >= 0 ? '+' : ''}${s.zScore.toFixed(2)}</td>
+            <td class="py-2.5 px-3 text-center">
+              <span class="inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold border ${grpCls}">${s.group}</span>
+            </td>
+            <td class="py-2.5 px-3 text-center">
+              <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${statusCls}">${s.passed ? 'Passed' : 'Needs Remediation'}</span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function exportClassAnalysisExcel() {
+      const analytics = latestAnalyticsCache || computeClassAnalytics();
+      if (!analytics) {
+        showToast('Upload or load class score data before exporting.', 'warning');
+        return;
+      }
+      if (typeof XLSX === 'undefined') {
+        showToast('SheetJS library is not available.', 'error');
+        return;
+      }
+
+      try {
+        // Sheet 1: Class Summary
+        const summaryRows = [
+          ['Class Performance & Psychometric Summary', 'Value'],
+          ['Source File', state.classData.fileName || 'Class Data'],
+          ['Total Students (N)', analytics.N],
+          ['Total Items / Points (K)', analytics.K],
+          ['Passing / Mastery Threshold (%)', `${analytics.threshold}%`],
+          [],
+          ['Central Tendency', ''],
+          ['Mean (x̄)', Number(analytics.mean.toFixed(2))],
+          ['Mean Percentage Score (MPS)', `${analytics.mps.toFixed(1)}%`],
+          ['Median (Mdn)', Number(analytics.median.toFixed(2))],
+          ['Mode (Mo)', analytics.modeText],
+          [],
+          ['Variability & Distribution', ''],
+          ['Standard Deviation (SD)', Number(analytics.sd.toFixed(2))],
+          ['Sample Variance (s²)', Number(analytics.sampleVariance.toFixed(2))],
+          ['Highest Score (Max)', analytics.max],
+          ['Lowest Score (Min)', analytics.min],
+          ['Range', analytics.range],
+          ['Q1 (25th Percentile)', Number(analytics.q1.toFixed(2))],
+          ['Q3 (75th Percentile)', Number(analytics.q3.toFixed(2))],
+          ['Interquartile Range (IQR)', Number(analytics.iqr.toFixed(2))],
+          ['Skewness (g₁)', `${analytics.skewness.toFixed(2)} (${analytics.skewnessLabel})`],
+          [],
+          ['Mastery & Reliability', ''],
+          ['Students Passing', `${analytics.passedCount} / ${analytics.N} (${analytics.masteryPct.toFixed(1)}%)`],
+          ['KR-20 Reliability', analytics.kr20 !== null ? `${analytics.kr20.toFixed(2)} (${analytics.kr20Label})` : 'N/A (Total Scores Only)']
+        ];
+        const ws1 = XLSX.utils.aoa_to_sheet(summaryRows);
+        ws1['!cols'] = [{ wch: 34 }, { wch: 34 }];
+
+        // Sheet 2: Item Analysis
+        const iaRows = [
+          ['Item No.', 'Total Correct', '% Correct', 'Upper (U)', 'Lower (L)', 'Difficulty (p)', 'Difficulty Interpretation', 'Discrimination (D)', 'Discrimination Interpretation', 'Decision']
+        ];
+        if (analytics.isItemLevel) {
+          analytics.itemStats.forEach(it => {
+            iaRows.push([
+              it.label,
+              `${it.totalCorrect}/${analytics.N}`,
+              `${it.totalCorrectPct.toFixed(1)}%`,
+              it.U,
+              it.L,
+              Number(it.p.toFixed(2)),
+              it.diffInterp,
+              Number(it.D.toFixed(2)),
+              it.discInterp,
+              it.decision
+            ]);
+          });
+        } else {
+          iaRows.push(['N/A — Upload item-by-item scores (1/0 or A–D) to populate item analysis.']);
+        }
+        const ws2 = XLSX.utils.aoa_to_sheet(iaRows);
+        ws2['!cols'] = [
+          { wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 11 }, { wch: 11 },
+          { wch: 14 }, { wch: 22 }, { wch: 17 }, { wch: 24 }, { wch: 12 }
+        ];
+
+        // Sheet 3: Student Roster
+        const rosterRows = [
+          ['Rank', 'Student Name', 'Raw Score', 'Total Points', 'Percentage (%)', 'Z-Score', 'Group', 'Status'],
+          ...analytics.roster.map(s => [
+            s.rank,
+            s.name,
+            s.rawScore,
+            analytics.K,
+            `${s.pct.toFixed(1)}%`,
+            Number(s.zScore.toFixed(2)),
+            s.group,
+            s.passed ? 'Passed' : 'Needs Remediation'
+          ])
+        ];
+        const ws3 = XLSX.utils.aoa_to_sheet(rosterRows);
+        ws3['!cols'] = [
+          { wch: 8 }, { wch: 24 }, { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 14 }, { wch: 20 }
+        ];
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws1, 'Class Summary');
+        XLSX.utils.book_append_sheet(wb, ws2, 'Item Analysis');
+        XLSX.utils.book_append_sheet(wb, ws3, 'Student Roster');
+        XLSX.writeFile(wb, 'Class_Item_Analysis_Report.xlsx');
+        showToast('Exported Class_Item_Analysis_Report.xlsx (3 sheets)!', 'success');
+      } catch (err) {
+        console.error('Class Excel export error:', err);
+        showToast('Could not export Class Analysis Excel workbook.', 'error');
+      }
+    }
+
+    // =========================================================================
     // INITIALIZATION
     // =========================================================================
     window.addEventListener('DOMContentLoaded', () => {
       loadFromStorage();
       setupDropzone();
+      setupScoreDropzone();
       updateKeyIndicator();
       switchTab('build');
       refreshIcons();
