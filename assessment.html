@@ -1,0 +1,3652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Item Detective: AI Assessment Design &amp; Validation Auditor</title>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+          colors: {
+            warmbg: '#F8F7F4',
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Lucide Icons via CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- SheetJS (XLSX) via cdnjs for .xlsx/.xls Import, Template & Multi-Sheet Export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: #F8F7F4;
+      color: #0F172A;
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F1F5F9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94A3B8;
+    }
+
+    @keyframes slideInUp {
+      from { transform: translateY(14px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .toast-enter {
+      animation: slideInUp 0.25s ease-out forwards;
+    }
+
+    .health-ring-circle {
+      transition: stroke-dashoffset 0.6s ease-out, stroke 0.3s ease;
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+    }
+
+    /* Clean Print Layout for 7-Column Validation Sheet */
+    @media print {
+      body {
+        background: #FFFFFF !important;
+        color: #000000 !important;
+        font-size: 11pt;
+      }
+      .no-print {
+        display: none !important;
+      }
+      header, footer {
+        display: none !important;
+      }
+      main {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .print-card {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+      }
+      .print-break-inside-avoid {
+        break-inside: avoid;
+      }
+      table.validation-print-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+      }
+      table.validation-print-table th,
+      table.validation-print-table td {
+        border: 1px solid #000000 !important;
+        padding: 6px 8px !important;
+        color: #000000 !important;
+        vertical-align: top !important;
+      }
+      table.validation-print-table thead th {
+        background-color: #F1F5F9 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        font-weight: 700 !important;
+        text-align: center !important;
+      }
+      .print-only-header {
+        display: block !important;
+        margin-bottom: 12px;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-indigo-100 selection:text-indigo-900">
+
+  <!-- Hidden global file input for attaching images directly to existing items -->
+  <input type="file" id="item-image-quick-input" accept="image/*" class="hidden" onchange="handleQuickImageAttach(event)" />
+
+  <!-- ==================== TOP NAVIGATION HEADER ==================== -->
+  <header class="bg-slate-900 text-white shadow-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between py-3.5 gap-3">
+        <!-- Brand Identity, Quick Stats Pill & AI Settings -->
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/20 shrink-0">
+              <i data-lucide="search-check" class="w-5 h-5 text-white"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white">Item Detective</h1>
+                <span class="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/25 text-indigo-200 border border-indigo-400/30">Validation AI</span>
+              </div>
+              <p class="text-xs text-slate-400 hidden sm:block">AI Assessment Design &amp; Validation Auditor</p>
+            </div>
+          </div>
+
+          <!-- Stats Pill + AI Settings Gear -->
+          <div class="flex items-center gap-2 shrink-0">
+            <div class="flex items-center gap-2 text-xs text-slate-200 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
+              <span class="flex items-center gap-1">
+                <i data-lucide="layers" class="w-3.5 h-3.5 text-indigo-400"></i>
+                <strong id="header-total-count">0</strong> <span class="hidden sm:inline">Items</span>
+              </span>
+              <span class="text-slate-600">|</span>
+              <span class="flex items-center gap-1">
+                <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-400"></i>
+                <strong id="header-audited-count">0</strong> <span class="hidden sm:inline">Audited</span>
+              </span>
+            </div>
+
+            <button
+              onclick="openAiSettingsModal()"
+              class="no-print inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-200 transition-colors cursor-pointer"
+              title="Configure Gemini API Key &amp; Engine Settings"
+            >
+              <i data-lucide="settings" class="w-4 h-4 text-indigo-400"></i>
+              <span class="hidden md:inline">AI Settings</span>
+              <span id="header-key-dot" class="w-2 h-2 rounded-full bg-emerald-400" title="AI Engine Ready"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3-Tab Navigation Bar -->
+        <nav class="no-print flex items-center gap-1.5 bg-slate-800/90 p-1 rounded-xl border border-slate-700/80 overflow-x-auto" aria-label="Main Tabs">
+          <button
+            id="tab-btn-build"
+            onclick="switchTab('build')"
+            class="flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer"
+          >
+            <span class="w-5 h-5 rounded-full text-[11px] font-bold flex items-center justify-center bg-white/15">1</span>
+            <span>Upload &amp; Build</span>
+          </button>
+
+          <button
+            id="tab-btn-detective"
+            onclick="switchTab('detective')"
+            class="flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer"
+          >
+            <span class="w-5 h-5 rounded-full text-[11px] font-bold flex items-center justify-center bg-white/15">2</span>
+            <span>Interactive Assessment &amp; Item Detective</span>
+            <span id="nav-badge-count" class="ml-0.5 px-2 py-0.5 text-[11px] font-bold rounded-full bg-indigo-500 text-white">0</span>
+          </button>
+
+          <button
+            id="tab-btn-report"
+            onclick="switchTab('report')"
+            class="flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer"
+          >
+            <span class="w-5 h-5 rounded-full text-[11px] font-bold flex items-center justify-center bg-white/15">3</span>
+            <span>Validation Report &amp; TOS</span>
+          </button>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== MAIN WORKSPACE ==================== -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+
+    <!-- ================================================================ -->
+    <!-- TAB 1: UPLOAD & BUILD                                            -->
+    <!-- ================================================================ -->
+    <section id="panel-build" class="space-y-6">
+      <!-- Intro & Quick Action Banner -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+          <div class="flex flex-wrap items-center gap-2 mb-1">
+            <h2 class="text-lg sm:text-xl font-bold text-slate-900">Upload &amp; Build Your Test Item Validation Sheet</h2>
+            <span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Supports 7-Column Validation Excel</span>
+          </div>
+          <p class="text-sm text-slate-600">
+            Upload Excel spreadsheets in the <strong>No. | Test Items | BTL | Retain | Reject | Revise | REMARKS</strong> format (or standard multi-column format), bulk-paste items, or add questions with diagrams manually.
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+          <button
+            onclick="downloadValidationTemplate()"
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm transition-colors cursor-pointer"
+          >
+            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+            <span>Download Validation Excel Template (.xlsx)</span>
+          </button>
+          <button
+            onclick="loadSampleFlawedTest()"
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition-colors cursor-pointer"
+          >
+            <i data-lucide="sparkles" class="w-4 h-4"></i>
+            <span>Load Sample Flawed Test</span>
+          </button>
+          <button
+            onclick="openClearModal()"
+            class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 text-sm font-semibold transition-colors cursor-pointer"
+            title="Clear all items"
+          >
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+            <span>Clear All</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Two-Column Input Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Left Column: Excel/File Upload & Smart Bulk Paste -->
+        <div class="lg:col-span-6 space-y-6">
+          <!-- File Upload Card -->
+          <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-6">
+            <div class="flex items-center justify-between gap-2 mb-4">
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                  <i data-lucide="upload-cloud" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <h3 class="text-base font-bold text-slate-900">Upload Excel or Test File</h3>
+                  <p class="text-xs text-slate-500">Auto-detects Validation Sheet (.xlsx/.xls) &amp; Standard formats (.csv, .txt, .json)</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Drag & Drop Zone -->
+            <div
+              id="dropzone"
+              class="border-2 border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/30 rounded-2xl p-6 text-center transition-all cursor-pointer"
+              onclick="document.getElementById('file-input').click()"
+            >
+              <input
+                type="file"
+                id="file-input"
+                accept=".xlsx,.xls,.csv,.txt,.json"
+                class="hidden"
+                onchange="handleFileSelect(event)"
+              />
+              <div class="w-12 h-12 mx-auto rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
+                <i data-lucide="file-spreadsheet" class="w-6 h-6"></i>
+              </div>
+              <p class="text-sm font-semibold text-slate-800">
+                Drag &amp; drop your Excel validation sheet here, or <span class="text-indigo-600 underline">browse files</span>
+              </p>
+              <p class="text-xs text-slate-500 mt-1.5">
+                Format A: <span class="font-mono text-[11px] bg-slate-100 px-1.5 py-0.5 rounded">No. | Test Items | BTL | Retain | Reject | Revise | REMARKS</span>
+              </p>
+              <p class="text-xs text-slate-500 mt-1">
+                Format B: <span class="font-mono text-[11px] bg-slate-100 px-1.5 py-0.5 rounded">Question | Choice A–D | Answer | Bloom's Level | Competency</span>
+              </p>
+            </div>
+
+            <!-- Inline Import Confirmation Banner -->
+            <div id="import-status-banner" class="hidden mt-3.5 p-3.5 rounded-xl border text-xs flex items-start justify-between gap-2.5">
+              <div id="import-status-content" class="flex items-start gap-2.5"></div>
+              <button
+                onclick="document.getElementById('import-status-banner').classList.add('hidden')"
+                class="text-slate-400 hover:text-slate-700 cursor-pointer shrink-0"
+                title="Dismiss"
+              >
+                <i data-lucide="x" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Smart Bulk Paste Card -->
+          <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-6">
+            <div class="flex items-center gap-2.5 mb-3">
+              <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h3 class="text-base font-bold text-slate-900">Smart Bulk Paste</h3>
+                <p class="text-xs text-slate-500">Paste numbered questions with A–D choices &amp; optional BTL / Answer / Competency</p>
+              </div>
+            </div>
+
+            <textarea
+              id="bulk-paste-input"
+              rows="8"
+              class="w-full rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 p-3.5 text-sm text-slate-800 font-mono bg-slate-50/50 transition-all outline-none"
+              placeholder="1. What mathematical term describes a statement indicating that two ratios are equal?&#10;A. Difference&#10;B. Fraction&#10;C. Percent&#10;D. Proportion&#10;Answer: D&#10;BTL: R"
+            ></textarea>
+
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-3">
+              <p class="text-xs text-slate-500">Accepts BTL codes (R, U, Ap, An, E, C) or full Bloom's names.</p>
+              <button
+                onclick="parseBulkText()"
+                class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold shadow-sm transition-colors shrink-0 cursor-pointer"
+              >
+                <i data-lucide="wand-2" class="w-4 h-4"></i>
+                <span>Parse into Items</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Manual Add / Edit Form -->
+        <div class="lg:col-span-6">
+          <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-6">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                  <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <h3 id="form-title" class="text-base font-bold text-slate-900">Add Test Item Manually</h3>
+                  <p class="text-xs text-slate-500">Create or edit individual items, BTL level, and optional diagrams</p>
+                </div>
+              </div>
+              <button
+                id="cancel-edit-btn"
+                onclick="resetManualForm()"
+                class="hidden text-xs font-semibold text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
+              >
+                Cancel Edit
+              </button>
+            </div>
+
+            <form id="manual-item-form" onsubmit="saveManualItem(event)" class="space-y-4">
+              <input type="hidden" id="edit-item-id" value="" />
+
+              <!-- Stem -->
+              <div>
+                <label for="input-stem" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Question Stem *</label>
+                <textarea
+                  id="input-stem"
+                  rows="3"
+                  required
+                  class="w-full rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 p-3 text-sm text-slate-800 outline-none transition-all"
+                  placeholder="Enter the question or problem statement..."
+                ></textarea>
+              </div>
+
+              <!-- Choices A-D -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label for="input-choice-A" class="block text-xs font-semibold text-slate-600 mb-1">Choice A *</label>
+                  <input type="text" id="input-choice-A" required class="w-full rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 px-3 py-2 text-sm outline-none" placeholder="Option A" />
+                </div>
+                <div>
+                  <label for="input-choice-B" class="block text-xs font-semibold text-slate-600 mb-1">Choice B *</label>
+                  <input type="text" id="input-choice-B" required class="w-full rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 px-3 py-2 text-sm outline-none" placeholder="Option B" />
+                </div>
+                <div>
+                  <label for="input-choice-C" class="block text-xs font-semibold text-slate-600 mb-1">Choice C *</label>
+                  <input type="text" id="input-choice-C" required class="w-full rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 px-3 py-2 text-sm outline-none" placeholder="Option C" />
+                </div>
+                <div>
+                  <label for="input-choice-D" class="block text-xs font-semibold text-slate-600 mb-1">Choice D *</label>
+                  <input type="text" id="input-choice-D" required class="w-full rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 px-3 py-2 text-sm outline-none" placeholder="Option D" />
+                </div>
+              </div>
+
+              <!-- Answer Key (Optional) & Target BTL -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label for="input-answer" class="block text-xs font-semibold text-slate-600 mb-1">Correct Answer (Optional)</label>
+                  <select id="input-answer" class="w-full rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 px-3 py-2.5 text-sm bg-white outline-none">
+                    <option value="">— Not Specified —</option>
+                    <option value="A">Option A</option>
+                    <option value="B">Option B</option>
+                    <option value="C">Option C</option>
+                    <option value="D">Option D</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label for="input-btl" class="block text-xs font-semibold text-slate-600 mb-1">Target BTL (Bloom's Level)</label>
+                  <select id="input-btl" class="w-full rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 px-3 py-2.5 text-sm bg-white outline-none">
+                    <option value="">— Not Specified —</option>
+                    <option value="R">R - Remembering</option>
+                    <option value="U">U - Understanding</option>
+                    <option value="Ap">Ap - Applying</option>
+                    <option value="An">An - Analyzing</option>
+                    <option value="E">E - Evaluating</option>
+                    <option value="C">C - Creating</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Learning Competency -->
+              <div>
+                <label for="input-competency" class="block text-xs font-semibold text-slate-600 mb-1">Learning Competency / Objective (Optional)</label>
+                <input
+                  type="text"
+                  id="input-competency"
+                  class="w-full rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 px-3 py-2 text-sm outline-none"
+                  placeholder="e.g., M6NS-IIa-129 Visualize and express ratios of two given numbers"
+                />
+              </div>
+
+              <!-- Optional Diagram / Image Attachment -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Diagram / Visual Attachment (Optional)</label>
+                <div class="flex flex-wrap items-center gap-3">
+                  <label class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 text-xs font-semibold text-slate-700 cursor-pointer transition-colors">
+                    <i data-lucide="image-plus" class="w-4 h-4 text-indigo-600"></i>
+                    <span>Choose Diagram Image</span>
+                    <input type="file" id="input-image-file" accept="image/*" class="hidden" onchange="handleFormImageSelect(event)" />
+                  </label>
+                  <button
+                    type="button"
+                    id="clear-form-image-btn"
+                    onclick="clearFormImage()"
+                    class="hidden text-xs font-semibold text-rose-600 hover:text-rose-700 cursor-pointer"
+                  >
+                    Remove Image
+                  </button>
+                </div>
+                <div id="form-image-preview-wrap" class="hidden mt-2.5 p-2 rounded-xl border border-slate-200 bg-slate-50 inline-block">
+                  <img id="form-image-preview" src="" alt="Attached diagram preview" class="max-h-28 rounded-lg object-contain" />
+                </div>
+              </div>
+
+              <!-- Submit -->
+              <div class="pt-1">
+                <button
+                  type="submit"
+                  id="submit-manual-btn"
+                  class="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition-colors cursor-pointer"
+                >
+                  <i data-lucide="plus" class="w-4 h-4"></i>
+                  <span>Add Item to Validation Bank</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Item Bank Preview Table (Matching Validation Sheet Columns) -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <h3 class="text-base font-bold text-slate-900">Live Item Bank Preview (<span id="build-item-count">0</span> Items)</h3>
+            <p class="text-xs text-slate-500">Structured in your Validation Sheet layout. Attach floating Excel diagrams using the image button on any row.</p>
+          </div>
+          <button
+            onclick="switchTab('detective')"
+            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition-colors cursor-pointer"
+          >
+            <span>Proceed to Item Detective</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <div id="build-table-container" class="overflow-x-auto">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================ -->
+    <!-- TAB 2: INTERACTIVE ASSESSMENT & ITEM DETECTIVE                   -->
+    <!-- ================================================================ -->
+    <section id="panel-detective" class="hidden space-y-6">
+      <!-- Mode Toggle & Action Bar -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 sm:p-5 space-y-4">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <!-- Mode Toggle Switch -->
+          <div class="inline-flex p-1 rounded-xl bg-slate-100 border border-slate-200/80 self-start">
+            <button
+              id="mode-btn-detective"
+              onclick="setDetectiveMode('detective')"
+              class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer"
+            >
+              <i data-lucide="shield-alert" class="w-4 h-4"></i>
+              <span>Item Detective Mode (AI Audit)</span>
+            </button>
+            <button
+              id="mode-btn-student"
+              onclick="setDetectiveMode('student')"
+              class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer"
+            >
+              <i data-lucide="graduation-cap" class="w-4 h-4"></i>
+              <span>Student Preview Mode</span>
+            </button>
+          </div>
+
+          <!-- Item Detective Actions -->
+          <div id="detective-toolbar-actions" class="flex flex-wrap items-center gap-2.5">
+            <button
+              id="run-all-audit-btn"
+              onclick="auditAllItems()"
+              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-sm font-semibold shadow-sm transition-colors cursor-pointer"
+            >
+              <i data-lucide="scan-search" class="w-4 h-4"></i>
+              <span>Audit All Items</span>
+            </button>
+            <button
+              onclick="resetAllAudits()"
+              class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 text-sm font-semibold transition-colors cursor-pointer"
+            >
+              <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+              <span>Reset Audits</span>
+            </button>
+          </div>
+
+          <!-- Student Preview Actions -->
+          <div id="student-toolbar-actions" class="hidden flex-wrap items-center gap-2.5">
+            <div class="flex items-center gap-3 px-4 py-2 rounded-xl bg-slate-100 border border-slate-200 text-sm font-semibold text-slate-700">
+              <span>Answered: <span id="student-answered-count" class="text-indigo-600">0</span>/<span id="student-total-count">0</span></span>
+              <span class="text-slate-300">|</span>
+              <span>Score: <span id="student-score-count" class="text-emerald-600">—</span></span>
+            </div>
+            <button
+              id="submit-quiz-btn"
+              onclick="submitStudentQuiz()"
+              class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm transition-colors cursor-pointer"
+            >
+              <i data-lucide="check-check" class="w-4 h-4"></i>
+              <span>Submit Quiz</span>
+            </button>
+            <button
+              onclick="resetStudentQuiz()"
+              class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 text-sm font-semibold transition-colors cursor-pointer"
+            >
+              <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+              <span>Reset Quiz</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Batch Audit Progress Bar -->
+        <div id="batch-progress-container" class="hidden bg-indigo-50/80 border border-indigo-200 rounded-xl p-3.5">
+          <div class="flex items-center justify-between text-xs font-semibold text-indigo-900 mb-1.5">
+            <span id="batch-progress-label" class="flex items-center gap-2">
+              <span class="w-3.5 h-3.5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin inline-block"></span>
+              <span>Auditing items...</span>
+            </span>
+            <span id="batch-progress-pct">0%</span>
+          </div>
+          <div class="w-full h-2.5 bg-indigo-200/70 rounded-full overflow-hidden">
+            <div id="batch-progress-bar" class="h-full bg-indigo-600 rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Filter Pills (Item Detective Mode Only) -->
+        <div id="detective-filters" class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
+          <span class="text-xs font-semibold text-slate-500 mr-1">Filter Verdict:</span>
+          <button onclick="setFilter('all')" data-filter="all" class="filter-pill px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors cursor-pointer">All</button>
+          <button onclick="setFilter('Retain')" data-filter="Retain" class="filter-pill px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors cursor-pointer">Retain</button>
+          <button onclick="setFilter('Revise')" data-filter="Revise" class="filter-pill px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors cursor-pointer">Revise</button>
+          <button onclick="setFilter('Reject')" data-filter="Reject" class="filter-pill px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors cursor-pointer">Reject</button>
+          <button onclick="setFilter('Unaudited')" data-filter="Unaudited" class="filter-pill px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors cursor-pointer">Unaudited</button>
+        </div>
+      </div>
+
+      <!-- Student Score Banner -->
+      <div id="student-result-banner" class="hidden bg-white rounded-2xl border border-emerald-200 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-3.5">
+          <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+            <i data-lucide="award" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h3 id="student-result-title" class="text-base font-bold text-slate-900">Quiz Submitted!</h3>
+            <p id="student-result-desc" class="text-sm text-slate-600">Review your item-by-item feedback below.</p>
+          </div>
+        </div>
+        <button
+          onclick="resetStudentQuiz()"
+          class="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold cursor-pointer shrink-0"
+        >
+          <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+          <span>Retake Preview</span>
+        </button>
+      </div>
+
+      <!-- Question Cards Container -->
+      <div id="detective-cards-container" class="space-y-5">
+        <!-- Populated dynamically -->
+      </div>
+    </section>
+
+    <!-- ================================================================ -->
+    <!-- TAB 3: VALIDATION REPORT & TOS                                   -->
+    <!-- ================================================================ -->
+    <section id="panel-report" class="hidden space-y-6">
+      <!-- Print-only Document Title -->
+      <div class="hidden print-only-header">
+        <h1 class="text-lg font-bold text-center uppercase tracking-wide">Test Item Validation Sheet</h1>
+        <p class="text-xs text-center text-slate-600 mt-0.5">Generated by Item Detective: AI Assessment Design &amp; Validation Auditor</p>
+      </div>
+
+      <!-- Report Header & Export Controls -->
+      <div class="no-print bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-lg sm:text-xl font-bold text-slate-900">Validation Report &amp; Table of Specifications (TOS)</h2>
+          <p class="text-sm text-slate-600 mt-1">
+            Export directly to your 7-column Validation Sheet Excel workbook (plus TOS Summary), download as text, or print a bordered validation table.
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+          <button
+            onclick="exportValidationSheetExcel()"
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm transition-colors cursor-pointer"
+          >
+            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+            <span>Export Validation Sheet (.xlsx)</span>
+          </button>
+          <button
+            onclick="copyRevisedTest()"
+            class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-sm font-semibold transition-colors cursor-pointer"
+          >
+            <i data-lucide="copy" class="w-4 h-4"></i>
+            <span>Copy Revised Test</span>
+          </button>
+          <button
+            onclick="downloadRevisedTestTxt()"
+            class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-sm font-semibold transition-colors cursor-pointer"
+          >
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span>Download (.txt)</span>
+          </button>
+          <button
+            onclick="window.print()"
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold shadow-sm transition-colors cursor-pointer"
+          >
+            <i data-lucide="printer" class="w-4 h-4"></i>
+            <span>Print Validation Report</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Assessment Health Dashboard -->
+      <div class="no-print grid grid-cols-1 md:grid-cols-12 gap-4">
+        <!-- Health Score Ring Card -->
+        <div class="md:col-span-4 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex items-center gap-4">
+          <div class="relative w-24 h-24 shrink-0">
+            <svg class="w-24 h-24" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="40" fill="none" stroke="#E2E8F0" stroke-width="10"></circle>
+              <circle
+                id="health-ring-progress"
+                class="health-ring-circle"
+                cx="50" cy="50" r="40"
+                fill="none"
+                stroke="#4F46E5"
+                stroke-width="10"
+                stroke-linecap="round"
+                stroke-dasharray="251.2"
+                stroke-dashoffset="251.2"
+              ></circle>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <span id="kpi-health-score" class="text-xl font-extrabold text-slate-900">—</span>
+              <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Health</span>
+            </div>
+          </div>
+          <div class="min-w-0 flex-1">
+            <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">Assessment Health</span>
+            <p id="kpi-health-sub" class="text-sm font-semibold text-slate-800 mt-1">Run audit to score</p>
+            <p id="kpi-audited-sub" class="text-xs text-slate-500 mt-1">0 of 0 validated</p>
+          </div>
+        </div>
+
+        <!-- Verdict Counts (Retain / Revise / Reject / Unaudited) -->
+        <div class="md:col-span-8 grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+          <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-emerald-700">Retain</span>
+              <span class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+              </span>
+            </div>
+            <div class="mt-3">
+              <span id="kpi-retain-count" class="text-3xl font-extrabold text-emerald-600">0</span>
+              <p class="text-[11px] text-slate-500 mt-0.5">Ready to use</p>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-amber-700">Revise</span>
+              <span class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                <i data-lucide="pencil-line" class="w-4 h-4"></i>
+              </span>
+            </div>
+            <div class="mt-3">
+              <span id="kpi-revise-count" class="text-3xl font-extrabold text-amber-600">0</span>
+              <p class="text-[11px] text-slate-500 mt-0.5">Fixable flaws</p>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-rose-700">Reject</span>
+              <span class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+                <i data-lucide="x-circle" class="w-4 h-4"></i>
+              </span>
+            </div>
+            <div class="mt-3">
+              <span id="kpi-reject-count" class="text-3xl font-extrabold text-rose-600">0</span>
+              <p class="text-[11px] text-slate-500 mt-0.5">Critical flaws</p>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-600">Unaudited</span>
+              <span class="w-7 h-7 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center">
+                <i data-lucide="clock" class="w-4 h-4"></i>
+              </span>
+            </div>
+            <div class="mt-3">
+              <span id="kpi-unaudited-count" class="text-3xl font-extrabold text-slate-700">0</span>
+              <p class="text-[11px] text-slate-500 mt-0.5">Pending review</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analytics Grid: Top Flagged Flaws + TOS Summary -->
+      <div class="no-print grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Top Flagged Design Flaws -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-6">
+          <div class="flex items-center gap-2.5 mb-5">
+            <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+              <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900">Top Flagged Design Flaws</h3>
+              <p class="text-xs text-slate-500">Breakdown across 10 psychometric &amp; assessment categories</p>
+            </div>
+          </div>
+          <div id="flaw-breakdown-container" class="space-y-3">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- Table of Specifications (TOS) Summary -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                <i data-lucide="table-properties" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h3 class="text-base font-bold text-slate-900">Table of Specifications (TOS) Summary</h3>
+                <p class="text-xs text-slate-500">Grouped by Bloom's Taxonomy Level (BTL)</p>
+              </div>
+            </div>
+            <span id="tos-hots-badge" class="text-xs font-bold px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 whitespace-nowrap self-start sm:self-center">
+              LOTS: 0% | HOTS: 0%
+            </span>
+          </div>
+
+          <!-- LOTS (R, U) vs HOTS (Ap, An, E, C) Stacked Bar -->
+          <div class="mb-4">
+            <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden flex">
+              <div id="tos-lots-bar" class="h-full bg-sky-500 transition-all duration-500" style="width: 0%"></div>
+              <div id="tos-hots-bar" class="h-full bg-indigo-600 transition-all duration-500" style="width: 0%"></div>
+            </div>
+            <div class="flex items-center justify-between text-[11px] font-semibold text-slate-600 mt-1.5">
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span>LOTS (R, U): <span id="tos-lots-text">0%</span></span>
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>HOTS (Ap, An, E, C): <span id="tos-hots-text">0%</span></span>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  <th class="py-2 pr-2">BTL Level</th>
+                  <th class="py-2 px-2">Item Nos.</th>
+                  <th class="py-2 px-2 text-center">Count</th>
+                  <th class="py-2 pl-2 text-right">%</th>
+                </tr>
+              </thead>
+              <tbody id="tos-table-body" class="divide-y divide-slate-100 text-sm">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Exact 7-Column Validation Sheet Preview Table (Also Printed!) -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-6 print-card">
+        <div class="no-print flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+          <div>
+            <h3 class="text-base font-bold text-slate-900">7-Column Validation Sheet Preview</h3>
+            <p class="text-xs text-slate-500">Matches your exact Excel &amp; print format: No. | Test Items | BTL | Retain | Reject | Revise | REMARKS</p>
+          </div>
+          <span class="text-xs font-semibold text-slate-500">Edit verdicts or remarks in Tab 2 to update live</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="validation-print-table w-full text-left border-collapse border border-slate-300 text-sm">
+            <thead>
+              <tr class="bg-slate-100 text-slate-900 text-xs font-bold uppercase tracking-wider text-center">
+                <th class="border border-slate-300 py-2.5 px-2.5 w-12">No.</th>
+                <th class="border border-slate-300 py-2.5 px-3 text-left min-w-[280px]">Test Items</th>
+                <th class="border border-slate-300 py-2.5 px-2.5 w-16">BTL</th>
+                <th class="border border-slate-300 py-2.5 px-2.5 w-16">Retain</th>
+                <th class="border border-slate-300 py-2.5 px-2.5 w-16">Reject</th>
+                <th class="border border-slate-300 py-2.5 px-2.5 w-16">Revise</th>
+                <th class="border border-slate-300 py-2.5 px-3 text-left min-w-[220px]">REMARKS</th>
+              </tr>
+            </thead>
+            <tbody id="validation-sheet-preview-body">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="no-print border-t border-slate-200/80 bg-white mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+      <p><strong>Item Detective</strong> — AI Assessment Design &amp; Validation Auditor</p>
+      <p>Gemini AI + Built-in Psychometric Engine &bull; SheetJS Excel Export &bull; Saved Locally</p>
+    </div>
+  </footer>
+
+  <!-- ==================== AI SETTINGS MODAL ==================== -->
+  <div id="ai-settings-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/55 backdrop-blur-xs">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-lg w-full p-6 space-y-5">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+            <i data-lucide="sliders-horizontal" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900">AI Audit Engine Settings</h3>
+            <p class="text-xs text-slate-500 mt-0.5">Works automatically in Canvas, or supply your own Gemini API key when hosted externally (e.g., GitHub Pages).</p>
+          </div>
+        </div>
+        <button onclick="closeAiSettingsModal()" class="text-slate-400 hover:text-slate-700 cursor-pointer">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label for="custom-api-key-input" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
+            Optional Gemini API Key
+          </label>
+          <input
+            type="password"
+            id="custom-api-key-input"
+            placeholder="AIza... (leave blank to use default environment key)"
+            class="w-full rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 px-3.5 py-2.5 text-sm font-mono outline-none"
+          />
+          <p class="text-[11px] text-slate-500 mt-1.5">
+            Stored locally in your browser's <code class="bg-slate-100 px-1 py-0.5 rounded">localStorage</code>. Never sent anywhere except Google's Gemini API endpoint.
+          </p>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200 text-xs text-amber-950 flex items-start gap-2.5">
+          <i data-lucide="zap" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
+          <div>
+            <strong>Zero-Downtime Fallback Active:</strong> If Gemini AI is unreachable or no API key is available, Item Detective automatically runs its <strong>Built-in Smart Psychometric Engine</strong> across all 10 flaw categories.
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-2.5 pt-2 border-t border-slate-100">
+        <button
+          onclick="clearCustomApiKey()"
+          class="px-3.5 py-2 rounded-xl bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 text-xs font-semibold transition-colors cursor-pointer"
+        >
+          Clear Saved Key
+        </button>
+        <div class="flex items-center gap-2">
+          <button
+            onclick="closeAiSettingsModal()"
+            class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            onclick="saveCustomApiKey()"
+            class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition-colors cursor-pointer"
+          >
+            Save Settings
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== CLEAR ALL CONFIRMATION MODAL ==================== -->
+  <div id="clear-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full p-6 space-y-4">
+      <div class="flex items-start gap-3">
+        <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+          <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Clear All Test Items?</h3>
+          <p class="text-sm text-slate-600 mt-1">
+            This will remove all items, attached diagrams, verdicts, and validation remarks from your workspace.
+          </p>
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-2.5 pt-2">
+        <button onclick="closeClearModal()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold transition-colors cursor-pointer">
+          Cancel
+        </button>
+        <button onclick="confirmClearAll()" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold shadow-sm transition-colors cursor-pointer">
+          Yes, Clear All
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TOAST NOTIFICATION CONTAINER ==================== -->
+  <div id="toast-container" class="no-print fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+  <!-- ==================== APPLICATION JAVASCRIPT ==================== -->
+  <script>
+    // =========================================================================
+    // CONSTANTS & BTL TAXONOMY MAPPINGS
+    // =========================================================================
+    const STORAGE_KEY = 'item_detective_validation_v4';
+    const API_KEY_STORAGE = 'item_detective_custom_gemini_key';
+
+    // LOTS = R, U | HOTS = Ap, An, E, C
+    const BTL_LIST = [
+      { code: 'R',  name: 'Remembering',   order: 'LOTS' },
+      { code: 'U',  name: 'Understanding', order: 'LOTS' },
+      { code: 'Ap', name: 'Applying',      order: 'HOTS' },
+      { code: 'An', name: 'Analyzing',     order: 'HOTS' },
+      { code: 'E',  name: 'Evaluating',    order: 'HOTS' },
+      { code: 'C',  name: 'Creating',      order: 'HOTS' }
+    ];
+
+    const BTL_CODE_TO_NAME = Object.fromEntries(BTL_LIST.map(b => [b.code, b.name]));
+
+    const FLAW_CATEGORIES = [
+      'Item Interdependence',
+      'Missing Visual Bias',
+      'Unordered / Implausible Distractors',
+      'All / None of the Above',
+      'Absolute Modifiers',
+      'Negative / Confusing Stem',
+      'Length / Detail Bias',
+      'Grammatical Clue',
+      'Double-Barreled Question',
+      "Bloom's Taxonomy (BTL) Alignment"
+    ];
+
+    // Main reactive application state
+    let state = {
+      items: [],
+      activeTab: 'build',         // 'build' | 'detective' | 'report'
+      detectiveMode: 'detective', // 'detective' | 'student'
+      activeFilter: 'all',        // 'all' | 'Retain' | 'Revise' | 'Reject' | 'Unaudited'
+      studentAnswers: {},
+      studentSubmitted: false,
+      auditingIds: new Set(),
+      isBatchAuditing: false,
+      formImageDataUrl: '',
+      pendingImageItemId: null
+    };
+
+    // =========================================================================
+    // CORE UTILITIES & STORAGE
+    // =========================================================================
+    function refreshIcons(rootEl) {
+      if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons(rootEl ? { root: rootEl } : undefined);
+      }
+    }
+
+    function generateId() {
+      return 'itm_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function normalizeBtlCode(val) {
+      if (!val) return '';
+      const lower = String(val).trim().toLowerCase();
+      if (lower === 'r' || lower.startsWith('rem')) return 'R';
+      if (lower === 'u' || lower.startsWith('und')) return 'U';
+      if (lower === 'ap' || lower.startsWith('app')) return 'Ap';
+      if (lower === 'an' || lower.startsWith('ana')) return 'An';
+      if (lower === 'e' || lower.startsWith('eva')) return 'E';
+      if (lower === 'c' || lower.startsWith('cre')) return 'C';
+      return '';
+    }
+
+    function formatBtlLabel(code) {
+      if (!code) return 'Not Set';
+      return BTL_CODE_TO_NAME[code] ? `${code} (${BTL_CODE_TO_NAME[code]})` : code;
+    }
+
+    function isCheckedCell(val) {
+      const s = String(val ?? '').trim().toLowerCase();
+      return ['✓', '✔', 'x', 'yes', 'y', '1', '/', 'true', 'checked'].includes(s);
+    }
+
+    function getSavedCustomApiKey() {
+      try {
+        return (localStorage.getItem(API_KEY_STORAGE) || '').trim();
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function saveToStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.items));
+      } catch (err) {
+        console.warn('LocalStorage quota warning:', err);
+        showToast('Workspace is large (attached images). Export to Excel regularly to back up.', 'warning');
+      }
+    }
+
+    function loadFromStorage() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) state.items = parsed;
+        }
+      } catch (err) {
+        console.warn('Could not load saved items:', err);
+      }
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const styles = {
+        success: 'bg-emerald-900 text-white border-emerald-700',
+        error: 'bg-rose-900 text-white border-rose-700',
+        warning: 'bg-amber-900 text-amber-50 border-amber-600',
+        info: 'bg-slate-900 text-white border-slate-700'
+      };
+      const icons = {
+        success: 'check-circle-2',
+        error: 'x-circle',
+        warning: 'zap',
+        info: 'info'
+      };
+
+      const toast = document.createElement('div');
+      toast.className = `toast-enter pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl border shadow-lg text-xs sm:text-sm font-medium ${styles[type] || styles.info}`;
+      toast.innerHTML = `
+        <i data-lucide="${icons[type] || 'info'}" class="w-4 h-4 shrink-0"></i>
+        <span class="flex-1">${escapeHtml(message)}</span>
+      `;
+      container.appendChild(toast);
+      refreshIcons(toast);
+
+      setTimeout(() => {
+        toast.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(8px)';
+        setTimeout(() => toast.remove(), 260);
+      }, 4000);
+    }
+
+    // Compress uploaded diagram images to keep UI fast and localStorage friendly
+    function compressImageFile(file, maxWidth = 720) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = reject;
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onerror = reject;
+          img.onload = () => {
+            const scale = img.width > maxWidth ? maxWidth / img.width : 1;
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(img.width * scale);
+            canvas.height = Math.round(img.height * scale);
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL('image/jpeg', 0.84));
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // =========================================================================
+    // NAVIGATION & MODALS (AI SETTINGS + CLEAR ALL)
+    // =========================================================================
+    function switchTab(tabName) {
+      state.activeTab = tabName;
+      ['build', 'detective', 'report'].forEach(t => {
+        const panel = document.getElementById(`panel-${t}`);
+        const btn = document.getElementById(`tab-btn-${t}`);
+        if (t === tabName) {
+          panel.classList.remove('hidden');
+          btn.className = 'flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer bg-indigo-600 text-white shadow-sm';
+        } else {
+          panel.classList.add('hidden');
+          btn.className = 'flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer text-slate-300 hover:text-white hover:bg-slate-700/60';
+        }
+      });
+      renderAll();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function setDetectiveMode(mode) {
+      state.detectiveMode = mode;
+      renderDetectiveTab();
+    }
+
+    function setFilter(filterKey) {
+      state.activeFilter = filterKey;
+      renderDetectiveTab();
+    }
+
+    function openAiSettingsModal() {
+      document.getElementById('custom-api-key-input').value = getSavedCustomApiKey();
+      document.getElementById('ai-settings-modal').classList.remove('hidden');
+      refreshIcons();
+    }
+
+    function closeAiSettingsModal() {
+      document.getElementById('ai-settings-modal').classList.add('hidden');
+    }
+
+    function saveCustomApiKey() {
+      const val = document.getElementById('custom-api-key-input').value.trim();
+      try {
+        if (val) {
+          localStorage.setItem(API_KEY_STORAGE, val);
+          showToast('Custom Gemini API key saved locally.', 'success');
+        } else {
+          localStorage.removeItem(API_KEY_STORAGE);
+          showToast('Using default environment Gemini API key.', 'info');
+        }
+      } catch (e) {
+        showToast('Could not save settings to localStorage.', 'warning');
+      }
+      updateKeyIndicator();
+      closeAiSettingsModal();
+    }
+
+    function clearCustomApiKey() {
+      try {
+        localStorage.removeItem(API_KEY_STORAGE);
+      } catch (e) {}
+      document.getElementById('custom-api-key-input').value = '';
+      updateKeyIndicator();
+      showToast('Custom API key cleared.', 'info');
+    }
+
+    function updateKeyIndicator() {
+      const dot = document.getElementById('header-key-dot');
+      if (!dot) return;
+      const hasCustom = Boolean(getSavedCustomApiKey());
+      dot.className = hasCustom
+        ? 'w-2 h-2 rounded-full bg-sky-400'
+        : 'w-2 h-2 rounded-full bg-emerald-400';
+      dot.title = hasCustom ? 'Custom Gemini API Key Saved' : 'Default Environment AI + Built-in Engine Ready';
+    }
+
+    function openClearModal() {
+      if (state.items.length === 0) {
+        showToast('Your item bank is already empty.', 'info');
+        return;
+      }
+      document.getElementById('clear-modal').classList.remove('hidden');
+    }
+
+    function closeClearModal() {
+      document.getElementById('clear-modal').classList.add('hidden');
+    }
+
+    function confirmClearAll() {
+      state.items = [];
+      state.studentAnswers = {};
+      state.studentSubmitted = false;
+      saveToStorage();
+      closeClearModal();
+      renderAll();
+      showToast('All test items cleared.', 'info');
+    }
+
+    // =========================================================================
+    // TEMPLATES & SAMPLE FLAWED TEST
+    // =========================================================================
+    function downloadValidationTemplate() {
+      if (typeof XLSX === 'undefined') {
+        showToast('Excel library (SheetJS) is still loading. Please try again.', 'error');
+        return;
+      }
+      try {
+        const rows = [
+          ['No.', 'Test Items', 'BTL', 'Retain', 'Reject', 'Revise', 'REMARKS'],
+          [
+            1,
+            '1. What is the ratio of number of apples to the number of bananas?\nA. 2 : 4\nB. 2 : 5\nC. 2 : 6\nD. 5 : 2',
+            'R',
+            '',
+            '',
+            '',
+            ''
+          ],
+          [
+            2,
+            '2. Based on the given in item no. 1, what is the ratio of number of bananas to the total number of fruits?\nA. 5 : 2\nB. 2 : 5\nC. 5 : 7\nD. 2 : 7',
+            'R',
+            '',
+            '',
+            '',
+            ''
+          ],
+          [
+            3,
+            '3. What mathematical term describes a statement indicating that two ratios are equal?\nA. Difference\nB. Fraction\nC. Percent\nD. Proportion',
+            'R',
+            '',
+            '',
+            '',
+            ''
+          ],
+          [
+            4,
+            '4. If the ratio of cats to dogs is 3:2 and there are 12 cats, how many dogs are there?\nA. 6\nB. 10\nC. 18\nD. 8',
+            'U',
+            '',
+            '',
+            '',
+            ''
+          ]
+        ];
+
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        ws['!cols'] = [
+          { wch: 6 },
+          { wch: 58 },
+          { wch: 8 },
+          { wch: 10 },
+          { wch: 10 },
+          { wch: 10 },
+          { wch: 36 }
+        ];
+        ws['!rows'] = [
+          { hpt: 24 },
+          { hpt: 96 },
+          { hpt: 96 },
+          { hpt: 96 },
+          { hpt: 96 }
+        ];
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Validation Sheet');
+        XLSX.writeFile(wb, 'Item_Validation_Template.xlsx');
+        showToast('Downloaded Item_Validation_Template.xlsx (7-Column Format)!', 'success');
+      } catch (err) {
+        console.error('Template error:', err);
+        showToast('Could not generate Excel template.', 'error');
+      }
+    }
+
+    function loadSampleFlawedTest() {
+      state.items = [
+        {
+          id: generateId(),
+          stem: 'What is the ratio of number of apples to the number of bananas shown in the bar model?',
+          choices: {
+            A: '2 : 4',
+            B: '2 : 5',
+            C: '2 : 6',
+            D: '5 : 2'
+          },
+          answer: 'B',
+          targetBtl: 'R',
+          competency: 'M6NS-IIa-129 Visualize and express ratios of two given numbers',
+          verdict: '',
+          remarks: '',
+          imageDataUrl: '',
+          revised: false,
+          audit: null
+        },
+        {
+          id: generateId(),
+          stem: 'Based on the given in item no. 1, what is the ratio of number of bananas to the total number of fruits?',
+          choices: {
+            A: '5 : 2',
+            B: '2 : 5',
+            C: '5 : 7',
+            D: '2 : 7'
+          },
+          answer: 'C',
+          targetBtl: 'R',
+          competency: 'M6NS-IIa-129 Express part-to-whole ratios',
+          verdict: '',
+          remarks: '',
+          imageDataUrl: '',
+          revised: false,
+          audit: null
+        },
+        {
+          id: generateId(),
+          stem: 'What mathematical term describes a statement indicating that two ratios are equal?',
+          choices: {
+            A: 'Difference',
+            B: 'Fraction',
+            C: 'Percent',
+            D: 'Proportion'
+          },
+          answer: 'D',
+          targetBtl: 'R',
+          competency: 'M6NS-IIb-131 Define and illustrate the meaning of proportion',
+          verdict: '',
+          remarks: '',
+          imageDataUrl: '',
+          revised: false,
+          audit: null
+        },
+        {
+          id: generateId(),
+          stem: 'If the ratio of cats to dogs is 3:2 and there are 12 cats, how many dogs are there?',
+          choices: {
+            A: '6',
+            B: '10',
+            C: '18',
+            D: '8'
+          },
+          answer: 'D',
+          targetBtl: 'U',
+          competency: 'M6NS-IIb-134 Solve problems involving direct proportion',
+          verdict: '',
+          remarks: '',
+          imageDataUrl: '',
+          revised: false,
+          audit: null
+        },
+        {
+          id: generateId(),
+          stem: 'Which of the following is not an example of an equivalent ratio to 2:3?',
+          choices: {
+            A: '4 : 6 because multiplying both terms by 2 preserves the exact same proportional relationship',
+            B: 'Always 6 : 9',
+            C: '8 : 12',
+            D: 'None of the above'
+          },
+          answer: 'D',
+          targetBtl: 'E',
+          competency: 'M6NS-IIa-130 Identify and write equivalent ratios',
+          verdict: '',
+          remarks: '',
+          imageDataUrl: '',
+          revised: false,
+          audit: null
+        }
+      ];
+
+      state.studentAnswers = {};
+      state.studentSubmitted = false;
+      saveToStorage();
+      renderAll();
+      showToast('Loaded 5 Ratio & Proportion sample items with intentional assessment flaws.', 'success');
+      switchTab('detective');
+    }
+
+    // =========================================================================
+    // EXCEL & FILE UPLOAD PARSING (AUTO-DETECTING FORMAT A & FORMAT B)
+    // =========================================================================
+    function setupDropzone() {
+      const dz = document.getElementById('dropzone');
+      if (!dz) return;
+      ['dragenter', 'dragover'].forEach(evt => {
+        dz.addEventListener(evt, e => {
+          e.preventDefault();
+          dz.classList.add('border-indigo-500', 'bg-indigo-50/50');
+        });
+      });
+      ['dragleave', 'drop'].forEach(evt => {
+        dz.addEventListener(evt, e => {
+          e.preventDefault();
+          dz.classList.remove('border-indigo-500', 'bg-indigo-50/50');
+        });
+      });
+      dz.addEventListener('drop', e => {
+        const file = e.dataTransfer.files?.[0];
+        if (file) processUploadedFile(file);
+      });
+    }
+
+    function handleFileSelect(event) {
+      const file = event.target.files?.[0];
+      if (file) {
+        processUploadedFile(file);
+        event.target.value = '';
+      }
+    }
+
+    function showImportBanner(htmlMessage, type = 'success') {
+      const banner = document.getElementById('import-status-banner');
+      const content = document.getElementById('import-status-content');
+      const styles = {
+        success: 'bg-emerald-50 border-emerald-200 text-emerald-950',
+        warning: 'bg-amber-50 border-amber-200 text-amber-950',
+        error: 'bg-rose-50 border-rose-200 text-rose-950'
+      };
+      const iconName = type === 'success' ? 'check-circle-2' : (type === 'warning' ? 'alert-triangle' : 'x-circle');
+      banner.className = `mt-3.5 p-3.5 rounded-xl border text-xs flex items-start justify-between gap-2.5 ${styles[type] || styles.success}`;
+      content.innerHTML = `
+        <i data-lucide="${iconName}" class="w-4 h-4 shrink-0 mt-0.5"></i>
+        <div class="leading-relaxed space-y-1">${htmlMessage}</div>
+      `;
+      refreshIcons(banner);
+    }
+
+    function normalizeHeader(h) {
+      return String(h || '')
+        .toLowerCase()
+        .replace(/['’`_\-\.]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    // Parse a multi-line Test Items cell (Format A) into { stem, choices: {A,B,C,D} }
+    function parseMultiLineTestItemCell(cellText) {
+      const raw = String(cellText ?? '').replace(/\r\n/g, '\n').trim();
+      if (!raw) return null;
+
+      const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+      const stemLines = [];
+      const choices = { A: '', B: '', C: '', D: '' };
+      let currentChoice = null;
+
+      for (const line of lines) {
+        const choiceMatch = line.match(/^([A-Da-d])[\.\)]\s*(.*)$/);
+        if (choiceMatch) {
+          currentChoice = choiceMatch[1].toUpperCase();
+          choices[currentChoice] = choiceMatch[2].trim();
+        } else if (currentChoice) {
+          choices[currentChoice] = (choices[currentChoice] + ' ' + line).trim();
+        } else {
+          stemLines.push(line);
+        }
+      }
+
+      let stem = stemLines.join(' ').trim();
+      if (!choices.A && !choices.B) {
+        const inlineMatch = raw.match(/^(.*?)\s+A[\.\)]\s*(.*?)\s+B[\.\)]\s*(.*?)\s+C[\.\)]\s*(.*?)\s+D[\.\)]\s*(.*)$/i);
+        if (inlineMatch) {
+          stem = inlineMatch[1].trim();
+          choices.A = inlineMatch[2].trim();
+          choices.B = inlineMatch[3].trim();
+          choices.C = inlineMatch[4].trim();
+          choices.D = inlineMatch[5].trim();
+        }
+      }
+
+      stem = stem.replace(/^(?:(?:Q|Question|Item)\s*)?\d+[\.\)\:]\s*/i, '').trim();
+
+      if (!stem) return null;
+      return {
+        stem,
+        choices: {
+          A: choices.A || '(Option A)',
+          B: choices.B || '(Option B)',
+          C: choices.C || '(Option C)',
+          D: choices.D || '(Option D)'
+        }
+      };
+    }
+
+    function resolveAnswerKey(rawAnswer, choices) {
+      const cleaned = String(rawAnswer || '').trim();
+      if (!cleaned) return '';
+      const letterMatch = cleaned.match(/^(?:(?:option|choice)\s*)?([A-Da-d])(?:[\.\)\:]|$)/i);
+      if (letterMatch) return letterMatch[1].toUpperCase();
+      const lowerAns = cleaned.toLowerCase();
+      for (const letter of ['A', 'B', 'C', 'D']) {
+        if (choices[letter] && choices[letter].trim().toLowerCase() === lowerAns) return letter;
+      }
+      const anyLetter = cleaned.toUpperCase().match(/^[A-D]$/);
+      return anyLetter ? anyLetter[0] : '';
+    }
+
+    function parseExcelWorkbook(arrayBuffer) {
+      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+
+      if (!rows || rows.length === 0) {
+        return { items: [], sheetName: sheetName || 'Sheet1', formatLabel: 'Unknown', skippedCount: 0 };
+      }
+
+      let headerRowIdx = rows.findIndex(r => {
+        if (!Array.isArray(r)) return false;
+        const norm = r.map(normalizeHeader);
+        return norm.some(h => ['test items', 'test item', 'question', 'stem', 'btl', 'choice a', 'retain'].includes(h));
+      });
+      if (headerRowIdx === -1) {
+        headerRowIdx = rows.findIndex(r => Array.isArray(r) && r.some(c => String(c).trim() !== ''));
+      }
+      if (headerRowIdx === -1) {
+        return { items: [], sheetName: sheetName || 'Sheet1', formatLabel: 'Unknown', skippedCount: 0 };
+      }
+
+      const headers = rows[headerRowIdx].map(normalizeHeader);
+      const findCol = (aliases) => headers.findIndex(h => aliases.includes(h));
+
+      const testItemsCol = findCol(['test items', 'test item', 'items', 'item']);
+      const btlCol = findCol(['btl', 'bloom', 'blooms', 'bloom s', 'bloom level', 'bloom s level', 'cognitive level', 'target btl', 'taxonomy']);
+      const retainCol = findCol(['retain', 'retained']);
+      const rejectCol = findCol(['reject', 'rejected']);
+      const reviseCol = findCol(['revise', 'revised', 'for revision']);
+      const remarksCol = findCol(['remarks', 'remark', 'comments', 'comment', 'notes']);
+
+      const aCol = findCol(['a', 'choice a', 'option a']);
+      const bCol = findCol(['b', 'choice b', 'option b']);
+      const cCol = findCol(['c', 'choice c', 'option c']);
+      const dCol = findCol(['d', 'choice d', 'option d']);
+      const stemCol = findCol(['question', 'stem', 'question text', 'problem', 'test item']);
+      const ansCol = findCol(['answer', 'correct answer', 'key', 'answer key', 'correct']);
+      const compCol = findCol(['competency', 'learning competency', 'objective', 'learning objective', 'topic']);
+
+      const isFormatA = (testItemsCol !== -1 && aCol === -1) ||
+                        (retainCol !== -1 && rejectCol !== -1 && reviseCol !== -1 && aCol === -1);
+
+      const items = [];
+      let skippedCount = 0;
+
+      if (isFormatA) {
+        const itemColIdx = testItemsCol !== -1 ? testItemsCol : 1;
+        const btlIdx = btlCol !== -1 ? btlCol : 2;
+        const retIdx = retainCol !== -1 ? retainCol : 3;
+        const rejIdx = rejectCol !== -1 ? rejectCol : 4;
+        const revIdx = reviseCol !== -1 ? reviseCol : 5;
+        const remIdx = remarksCol !== -1 ? remarksCol : 6;
+
+        for (let i = headerRowIdx + 1; i < rows.length; i++) {
+          const row = rows[i];
+          if (!Array.isArray(row) || row.every(c => String(c).trim() === '')) continue;
+
+          const cellText = String(row[itemColIdx] ?? '').trim();
+          const parsedCell = parseMultiLineTestItemCell(cellText);
+          if (!parsedCell) {
+            skippedCount++;
+            continue;
+          }
+
+          let verdict = '';
+          if (isCheckedCell(row[retIdx])) verdict = 'Retain';
+          else if (isCheckedCell(row[rejIdx])) verdict = 'Reject';
+          else if (isCheckedCell(row[revIdx])) verdict = 'Revise';
+
+          items.push({
+            id: generateId(),
+            stem: parsedCell.stem,
+            choices: parsedCell.choices,
+            answer: ansCol !== -1 ? resolveAnswerKey(row[ansCol], parsedCell.choices) : '',
+            targetBtl: normalizeBtlCode(row[btlIdx]),
+            competency: compCol !== -1 ? String(row[compCol] ?? '').trim() : '',
+            verdict,
+            remarks: String(row[remIdx] ?? '').trim(),
+            imageDataUrl: '',
+            revised: false,
+            audit: null
+          });
+        }
+
+        return {
+          items,
+          sheetName: sheetName || 'Sheet1',
+          formatLabel: 'Validation Sheet Format',
+          skippedCount
+        };
+      }
+
+      // Format B: Standard Multi-Column Format
+      const hasHeader = stemCol !== -1 || aCol !== -1 || bCol !== -1;
+      const startRow = hasHeader ? headerRowIdx + 1 : headerRowIdx;
+
+      for (let i = startRow; i < rows.length; i++) {
+        const row = rows[i];
+        if (!Array.isArray(row) || row.every(c => String(c).trim() === '')) continue;
+
+        const getCell = (idx, fallback) => {
+          const col = idx !== -1 ? idx : fallback;
+          return col !== undefined && col >= 0 && col < row.length ? String(row[col] ?? '').trim() : '';
+        };
+
+        const stem = getCell(stemCol, 0).replace(/^(?:(?:Q|Question)\s*)?\d+[\.\)\:]\s*/i, '').trim();
+        const choices = {
+          A: getCell(aCol, 1),
+          B: getCell(bCol, 2),
+          C: getCell(cCol, 3),
+          D: getCell(dCol, 4)
+        };
+
+        if (!stem || Object.values(choices).filter(Boolean).length < 2) {
+          skippedCount++;
+          continue;
+        }
+
+        items.push({
+          id: generateId(),
+          stem,
+          choices: {
+            A: choices.A || '(Option A)',
+            B: choices.B || '(Option B)',
+            C: choices.C || '(Option C)',
+            D: choices.D || '(Option D)'
+          },
+          answer: resolveAnswerKey(getCell(ansCol, 5), choices),
+          targetBtl: normalizeBtlCode(btlCol !== -1 ? getCell(btlCol) : (hasHeader ? '' : getCell(-1, 6))),
+          competency: compCol !== -1 ? getCell(compCol) : (hasHeader ? '' : getCell(-1, 7)),
+          verdict: '',
+          remarks: remarksCol !== -1 ? getCell(remarksCol) : '',
+          imageDataUrl: '',
+          revised: false,
+          audit: null
+        });
+      }
+
+      return {
+        items,
+        sheetName: sheetName || 'Sheet1',
+        formatLabel: 'Standard Format',
+        skippedCount
+      };
+    }
+
+    function processUploadedFile(file) {
+      const ext = file.name.split('.').pop().toLowerCase();
+
+      if (ext === 'xlsx' || ext === 'xls') {
+        if (typeof XLSX === 'undefined') {
+          showToast('SheetJS library failed to load. Please check your internet connection.', 'error');
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const { items, sheetName, formatLabel, skippedCount } = parseExcelWorkbook(e.target.result);
+            if (items.length === 0) {
+              showImportBanner(
+                `No valid test items found in <strong>${escapeHtml(file.name)}</strong> (Sheet: <em>${escapeHtml(sheetName)}</em>). Try downloading our Validation Excel Template to verify column structure.`,
+                'warning'
+              );
+              showToast('No valid questions detected in Excel file.', 'warning');
+              return;
+            }
+
+            state.items = [...state.items, ...items];
+            saveToStorage();
+            renderAll();
+
+            const skipText = skippedCount > 0 ? ` (${skippedCount} blank/incomplete row${skippedCount === 1 ? '' : 's'} skipped)` : '';
+            showImportBanner(
+              `<div>Imported <strong>${items.length} item${items.length === 1 ? '' : 's'}</strong> from <strong>${escapeHtml(file.name)}</strong> &bull; Detected: <span class="px-1.5 py-0.5 rounded bg-emerald-100 font-bold text-emerald-900">${escapeHtml(formatLabel)}</span> (Sheet: <em>${escapeHtml(sheetName)}</em>)${skipText}.</div>
+               <div class="text-slate-600 flex items-center gap-1.5 mt-1"><i data-lucide="image" class="w-3.5 h-3.5 text-indigo-600 shrink-0"></i><span><strong>Tip:</strong> If any Excel items contain floating diagrams or bar models, use the <strong>Add Image</strong> button on the item row or card to attach them.</span></div>`,
+              skippedCount > 0 ? 'warning' : 'success'
+            );
+            showToast(`Imported ${items.length} item(s) (${formatLabel}).`, 'success');
+          } catch (err) {
+            console.error('Excel parse error:', err);
+            showImportBanner(`Could not read <strong>${escapeHtml(file.name)}</strong>. Please ensure it is a valid .xlsx or .xls workbook.`, 'error');
+            showToast('Failed to parse Excel workbook.', 'error');
+          }
+        };
+        reader.readAsArrayBuffer(file);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target.result;
+        try {
+          let newItems = [];
+          const formatLabel = ext.toUpperCase() + ' Format';
+          if (ext === 'json') newItems = parseJsonItems(content);
+          else if (ext === 'csv') newItems = parseCsvItems(content);
+          else newItems = parseTextToItems(content);
+
+          if (newItems.length === 0) {
+            showImportBanner(`No valid multiple-choice items found in <strong>${escapeHtml(file.name)}</strong>.`, 'warning');
+            showToast('No valid items found in file.', 'warning');
+            return;
+          }
+
+          state.items = [...state.items, ...newItems];
+          saveToStorage();
+          renderAll();
+          showImportBanner(
+            `Imported <strong>${newItems.length} item${newItems.length === 1 ? '' : 's'}</strong> from <strong>${escapeHtml(file.name)}</strong> (${escapeHtml(formatLabel)}).`,
+            'success'
+          );
+          showToast(`Imported ${newItems.length} item(s) from ${file.name}.`, 'success');
+        } catch (err) {
+          console.error('File parse error:', err);
+          showImportBanner(`Error parsing <strong>${escapeHtml(file.name)}</strong>. Please check the file formatting.`, 'error');
+          showToast('Error parsing file.', 'error');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function parseJsonItems(raw) {
+      const data = JSON.parse(raw);
+      const arr = Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : []);
+      return arr.filter(q => q && (q.stem || q.question)).map(q => {
+        const ch = q.choices || {};
+        const choices = {
+          A: String(ch.A || ch.a || q.A || '').trim(),
+          B: String(ch.B || ch.b || q.B || '').trim(),
+          C: String(ch.C || ch.c || q.C || '').trim(),
+          D: String(ch.D || ch.d || q.D || '').trim()
+        };
+        return {
+          id: generateId(),
+          stem: String(q.stem || q.question).trim(),
+          choices,
+          answer: resolveAnswerKey(q.answer || q.key || '', choices),
+          targetBtl: normalizeBtlCode(q.targetBtl || q.btl || q.blooms || q.intendedBlooms || ''),
+          competency: String(q.competency || q.objective || '').trim(),
+          verdict: ['Retain', 'Revise', 'Reject'].includes(q.verdict) ? q.verdict : '',
+          remarks: String(q.remarks || '').trim(),
+          imageDataUrl: '',
+          revised: false,
+          audit: null
+        };
+      });
+    }
+
+    function splitCsvRow(line) {
+      const result = [];
+      let current = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+          if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+          else inQuotes = !inQuotes;
+        } else if (ch === ',' && !inQuotes) {
+          result.push(current.trim());
+          current = '';
+        } else {
+          current += ch;
+        }
+      }
+      result.push(current.trim());
+      return result;
+    }
+
+    function parseCsvItems(raw) {
+      const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      if (lines.length < 2) return [];
+      const headers = splitCsvRow(lines[0]).map(normalizeHeader);
+      const idx = (aliases) => headers.findIndex(h => aliases.includes(h));
+
+      const stemIdx = idx(['question', 'stem', 'test items', 'item']);
+      const aIdx = idx(['a', 'choice a', 'option a']);
+      const bIdx = idx(['b', 'choice b', 'option b']);
+      const cIdx = idx(['c', 'choice c', 'option c']);
+      const dIdx = idx(['d', 'choice d', 'option d']);
+      const ansIdx = idx(['answer', 'correct answer', 'key']);
+      const btlIdx = idx(['btl', 'bloom', 'blooms', 'bloom s', 'bloom level', 'cognitive level']);
+      const compIdx = idx(['competency', 'learning competency', 'objective']);
+
+      const items = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = splitCsvRow(lines[i]);
+        const stem = cols[stemIdx >= 0 ? stemIdx : 0] || '';
+        if (!stem) continue;
+        const choices = {
+          A: cols[aIdx >= 0 ? aIdx : 1] || '',
+          B: cols[bIdx >= 0 ? bIdx : 2] || '',
+          C: cols[cIdx >= 0 ? cIdx : 3] || '',
+          D: cols[dIdx >= 0 ? dIdx : 4] || ''
+        };
+        items.push({
+          id: generateId(),
+          stem,
+          choices,
+          answer: resolveAnswerKey(cols[ansIdx >= 0 ? ansIdx : 5] || '', choices),
+          targetBtl: btlIdx >= 0 ? normalizeBtlCode(cols[btlIdx]) : '',
+          competency: compIdx >= 0 ? (cols[compIdx] || '') : '',
+          verdict: '',
+          remarks: '',
+          imageDataUrl: '',
+          revised: false,
+          audit: null
+        });
+      }
+      return items;
+    }
+
+    function parseBulkText() {
+      const input = document.getElementById('bulk-paste-input');
+      const raw = input.value.trim();
+      if (!raw) {
+        showToast('Please paste at least one formatted multiple-choice item first.', 'warning');
+        return;
+      }
+      const parsed = parseTextToItems(raw);
+      if (parsed.length === 0) {
+        showToast('Could not detect items. Label choices as A., B., C., D.', 'warning');
+        return;
+      }
+      state.items = [...state.items, ...parsed];
+      saveToStorage();
+      input.value = '';
+      renderAll();
+      showToast(`Parsed and added ${parsed.length} item(s)!`, 'success');
+    }
+
+    function parseTextToItems(raw) {
+      const lines = raw.split(/\r?\n/);
+      const items = [];
+      let current = null;
+
+      const pushCurrent = () => {
+        if (current && current.stem && (current.choices.A || current.choices.B)) {
+          const choices = {
+            A: current.choices.A.trim() || '(Option A)',
+            B: current.choices.B.trim() || '(Option B)',
+            C: current.choices.C.trim() || '(Option C)',
+            D: current.choices.D.trim() || '(Option D)'
+          };
+          items.push({
+            id: generateId(),
+            stem: current.stem.trim(),
+            choices,
+            answer: resolveAnswerKey(current.answer, choices),
+            targetBtl: normalizeBtlCode(current.targetBtl),
+            competency: current.competency.trim(),
+            verdict: '',
+            remarks: '',
+            imageDataUrl: '',
+            revised: false,
+            audit: null
+          });
+        }
+      };
+
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line) continue;
+
+        const choiceMatch = line.match(/^([A-Da-d])[\.\)]\s*(.+)$/);
+        if (choiceMatch && current) {
+          current.choices[choiceMatch[1].toUpperCase()] = choiceMatch[2].trim();
+          continue;
+        }
+
+        const ansMatch = line.match(/^(?:answer|key|correct(?:\s+answer)?)\s*[:\-]\s*(.+)$/i);
+        if (ansMatch && current) {
+          current.answer = ansMatch[1].trim();
+          continue;
+        }
+
+        const btlMatch = line.match(/^(?:btl|bloom'?s?(?:\s+level|\s+taxonomy)?|cognitive\s+level)\s*[:\-]\s*(.+)$/i);
+        if (btlMatch && current) {
+          current.targetBtl = btlMatch[1].trim();
+          continue;
+        }
+
+        const compMatch = line.match(/^(?:competency|learning\s+competency|objective)\s*[:\-]\s*(.+)$/i);
+        if (compMatch && current) {
+          current.competency = compMatch[1].trim();
+          continue;
+        }
+
+        const qMatch = line.match(/^(?:(?:Q|Question|Item)\s*)?\d+[\.\)\:]\s*(.+)$/i);
+        if (qMatch) {
+          pushCurrent();
+          current = { stem: qMatch[1].trim(), choices: { A: '', B: '', C: '', D: '' }, answer: '', targetBtl: '', competency: '' };
+          continue;
+        }
+
+        if (!current) {
+          current = { stem: line, choices: { A: '', B: '', C: '', D: '' }, answer: '', targetBtl: '', competency: '' };
+        } else if (!current.choices.A && !current.choices.B) {
+          current.stem += ' ' + line;
+        }
+      }
+
+      pushCurrent();
+      return items;
+    }
+
+    // =========================================================================
+    // MANUAL ADD / EDIT FORM & IMAGE ATTACHMENTS
+    // =========================================================================
+    async function handleFormImageSelect(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      try {
+        const dataUrl = await compressImageFile(file);
+        state.formImageDataUrl = dataUrl;
+        document.getElementById('form-image-preview').src = dataUrl;
+        document.getElementById('form-image-preview-wrap').classList.remove('hidden');
+        document.getElementById('clear-form-image-btn').classList.remove('hidden');
+      } catch (err) {
+        showToast('Could not load that image file.', 'error');
+      }
+      event.target.value = '';
+    }
+
+    function clearFormImage() {
+      state.formImageDataUrl = '';
+      document.getElementById('form-image-preview').src = '';
+      document.getElementById('form-image-preview-wrap').classList.add('hidden');
+      document.getElementById('clear-form-image-btn').classList.add('hidden');
+    }
+
+    function triggerQuickImageAttach(itemId) {
+      state.pendingImageItemId = itemId;
+      document.getElementById('item-image-quick-input').click();
+    }
+
+    async function handleQuickImageAttach(event) {
+      const file = event.target.files?.[0];
+      const itemId = state.pendingImageItemId;
+      event.target.value = '';
+      if (!file || !itemId) return;
+
+      const item = state.items.find(i => i.id === itemId);
+      if (!item) return;
+
+      try {
+        const dataUrl = await compressImageFile(file);
+        item.imageDataUrl = dataUrl;
+        saveToStorage();
+        renderAll();
+        showToast('Diagram image attached to item!', 'success');
+      } catch (err) {
+        showToast('Could not process that image.', 'error');
+      }
+    }
+
+    function removeItemImage(itemId) {
+      const item = state.items.find(i => i.id === itemId);
+      if (!item) return;
+      item.imageDataUrl = '';
+      saveToStorage();
+      renderAll();
+      showToast('Attached image removed.', 'info');
+    }
+
+    function saveManualItem(event) {
+      event.preventDefault();
+      const editId = document.getElementById('edit-item-id').value;
+      const stem = document.getElementById('input-stem').value.trim();
+      const choices = {
+        A: document.getElementById('input-choice-A').value.trim(),
+        B: document.getElementById('input-choice-B').value.trim(),
+        C: document.getElementById('input-choice-C').value.trim(),
+        D: document.getElementById('input-choice-D').value.trim()
+      };
+      const answer = document.getElementById('input-answer').value;
+      const targetBtl = document.getElementById('input-btl').value;
+      const competency = document.getElementById('input-competency').value.trim();
+
+      if (editId) {
+        const idx = state.items.findIndex(i => i.id === editId);
+        if (idx !== -1) {
+          state.items[idx] = {
+            ...state.items[idx],
+            stem,
+            choices,
+            answer,
+            targetBtl,
+            competency,
+            imageDataUrl: state.formImageDataUrl,
+            audit: null
+          };
+          showToast('Item updated. Re-audit to refresh feedback.', 'success');
+        }
+      } else {
+        state.items.push({
+          id: generateId(),
+          stem,
+          choices,
+          answer,
+          targetBtl,
+          competency,
+          verdict: '',
+          remarks: '',
+          imageDataUrl: state.formImageDataUrl,
+          revised: false,
+          audit: null
+        });
+        showToast('Item added to validation bank!', 'success');
+      }
+
+      saveToStorage();
+      resetManualForm();
+      renderAll();
+    }
+
+    function editItemInForm(id) {
+      const item = state.items.find(i => i.id === id);
+      if (!item) return;
+
+      document.getElementById('edit-item-id').value = item.id;
+      document.getElementById('input-stem').value = item.stem;
+      document.getElementById('input-choice-A').value = item.choices.A;
+      document.getElementById('input-choice-B').value = item.choices.B;
+      document.getElementById('input-choice-C').value = item.choices.C;
+      document.getElementById('input-choice-D').value = item.choices.D;
+      document.getElementById('input-answer').value = item.answer || '';
+      document.getElementById('input-btl').value = item.targetBtl || '';
+      document.getElementById('input-competency').value = item.competency || '';
+
+      if (item.imageDataUrl) {
+        state.formImageDataUrl = item.imageDataUrl;
+        document.getElementById('form-image-preview').src = item.imageDataUrl;
+        document.getElementById('form-image-preview-wrap').classList.remove('hidden');
+        document.getElementById('clear-form-image-btn').classList.remove('hidden');
+      } else {
+        clearFormImage();
+      }
+
+      document.getElementById('form-title').textContent = 'Edit Test Item';
+      document.getElementById('submit-manual-btn').innerHTML = `<i data-lucide="save" class="w-4 h-4"></i><span>Save Changes</span>`;
+      document.getElementById('cancel-edit-btn').classList.remove('hidden');
+
+      switchTab('build');
+      document.getElementById('manual-item-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      refreshIcons();
+    }
+
+    function resetManualForm() {
+      document.getElementById('manual-item-form').reset();
+      document.getElementById('edit-item-id').value = '';
+      clearFormImage();
+      document.getElementById('form-title').textContent = 'Add Test Item Manually';
+      document.getElementById('submit-manual-btn').innerHTML = `<i data-lucide="plus" class="w-4 h-4"></i><span>Add Item to Validation Bank</span>`;
+      document.getElementById('cancel-edit-btn').classList.add('hidden');
+      refreshIcons();
+    }
+
+    function deleteItem(id) {
+      state.items = state.items.filter(i => i.id !== id);
+      delete state.studentAnswers[id];
+      saveToStorage();
+      renderAll();
+      showToast('Item removed.', 'info');
+    }
+
+    // =========================================================================
+    // ROCK-SOLID GEMINI API + BUILT-IN SMART PSYCHOMETRIC ENGINE FALLBACK
+    // =========================================================================
+
+    function extractJsonObject(rawText) {
+      if (!rawText || typeof rawText !== 'string') {
+        throw new Error('Empty response text');
+      }
+      // Strip markdown code fences if present
+      let cleaned = rawText
+        .replace(/```json\s*/gi, '')
+        .replace(/```\s*/g, '')
+        .trim();
+
+      // Locate outermost { ... }
+      const firstBrace = cleaned.indexOf('{');
+      const lastBrace = cleaned.lastIndexOf('}');
+      if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+        throw new Error('No JSON object found in model output');
+      }
+      const jsonStr = cleaned.slice(firstBrace, lastBrace + 1);
+      return JSON.parse(jsonStr);
+    }
+
+    function normalizeCategoryName(cat) {
+      const s = String(cat || '').toLowerCase();
+      if (s.includes('interdepend')) return 'Item Interdependence';
+      if (s.includes('visual') || s.includes('diagram') || s.includes('image')) return 'Missing Visual Bias';
+      if (s.includes('unordered') || s.includes('distractor') || s.includes('implausible') || s.includes('order')) return 'Unordered / Implausible Distractors';
+      if (s.includes('all') || s.includes('none of the above')) return 'All / None of the Above';
+      if (s.includes('absolute') || s.includes('modifier')) return 'Absolute Modifiers';
+      if (s.includes('negative') || s.includes('confusing') || s.includes('trick') || s.includes('ambiguous')) return 'Negative / Confusing Stem';
+      if (s.includes('length') || s.includes('detail')) return 'Length / Detail Bias';
+      if (s.includes('gramma') || s.includes('clue')) return 'Grammatical Clue';
+      if (s.includes('double') || s.includes('barreled')) return 'Double-Barreled Question';
+      if (s.includes('bloom') || s.includes('btl') || s.includes('taxonomy')) return "Bloom's Taxonomy (BTL) Alignment";
+      return FLAW_CATEGORIES.includes(cat) ? cat : 'Negative / Confusing Stem';
+    }
+
+    function normalizeAuditPayload(parsed, item, source) {
+      const verdict = ['Retain', 'Revise', 'Reject'].includes(parsed.verdict) ? parsed.verdict : 'Revise';
+      const detectedBtl = normalizeBtlCode(parsed.detectedBtl) || item.targetBtl || 'R';
+      const flags = Array.isArray(parsed.flags)
+        ? parsed.flags
+            .filter(f => f && (f.category || f.explanation))
+            .map(f => ({
+              category: normalizeCategoryName(f.category),
+              severity: ['High', 'Medium', 'Low'].includes(f.severity) ? f.severity : 'Medium',
+              explanation: String(f.explanation || 'Review this design aspect.').trim()
+            }))
+        : [];
+
+      const rev = parsed.suggestedRevision || {};
+      const revChoices = rev.choices || {};
+      const suggestedRevision = {
+        stem: String(rev.stem || item.stem).trim(),
+        choices: {
+          A: String(revChoices.A ?? item.choices.A).trim(),
+          B: String(revChoices.B ?? item.choices.B).trim(),
+          C: String(revChoices.C ?? item.choices.C).trim(),
+          D: String(revChoices.D ?? item.choices.D).trim()
+        },
+        correctAnswer: ['A', 'B', 'C', 'D'].includes(String(rev.correctAnswer || '').toUpperCase())
+          ? String(rev.correctAnswer).toUpperCase()
+          : (item.answer || '')
+      };
+
+      const btlAlignment = String(
+        parsed.btlAlignment ||
+        (item.targetBtl
+          ? (item.targetBtl === detectedBtl
+              ? `Aligned with declared BTL ${item.targetBtl} (${BTL_CODE_TO_NAME[item.targetBtl]}).`
+              : `Declared ${item.targetBtl} (${BTL_CODE_TO_NAME[item.targetBtl]}), but item demands ${detectedBtl} (${BTL_CODE_TO_NAME[detectedBtl]}).`)
+          : `Detected cognitive level: ${detectedBtl} (${BTL_CODE_TO_NAME[detectedBtl]}).`)
+      ).trim();
+
+      const remarks = String(
+        parsed.remarks ||
+        (flags.length === 0
+          ? 'Well-constructed item; aligned with cognitive level. Ready to retain.'
+          : flags.map(f => `${f.category}: ${f.explanation}`).join(' | '))
+      ).trim();
+
+      return {
+        verdict,
+        detectedBtl,
+        btlAlignment,
+        flags,
+        remarks,
+        suggestedRevision,
+        engineSource: source // 'gemini' | 'builtin'
+      };
+    }
+
+    // Exponential backoff fetch (up to 2 retries on 429/500/503)
+    async function fetchWithBackoff(url, options, maxRetries = 2) {
+      let delay = 1000;
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        const response = await fetch(url, options);
+        if (response.ok) return response;
+        if ([429, 500, 503].includes(response.status) && attempt < maxRetries) {
+          await new Promise(res => setTimeout(res, delay));
+          delay *= 2;
+          continue;
+        }
+        const errText = await response.text().catch(() => '');
+        throw new Error(`HTTP ${response.status}: ${errText.slice(0, 200)}`);
+      }
+      throw new Error('Max retries exceeded');
+    }
+
+    async function callGeminiAudit(item, itemIndex) {
+      const apiKey = getSavedCustomApiKey() || "";
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+      const systemPrompt = `You are "Item Detective", an expert psychometrician and multiple-choice test validator.
+Analyze the given multiple-choice item against these 10 psychometric flaw categories:
+1. "Item Interdependence" (references another item like "based on item no. 1")
+2. "Missing Visual Bias" (references a diagram, bar model, figure, or unstated visual counts without an attached image)
+3. "Unordered / Implausible Distractors" (numeric/ratio choices not sorted ascending/descending, duplicates, or absurd distractors)
+4. "All / None of the Above" (uses "All of the above", "None of the above", "Both A and B")
+5. "Absolute Modifiers" (uses "always", "never", "only", "every", "must" in choices)
+6. "Negative / Confusing Stem" (unemphasized NOT/EXCEPT/LEAST/INCORRECT or ambiguous wording)
+7. "Length / Detail Bias" (one choice is noticeably longer/more detailed than the others)
+8. "Grammatical Clue" (stem ends in "a"/"an" or verb agreement that cues one choice)
+9. "Double-Barreled Question" (asks two separate questions in one stem)
+10. "Bloom's Taxonomy (BTL) Alignment" (declared BTL R/U/Ap/An/E/C mismatches actual cognitive demand)
+
+Return ONLY a valid raw JSON object (NO markdown code fences, NO extra prose) with this exact structure:
+{
+  "verdict": "Retain" | "Revise" | "Reject",
+  "detectedBtl": "R" | "U" | "Ap" | "An" | "E" | "C",
+  "btlAlignment": "short explanation of BTL alignment",
+  "flags": [
+    {
+      "category": "one of the 10 exact category names above",
+      "severity": "High" | "Medium" | "Low",
+      "explanation": "specific, concise explanation for this item"
+    }
+  ],
+  "remarks": "concise validation remark ready for an Excel REMARKS column",
+  "suggestedRevision": {
+    "stem": "improved self-contained stem",
+    "choices": { "A": "...", "B": "...", "C": "...", "D": "..." },
+    "correctAnswer": "A" | "B" | "C" | "D"
+  }
+}`;
+
+      const userText = `Audit Item #${itemIndex + 1}:
+Stem: ${item.stem}
+Choice A: ${item.choices.A}
+Choice B: ${item.choices.B}
+Choice C: ${item.choices.C}
+Choice D: ${item.choices.D}
+Declared Correct Answer: ${item.answer || 'Not specified'}
+Declared BTL: ${item.targetBtl ? formatBtlLabel(item.targetBtl) : 'Not specified'}
+Learning Competency: ${item.competency || 'Not specified'}
+Image Attached: ${item.imageDataUrl ? 'Yes (see attached image)' : 'No image attached'}`;
+
+      const userParts = [{ text: userText }];
+
+      // Multimodal support: only attach inlineData if item.imageDataUrl is a valid base64 data URL
+      if (item.imageDataUrl && typeof item.imageDataUrl === 'string') {
+        const match = item.imageDataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([A-Za-z0-9+/=]+)$/);
+        if (match) {
+          userParts.push({
+            inlineData: {
+              mimeType: match[1],
+              data: match[2]
+            }
+          });
+        }
+      }
+
+      const payload = {
+        contents: [{ role: 'user', parts: userParts }],
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        generationConfig: {
+          temperature: 0.2
+        }
+      };
+
+      const response = await fetchWithBackoff(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }, 2);
+
+      const data = await response.json();
+      const rawText = data?.candidates?.[0]?.content?.parts
+        ?.map(p => p.text || '')
+        .join('')
+        .trim();
+
+      const parsed = extractJsonObject(rawText);
+      return normalizeAuditPayload(parsed, item, 'gemini');
+    }
+
+    // =========================================================================
+    // BUILT-IN SMART PSYCHOMETRIC ENGINE (COMPREHENSIVE OFFLINE FALLBACK)
+    // =========================================================================
+    function parseNumericOrRatioValue(text) {
+      const s = String(text || '').trim().replace(/,/g, '');
+      // Pure number or decimal or percentage (e.g., "6", "10.5", "25%")
+      const numMatch = s.match(/^(-?\d+(?:\.\d+)?)\s*%?$/);
+      if (numMatch) {
+        return { kind: 'number', value: parseFloat(numMatch[1]), raw: s };
+      }
+      // Ratio (e.g., "2 : 5", "5:7")
+      const ratioMatch = s.match(/^(\d+(?:\.\d+)?)\s*:\s*(\d+(?:\.\d+)?)$/);
+      if (ratioMatch) {
+        const a = parseFloat(ratioMatch[1]);
+        const b = parseFloat(ratioMatch[2]);
+        return { kind: 'ratio', value: b !== 0 ? a / b : a, a, b, raw: s };
+      }
+      // Simple fraction (e.g., "3/4")
+      const fracMatch = s.match(/^(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/);
+      if (fracMatch) {
+        const a = parseFloat(fracMatch[1]);
+        const b = parseFloat(fracMatch[2]);
+        return { kind: 'fraction', value: b !== 0 ? a / b : a, raw: s };
+      }
+      return null;
+    }
+
+    function detectBtlCognitiveLevel(stem) {
+      const s = stem.toLowerCase();
+
+      // Creating (C)
+      if (/\b(design|create|formulate|propose|construct|develop|invent|devise)\b/.test(s)) {
+        return 'C';
+      }
+      // Evaluating (E)
+      if (/\b(evaluate|justify|critique|defend|judge|recommend|most effective|best conclusion|valid argument)\b/.test(s)) {
+        return 'E';
+      }
+      // Analyzing (An)
+      if (/\b(compare|contrast|analyze|analyse|differentiate|distinguish|categorize|relationship between|examine why)\b/.test(s)) {
+        return 'An';
+      }
+      // Applying (Ap) — multi-step word problems / computations
+      const hasNumbersInStem = (stem.match(/\d+/g) || []).length >= 2;
+      if (
+        /\b(calculate|solve|compute|find the value|how many|how much|if the ratio|if there are|total cost|find the)\b/.test(s) ||
+        (hasNumbersInStem && /\b(if|given|total|altogether|left|remaining|each)\b/.test(s))
+      ) {
+        return 'Ap';
+      }
+      // Remembering (R)
+      if (/\b(what mathematical term|what term|term describes|define|definition|identify the name|recall|list|which term|is called|who invented|when did)\b/.test(s)) {
+        return 'R';
+      }
+      // Understanding (U)
+      if (/\b(explain|summarize|convert|interpret|equivalent|describe why|which statement|ratio of|meaning of|example of|represents)\b/.test(s)) {
+        return 'U';
+      }
+
+      return 'U';
+    }
+
+    function runBuiltInPsychometricEngine(item) {
+      const stem = String(item.stem || '').trim();
+      const stemLower = stem.toLowerCase();
+      const letters = ['A', 'B', 'C', 'D'];
+      const choices = {
+        A: String(item.choices?.A || '').trim(),
+        B: String(item.choices?.B || '').trim(),
+        C: String(item.choices?.C || '').trim(),
+        D: String(item.choices?.D || '').trim()
+      };
+
+      const flags = [];
+      let revStem = stem;
+      let revChoices = { ...choices };
+      let revAnswer = item.answer || '';
+
+      // 1. Item Interdependence
+      const interdepMatch = stemLower.match(/(based on (?:the )?(?:given in )?item|item\s*no\.?\s*\d+|previous question|refer to\s*(?:#|item|question)|from\s*#?\s*\d+|in\s+question\s+\d+|above item)/i);
+      if (interdepMatch) {
+        flags.push({
+          category: 'Item Interdependence',
+          severity: 'High',
+          explanation: `Stem references another item ("${interdepMatch[0]}"). Each test item should be self-contained so an error on a prior item does not cascade.`
+        });
+        revStem = revStem.replace(/^(?:based on (?:the )?(?:given in )?item\s*(?:no\.?\s*)?\d+\s*,?\s*)/i, '');
+        if (revStem.length > 0) {
+          revStem = '[Include the full given data here, e.g., Given 2 apples and 5 bananas,] ' + revStem.charAt(0).toLowerCase() + revStem.slice(1);
+        }
+      }
+
+      // 2. Missing Visual Bias
+      const hasImage = Boolean(item.imageDataUrl && item.imageDataUrl.startsWith('data:image/'));
+      const visualCueMatch = stemLower.match(/\b(diagram|picture|bar model|figure|graph|chart|illustration|shown above|shown below|table below|image|illustration)\b/i);
+      const unstatedQuantityMatch = !hasImage &&
+        /\b(ratio of|number of)\b/i.test(stemLower) &&
+        /\b(apples|bananas|fruits|blocks|cubes|stars|shapes|marbles|balls|pencils)\b/i.test(stemLower) &&
+        !/\d+/.test(stem);
+
+      if (!hasImage && (visualCueMatch || unstatedQuantityMatch)) {
+        const reason = visualCueMatch
+          ? `Stem references a visual element ("${visualCueMatch[0]}") but no diagram/image is attached.`
+          : 'Stem asks for a ratio/count of objects without stating their quantities in text or attaching a visual diagram.';
+        flags.push({
+          category: 'Missing Visual Bias',
+          severity: 'High',
+          explanation: `${reason} Attach the diagram using "Add Image" or state all given values explicitly in the stem.`
+        });
+        if (!revStem.includes('[Include') && !/\d+/.test(revStem)) {
+          revStem = `${revStem} [Attach visual diagram or state exact given quantities, e.g., 2 apples and 5 bananas.]`;
+        }
+      }
+
+      // 3. Unordered / Implausible Distractors
+      const choiceValues = letters.map(l => choices[l]);
+      const emptyCount = choiceValues.filter(v => !v || v.startsWith('(Option ')).length;
+      const lowerSet = new Set(choiceValues.map(v => v.toLowerCase()));
+      const hasDuplicates = lowerSet.size < 4;
+      const absurdWords = choiceValues.filter(v => /\b(dinosaur|unicorn|alien|pizza|banana monster|none sense)\b/i.test(v));
+
+      if (emptyCount > 0 || hasDuplicates) {
+        flags.push({
+          category: 'Unordered / Implausible Distractors',
+          severity: 'High',
+          explanation: emptyCount > 0
+            ? 'One or more answer choices are missing or placeholder text.'
+            : 'Duplicate answer choices were detected. Ensure all 4 choices are distinct and plausible.'
+        });
+      } else if (absurdWords.length > 0) {
+        flags.push({
+          category: 'Unordered / Implausible Distractors',
+          severity: 'Medium',
+          explanation: `Detected implausible/humorous distractor ("${absurdWords[0]}"). Replace with a realistic misconception.`
+        });
+      } else {
+        const parsedNums = letters.map(l => ({ letter: l, text: choices[l], parsed: parseNumericOrRatioValue(choices[l]) }));
+        if (parsedNums.every(p => p.parsed !== null)) {
+          const vals = parsedNums.map(p => p.parsed.value);
+          const isAsc = vals.every((v, i) => i === 0 || vals[i - 1] <= v);
+          const isDesc = vals.every((v, i) => i === 0 || vals[i - 1] >= v);
+          if (!isAsc && !isDesc) {
+            const sorted = [...parsedNums].sort((x, y) => x.parsed.value - y.parsed.value);
+            const sortedListStr = sorted.map(s => s.text).join(', ');
+            flags.push({
+              category: 'Unordered / Implausible Distractors',
+              severity: 'Low',
+              explanation: `Numeric/ratio choices (${choiceValues.join(', ')}) are not arranged in ascending or descending order. Sort them logically (${sortedListStr}) to reduce reading load.`
+            });
+            // Auto-sort choices in suggestedRevision and remap answer key
+            const originalKeyText = item.answer ? choices[item.answer] : '';
+            const newChoices = {};
+            let newKey = revAnswer;
+            letters.forEach((l, idx) => {
+              newChoices[l] = sorted[idx].text;
+              if (originalKeyText && sorted[idx].text === originalKeyText) {
+                newKey = l;
+              }
+            });
+            revChoices = newChoices;
+            revAnswer = newKey;
+          }
+        }
+      }
+
+      // 4. All / None of the Above
+      const aotaLetters = letters.filter(l => /\b(all of the above|none of the above|both a and b|all of these|none of these)\b/i.test(choices[l]));
+      if (aotaLetters.length > 0) {
+        flags.push({
+          category: 'All / None of the Above',
+          severity: 'Medium',
+          explanation: `Choice ${aotaLetters.join(', ')} uses "${choices[aotaLetters[0]]}". Psychometric best practice recommends replacing this with a concrete, plausible distractor.`
+        });
+        aotaLetters.forEach(l => {
+          revChoices[l] = '[Replace with a specific, plausible distractor]';
+        });
+      }
+
+      // 5. Absolute Modifiers
+      const absHits = [];
+      letters.forEach(l => {
+        const m = choices[l].match(/\b(always|never|only|every|must|none)\b/i);
+        if (m && !/\bnone of the above\b/i.test(choices[l])) {
+          absHits.push(`${l} ("${m[1]}")`);
+          revChoices[l] = revChoices[l].replace(/\b(always|never|only|every|must)\b\s*/gi, '').trim();
+        }
+      });
+      if (absHits.length > 0) {
+        flags.push({
+          category: 'Absolute Modifiers',
+          severity: 'Medium',
+          explanation: `Absolute modifier(s) detected in choice(s) ${absHits.join(', ')}. Extreme qualifiers often cue test-wise students to eliminate distractors.`
+        });
+      }
+
+      // 6. Negative / Confusing Stem
+      const negWords = ['not', 'except', 'least', 'incorrect', 'false'];
+      const unemphasizedNegs = [];
+      negWords.forEach(w => {
+        const re = new RegExp(`\\b(${w})\\b`, 'g');
+        const matches = stem.match(re);
+        if (matches) {
+          matches.forEach(m => {
+            if (m !== m.toUpperCase()) unemphasizedNegs.push(m);
+          });
+        }
+      });
+      if (unemphasizedNegs.length > 0) {
+        const uniqueNegs = [...new Set(unemphasizedNegs)];
+        flags.push({
+          category: 'Negative / Confusing Stem',
+          severity: uniqueNegs.length >= 2 ? 'High' : 'Medium',
+          explanation: `Unemphasized negative wording ("${uniqueNegs.join('", "')}") can cause careless misreading. Rephrase positively or CAPITALIZE/bold the negative word.`
+        });
+        uniqueNegs.forEach(w => {
+          const re = new RegExp(`\\b${w}\\b`, 'gi');
+          revStem = revStem.replace(re, w.toUpperCase());
+        });
+      }
+
+      // 7. Length / Detail Bias
+      const lengths = letters.map(l => choices[l].length);
+      for (let i = 0; i < 4; i++) {
+        const othersAvg = lengths.filter((_, idx) => idx !== i).reduce((a, b) => a + b, 0) / 3;
+        if (lengths[i] >= 25 && othersAvg > 0 && lengths[i] > othersAvg * 1.65) {
+          flags.push({
+            category: 'Length / Detail Bias',
+            severity: 'Medium',
+            explanation: `Choice ${letters[i]} (${lengths[i]} chars) is more than 1.65× longer than the average of the other choices (${Math.round(othersAvg)} chars), which may inadvertently cue the correct answer.`
+          });
+          break;
+        }
+      }
+
+      // 8. Grammatical Clue (stem ending in " a" or " an")
+      const articleMatch = stem.match(/\b(a|an)\s*(?:_+|\.{2,})?\s*$/i);
+      if (articleMatch) {
+        const art = articleMatch[1].toLowerCase();
+        const startsVowel = choiceValues.map(c => /^[aeiou]/i.test(c.trim()));
+        const hasMix = startsVowel.some(Boolean) && startsVowel.some(v => !v);
+        if (hasMix) {
+          flags.push({
+            category: 'Grammatical Clue',
+            severity: 'High',
+            explanation: `Stem ends with the article "${art}", which grammatically eliminates choices that don't match its vowel/consonant sound. Use "a/an" or rephrase as a direct question.`
+          });
+          revStem = revStem.replace(/\b(a|an)(\s*(?:_+|\.{2,})?\s*)$/i, 'a/an$2');
+        }
+      }
+
+      // 9. Double-Barreled Question
+      const qMarks = (stem.match(/\?/g) || []).length;
+      const doubleCue = /\b(and why|and how|and what|and explain)\b/i.test(stemLower);
+      if (qMarks >= 2 || doubleCue) {
+        flags.push({
+          category: 'Double-Barreled Question',
+          severity: 'Medium',
+          explanation: 'Stem appears to ask two separate questions or concepts at once. Focus the item on a single measurable learning objective.'
+        });
+      }
+
+      // 10. Bloom's Taxonomy (BTL) Alignment
+      const detectedBtl = detectBtlCognitiveLevel(stem);
+      let btlAlignment = `Detected cognitive level: ${detectedBtl} (${BTL_CODE_TO_NAME[detectedBtl]}).`;
+      if (item.targetBtl) {
+        if (item.targetBtl !== detectedBtl) {
+          flags.push({
+            category: "Bloom's Taxonomy (BTL) Alignment",
+            severity: 'Medium',
+            explanation: `Declared BTL is ${item.targetBtl} (${BTL_CODE_TO_NAME[item.targetBtl]}), but the task structure aligns with ${detectedBtl} (${BTL_CODE_TO_NAME[detectedBtl]}). Update the BTL tag or adjust cognitive complexity.`
+          });
+          btlAlignment = `Mismatch: Declared ${item.targetBtl} (${BTL_CODE_TO_NAME[item.targetBtl]}) vs. Detected ${detectedBtl} (${BTL_CODE_TO_NAME[detectedBtl]}).`;
+        } else {
+          btlAlignment = `Aligned with declared BTL ${item.targetBtl} (${BTL_CODE_TO_NAME[item.targetBtl]}).`;
+        }
+      }
+
+      // Compute Verdict: Retain (0 flags), Revise (1-2 moderate), Reject (>=3 High or >=4 total or broken choices)
+      const highCount = flags.filter(f => f.severity === 'High').length;
+      let verdict = 'Retain';
+      if (flags.length === 0) {
+        verdict = 'Retain';
+      } else if (highCount >= 3 || flags.length >= 4 || emptyCount > 0 || hasDuplicates) {
+        verdict = 'Reject';
+      } else {
+        verdict = 'Revise';
+      }
+
+      // Build clean Validation Sheet REMARKS summary
+      const remarks = flags.length === 0
+        ? `Sound item aligned with BTL ${detectedBtl} (${BTL_CODE_TO_NAME[detectedBtl]}). Retain as is.`
+        : flags.map(f => `${f.category}: ${f.explanation.split('.')[0]}.`).join(' ');
+
+      return {
+        verdict,
+        detectedBtl,
+        btlAlignment,
+        flags,
+        remarks,
+        suggestedRevision: {
+          stem: revStem,
+          choices: revChoices,
+          correctAnswer: revAnswer
+        },
+        engineSource: 'builtin'
+      };
+    }
+
+    // Unified audit orchestrator: Gemini first -> seamless Built-in Engine fallback
+    async function auditItemWithFallback(item, itemIndex) {
+      try {
+        const result = await callGeminiAudit(item, itemIndex);
+        return { audit: result, usedFallback: false };
+      } catch (err) {
+        console.warn(`Gemini API unavailable for Item #${itemIndex + 1} (${err.message}). Falling back to Built-in Psychometric Engine.`);
+        const fallbackResult = runBuiltInPsychometricEngine(item);
+        return { audit: fallbackResult, usedFallback: true };
+      }
+    }
+
+    async function auditSingleItem(id) {
+      const idx = state.items.findIndex(i => i.id === id);
+      if (idx === -1 || state.auditingIds.has(id)) return;
+      const item = state.items[idx];
+
+      state.auditingIds.add(id);
+      renderDetectiveTab();
+
+      try {
+        const { audit, usedFallback } = await auditItemWithFallback(item, idx);
+        item.audit = audit;
+        item.verdict = audit.verdict;
+        item.remarks = audit.remarks || '';
+        saveToStorage();
+
+        if (usedFallback) {
+          showToast('Gemini AI unavailable — audited using Built-in Psychometric Engine.', 'warning');
+        } else {
+          showToast(`Item #${idx + 1} audited with Gemini AI (${audit.verdict}).`, 'success');
+        }
+      } finally {
+        state.auditingIds.delete(id);
+        renderAll();
+      }
+    }
+
+    async function auditAllItems() {
+      if (state.items.length === 0) {
+        showToast('Upload or add test items first before running an audit.', 'warning');
+        return;
+      }
+      if (state.isBatchAuditing) return;
+
+      state.isBatchAuditing = true;
+      const total = state.items.length;
+      let completed = 0;
+      let geminiCount = 0;
+      let fallbackCount = 0;
+
+      const btn = document.getElementById('run-all-audit-btn');
+      const progressBox = document.getElementById('batch-progress-container');
+      const progressBar = document.getElementById('batch-progress-bar');
+      const progressPct = document.getElementById('batch-progress-pct');
+      const progressLabel = document.getElementById('batch-progress-label');
+
+      btn.disabled = true;
+      progressBox.classList.remove('hidden');
+
+      const updateProgress = () => {
+        const pct = Math.round((completed / total) * 100);
+        progressBar.style.width = `${pct}%`;
+        progressPct.textContent = `${pct}%`;
+        progressLabel.innerHTML = `
+          <span class="w-3.5 h-3.5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin inline-block"></span>
+          <span>Auditing Item ${Math.min(completed + 1, total)} of ${total}...</span>
+        `;
+      };
+
+      updateProgress();
+
+      for (let i = 0; i < state.items.length; i++) {
+        const item = state.items[i];
+        state.auditingIds.add(item.id);
+        renderDetectiveTab();
+
+        const { audit, usedFallback } = await auditItemWithFallback(item, i);
+        item.audit = audit;
+        item.verdict = audit.verdict;
+        item.remarks = audit.remarks || '';
+        if (usedFallback) fallbackCount++;
+        else geminiCount++;
+
+        saveToStorage();
+        state.auditingIds.delete(item.id);
+        completed++;
+        updateProgress();
+        renderDetectiveTab();
+      }
+
+      state.isBatchAuditing = false;
+      btn.disabled = false;
+      setTimeout(() => progressBox.classList.add('hidden'), 600);
+
+      renderAll();
+      if (fallbackCount === 0) {
+        showToast(`All ${total} items audited successfully with Gemini AI!`, 'success');
+      } else if (geminiCount === 0) {
+        showToast('Gemini AI unavailable — audited using Built-in Psychometric Engine.', 'warning');
+      } else {
+        showToast(`Audit complete: ${geminiCount} via Gemini AI, ${fallbackCount} via Built-in Psychometric Engine.`, 'warning');
+      }
+    }
+
+    function resetAllAudits() {
+      if (state.items.length === 0) return;
+      state.items.forEach(item => {
+        item.audit = null;
+        item.verdict = '';
+        item.remarks = '';
+        item.revised = false;
+      });
+      saveToStorage();
+      renderAll();
+      showToast('All audits and verdicts have been reset.', 'info');
+    }
+
+    function setItemVerdict(itemId, verdict) {
+      const item = state.items.find(i => i.id === itemId);
+      if (!item) return;
+      item.verdict = item.verdict === verdict ? '' : verdict;
+      saveToStorage();
+      renderAll();
+    }
+
+    function updateItemRemarks(itemId, value) {
+      const item = state.items.find(i => i.id === itemId);
+      if (!item) return;
+      item.remarks = value;
+      saveToStorage();
+    }
+
+    function applySuggestedRevision(itemId) {
+      const item = state.items.find(i => i.id === itemId);
+      if (!item || !item.audit || !item.audit.suggestedRevision) return;
+
+      const rev = item.audit.suggestedRevision;
+      item.stem = rev.stem;
+      item.choices = { ...rev.choices };
+      if (rev.correctAnswer) item.answer = rev.correctAnswer;
+      item.verdict = 'Retain';
+      item.revised = true;
+      if (item.audit.detectedBtl) {
+        item.targetBtl = item.audit.detectedBtl;
+      }
+      const prevRemarks = (item.remarks || '').trim();
+      item.remarks = prevRemarks
+        ? `Revised and retained. (Prior note: ${prevRemarks})`
+        : 'Revised per suggested improvement and retained.';
+
+      saveToStorage();
+      renderAll();
+      showToast('Revision applied! Item updated and marked as Retain.', 'success');
+    }
+
+    // =========================================================================
+    // STUDENT PREVIEW MODE
+    // =========================================================================
+    function selectStudentChoice(itemId, choiceLetter) {
+      if (state.studentSubmitted) return;
+      state.studentAnswers[itemId] = choiceLetter;
+      renderDetectiveTab();
+    }
+
+    function submitStudentQuiz() {
+      if (state.items.length === 0) return;
+      const answeredCount = Object.keys(state.studentAnswers).filter(id => state.items.some(i => i.id === id)).length;
+      if (answeredCount === 0) {
+        showToast('Select at least one answer before submitting.', 'warning');
+        return;
+      }
+      state.studentSubmitted = true;
+      renderDetectiveTab();
+
+      const keyedItems = state.items.filter(i => i.answer);
+      const correct = keyedItems.filter(i => state.studentAnswers[i.id] === i.answer).length;
+      if (keyedItems.length > 0) {
+        showToast(`Quiz submitted! Score: ${correct}/${keyedItems.length} keyed items.`, 'success');
+      } else {
+        showToast('Quiz submitted! (No answer keys were set on these items.)', 'info');
+      }
+    }
+
+    function resetStudentQuiz() {
+      state.studentAnswers = {};
+      state.studentSubmitted = false;
+      renderDetectiveTab();
+      showToast('Student preview quiz reset.', 'info');
+    }
+
+    // =========================================================================
+    // RENDERING FUNCTIONS
+    // =========================================================================
+    function renderAll() {
+      updateHeaderStats();
+      renderBuildTable();
+      if (state.activeTab === 'detective') renderDetectiveTab();
+      if (state.activeTab === 'report') renderReportTab();
+      refreshIcons();
+    }
+
+    function updateHeaderStats() {
+      const total = state.items.length;
+      const audited = state.items.filter(i => i.audit || i.verdict).length;
+      document.getElementById('header-total-count').textContent = total;
+      document.getElementById('header-audited-count').textContent = audited;
+      document.getElementById('nav-badge-count').textContent = total;
+      document.getElementById('build-item-count').textContent = total;
+    }
+
+    function getVerdictBadgeHtml(item) {
+      if (state.auditingIds.has(item.id)) {
+        return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+          <span class="w-3 h-3 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></span>
+          Auditing...
+        </span>`;
+      }
+      const v = item.verdict;
+      if (v === 'Retain') {
+        return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>Retain
+        </span>`;
+      }
+      if (v === 'Revise') {
+        return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+          <i data-lucide="pencil-line" class="w-3.5 h-3.5"></i>Revise
+        </span>`;
+      }
+      if (v === 'Reject') {
+        return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+          <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>Reject
+        </span>`;
+      }
+      return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+        <i data-lucide="clock" class="w-3.5 h-3.5"></i>Unaudited
+      </span>`;
+    }
+
+    function getEngineSourceBadgeHtml(audit) {
+      if (!audit) return '';
+      if (audit.engineSource === 'gemini') {
+        return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-violet-50 text-violet-700 border border-violet-200">✨ Gemini AI</span>`;
+      }
+      return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">⚡ Built-in Psychometric Engine</span>`;
+    }
+
+    // ---------- TAB 1: LIVE ITEM BANK PREVIEW TABLE ----------
+    function renderBuildTable() {
+      const container = document.getElementById('build-table-container');
+      if (state.items.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-10 px-4 rounded-2xl bg-slate-50 border border-dashed border-slate-200">
+            <div class="w-12 h-12 mx-auto rounded-2xl bg-white shadow-xs border border-slate-200 text-slate-400 flex items-center justify-center mb-3">
+              <i data-lucide="inbox" class="w-6 h-6"></i>
+            </div>
+            <p class="text-sm font-semibold text-slate-700">No test items loaded yet</p>
+            <p class="text-xs text-slate-500 mt-1">Upload your 7-column Excel validation sheet, download our template, or click <strong>"Load Sample Flawed Test"</strong>.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <table class="w-full text-left border-collapse text-sm">
+          <thead>
+            <tr class="border-b border-slate-200 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              <th class="py-2.5 px-3 w-12 text-center">No.</th>
+              <th class="py-2.5 px-3 min-w-[300px]">Test Items</th>
+              <th class="py-2.5 px-3 w-24 text-center">BTL</th>
+              <th class="py-2.5 px-3 w-28 text-center">Verdict</th>
+              <th class="py-2.5 px-3 w-36 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            ${state.items.map((item, idx) => `
+              <tr class="hover:bg-slate-50/70 align-top">
+                <td class="py-3.5 px-3 text-center font-bold text-slate-700">${idx + 1}</td>
+                <td class="py-3.5 px-3 space-y-2">
+                  <p class="font-semibold text-slate-900 leading-snug">${escapeHtml(item.stem)}</p>
+                  ${item.imageDataUrl ? `
+                    <div class="inline-flex items-start gap-2 p-1.5 rounded-lg border border-slate-200 bg-white">
+                      <img src="${item.imageDataUrl}" alt="Item diagram" class="max-h-20 rounded object-contain" />
+                      <button onclick="removeItemImage('${item.id}')" class="text-slate-400 hover:text-rose-600 cursor-pointer" title="Remove diagram">
+                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                      </button>
+                    </div>
+                  ` : ''}
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs text-slate-600">
+                    ${['A', 'B', 'C', 'D'].map(l => `
+                      <div class="${item.answer === l ? 'text-emerald-700 font-semibold' : ''}">
+                        <span class="font-bold">${l}.</span> ${escapeHtml(item.choices[l])} ${item.answer === l ? '<span class="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded ml-1">Key</span>' : ''}
+                      </div>
+                    `).join('')}
+                  </div>
+                </td>
+                <td class="py-3.5 px-3 text-center">
+                  ${item.targetBtl
+                    ? `<span class="inline-block px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200" title="${escapeHtml(BTL_CODE_TO_NAME[item.targetBtl] || '')}">${escapeHtml(item.targetBtl)}</span>`
+                    : `<span class="text-xs text-slate-400">—</span>`
+                  }
+                </td>
+                <td class="py-3.5 px-3 text-center">${getVerdictBadgeHtml(item)}</td>
+                <td class="py-3.5 px-3 text-right">
+                  <div class="inline-flex items-center gap-1">
+                    <button onclick="triggerQuickImageAttach('${item.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer" title="Add/Change Diagram Image">
+                      <i data-lucide="image-plus" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="editItemInForm('${item.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors cursor-pointer" title="Edit Item">
+                      <i data-lucide="pencil" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="deleteItem('${item.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer" title="Delete Item">
+                      <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    // ---------- TAB 2: INTERACTIVE ASSESSMENT & ITEM DETECTIVE ----------
+    function renderDetectiveTab() {
+      const detBtn = document.getElementById('mode-btn-detective');
+      const stuBtn = document.getElementById('mode-btn-student');
+      const detActions = document.getElementById('detective-toolbar-actions');
+      const stuActions = document.getElementById('student-toolbar-actions');
+      const filtersBar = document.getElementById('detective-filters');
+      const studentBanner = document.getElementById('student-result-banner');
+
+      if (state.detectiveMode === 'detective') {
+        detBtn.className = 'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer bg-white text-indigo-700 shadow-xs';
+        stuBtn.className = 'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer text-slate-600 hover:text-slate-900';
+        detActions.classList.remove('hidden'); detActions.classList.add('flex');
+        stuActions.classList.add('hidden'); stuActions.classList.remove('flex');
+        filtersBar.classList.remove('hidden');
+        studentBanner.classList.add('hidden');
+      } else {
+        stuBtn.className = 'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer bg-white text-indigo-700 shadow-xs';
+        detBtn.className = 'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer text-slate-600 hover:text-slate-900';
+        stuActions.classList.remove('hidden'); stuActions.classList.add('flex');
+        detActions.classList.add('hidden'); detActions.classList.remove('flex');
+        filtersBar.classList.add('hidden');
+      }
+
+      const counts = {
+        all: state.items.length,
+        Retain: state.items.filter(i => i.verdict === 'Retain').length,
+        Revise: state.items.filter(i => i.verdict === 'Revise').length,
+        Reject: state.items.filter(i => i.verdict === 'Reject').length,
+        Unaudited: state.items.filter(i => !i.verdict).length
+      };
+
+      document.querySelectorAll('.filter-pill').forEach(btn => {
+        const f = btn.dataset.filter;
+        const label = f === 'all' ? 'All' : f;
+        btn.textContent = `${label} (${counts[f] ?? 0})`;
+        if (f === state.activeFilter) {
+          btn.className = 'filter-pill px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors cursor-pointer bg-slate-900 text-white border-slate-900';
+        } else {
+          btn.className = 'filter-pill px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors cursor-pointer bg-white text-slate-600 border-slate-200 hover:bg-slate-50';
+        }
+      });
+
+      const container = document.getElementById('detective-cards-container');
+
+      if (state.items.length === 0) {
+        studentBanner.classList.add('hidden');
+        container.innerHTML = `
+          <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-10 text-center">
+            <div class="w-14 h-14 mx-auto rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4">
+              <i data-lucide="search-check" class="w-7 h-7"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-900">Your Validation Bank is Empty</h3>
+            <p class="text-sm text-slate-600 mt-1 max-w-md mx-auto">Upload your 7-column Excel validation sheet or load our 5-item sample flawed test to begin auditing.</p>
+            <div class="flex flex-wrap justify-center gap-3 mt-5">
+              <button onclick="switchTab('build')" class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold cursor-pointer">Go to Upload &amp; Build</button>
+              <button onclick="loadSampleFlawedTest()" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold cursor-pointer">Load Sample Flawed Test</button>
+            </div>
+          </div>
+        `;
+        refreshIcons();
+        return;
+      }
+
+      if (state.detectiveMode === 'student') {
+        renderStudentPreviewCards(container);
+      } else {
+        renderItemDetectiveCards(container);
+      }
+      refreshIcons();
+    }
+
+    function renderStudentPreviewCards(container) {
+      let answeredCount = 0;
+      let correctCount = 0;
+      const keyedItems = state.items.filter(i => i.answer);
+
+      state.items.forEach(item => {
+        const chosen = state.studentAnswers[item.id];
+        if (chosen) {
+          answeredCount++;
+          if (item.answer && chosen === item.answer) correctCount++;
+        }
+      });
+
+      document.getElementById('student-answered-count').textContent = answeredCount;
+      document.getElementById('student-total-count').textContent = state.items.length;
+      document.getElementById('student-score-count').textContent = state.studentSubmitted
+        ? (keyedItems.length > 0 ? `${correctCount}/${keyedItems.length}` : 'Submitted')
+        : '—';
+
+      const submitBtn = document.getElementById('submit-quiz-btn');
+      const resultBanner = document.getElementById('student-result-banner');
+
+      if (state.studentSubmitted) {
+        submitBtn.classList.add('hidden');
+        resultBanner.classList.remove('hidden');
+        if (keyedItems.length > 0) {
+          const pct = Math.round((correctCount / keyedItems.length) * 100);
+          document.getElementById('student-result-title').textContent = `Student Preview Score: ${correctCount} / ${keyedItems.length} (${pct}%)`;
+          const unkeyedNote = keyedItems.length < state.items.length
+            ? ` (${state.items.length - keyedItems.length} item(s) have no answer key set.)`
+            : '';
+          document.getElementById('student-result-desc').textContent = `Review each item below to experience how students read your test.${unkeyedNote}`;
+        } else {
+          document.getElementById('student-result-title').textContent = 'Student Preview Completed';
+          document.getElementById('student-result-desc').textContent = 'Add answer keys in Tab 1 (or apply AI revisions) to enable automatic scoring.';
+        }
+      } else {
+        submitBtn.classList.remove('hidden');
+        resultBanner.classList.add('hidden');
+      }
+
+      container.innerHTML = state.items.map((item, idx) => {
+        const chosen = state.studentAnswers[item.id];
+        const hasKey = Boolean(item.answer);
+        const isCorrect = hasKey && chosen === item.answer;
+
+        const choicesHtml = ['A', 'B', 'C', 'D'].map(letter => {
+          let cls = 'border-slate-200 bg-white hover:border-indigo-400 hover:bg-indigo-50/40 text-slate-800';
+          let iconHtml = '';
+
+          if (state.studentSubmitted && hasKey) {
+            if (letter === item.answer) {
+              cls = 'border-emerald-500 bg-emerald-50 text-emerald-950 ring-1 ring-emerald-500';
+              iconHtml = `<i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600 shrink-0"></i>`;
+            } else if (letter === chosen && chosen !== item.answer) {
+              cls = 'border-rose-400 bg-rose-50 text-rose-950 ring-1 ring-rose-400';
+              iconHtml = `<i data-lucide="x-circle" class="w-4 h-4 text-rose-600 shrink-0"></i>`;
+            } else {
+              cls = 'border-slate-200 bg-slate-50/50 text-slate-400';
+            }
+          } else if (chosen === letter) {
+            cls = 'border-indigo-600 bg-indigo-50 text-indigo-950 ring-1 ring-indigo-600';
+            iconHtml = `<i data-lucide="check" class="w-4 h-4 text-indigo-600 shrink-0"></i>`;
+          }
+
+          return `
+            <button
+              onclick="selectStudentChoice('${item.id}', '${letter}')"
+              class="w-full text-left flex items-center justify-between gap-3 p-3.5 rounded-xl border transition-all ${state.studentSubmitted ? 'cursor-default' : 'cursor-pointer'} ${cls}"
+            >
+              <div class="flex items-start gap-3">
+                <span class="w-6 h-6 rounded-lg bg-slate-900/5 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">${letter}</span>
+                <span class="text-sm font-medium">${escapeHtml(item.choices[letter])}</span>
+              </div>
+              ${iconHtml}
+            </button>
+          `;
+        }).join('');
+
+        let statusPill = `<span class="text-xs text-slate-400">${chosen ? `Selected: ${chosen}` : 'Select an answer'}</span>`;
+        if (state.studentSubmitted) {
+          if (!hasKey) {
+            statusPill = `<span class="text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full">No Key Set</span>`;
+          } else if (!chosen) {
+            statusPill = `<span class="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">Unanswered — Key: ${escapeHtml(item.answer)}</span>`;
+          } else if (isCorrect) {
+            statusPill = `<span class="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">Correct!</span>`;
+          } else {
+            statusPill = `<span class="text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-full">Incorrect — Key: ${escapeHtml(item.answer)}</span>`;
+          }
+        }
+
+        return `
+          <article class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-6">
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <span class="text-xs font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg">Item #${idx + 1} of ${state.items.length}</span>
+              ${statusPill}
+            </div>
+            <p class="text-base font-semibold text-slate-900 leading-relaxed mb-3">${escapeHtml(item.stem)}</p>
+            ${item.imageDataUrl ? `
+              <div class="mb-4 p-2.5 rounded-xl border border-slate-200 bg-slate-50 inline-block">
+                <img src="${item.imageDataUrl}" alt="Item diagram" class="max-h-48 rounded-lg object-contain" />
+              </div>
+            ` : ''}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              ${choicesHtml}
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function renderItemDetectiveCards(container) {
+      const filtered = state.items.filter(item => {
+        if (state.activeFilter === 'all') return true;
+        if (state.activeFilter === 'Unaudited') return !item.verdict;
+        return item.verdict === state.activeFilter;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-8 text-center">
+            <p class="text-sm font-semibold text-slate-700">No items match the "${escapeHtml(state.activeFilter)}" filter.</p>
+            <button onclick="setFilter('all')" class="mt-3 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer">Show All Items</button>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(item => {
+        const idx = state.items.indexOf(item) + 1;
+        const audit = item.audit;
+        const isAuditing = state.auditingIds.has(item.id);
+
+        let borderAccent = 'border-l-slate-300';
+        if (item.verdict === 'Retain') borderAccent = 'border-l-emerald-500';
+        else if (item.verdict === 'Revise') borderAccent = 'border-l-amber-500';
+        else if (item.verdict === 'Reject') borderAccent = 'border-l-rose-500';
+
+        const btlMismatch = item.targetBtl && audit?.detectedBtl && item.targetBtl !== audit.detectedBtl;
+
+        const choicesHtml = ['A', 'B', 'C', 'D'].map(letter => {
+          const isKey = item.answer === letter;
+          return `
+            <div class="flex items-start gap-2.5 p-3 rounded-xl border ${isKey ? 'bg-emerald-50/70 border-emerald-300 text-emerald-950' : 'bg-slate-50/70 border-slate-200/80 text-slate-700'}">
+              <span class="w-6 h-6 rounded-lg text-xs font-bold flex items-center justify-center shrink-0 ${isKey ? 'bg-emerald-600 text-white' : 'bg-white border border-slate-300 text-slate-600'}">${letter}</span>
+              <span class="text-sm ${isKey ? 'font-semibold' : 'font-medium'} flex-1">${escapeHtml(item.choices[letter])}</span>
+              ${isKey ? `<span class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md shrink-0">Key</span>` : ''}
+            </div>
+          `;
+        }).join('');
+
+        const verdictToggleHtml = `
+          <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
+            ${['Retain', 'Revise', 'Reject'].map(v => {
+              const active = item.verdict === v;
+              const activeCls = v === 'Retain'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : (v === 'Revise' ? 'bg-amber-500 text-white shadow-xs' : 'bg-rose-600 text-white shadow-xs');
+              return `
+                <button
+                  onclick="setItemVerdict('${item.id}', '${v}')"
+                  class="px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${active ? activeCls : 'text-slate-600 hover:text-slate-900'}"
+                >
+                  ${v}
+                </button>
+              `;
+            }).join('')}
+          </div>
+        `;
+
+        let auditSectionHtml = '';
+        if (audit) {
+          const flagsHtml = audit.flags && audit.flags.length > 0
+            ? `<div class="space-y-2.5">
+                ${audit.flags.map(flag => {
+                  const sevCls = flag.severity === 'High'
+                    ? 'bg-rose-50/75 border-rose-200 text-rose-950'
+                    : (flag.severity === 'Medium' ? 'bg-amber-50/75 border-amber-200 text-amber-950' : 'bg-sky-50/75 border-sky-200 text-sky-950');
+                  const pillCls = flag.severity === 'High'
+                    ? 'bg-rose-600 text-white'
+                    : (flag.severity === 'Medium' ? 'bg-amber-500 text-white' : 'bg-sky-600 text-white');
+                  return `
+                    <div class="p-3.5 rounded-xl border ${sevCls}">
+                      <div class="flex flex-wrap items-center gap-2 mb-1">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${pillCls}">${escapeHtml(flag.severity)}</span>
+                        <span class="text-xs font-bold">${escapeHtml(flag.category)}</span>
+                      </div>
+                      <p class="text-sm opacity-90 leading-relaxed">${escapeHtml(flag.explanation)}</p>
+                    </div>
+                  `;
+                }).join('')}
+              </div>`
+            : `<div class="flex items-center gap-3 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm">
+                <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 shrink-0"></i>
+                <span><strong>No design flaws detected.</strong> This item meets psychometric quality guidelines.</span>
+              </div>`;
+
+          const rev = audit.suggestedRevision;
+          const revisionHtml = rev ? `
+            <div class="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-200/90 space-y-3">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0">
+                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+                  </span>
+                  <h4 class="text-sm font-bold text-indigo-950">Suggested Revision</h4>
+                </div>
+                <button
+                  onclick="applySuggestedRevision('${item.id}')"
+                  class="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+                >
+                  <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                  <span>Apply Revision</span>
+                </button>
+              </div>
+              <div class="bg-white rounded-xl border border-indigo-100 p-3.5 space-y-2">
+                <p class="text-sm font-semibold text-slate-900">${escapeHtml(rev.stem)}</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
+                  ${['A', 'B', 'C', 'D'].map(l => `
+                    <div class="px-2.5 py-1.5 rounded-lg border ${l === rev.correctAnswer ? 'bg-emerald-50 border-emerald-300 text-emerald-900 font-semibold' : 'bg-slate-50 border-slate-200 text-slate-700'}">
+                      <span class="font-bold mr-1">${l}.</span> ${escapeHtml(rev.choices[l])}
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+          ` : '';
+
+          auditSectionHtml = `
+            <div class="mt-5 pt-4 border-t border-slate-100 space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    Psychometric Findings
+                  </h4>
+                  ${getEngineSourceBadgeHtml(audit)}
+                </div>
+                <span class="text-xs text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg">
+                  <strong>BTL Check:</strong> ${escapeHtml(audit.btlAlignment)}
+                </span>
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                <div class="lg:col-span-6 space-y-3">
+                  ${flagsHtml}
+                </div>
+                <div class="lg:col-span-6">
+                  ${revisionHtml}
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        return `
+          <article class="bg-white rounded-2xl border border-slate-200/80 border-l-4 ${borderAccent} shadow-sm p-5 sm:p-6 transition-all">
+            <!-- Card Header -->
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-4">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="px-2.5 py-1 rounded-lg bg-slate-900 text-white text-xs font-bold">No. ${idx}</span>
+                ${item.targetBtl
+                  ? `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">Target BTL: ${escapeHtml(item.targetBtl)}</span>`
+                  : `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-500">Target BTL: —</span>`
+                }
+                ${audit?.detectedBtl
+                  ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border ${btlMismatch ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}">
+                      <i data-lucide="${btlMismatch ? 'alert-triangle' : 'brain'}" class="w-3.5 h-3.5"></i>
+                      Detected BTL: ${escapeHtml(audit.detectedBtl)} (${escapeHtml(BTL_CODE_TO_NAME[audit.detectedBtl] || '')})
+                    </span>`
+                  : ''
+                }
+                ${item.revised ? `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">Revised</span>` : ''}
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2">
+                ${verdictToggleHtml}
+                <button
+                  onclick="triggerQuickImageAttach('${item.id}')"
+                  class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-semibold cursor-pointer"
+                  title="Attach diagram image"
+                >
+                  <i data-lucide="image-plus" class="w-3.5 h-3.5"></i>
+                  <span class="hidden sm:inline">${item.imageDataUrl ? 'Change Image' : 'Add Image'}</span>
+                </button>
+                <button
+                  onclick="auditSingleItem('${item.id}')"
+                  ${isAuditing ? 'disabled' : ''}
+                  class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                >
+                  ${isAuditing
+                    ? `<span class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span><span>Auditing...</span>`
+                    : `<i data-lucide="search" class="w-3.5 h-3.5"></i><span>${audit ? 'Re-Audit' : 'Audit This Item'}</span>`
+                  }
+                </button>
+              </div>
+            </div>
+
+            <!-- Stem & Optional Diagram -->
+            <p class="text-base font-semibold text-slate-900 leading-relaxed mb-3">${escapeHtml(item.stem)}</p>
+
+            ${item.imageDataUrl ? `
+              <div class="mb-4 inline-flex items-start gap-2 p-2 rounded-xl border border-slate-200 bg-slate-50">
+                <img src="${item.imageDataUrl}" alt="Attached diagram" class="max-h-44 rounded-lg object-contain" />
+                <button onclick="removeItemImage('${item.id}')" class="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer" title="Remove diagram">
+                  <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+              </div>
+            ` : ''}
+
+            <!-- Choices -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+              ${choicesHtml}
+            </div>
+
+            <!-- Editable Validation Remarks (Synced with Excel REMARKS column) -->
+            <div class="mt-4 pt-3 border-t border-slate-100">
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                Validation Remarks <span class="font-normal normal-case text-slate-400">(Editable — exported directly to Excel REMARKS column)</span>
+              </label>
+              <textarea
+                rows="2"
+                oninput="updateItemRemarks('${item.id}', this.value)"
+                placeholder="Audit remarks will appear here after running an audit, or type your own validation remarks..."
+                class="w-full rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 px-3 py-2 text-sm text-slate-800 bg-slate-50/50 outline-none transition-all"
+              >${escapeHtml(item.remarks || '')}</textarea>
+            </div>
+
+            ${auditSectionHtml}
+          </article>
+        `;
+      }).join('');
+    }
+
+    // ---------- TAB 3: VALIDATION REPORT & TOS ----------
+    function renderReportTab() {
+      const total = state.items.length;
+      const retainCount = state.items.filter(i => i.verdict === 'Retain').length;
+      const reviseCount = state.items.filter(i => i.verdict === 'Revise').length;
+      const rejectCount = state.items.filter(i => i.verdict === 'Reject').length;
+      const unauditedCount = state.items.filter(i => !i.verdict).length;
+      const validatedCount = total - unauditedCount;
+
+      const healthScore = validatedCount > 0
+        ? Math.round(((retainCount * 100) + (reviseCount * 55) + (rejectCount * 15)) / validatedCount)
+        : null;
+
+      const circumference = 251.2;
+      const ringEl = document.getElementById('health-ring-progress');
+      const scoreEl = document.getElementById('kpi-health-score');
+
+      if (healthScore !== null) {
+        scoreEl.textContent = `${healthScore}%`;
+        ringEl.style.strokeDashoffset = circumference - (healthScore / 100) * circumference;
+        ringEl.style.stroke = healthScore >= 80 ? '#10B981' : (healthScore >= 55 ? '#F59E0B' : '#F43F5E');
+        document.getElementById('kpi-health-sub').textContent =
+          healthScore >= 80 ? 'Strong assessment quality' :
+          healthScore >= 55 ? 'Moderate — revisions needed' :
+          'High priority flaws detected';
+      } else {
+        scoreEl.textContent = '—';
+        ringEl.style.strokeDashoffset = circumference;
+        ringEl.style.stroke = '#94A3B8';
+        document.getElementById('kpi-health-sub').textContent = 'Run audit to score';
+      }
+
+      document.getElementById('kpi-audited-sub').textContent = `${validatedCount} of ${total} validated`;
+      document.getElementById('kpi-retain-count').textContent = retainCount;
+      document.getElementById('kpi-revise-count').textContent = reviseCount;
+      document.getElementById('kpi-reject-count').textContent = rejectCount;
+      document.getElementById('kpi-unaudited-count').textContent = unauditedCount;
+
+      // Top Flagged Design Flaws (10 categories)
+      const flawCounts = {};
+      FLAW_CATEGORIES.forEach(cat => flawCounts[cat] = 0);
+      let totalFlags = 0;
+
+      state.items.forEach(item => {
+        (item.audit?.flags || []).forEach(f => {
+          const cat = normalizeCategoryName(f.category);
+          if (flawCounts[cat] !== undefined) {
+            flawCounts[cat]++;
+            totalFlags++;
+          }
+        });
+      });
+
+      const flawContainer = document.getElementById('flaw-breakdown-container');
+      flawContainer.innerHTML = FLAW_CATEGORIES.map(cat => {
+        const count = flawCounts[cat];
+        const pct = totalFlags > 0 ? Math.round((count / totalFlags) * 100) : 0;
+        const barColor = count === 0 ? 'bg-slate-200' : 'bg-rose-500';
+        return `
+          <div>
+            <div class="flex items-center justify-between text-xs font-semibold mb-1">
+              <span class="text-slate-700">${escapeHtml(cat)}</span>
+              <span class="text-slate-500">${count} flag${count === 1 ? '' : 's'}${totalFlags > 0 ? ` (${pct}%)` : ''}</span>
+            </div>
+            <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div class="h-full ${barColor} rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // TOS Summary: LOTS (R, U) vs HOTS (Ap, An, E, C)
+      const buckets = {};
+      BTL_LIST.forEach(b => buckets[b.code] = []);
+      let classifiedTotal = 0;
+      let hotsCount = 0;
+
+      state.items.forEach((item, idx) => {
+        const code = item.audit?.detectedBtl || item.targetBtl;
+        if (code && buckets[code]) {
+          buckets[code].push(idx + 1);
+          classifiedTotal++;
+          if (['Ap', 'An', 'E', 'C'].includes(code)) hotsCount++;
+        }
+      });
+
+      const hotsPct = classifiedTotal > 0 ? Math.round((hotsCount / classifiedTotal) * 100) : 0;
+      const lotsPct = classifiedTotal > 0 ? (100 - hotsPct) : 0;
+
+      document.getElementById('tos-hots-badge').textContent = `LOTS: ${lotsPct}% | HOTS: ${hotsPct}%`;
+      document.getElementById('tos-lots-bar').style.width = `${lotsPct}%`;
+      document.getElementById('tos-hots-bar').style.width = `${hotsPct}%`;
+      document.getElementById('tos-lots-text').textContent = `${lotsPct}%`;
+      document.getElementById('tos-hots-text').textContent = `${hotsPct}%`;
+
+      document.getElementById('tos-table-body').innerHTML = BTL_LIST.map(b => {
+        const nums = buckets[b.code];
+        const pct = classifiedTotal > 0 ? Math.round((nums.length / classifiedTotal) * 100) : 0;
+        const isHots = b.order === 'HOTS';
+        return `
+          <tr>
+            <td class="py-2.5 pr-2 font-semibold text-slate-800 whitespace-nowrap">
+              <span class="inline-block w-2 h-2 rounded-full mr-2 ${isHots ? 'bg-indigo-600' : 'bg-sky-500'}"></span>
+              <span class="font-bold text-indigo-700">${b.code}</span> — ${b.name}
+            </td>
+            <td class="py-2.5 px-2 text-xs text-slate-500 font-mono">${nums.length ? nums.join(', ') : '—'}</td>
+            <td class="py-2.5 px-2 text-center font-bold text-slate-700">${nums.length}</td>
+            <td class="py-2.5 pl-2 text-right text-slate-600">${pct}%</td>
+          </tr>
+        `;
+      }).join('');
+
+      // 7-Column Validation Sheet Preview Table
+      const previewBody = document.getElementById('validation-sheet-preview-body');
+      if (state.items.length === 0) {
+        previewBody.innerHTML = `<tr><td colspan="7" class="border border-slate-300 py-8 text-center text-slate-500 text-sm">No test items loaded.</td></tr>`;
+      } else {
+        previewBody.innerHTML = state.items.map((item, idx) => {
+          const btlCode = item.audit?.detectedBtl || item.targetBtl || '';
+          return `
+            <tr class="align-top print-break-inside-avoid">
+              <td class="border border-slate-300 py-3 px-2.5 text-center font-semibold text-slate-800">${idx + 1}</td>
+              <td class="border border-slate-300 py-3 px-3 text-slate-900 space-y-1.5">
+                <p class="font-medium leading-snug">${idx + 1}. ${escapeHtml(item.stem)}</p>
+                ${item.imageDataUrl ? `<img src="${item.imageDataUrl}" alt="Item diagram" class="max-h-28 my-1.5 rounded object-contain" />` : ''}
+                <div class="text-xs sm:text-sm space-y-0.5 pl-0.5 text-slate-800">
+                  <div>A. ${escapeHtml(item.choices.A)}</div>
+                  <div>B. ${escapeHtml(item.choices.B)}</div>
+                  <div>C. ${escapeHtml(item.choices.C)}</div>
+                  <div>D. ${escapeHtml(item.choices.D)}</div>
+                </div>
+              </td>
+              <td class="border border-slate-300 py-3 px-2 text-center font-bold text-slate-800">${escapeHtml(btlCode)}</td>
+              <td class="border border-slate-300 py-3 px-2 text-center font-bold text-emerald-700 text-base">${item.verdict === 'Retain' ? '✓' : ''}</td>
+              <td class="border border-slate-300 py-3 px-2 text-center font-bold text-rose-700 text-base">${item.verdict === 'Reject' ? '✓' : ''}</td>
+              <td class="border border-slate-300 py-3 px-2 text-center font-bold text-amber-700 text-base">${item.verdict === 'Revise' ? '✓' : ''}</td>
+              <td class="border border-slate-300 py-3 px-3 text-xs text-slate-700 leading-relaxed">${escapeHtml(item.remarks || '')}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      refreshIcons();
+    }
+
+    // =========================================================================
+    // EXPORT UTILITIES (2-SHEET VALIDATION EXCEL, TXT DOWNLOAD & CLIPBOARD)
+    // =========================================================================
+    function buildRevisedTestPlainText() {
+      return state.items.map((item, idx) => {
+        const btl = item.audit?.detectedBtl || item.targetBtl;
+        const lines = [
+          `${idx + 1}. ${item.stem}`,
+          `A. ${item.choices.A}`,
+          `B. ${item.choices.B}`,
+          `C. ${item.choices.C}`,
+          `D. ${item.choices.D}`
+        ];
+        if (item.answer) lines.push(`Answer: ${item.answer}`);
+        if (btl) lines.push(`BTL: ${btl} (${BTL_CODE_TO_NAME[btl] || btl})`);
+        if (item.verdict) lines.push(`Verdict: ${item.verdict}`);
+        if (item.remarks) lines.push(`Remarks: ${item.remarks}`);
+        return lines.join('\n');
+      }).join('\n\n');
+    }
+
+    function exportValidationSheetExcel() {
+      if (state.items.length === 0) {
+        showToast('There are no items to export.', 'warning');
+        return;
+      }
+      if (typeof XLSX === 'undefined') {
+        showToast('SheetJS library is not available.', 'error');
+        return;
+      }
+
+      try {
+        // Sheet 1: Exact 7-Column Validation Sheet
+        const sheet1Rows = [
+          ['No.', 'Test Items', 'BTL', 'Retain', 'Reject', 'Revise', 'REMARKS']
+        ];
+        const rowHeights = [{ hpt: 24 }];
+
+        state.items.forEach((item, idx) => {
+          const itemNum = idx + 1;
+          const multiLineText = [
+            `${itemNum}. ${item.stem}`,
+            `A. ${item.choices.A}`,
+            `B. ${item.choices.B}`,
+            `C. ${item.choices.C}`,
+            `D. ${item.choices.D}`
+          ].join('\n');
+
+          const btlCode = item.audit?.detectedBtl || item.targetBtl || '';
+          sheet1Rows.push([
+            itemNum,
+            multiLineText,
+            btlCode,
+            item.verdict === 'Retain' ? '✓' : '',
+            item.verdict === 'Reject' ? '✓' : '',
+            item.verdict === 'Revise' ? '✓' : '',
+            (item.remarks || '').trim()
+          ]);
+          rowHeights.push({ hpt: 98 });
+        });
+
+        const ws1 = XLSX.utils.aoa_to_sheet(sheet1Rows);
+        ws1['!cols'] = [
+          { wch: 6 },
+          { wch: 58 },
+          { wch: 8 },
+          { wch: 10 },
+          { wch: 10 },
+          { wch: 10 },
+          { wch: 44 }
+        ];
+        ws1['!rows'] = rowHeights;
+
+        // Sheet 2: TOS Summary (LOTS: R, U | HOTS: Ap, An, E, C)
+        const buckets = {};
+        BTL_LIST.forEach(b => buckets[b.code] = []);
+        let classifiedTotal = 0;
+        let hotsCount = 0;
+
+        state.items.forEach((item, idx) => {
+          const code = item.audit?.detectedBtl || item.targetBtl;
+          if (code && buckets[code]) {
+            buckets[code].push(idx + 1);
+            classifiedTotal++;
+            if (['Ap', 'An', 'E', 'C'].includes(code)) hotsCount++;
+          }
+        });
+
+        const lotsCount = classifiedTotal - hotsCount;
+        const hotsPct = classifiedTotal > 0 ? Math.round((hotsCount / classifiedTotal) * 100) : 0;
+        const lotsPct = classifiedTotal > 0 ? (100 - hotsPct) : 0;
+
+        const sheet2Rows = [
+          ['BTL Code', "Bloom's Taxonomy Level", 'Order', 'Item Numbers', 'Count', 'Percentage'],
+          ...BTL_LIST.map(b => {
+            const nums = buckets[b.code];
+            const pct = classifiedTotal > 0 ? `${Math.round((nums.length / classifiedTotal) * 100)}%` : '0%';
+            return [b.code, b.name, b.order, nums.join(', ') || '—', nums.length, pct];
+          }),
+          [],
+          ['Summary Metric', 'Count', 'Percentage'],
+          ['LOTS (R, U)', lotsCount, `${lotsPct}%`],
+          ['HOTS (Ap, An, E, C)', hotsCount, `${hotsPct}%`],
+          ['Total Items', state.items.length, '100%'],
+          ['Retain', state.items.filter(i => i.verdict === 'Retain').length, ''],
+          ['Revise', state.items.filter(i => i.verdict === 'Revise').length, ''],
+          ['Reject', state.items.filter(i => i.verdict === 'Reject').length, '']
+        ];
+
+        const ws2 = XLSX.utils.aoa_to_sheet(sheet2Rows);
+        ws2['!cols'] = [
+          { wch: 18 }, { wch: 26 }, { wch: 12 }, { wch: 24 }, { wch: 10 }, { wch: 14 }
+        ];
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws1, 'Validation Sheet');
+        XLSX.utils.book_append_sheet(wb, ws2, 'TOS Summary');
+        XLSX.writeFile(wb, 'Item_Validation_Report.xlsx');
+        showToast('Exported Item_Validation_Report.xlsx (Validation Sheet + TOS Summary)!', 'success');
+      } catch (err) {
+        console.error('Excel export error:', err);
+        showToast('Could not export Excel validation report.', 'error');
+      }
+    }
+
+    function copyRevisedTest() {
+      if (state.items.length === 0) {
+        showToast('There are no items to copy.', 'warning');
+        return;
+      }
+      const text = buildRevisedTestPlainText();
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        showToast('Revised test copied to clipboard!', 'success');
+      } catch (err) {
+        showToast('Could not copy automatically.', 'error');
+      }
+      document.body.removeChild(textarea);
+    }
+
+    function downloadRevisedTestTxt() {
+      if (state.items.length === 0) {
+        showToast('There are no items to download.', 'warning');
+        return;
+      }
+      const text = buildRevisedTestPlainText();
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Item_Validation_Revised_Test.txt';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Downloaded Item_Validation_Revised_Test.txt!', 'success');
+    }
+
+    // =========================================================================
+    // INITIALIZATION
+    // =========================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      loadFromStorage();
+      setupDropzone();
+      updateKeyIndicator();
+      switchTab('build');
+      refreshIcons();
+    });
+  </script>
+</body>
+</html>
