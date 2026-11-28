@@ -8,45 +8,87 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
-    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: #f8fafc; color: #0f172a; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #fdf2f8;
+      color: #3b0724;
+    }
     .tab-btn { transition: all 0.15s ease; }
-    .tab-btn.active { background: #4f46e5; color: #fff; box-shadow: 0 2px 8px rgba(79,70,229,0.28); }
-    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 1px 3px rgba(15,23,42,0.04); }
-    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
-    .val-table th, .val-table td { border: 1px solid #0f172a; padding: 8px 10px; vertical-align: top; }
-    .val-table th { background: #f1f5f9; font-weight: 700; text-align: center; }
-    .toast { position: fixed; bottom: 20px; right: 20px; z-index: 60; padding: 12px 18px; border-radius: 12px; color: #fff; font-weight: 600; font-size: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.18); display: none; max-width: 420px; }
+    .tab-btn.active {
+      background: linear-gradient(135deg, #ec4899, #db2777);
+      color: #fff;
+      box-shadow: 0 3px 10px rgba(219, 39, 119, 0.30);
+    }
+    .card {
+      background: #ffffff;
+      border: 1px solid #fbcfe8;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(190, 24, 93, 0.05);
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 9px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .val-table th, .val-table td {
+      border: 1px solid #831843;
+      padding: 8px 10px;
+      vertical-align: top;
+    }
+    .val-table th {
+      background: #fce7f3;
+      color: #831843;
+      font-weight: 700;
+      text-align: center;
+    }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 60;
+      padding: 12px 18px;
+      border-radius: 12px;
+      color: #fff;
+      font-weight: 600;
+      font-size: 14px;
+      box-shadow: 0 10px 25px rgba(131, 24, 67, 0.25);
+      display: none;
+      max-width: 420px;
+    }
     @media print {
       .no-print { display: none !important; }
-      body { background: #fff; }
-      .card { box-shadow: none; border: none; padding: 0; }
-      .print-break { page-break-before: always; }
+      body { background: #fff; color: #000; }
+      .card { box-shadow: none; border: 1px solid #f9a8d4; padding: 10px; }
     }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
   <!-- HEADER -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 no-print">
+  <header class="bg-white/95 backdrop-blur border-b border-pink-200 sticky top-0 z-40 no-print">
     <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-lg shadow">ID</div>
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 text-white flex items-center justify-center font-black text-lg shadow">ID</div>
         <div>
-          <h1 class="text-lg font-extrabold tracking-tight text-slate-900 leading-tight">Item Detective</h1>
-          <p class="text-xs text-slate-500">AI Assessment Design Auditor • 7-Col Validation • Class & Item Analytics</p>
+          <h1 class="text-lg font-extrabold tracking-tight text-pink-950 leading-tight">Item Detective</h1>
+          <p class="text-xs text-pink-700/80">AI Assessment Design Auditor • 7-Col Validation • Class & Item Analytics</p>
         </div>
       </div>
 
-      <nav class="flex flex-wrap gap-1.5 bg-slate-100 p-1 rounded-xl">
+      <nav class="flex flex-wrap gap-1.5 bg-pink-50 border border-pink-200 p-1 rounded-xl">
         <button onclick="switchTab(1)" id="tabBtn1" class="tab-btn active px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold">1. Upload & Build</button>
-        <button onclick="switchTab(2)" id="tabBtn2" class="tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-900">2. Item Detective</button>
-        <button onclick="switchTab(3)" id="tabBtn3" class="tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-900">3. Validation & TOS</button>
-        <button onclick="switchTab(4)" id="tabBtn4" class="tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-900">4. Class Data & Item Analysis</button>
+        <button onclick="switchTab(2)" id="tabBtn2" class="tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold text-pink-900 hover:bg-pink-100">2. Item Detective</button>
+        <button onclick="switchTab(3)" id="tabBtn3" class="tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold text-pink-900 hover:bg-pink-100">3. Validation & TOS</button>
+        <button onclick="switchTab(4)" id="tabBtn4" class="tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold text-pink-900 hover:bg-pink-100">4. Class Data & Item Analysis</button>
       </nav>
 
       <div class="flex items-center gap-2">
-        <span id="aiStatusPill" class="badge bg-amber-100 text-amber-800 cursor-pointer" onclick="openAiModal()" title="Configure Gemini API Key">⚡ Built-in Engine</span>
-        <button onclick="openAiModal()" class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50">⚙️ AI Settings</button>
+        <span id="aiStatusPill" class="badge bg-pink-100 text-pink-800 cursor-pointer" onclick="openAiModal()" title="Configure Gemini API Key">⚡ Built-in Engine</span>
+        <button onclick="openAiModal()" class="px-3 py-1.5 rounded-lg border border-pink-300 text-xs font-semibold text-pink-800 hover:bg-pink-50">⚙️ AI Settings</button>
       </div>
     </div>
   </header>
@@ -61,34 +103,34 @@
         <div class="card p-5 lg:col-span-2 space-y-4">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h2 class="text-base font-bold text-slate-900">Upload Test File (Excel, CSV, TXT, JSON)</h2>
-              <p class="text-xs text-slate-500">Auto-detects your <b>7-Column Validation Format</b> (No. | Test Items | BTL | Retain | Reject | Revise | REMARKS) or standard multi-column sheets.</p>
+              <h2 class="text-base font-bold text-pink-950">Upload Test File (Excel, CSV, TXT, JSON)</h2>
+              <p class="text-xs text-pink-800/75">Auto-detects your <b>7-Column Validation Format</b> (No. | Test Items | BTL | Retain | Reject | Revise | REMARKS) or standard multi-column sheets.</p>
             </div>
             <div class="flex flex-wrap gap-2">
-              <button onclick="downloadValidationTemplate()" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold">📥 Excel Template (.xlsx)</button>
-              <button onclick="loadSampleTest()" class="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold">🧪 Load Sample Flawed Test</button>
+              <button onclick="downloadValidationTemplate()" class="px-3 py-1.5 rounded-lg bg-pink-600 hover:bg-pink-700 text-white text-xs font-semibold shadow-sm">📥 Excel Template (.xlsx)</button>
+              <button onclick="loadSampleTest()" class="px-3 py-1.5 rounded-lg bg-pink-100 hover:bg-pink-200 text-pink-800 text-xs font-semibold">🧪 Load Sample Flawed Test</button>
             </div>
           </div>
 
-          <div id="dropZone" class="border-2 border-dashed border-slate-300 hover:border-indigo-400 rounded-xl p-6 text-center cursor-pointer transition bg-slate-50/70"
+          <div id="dropZone" class="border-2 border-dashed border-pink-300 hover:border-pink-500 rounded-xl p-6 text-center cursor-pointer transition bg-pink-50/50"
                onclick="document.getElementById('testFileInput').click()"
-               ondragover="event.preventDefault(); this.classList.add('border-indigo-500','bg-indigo-50/40')"
-               ondragleave="this.classList.remove('border-indigo-500','bg-indigo-50/40')"
+               ondragover="event.preventDefault(); this.classList.add('border-pink-600','bg-pink-100/60')"
+               ondragleave="this.classList.remove('border-pink-600','bg-pink-100/60')"
                ondrop="handleTestDrop(event)">
-            <input type="file" id="testFileInput" accept=".xlsx,.xls,.csv,.txt,.json" class="hidden" onchange="handleTestFile(this.files[0])" />
+            <input type="file" id="testFileInput" accept=".xlsx,.xls,.csv,.txt,.json" class="hidden" onchange="handleTestFile(this.files[0]); this.value='';" />
             <div class="text-3xl mb-1">📄</div>
-            <p class="text-sm font-semibold text-slate-700">Drag & drop your test file here, or click to browse</p>
-            <p class="text-xs text-slate-500 mt-1">Supports <code>.xlsx</code>, <code>.xls</code>, <code>.csv</code>, <code>.txt</code>, <code>.json</code></p>
+            <p class="text-sm font-semibold text-pink-900">Drag & drop your test file here, or click to browse</p>
+            <p class="text-xs text-pink-700/80 mt-1">Supports <code>.xlsx</code>, <code>.xls</code>, <code>.csv</code>, <code>.txt</code>, <code>.json</code></p>
           </div>
-          <div id="uploadFeedback" class="hidden text-xs rounded-lg p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 font-medium"></div>
+          <div id="uploadFeedback" class="hidden text-xs rounded-lg p-3 bg-pink-50 border border-pink-300 text-pink-900 font-medium"></div>
 
           <!-- Smart Bulk Paste -->
-          <div class="pt-2 border-t border-slate-100">
-            <label class="block text-xs font-bold text-slate-700 mb-1">Smart Bulk Paste (Questions + A/B/C/D Choices)</label>
-            <textarea id="bulkPasteInput" rows="4" class="w-full rounded-lg border border-slate-300 p-2.5 text-xs font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+          <div class="pt-2 border-t border-pink-100">
+            <label class="block text-xs font-bold text-pink-900 mb-1">Smart Bulk Paste (Questions + A/B/C/D Choices)</label>
+            <textarea id="bulkPasteInput" rows="4" class="w-full rounded-lg border border-pink-300 p-2.5 text-xs font-mono focus:ring-2 focus:ring-pink-400 focus:outline-none"
               placeholder="1. What is the ratio of 2 apples to 5 bananas?&#10;A. 2:4&#10;B. 2:5&#10;C. 2:6&#10;D. 5:2&#10;Answer: B"></textarea>
             <div class="mt-2 flex justify-end">
-              <button onclick="parseBulkPaste()" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold">Parse & Add Questions</button>
+              <button onclick="parseBulkPaste()" class="px-3.5 py-1.5 rounded-lg bg-pink-800 hover:bg-pink-900 text-white text-xs font-semibold">Parse & Add Questions</button>
             </div>
           </div>
         </div>
@@ -96,30 +138,30 @@
         <!-- Manual Add / Edit Form -->
         <div class="card p-5 space-y-3">
           <div class="flex items-center justify-between">
-            <h2 id="formTitle" class="text-base font-bold text-slate-900">Add / Edit Item</h2>
-            <button onclick="resetForm()" class="text-xs text-slate-500 hover:text-slate-800">Reset</button>
+            <h2 id="formTitle" class="text-base font-bold text-pink-950">Add / Edit Item</h2>
+            <button onclick="resetForm()" class="text-xs text-pink-600 hover:text-pink-900 font-semibold">Reset</button>
           </div>
           <input type="hidden" id="editIndex" value="-1" />
           <div>
-            <label class="text-xs font-semibold text-slate-600">Question Stem</label>
-            <textarea id="fStem" rows="2" class="w-full mt-1 rounded-lg border border-slate-300 p-2 text-xs" placeholder="Enter test question..."></textarea>
+            <label class="text-xs font-semibold text-pink-800">Question Stem</label>
+            <textarea id="fStem" rows="2" class="w-full mt-1 rounded-lg border border-pink-300 p-2 text-xs focus:ring-2 focus:ring-pink-400 focus:outline-none" placeholder="Enter test question..."></textarea>
           </div>
           <div class="grid grid-cols-2 gap-2">
-            <div><label class="text-[11px] font-semibold text-slate-600">Option A</label><input id="fA" class="w-full mt-0.5 rounded-lg border border-slate-300 px-2 py-1.5 text-xs" /></div>
-            <div><label class="text-[11px] font-semibold text-slate-600">Option B</label><input id="fB" class="w-full mt-0.5 rounded-lg border border-slate-300 px-2 py-1.5 text-xs" /></div>
-            <div><label class="text-[11px] font-semibold text-slate-600">Option C</label><input id="fC" class="w-full mt-0.5 rounded-lg border border-slate-300 px-2 py-1.5 text-xs" /></div>
-            <div><label class="text-[11px] font-semibold text-slate-600">Option D</label><input id="fD" class="w-full mt-0.5 rounded-lg border border-slate-300 px-2 py-1.5 text-xs" /></div>
+            <div><label class="text-[11px] font-semibold text-pink-800">Option A</label><input id="fA" class="w-full mt-0.5 rounded-lg border border-pink-300 px-2 py-1.5 text-xs" /></div>
+            <div><label class="text-[11px] font-semibold text-pink-800">Option B</label><input id="fB" class="w-full mt-0.5 rounded-lg border border-pink-300 px-2 py-1.5 text-xs" /></div>
+            <div><label class="text-[11px] font-semibold text-pink-800">Option C</label><input id="fC" class="w-full mt-0.5 rounded-lg border border-pink-300 px-2 py-1.5 text-xs" /></div>
+            <div><label class="text-[11px] font-semibold text-pink-800">Option D</label><input id="fD" class="w-full mt-0.5 rounded-lg border border-pink-300 px-2 py-1.5 text-xs" /></div>
           </div>
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <label class="text-[11px] font-semibold text-slate-600">Answer Key</label>
-              <select id="fKey" class="w-full mt-0.5 rounded-lg border border-slate-300 px-2 py-1.5 text-xs bg-white">
+              <label class="text-[11px] font-semibold text-pink-800">Answer Key</label>
+              <select id="fKey" class="w-full mt-0.5 rounded-lg border border-pink-300 px-2 py-1.5 text-xs bg-white">
                 <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="">Unknown</option>
               </select>
             </div>
             <div>
-              <label class="text-[11px] font-semibold text-slate-600">BTL (Bloom's)</label>
-              <select id="fBtl" class="w-full mt-0.5 rounded-lg border border-slate-300 px-2 py-1.5 text-xs bg-white">
+              <label class="text-[11px] font-semibold text-pink-800">BTL (Bloom's)</label>
+              <select id="fBtl" class="w-full mt-0.5 rounded-lg border border-pink-300 px-2 py-1.5 text-xs bg-white">
                 <option value="R">R — Remembering</option>
                 <option value="U">U — Understanding</option>
                 <option value="Ap">Ap — Applying</option>
@@ -130,24 +172,24 @@
             </div>
           </div>
           <div>
-            <label class="text-[11px] font-semibold text-slate-600">Remarks (Optional)</label>
-            <input id="fRemarks" class="w-full mt-0.5 rounded-lg border border-slate-300 px-2 py-1.5 text-xs" placeholder="Validator notes..." />
+            <label class="text-[11px] font-semibold text-pink-800">Remarks (Optional)</label>
+            <input id="fRemarks" class="w-full mt-0.5 rounded-lg border border-pink-300 px-2 py-1.5 text-xs" placeholder="Validator notes..." />
           </div>
           <div>
-            <label class="text-[11px] font-semibold text-slate-600">Diagram / Image (Optional)</label>
-            <input type="file" id="fImg" accept="image/*" class="w-full mt-0.5 text-xs" />
+            <label class="text-[11px] font-semibold text-pink-800">Diagram / Image (Optional)</label>
+            <input type="file" id="fImg" accept="image/*" class="w-full mt-0.5 text-xs text-pink-800" />
           </div>
-          <button onclick="saveManualItem()" class="w-full py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold">Save Item</button>
+          <button onclick="saveManualItem()" class="w-full py-2 rounded-lg bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold shadow-sm">Save Item</button>
         </div>
       </div>
 
       <!-- Current Items Table -->
       <div class="card p-5">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-          <h3 class="text-sm font-bold text-slate-900">Loaded Test Items (<span id="itemCountBadge">0</span>)</h3>
+          <h3 class="text-sm font-bold text-pink-950">Loaded Test Items (<span id="itemCountBadge">0</span>)</h3>
           <div class="flex gap-2">
-            <button onclick="clearAllItems()" class="px-3 py-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-semibold">Clear All</button>
-            <button onclick="switchTab(2)" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold">Go to Item Detective →</button>
+            <button onclick="clearAllItems()" class="px-3 py-1.5 rounded-lg border border-rose-300 text-rose-700 hover:bg-rose-50 text-xs font-semibold">Clear All</button>
+            <button onclick="switchTab(2)" class="px-3.5 py-1.5 rounded-lg bg-pink-600 hover:bg-pink-700 text-white text-xs font-semibold">Go to Item Detective →</button>
           </div>
         </div>
         <div id="tab1List" class="space-y-2.5 text-sm"></div>
@@ -157,69 +199,69 @@
     <!-- ==================== TAB 2: ITEM DETECTIVE & STUDENT PREVIEW ==================== -->
     <section id="tab2" class="hidden space-y-5">
       <div class="card p-4 flex flex-wrap items-center justify-between gap-3">
-        <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
-          <button onclick="setTab2Mode('detective')" id="modeDetectiveBtn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-white shadow text-indigo-700">🕵️ Item Detective Mode</button>
-          <button onclick="setTab2Mode('student')" id="modeStudentBtn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-600">🎓 Student Preview Mode</button>
+        <div class="flex items-center gap-2 bg-pink-50 border border-pink-200 p-1 rounded-xl">
+          <button onclick="setTab2Mode('detective')" id="modeDetectiveBtn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-white shadow text-pink-700">🕵️ Item Detective Mode</button>
+          <button onclick="setTab2Mode('student')" id="modeStudentBtn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-pink-800">🎓 Student Preview Mode</button>
         </div>
         <div id="detectiveControls" class="flex flex-wrap items-center gap-2">
           <div class="flex gap-1 text-xs">
-            <button onclick="setFilter('all')" id="flt_all" class="px-2.5 py-1 rounded-full bg-slate-800 text-white font-semibold">All</button>
-            <button onclick="setFilter('Retain')" id="flt_Retain" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-semibold">Retain</button>
-            <button onclick="setFilter('Revise')" id="flt_Revise" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-semibold">Revise</button>
-            <button onclick="setFilter('Reject')" id="flt_Reject" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-semibold">Reject</button>
+            <button onclick="setFilter('all')" id="flt_all" class="px-2.5 py-1 rounded-full bg-pink-700 text-white font-semibold">All</button>
+            <button onclick="setFilter('Retain')" id="flt_Retain" class="px-2.5 py-1 rounded-full bg-pink-100 text-pink-800 font-semibold">Retain</button>
+            <button onclick="setFilter('Revise')" id="flt_Revise" class="px-2.5 py-1 rounded-full bg-pink-100 text-pink-800 font-semibold">Revise</button>
+            <button onclick="setFilter('Reject')" id="flt_Reject" class="px-2.5 py-1 rounded-full bg-pink-100 text-pink-800 font-semibold">Reject</button>
           </div>
-          <button onclick="auditAllItems()" id="auditAllBtn" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm">🔍 Audit All Items</button>
+          <button onclick="auditAllItems()" id="auditAllBtn" class="px-4 py-2 rounded-lg bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold shadow-sm">🔍 Audit All Items</button>
         </div>
         <div id="studentControls" class="hidden flex items-center gap-2">
-          <button onclick="submitStudentQuiz()" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">Submit Answers</button>
-          <button onclick="resetStudentQuiz()" class="px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold">Reset</button>
+          <button onclick="submitStudentQuiz()" class="px-4 py-2 rounded-lg bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold">Submit Answers</button>
+          <button onclick="resetStudentQuiz()" class="px-3 py-2 rounded-lg border border-pink-300 text-pink-800 text-xs font-semibold">Reset</button>
         </div>
       </div>
 
-      <div id="studentScoreBanner" class="hidden card p-4 bg-indigo-50 border-indigo-200 flex items-center justify-between"></div>
+      <div id="studentScoreBanner" class="hidden card p-4 bg-pink-100/70 border-pink-300 flex items-center justify-between"></div>
       <div id="tab2Container" class="space-y-4"></div>
     </section>
 
     <!-- ==================== TAB 3: VALIDATION REPORT & TOS ==================== -->
     <section id="tab3" class="hidden space-y-6">
       <div class="flex flex-wrap items-center justify-between gap-2 no-print">
-        <h2 class="text-lg font-extrabold text-slate-900">Validation Report & Table of Specifications</h2>
+        <h2 class="text-lg font-extrabold text-pink-950">Validation Report & Table of Specifications</h2>
         <div class="flex flex-wrap gap-2">
-          <button onclick="exportValidationExcel()" class="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">📊 Export Validation Sheet (.xlsx)</button>
-          <button onclick="copyRevisedTest()" class="px-3 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-semibold">📋 Copy Revised Test</button>
-          <button onclick="downloadRevisedTxt()" class="px-3 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-semibold">⬇️ Download (.txt)</button>
-          <button onclick="window.print()" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold">🖨️ Print Report</button>
+          <button onclick="exportValidationExcel()" class="px-3.5 py-2 rounded-lg bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold shadow-sm">📊 Export Validation Sheet (.xlsx)</button>
+          <button onclick="copyRevisedTest()" class="px-3 py-2 rounded-lg border border-pink-300 bg-white hover:bg-pink-50 text-pink-900 text-xs font-semibold">📋 Copy Revised Test</button>
+          <button onclick="downloadRevisedTxt()" class="px-3 py-2 rounded-lg border border-pink-300 bg-white hover:bg-pink-50 text-pink-900 text-xs font-semibold">⬇️ Download (.txt)</button>
+          <button onclick="window.print()" class="px-3 py-2 rounded-lg bg-pink-900 hover:bg-pink-950 text-white text-xs font-semibold">🖨️ Print Report</button>
         </div>
       </div>
 
       <!-- KPI Summary -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="card p-4">
-          <div class="text-xs font-semibold text-slate-500">Assessment Health</div>
-          <div id="kpiHealth" class="text-2xl font-black text-indigo-600 mt-1">—</div>
-          <div class="w-full bg-slate-100 h-2 rounded-full mt-2 overflow-hidden"><div id="kpiHealthBar" class="bg-indigo-600 h-full transition-all" style="width:0%"></div></div>
+          <div class="text-xs font-semibold text-pink-700">Assessment Health</div>
+          <div id="kpiHealth" class="text-2xl font-black text-pink-600 mt-1">—</div>
+          <div class="w-full bg-pink-100 h-2 rounded-full mt-2 overflow-hidden"><div id="kpiHealthBar" class="bg-pink-600 h-full transition-all" style="width:0%"></div></div>
         </div>
-        <div class="card p-4"><div class="text-xs font-semibold text-slate-500">Retain</div><div id="kpiRetain" class="text-2xl font-black text-emerald-600 mt-1">0</div></div>
-        <div class="card p-4"><div class="text-xs font-semibold text-slate-500">Revise</div><div id="kpiRevise" class="text-2xl font-black text-amber-600 mt-1">0</div></div>
-        <div class="card p-4"><div class="text-xs font-semibold text-slate-500">Reject</div><div id="kpiReject" class="text-2xl font-black text-rose-600 mt-1">0</div></div>
+        <div class="card p-4"><div class="text-xs font-semibold text-pink-700">Retain</div><div id="kpiRetain" class="text-2xl font-black text-emerald-600 mt-1">0</div></div>
+        <div class="card p-4"><div class="text-xs font-semibold text-pink-700">Revise</div><div id="kpiRevise" class="text-2xl font-black text-amber-600 mt-1">0</div></div>
+        <div class="card p-4"><div class="text-xs font-semibold text-pink-700">Reject</div><div id="kpiReject" class="text-2xl font-black text-rose-600 mt-1">0</div></div>
       </div>
 
       <!-- TOS & Flaw Breakdown -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="card p-5">
           <div class="flex items-center justify-between mb-3">
-            <h3 class="text-sm font-bold text-slate-900">Bloom's Taxonomy TOS Summary</h3>
-            <span id="hotsBadge" class="badge bg-indigo-100 text-indigo-800">HOTS: 0%</span>
+            <h3 class="text-sm font-bold text-pink-950">Bloom's Taxonomy TOS Summary</h3>
+            <span id="hotsBadge" class="badge bg-pink-100 text-pink-800">HOTS: 0%</span>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-xs border-collapse">
               <thead>
-                <tr class="bg-slate-100 text-slate-700">
-                  <th class="p-2 text-left border">BTL Level</th>
-                  <th class="p-2 text-center border">Tier</th>
-                  <th class="p-2 text-center border">Count</th>
-                  <th class="p-2 text-center border">%</th>
-                  <th class="p-2 text-left border">Item Numbers</th>
+                <tr class="bg-pink-50 text-pink-900">
+                  <th class="p-2 text-left border border-pink-200">BTL Level</th>
+                  <th class="p-2 text-center border border-pink-200">Tier</th>
+                  <th class="p-2 text-center border border-pink-200">Count</th>
+                  <th class="p-2 text-center border border-pink-200">%</th>
+                  <th class="p-2 text-left border border-pink-200">Item Numbers</th>
                 </tr>
               </thead>
               <tbody id="tosTableBody"></tbody>
@@ -228,14 +270,14 @@
         </div>
 
         <div class="card p-5">
-          <h3 class="text-sm font-bold text-slate-900 mb-3">Top Flagged Design Flaws</h3>
+          <h3 class="text-sm font-bold text-pink-950 mb-3">Top Flagged Design Flaws</h3>
           <div id="flawBreakdownList" class="space-y-2.5 text-xs"></div>
         </div>
       </div>
 
       <!-- 7-Column Validation Sheet Preview -->
       <div class="card p-5">
-        <h3 class="text-sm font-bold text-slate-900 mb-3">7-Column Test Item Validation Sheet Preview</h3>
+        <h3 class="text-sm font-bold text-pink-950 mb-3">7-Column Test Item Validation Sheet Preview</h3>
         <div class="overflow-x-auto">
           <table class="w-full text-xs val-table border-collapse">
             <thead>
@@ -261,54 +303,88 @@
       <div class="card p-5 space-y-4 no-print">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h2 class="text-base font-bold text-slate-900">Upload Student Scores (Excel / CSV)</h2>
-            <p class="text-xs text-slate-500">Auto-detects <b>Format A</b> (Binary 1/0), <b>Format B</b> (Letters A–D + Answer Key), or <b>Format C</b> (Total Scores only).</p>
+            <h2 class="text-base font-bold text-pink-950">Upload Student Scores (Excel / CSV)</h2>
+            <p class="text-xs text-pink-800/75">Auto-detects <b>Format A</b> (Binary 1/0), <b>Format B</b> (Letters A–D + Answer Key), or <b>Format C</b> (Total Scores only).</p>
           </div>
           <div class="flex flex-wrap gap-2">
-            <button onclick="downloadScoreTemplate()" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold">📥 Score Template (.xlsx)</button>
-            <button onclick="loadSampleClassData()" class="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold">👥 Load Sample Class (30 Students)</button>
-            <button onclick="exportClassAnalysisExcel()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold">📊 Export 3-Sheet Report (.xlsx)</button>
-            <button onclick="window.print()" class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold">🖨️ Print</button>
+            <button onclick="downloadScoreTemplate()" class="px-3 py-1.5 rounded-lg bg-pink-600 hover:bg-pink-700 text-white text-xs font-semibold shadow-sm">📥 Score Template (.xlsx)</button>
+            <button onclick="loadSampleClassData()" class="px-3 py-1.5 rounded-lg bg-pink-100 hover:bg-pink-200 text-pink-800 text-xs font-semibold">👥 Load Sample Class (30 Students)</button>
+            <button onclick="togglePasteScores()" class="px-3 py-1.5 rounded-lg border border-pink-300 text-pink-800 hover:bg-pink-50 text-xs font-semibold">📋 Paste Scores</button>
+            <button onclick="exportClassAnalysisExcel()" class="px-3 py-1.5 rounded-lg bg-pink-900 hover:bg-pink-950 text-white text-xs font-semibold">📊 Export 3-Sheet Report (.xlsx)</button>
+            <button onclick="window.print()" class="px-3 py-1.5 rounded-lg border border-pink-300 text-pink-800 text-xs font-semibold">🖨️ Print</button>
           </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-          <div class="md:col-span-2 border-2 border-dashed border-slate-300 hover:border-indigo-400 rounded-xl p-4 text-center cursor-pointer bg-slate-50/70"
+          <div class="md:col-span-2 border-2 border-dashed border-pink-300 hover:border-pink-500 rounded-xl p-5 text-center cursor-pointer bg-pink-50/50 transition"
                onclick="document.getElementById('scoreFileInput').click()"
-               ondragover="event.preventDefault()" ondrop="handleScoreDrop(event)">
-            <input type="file" id="scoreFileInput" accept=".xlsx,.xls,.csv" class="hidden" onchange="handleScoreFile(this.files[0])" />
-            <p class="text-xs font-semibold text-slate-700">📂 Click or drop student score sheet (<code>.xlsx</code>, <code>.xls</code>, <code>.csv</code>)</p>
+               ondragover="event.preventDefault(); this.classList.add('border-pink-600','bg-pink-100/60')"
+               ondragleave="this.classList.remove('border-pink-600','bg-pink-100/60')"
+               ondrop="handleScoreDrop(event)">
+            <input type="file" id="scoreFileInput" accept=".xlsx,.xls,.csv" class="hidden" onchange="handleScoreFile(this.files[0]); this.value='';" />
+            <p class="text-xs font-semibold text-pink-900">📂 Click or drop student score sheet (<code>.xlsx</code>, <code>.xls</code>, <code>.csv</code>)</p>
+            <p class="text-[11px] text-pink-700/80 mt-1">Accepts <code>Student Name | Q1 | Q2 ...</code> (1/0 or A–D) or <code>Student Name | Total Score</code></p>
           </div>
-          <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 space-y-2">
-            <div class="flex items-center justify-between text-xs font-semibold">
+
+          <div class="bg-pink-50/70 rounded-xl p-3 border border-pink-200 space-y-2">
+            <div class="flex items-center justify-between text-xs font-semibold text-pink-900">
               <span>Mastery / Passing Cut-off:</span>
-              <span id="passPctLabel" class="text-indigo-700 font-bold">75%</span>
+              <span id="passPctLabel" class="text-pink-700 font-extrabold">75%</span>
             </div>
-            <input type="range" id="passPctInput" min="50" max="95" value="75" class="w-full accent-indigo-600"
+            <input type="range" id="passPctInput" min="50" max="95" value="75" class="w-full accent-pink-600"
                    oninput="document.getElementById('passPctLabel').textContent=this.value+'%'; if(classState.students.length) computeAndRenderClassAnalytics();" />
-            <div id="scoreFormatBadge" class="text-[11px] text-slate-500">No dataset loaded yet.</div>
+            <div id="maxScoreWrap" class="hidden flex items-center justify-between gap-2 text-xs">
+              <label class="font-semibold text-pink-900">Max Possible Score (K):</label>
+              <input type="number" id="maxScoreInput" min="1" value="10" class="w-16 rounded border border-pink-300 px-1.5 py-0.5 text-xs text-center font-bold"
+                     onchange="classState.itemCount = Math.max(1, parseInt(this.value,10)||10); computeAndRenderClassAnalytics();" />
+            </div>
+            <div id="scoreFormatBadge" class="text-[11px] text-pink-700">No dataset loaded yet.</div>
+          </div>
+        </div>
+
+        <!-- Sheet Selector & Transpose Controls (Shown after upload) -->
+        <div id="sheetControlsBar" class="hidden flex flex-wrap items-center justify-between gap-2 bg-pink-50 border border-pink-200 rounded-xl px-3 py-2 text-xs">
+          <div class="flex flex-wrap items-center gap-2">
+            <span id="detectedMetaText" class="text-pink-900 font-medium"></span>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <div id="sheetSelectWrap" class="hidden flex items-center gap-1.5">
+              <label class="font-bold text-pink-900">Sheet:</label>
+              <select id="sheetSelect" onchange="loadSelectedSheet()" class="rounded-lg border border-pink-300 bg-white px-2 py-1 text-xs font-semibold text-pink-900"></select>
+            </div>
+            <button onclick="toggleTransposeScores()" class="px-2.5 py-1 rounded-lg bg-white border border-pink-300 hover:bg-pink-100 text-pink-800 font-semibold">🔄 Transpose Rows/Cols</button>
+          </div>
+        </div>
+
+        <!-- Optional Paste Scores Box -->
+        <div id="pasteScoresBox" class="hidden bg-pink-50/60 border border-pink-200 rounded-xl p-3 space-y-2">
+          <label class="block text-xs font-bold text-pink-900">Paste Table Directly from Excel / Google Sheets (Tab or Comma separated)</label>
+          <textarea id="pasteScoresInput" rows="4" class="w-full rounded-lg border border-pink-300 p-2 text-xs font-mono"
+            placeholder="Student Name&#9;Q1&#9;Q2&#9;Q3&#9;Q4&#9;Q5&#10;Ana&#9;1&#9;1&#9;0&#9;1&#9;1&#10;Ben&#9;1&#9;0&#9;0&#9;1&#9;0"></textarea>
+          <div class="flex justify-end">
+            <button onclick="parsePastedScores()" class="px-3 py-1.5 rounded-lg bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold">Analyze Pasted Scores</button>
           </div>
         </div>
 
         <!-- Answer Key Bar (for Format B) -->
-        <div id="answerKeyBar" class="hidden bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-2">
+        <div id="answerKeyBar" class="hidden bg-pink-50 border border-pink-300 rounded-xl p-3 space-y-2">
           <div class="flex flex-wrap items-center justify-between gap-2">
-            <span class="text-xs font-bold text-amber-900">🔑 Answer Key (Format B — Letter Responses)</span>
-            <button onclick="syncKeyFromTab1()" class="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-semibold">Sync Keys from Tab 1</button>
+            <span class="text-xs font-bold text-pink-950">🔑 Answer Key (Format B — Letter Responses)</span>
+            <button onclick="syncKeyFromTab1()" class="px-2.5 py-1 rounded-lg bg-pink-600 hover:bg-pink-700 text-white text-[11px] font-semibold">Sync Keys from Tab 1</button>
           </div>
           <div id="answerKeyInputs" class="flex flex-wrap gap-2"></div>
         </div>
       </div>
 
       <!-- Empty State -->
-      <div id="tab4Empty" class="card p-10 text-center text-slate-500 text-sm">
-        Upload an Excel/CSV score file or click <b>Load Sample Class (30 Students)</b> to view Central Tendency, Variability, Score Histogram, Item Analysis, and Distractor Diagnostics.
+      <div id="tab4Empty" class="card p-10 text-center text-pink-800/80 text-sm">
+        Upload an Excel/CSV score file, paste from Excel, or click <b>Load Sample Class (30 Students)</b> to view Central Tendency, Variability, Score Histogram, Item Analysis, and Distractor Diagnostics.
       </div>
 
       <!-- Analytics Content -->
       <div id="tab4Content" class="hidden space-y-6">
         <!-- Skewness Banner -->
-        <div id="skewBanner" class="card p-4 bg-indigo-50/70 border-indigo-200 text-xs text-indigo-950 font-medium"></div>
+        <div id="skewBanner" class="card p-4 bg-pink-100/60 border-pink-300 text-xs text-pink-950 font-medium"></div>
 
         <!-- Central Tendency & Variability Cards -->
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3" id="statsCardsGrid"></div>
@@ -316,22 +392,25 @@
         <!-- Charts Row -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div class="card p-5">
-            <div class="flex items-center justify-between mb-3">
-              <h3 class="text-sm font-bold text-slate-900">Score Distribution Histogram</h3>
-              <div class="flex gap-1 bg-slate-100 p-0.5 rounded-lg text-[11px] no-print">
-                <button onclick="setHistMode('exact')" id="histExactBtn" class="px-2 py-1 rounded bg-white shadow font-bold text-indigo-700">Exact</button>
-                <button onclick="setHistMode('grouped')" id="histGroupedBtn" class="px-2 py-1 rounded text-slate-600 font-semibold">Grouped Bins</button>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <div>
+                <h3 class="text-sm font-bold text-pink-950">Score Distribution Histogram</h3>
+                <p class="text-[11px] text-pink-700/80">Deep Pink = Mastered • Soft Rose = Needs Support</p>
+              </div>
+              <div class="flex gap-1 bg-pink-50 border border-pink-200 p-0.5 rounded-lg text-[11px] no-print">
+                <button onclick="setHistMode('exact')" id="histExactBtn" class="px-2 py-1 rounded bg-white shadow font-bold text-pink-700">Exact</button>
+                <button onclick="setHistMode('grouped')" id="histGroupedBtn" class="px-2 py-1 rounded text-pink-800 font-semibold">Grouped Bins</button>
               </div>
             </div>
-            <div class="h-64"><canvas id="histChart"></canvas></div>
+            <div class="h-64 relative"><canvas id="histChart"></canvas></div>
           </div>
 
-          <div class="card p-5">
+          <div id="scatterCard" class="card p-5">
             <div class="flex items-center justify-between mb-3">
-              <h3 class="text-sm font-bold text-slate-900">Item Quality Map (Difficulty p vs. Discrimination D)</h3>
-              <span class="text-[11px] text-slate-500">Upper 27% vs. Lower 27%</span>
+              <h3 class="text-sm font-bold text-pink-950">Item Quality Map (Difficulty p vs. Discrimination D)</h3>
+              <span class="text-[11px] text-pink-700/80">Upper 27% vs. Lower 27%</span>
             </div>
-            <div class="h-64"><canvas id="scatterChart"></canvas></div>
+            <div class="h-64 relative"><canvas id="scatterChart"></canvas></div>
           </div>
         </div>
 
@@ -339,28 +418,28 @@
         <div id="itemAnalysisSection" class="card p-5 space-y-3">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h3 class="text-sm font-bold text-slate-900">Item & Distractor Analysis (Upper 27% vs. Lower 27%)</h3>
-              <p class="text-xs text-slate-500" id="ulGroupMeta"></p>
+              <h3 class="text-sm font-bold text-pink-950">Item & Distractor Analysis (Upper 27% vs. Lower 27%)</h3>
+              <p class="text-xs text-pink-700/80" id="ulGroupMeta"></p>
             </div>
             <div class="flex gap-1 text-xs no-print">
-              <button onclick="setIaFilter('all')" id="iaf_all" class="px-2.5 py-1 rounded-full bg-slate-800 text-white font-semibold">All</button>
-              <button onclick="setIaFilter('Retain')" id="iaf_Retain" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-semibold">Retain</button>
-              <button onclick="setIaFilter('Revise')" id="iaf_Revise" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-semibold">Revise</button>
-              <button onclick="setIaFilter('Reject')" id="iaf_Reject" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-semibold">Reject</button>
+              <button onclick="setIaFilter('all')" id="iaf_all" class="px-2.5 py-1 rounded-full bg-pink-700 text-white font-semibold">All</button>
+              <button onclick="setIaFilter('Retain')" id="iaf_Retain" class="px-2.5 py-1 rounded-full bg-pink-100 text-pink-800 font-semibold">Retain</button>
+              <button onclick="setIaFilter('Revise')" id="iaf_Revise" class="px-2.5 py-1 rounded-full bg-pink-100 text-pink-800 font-semibold">Revise</button>
+              <button onclick="setIaFilter('Reject')" id="iaf_Reject" class="px-2.5 py-1 rounded-full bg-pink-100 text-pink-800 font-semibold">Reject</button>
             </div>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-xs border-collapse">
               <thead>
-                <tr class="bg-slate-100 text-slate-700">
-                  <th class="p-2 border text-center">Item</th>
-                  <th class="p-2 border text-left">Stem Preview (Tab 1 Sync)</th>
-                  <th class="p-2 border text-center">Upper 27%</th>
-                  <th class="p-2 border text-center">Lower 27%</th>
-                  <th class="p-2 border text-center">Difficulty (p)</th>
-                  <th class="p-2 border text-center">Discrimination (D)</th>
-                  <th class="p-2 border text-center">Decision</th>
-                  <th class="p-2 border text-center no-print">Distractors</th>
+                <tr class="bg-pink-50 text-pink-950">
+                  <th class="p-2 border border-pink-200 text-center">Item</th>
+                  <th class="p-2 border border-pink-200 text-left">Stem Preview (Tab 1 Sync)</th>
+                  <th class="p-2 border border-pink-200 text-center">Upper 27%</th>
+                  <th class="p-2 border border-pink-200 text-center">Lower 27%</th>
+                  <th class="p-2 border border-pink-200 text-center">Difficulty (p)</th>
+                  <th class="p-2 border border-pink-200 text-center">Discrimination (D)</th>
+                  <th class="p-2 border border-pink-200 text-center">Decision</th>
+                  <th class="p-2 border border-pink-200 text-center no-print">Distractors</th>
                 </tr>
               </thead>
               <tbody id="itemAnalysisBody"></tbody>
@@ -371,10 +450,10 @@
         <!-- Class Roster -->
         <div class="card p-5 space-y-3">
           <div class="flex flex-wrap items-center justify-between gap-2">
-            <h3 class="text-sm font-bold text-slate-900">Class Roster & Individual Standing</h3>
+            <h3 class="text-sm font-bold text-pink-950">Class Roster & Individual Standing</h3>
             <div class="flex gap-2 no-print">
-              <input id="rosterSearch" oninput="renderRoster()" placeholder="Search student..." class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs" />
-              <select id="rosterSort" onchange="renderRoster()" class="px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs bg-white">
+              <input id="rosterSearch" oninput="renderRoster()" placeholder="Search student..." class="px-3 py-1.5 rounded-lg border border-pink-300 text-xs focus:outline-none focus:ring-2 focus:ring-pink-400" />
+              <select id="rosterSort" onchange="renderRoster()" class="px-2.5 py-1.5 rounded-lg border border-pink-300 text-xs bg-white">
                 <option value="scoreDesc">Score: High → Low</option>
                 <option value="scoreAsc">Score: Low → High</option>
                 <option value="nameAsc">Name: A → Z</option>
@@ -383,15 +462,15 @@
           </div>
           <div class="overflow-x-auto max-h-96 overflow-y-auto">
             <table class="w-full text-xs border-collapse">
-              <thead class="sticky top-0 bg-slate-100 text-slate-700">
+              <thead class="sticky top-0 bg-pink-50 text-pink-950">
                 <tr>
-                  <th class="p-2 border text-center">Rank</th>
-                  <th class="p-2 border text-left">Student Name</th>
-                  <th class="p-2 border text-center">Score</th>
-                  <th class="p-2 border text-center">%</th>
-                  <th class="p-2 border text-center">Z-Score</th>
-                  <th class="p-2 border text-center">Group (27%)</th>
-                  <th class="p-2 border text-center">Status</th>
+                  <th class="p-2 border border-pink-200 text-center">Rank</th>
+                  <th class="p-2 border border-pink-200 text-left">Student Name</th>
+                  <th class="p-2 border border-pink-200 text-center">Score</th>
+                  <th class="p-2 border border-pink-200 text-center">%</th>
+                  <th class="p-2 border border-pink-200 text-center">Z-Score</th>
+                  <th class="p-2 border border-pink-200 text-center">Group (27%)</th>
+                  <th class="p-2 border border-pink-200 text-center">Status</th>
                 </tr>
               </thead>
               <tbody id="rosterBody"></tbody>
@@ -403,22 +482,22 @@
   </main>
 
   <!-- AI SETTINGS MODAL -->
-  <div id="aiModal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+  <div id="aiModal" class="fixed inset-0 bg-pink-950/50 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-pink-200">
       <div class="flex items-center justify-between">
-        <h3 class="text-base font-bold text-slate-900">⚙️ AI Engine Settings</h3>
-        <button onclick="closeAiModal()" class="text-slate-400 hover:text-slate-700 font-bold">✕</button>
+        <h3 class="text-base font-bold text-pink-950">⚙️ AI Engine Settings</h3>
+        <button onclick="closeAiModal()" class="text-pink-400 hover:text-pink-700 font-bold">✕</button>
       </div>
-      <p class="text-xs text-slate-600 leading-relaxed">
-        Enter an optional <b>Google Gemini API Key</b> to use live Gemini AI auditing (including image analysis). Your key is stored only in your browser's <code>localStorage</code>. Without a key, Item Detective automatically uses the <b>Built-in Smart Psychometric Engine</b>.
+      <p class="text-xs text-pink-900/80 leading-relaxed">
+        Enter an optional <b>Google Gemini API Key</b> for live Gemini AI auditing (including diagram analysis). Your key is saved only in your browser's <code>localStorage</code>. Without a key, Item Detective uses the <b>Built-in Smart Psychometric Engine</b>.
       </p>
       <div>
-        <label class="text-xs font-semibold text-slate-700">Gemini API Key</label>
-        <input type="password" id="geminiKeyInput" class="w-full mt-1 rounded-lg border border-slate-300 px-3 py-2 text-xs" placeholder="AIzaSy..." />
+        <label class="text-xs font-semibold text-pink-900">Gemini API Key</label>
+        <input type="password" id="geminiKeyInput" class="w-full mt-1 rounded-lg border border-pink-300 px-3 py-2 text-xs" placeholder="AIzaSy..." />
       </div>
       <div class="flex justify-end gap-2">
-        <button onclick="clearAiKey()" class="px-3 py-1.5 rounded-lg border border-rose-200 text-rose-600 text-xs font-semibold">Clear Key</button>
-        <button onclick="saveAiKey()" class="px-4 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold">Save Settings</button>
+        <button onclick="clearAiKey()" class="px-3 py-1.5 rounded-lg border border-rose-300 text-rose-700 text-xs font-semibold">Clear Key</button>
+        <button onclick="saveAiKey()" class="px-4 py-1.5 rounded-lg bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold">Save Settings</button>
       </div>
     </div>
   </div>
@@ -429,12 +508,12 @@
 <script>
 /* ===================== GLOBAL STATE ===================== */
 const BTL_MAP = {
-  R: { label: 'Remembering', tier: 'LOTS' },
-  U: { label: 'Understanding', tier: 'LOTS' },
-  Ap: { label: 'Applying', tier: 'HOTS' },
-  An: { label: 'Analyzing', tier: 'HOTS' },
-  E: { label: 'Evaluating', tier: 'HOTS' },
-  C: { label: 'Creating', tier: 'HOTS' }
+  R:  { label: 'Remembering',   tier: 'LOTS' },
+  U:  { label: 'Understanding', tier: 'LOTS' },
+  Ap: { label: 'Applying',      tier: 'HOTS' },
+  An: { label: 'Analyzing',     tier: 'HOTS' },
+  E:  { label: 'Evaluating',    tier: 'HOTS' },
+  C:  { label: 'Creating',      tier: 'HOTS' }
 };
 
 let items = [];
@@ -443,12 +522,17 @@ let detectiveFilter = 'all';
 let studentAnswers = {};
 let studentSubmitted = false;
 
+let lastScoreWorkbook = null;
+let lastRawScoreRows = null;
+let lastScoreSourceName = '';
+let isScoreTransposed = false;
+
 let classState = {
   format: null, // 'A' binary, 'B' letters, 'C' totals
   itemCount: 0,
   itemLabels: [],
   answerKey: [],
-  students: [], // { name, responses: [], score }
+  students: [],
   stats: null,
   itemAnalysis: [],
   histMode: 'exact',
@@ -465,10 +549,10 @@ function esc(str) {
 function showToast(msg, type = 'info') {
   const el = document.getElementById('toast');
   el.textContent = msg;
-  el.style.background = type === 'error' ? '#be123c' : type === 'success' ? '#047857' : '#1e293b';
+  el.style.background = type === 'error' ? '#be123c' : type === 'success' ? '#db2777' : '#831843';
   el.style.display = 'block';
   clearTimeout(window._toastTimer);
-  window._toastTimer = setTimeout(() => el.style.display = 'none', 3400);
+  window._toastTimer = setTimeout(() => el.style.display = 'none', 3600);
 }
 
 function normalizeBtl(raw) {
@@ -484,11 +568,12 @@ function normalizeBtl(raw) {
 }
 
 function switchTab(n) {
-  [1,2,3,4].forEach(i => {
-    document.getElementById('tab'+i).classList.toggle('hidden', i !== n);
-    const btn = document.getElementById('tabBtn'+i);
+  [1, 2, 3, 4].forEach(i => {
+    document.getElementById('tab' + i).classList.toggle('hidden', i !== n);
+    const btn = document.getElementById('tabBtn' + i);
     btn.classList.toggle('active', i === n);
-    if (i !== n) btn.classList.add('text-slate-600'); else btn.classList.remove('text-slate-600');
+    if (i !== n) btn.classList.add('text-pink-900', 'hover:bg-pink-100');
+    else btn.classList.remove('text-pink-900', 'hover:bg-pink-100');
   });
   if (n === 1) renderTab1List();
   if (n === 2) renderTab2();
@@ -502,10 +587,10 @@ function updateAiPill() {
   const pill = document.getElementById('aiStatusPill');
   if (key) {
     pill.textContent = '✨ Gemini AI Active';
-    pill.className = 'badge bg-indigo-100 text-indigo-800 cursor-pointer';
+    pill.className = 'badge bg-pink-600 text-white cursor-pointer';
   } else {
     pill.textContent = '⚡ Built-in Engine';
-    pill.className = 'badge bg-amber-100 text-amber-800 cursor-pointer';
+    pill.className = 'badge bg-pink-100 text-pink-800 cursor-pointer';
   }
 }
 function openAiModal() {
@@ -553,15 +638,17 @@ function splitTestItemCell(text) {
 
 function handleTestDrop(e) {
   e.preventDefault();
-  e.currentTarget.classList.remove('border-indigo-500','bg-indigo-50/40');
+  e.currentTarget.classList.remove('border-pink-600', 'bg-pink-100/60');
   if (e.dataTransfer.files[0]) handleTestFile(e.dataTransfer.files[0]);
 }
 
 function handleTestFile(file) {
   if (!file) return;
+  if (typeof XLSX === 'undefined') return showToast('Excel library failed to load. Check your internet connection.', 'error');
   const ext = file.name.split('.').pop().toLowerCase();
   const fb = document.getElementById('uploadFeedback');
-  if (['xlsx','xls','csv'].includes(ext)) {
+
+  if (['xlsx', 'xls', 'csv'].includes(ext)) {
     const reader = new FileReader();
     reader.onload = ev => {
       try {
@@ -570,7 +657,6 @@ function handleTestFile(file) {
         const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1, defval: '' });
         if (!rows.length) return showToast('Empty spreadsheet.', 'error');
 
-        // Find header row
         let hIdx = rows.findIndex(r => r.some(c => /test\s*items|question|stem/i.test(String(c))));
         if (hIdx < 0) hIdx = 0;
         const headers = rows[hIdx].map(c => String(c).trim().toLowerCase());
@@ -595,14 +681,10 @@ function handleTestFile(file) {
             else if (idxRev >= 0 && String(r[idxRev]).trim()) decision = 'Revise';
             imported.push({
               id: Date.now() + Math.random(),
-              stem: parsed.stem,
-              choices: parsed.choices,
-              answerKey: '',
+              stem: parsed.stem, choices: parsed.choices, answerKey: '',
               btl: normalizeBtl(idxBtl >= 0 ? r[idxBtl] : 'R'),
-              decision,
-              remarks: idxRem >= 0 ? String(r[idxRem]).trim() : '',
-              image: null,
-              audit: null
+              decision, remarks: idxRem >= 0 ? String(r[idxRem]).trim() : '',
+              image: null, audit: null
             });
           } else {
             const findCol = rx => headers.findIndex(h => rx.test(h));
@@ -623,18 +705,16 @@ function handleTestFile(file) {
               D: iD >= 0 ? String(r[iD]).trim() : ''
             };
             let key = iKey >= 0 ? String(r[iKey]).trim().toUpperCase() : '';
-            if (!['A','B','C','D'].includes(key)) {
-              const found = Object.entries(choices).find(([,v]) => v.toUpperCase() === key);
+            if (!['A', 'B', 'C', 'D'].includes(key)) {
+              const found = Object.entries(choices).find(([, v]) => v.toUpperCase() === key);
               key = found ? found[0] : '';
             }
             imported.push({
               id: Date.now() + Math.random(),
               stem, choices, answerKey: key,
               btl: normalizeBtl(iBtl >= 0 ? r[iBtl] : 'R'),
-              decision: '',
-              remarks: iRem >= 0 ? String(r[iRem]).trim() : '',
-              image: null,
-              audit: null
+              decision: '', remarks: iRem >= 0 ? String(r[iRem]).trim() : '',
+              image: null, audit: null
             });
           }
         }
@@ -657,13 +737,11 @@ function handleTestFile(file) {
       arr.forEach(q => items.push({
         id: Date.now() + Math.random(),
         stem: q.stem || q.question || '',
-        choices: q.choices || { A: q.A||'', B: q.B||'', C: q.C||'', D: q.D||'' },
+        choices: q.choices || { A: q.A || '', B: q.B || '', C: q.C || '', D: q.D || '' },
         answerKey: (q.answerKey || q.answer || '').toUpperCase(),
         btl: normalizeBtl(q.btl || q.bloom || 'R'),
-        decision: q.decision || '',
-        remarks: q.remarks || '',
-        image: q.image || null,
-        audit: null
+        decision: q.decision || '', remarks: q.remarks || '',
+        image: q.image || null, audit: null
       }));
       renderTab1List();
       showToast(`Imported ${arr.length} items from JSON.`, 'success');
@@ -683,7 +761,7 @@ function parseBulkPaste() {
   let count = 0;
   blocks.forEach(block => {
     const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
-    let stem = [], choices = { A:'', B:'', C:'', D:'' }, key = '', btl = 'R';
+    let stem = [], choices = { A: '', B: '', C: '', D: '' }, key = '', btl = 'R';
     lines.forEach(l => {
       const cm = l.match(/^([A-D])[\.\)\:]\s*(.+)$/i);
       const am = l.match(/^(?:answer|key|ans)\s*[\:\-]?\s*([A-D])/i);
@@ -694,7 +772,7 @@ function parseBulkPaste() {
       else stem.push(l.replace(/^\d+[\.\)]\s*/, ''));
     });
     if (stem.length) {
-      items.push({ id: Date.now()+Math.random(), stem: stem.join(' '), choices, answerKey: key, btl, decision:'', remarks:'', image:null, audit:null });
+      items.push({ id: Date.now() + Math.random(), stem: stem.join(' '), choices, answerKey: key, btl, decision: '', remarks: '', image: null, audit: null });
       count++;
     }
   });
@@ -723,36 +801,11 @@ function downloadValidationTemplate() {
 
 function loadSampleTest() {
   items = [
-    {
-      id: 101,
-      stem: 'What is the ratio of number of apples to the number of bananas?',
-      choices: { A: '2 : 4', B: '2 : 5', C: '2 : 6', D: '5 : 2' },
-      answerKey: 'B', btl: 'R', decision: '', remarks: '', image: null, audit: null
-    },
-    {
-      id: 102,
-      stem: 'Based on the given in item no. 1, what is the ratio of number of bananas to the total number of fruits?',
-      choices: { A: '5 : 2', B: '2 : 5', C: '5 : 7', D: '2 : 7' },
-      answerKey: 'C', btl: 'R', decision: '', remarks: '', image: null, audit: null
-    },
-    {
-      id: 103,
-      stem: 'What mathematical term describes a statement indicating that two ratios are equal?',
-      choices: { A: 'Difference', B: 'Fraction', C: 'Percent', D: 'Proportion' },
-      answerKey: 'D', btl: 'R', decision: '', remarks: '', image: null, audit: null
-    },
-    {
-      id: 104,
-      stem: 'If the ratio of cats to dogs is 3:2 and there are 12 cats, how many dogs are there?',
-      choices: { A: '6', B: '10', C: '18', D: '8' },
-      answerKey: 'D', btl: 'U', decision: '', remarks: '', image: null, audit: null
-    },
-    {
-      id: 105,
-      stem: 'Which of the following is NOT never true about equivalent ratios and always applies to an?',
-      choices: { A: 'They are equal when simplified', B: 'All of the above', C: 'They can be written as fractions with cross products that are always completely identical in every single mathematical case', D: 'None of the above' },
-      answerKey: 'A', btl: 'An', decision: '', remarks: '', image: null, audit: null
-    }
+    { id: 101, stem: 'What is the ratio of number of apples to the number of bananas?', choices: { A: '2 : 4', B: '2 : 5', C: '2 : 6', D: '5 : 2' }, answerKey: 'B', btl: 'R', decision: '', remarks: '', image: null, audit: null },
+    { id: 102, stem: 'Based on the given in item no. 1, what is the ratio of number of bananas to the total number of fruits?', choices: { A: '5 : 2', B: '2 : 5', C: '5 : 7', D: '2 : 7' }, answerKey: 'C', btl: 'R', decision: '', remarks: '', image: null, audit: null },
+    { id: 103, stem: 'What mathematical term describes a statement indicating that two ratios are equal?', choices: { A: 'Difference', B: 'Fraction', C: 'Percent', D: 'Proportion' }, answerKey: 'D', btl: 'R', decision: '', remarks: '', image: null, audit: null },
+    { id: 104, stem: 'If the ratio of cats to dogs is 3:2 and there are 12 cats, how many dogs are there?', choices: { A: '6', B: '10', C: '18', D: '8' }, answerKey: 'D', btl: 'U', decision: '', remarks: '', image: null, audit: null },
+    { id: 105, stem: 'Which of the following is NOT never true about equivalent ratios and always applies to an?', choices: { A: 'They are equal when simplified', B: 'All of the above', C: 'They can be written as fractions with cross products that are always completely identical in every single mathematical case', D: 'None of the above' }, answerKey: 'A', btl: 'An', decision: '', remarks: '', image: null, audit: null }
   ];
   renderTab1List();
   showToast('Loaded 5 sample items (with intentional design flaws).', 'success');
@@ -810,7 +863,7 @@ function editItem(idx) {
 function resetForm() {
   document.getElementById('editIndex').value = -1;
   document.getElementById('formTitle').textContent = 'Add / Edit Item';
-  ['fStem','fA','fB','fC','fD','fRemarks','fImg'].forEach(id => document.getElementById(id).value = '');
+  ['fStem', 'fA', 'fB', 'fC', 'fD', 'fRemarks', 'fImg'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('fKey').value = 'A';
   document.getElementById('fBtl').value = 'R';
 }
@@ -828,63 +881,54 @@ function attachItemImage(idx, inputEl) {
   r.readAsDataURL(file);
 }
 
-function deleteItem(idx) {
-  items.splice(idx, 1);
-  renderTab1List();
-}
+function deleteItem(idx) { items.splice(idx, 1); renderTab1List(); }
+function clearAllItems() { if (!items.length) return; items = []; renderTab1List(); showToast('Cleared all test items.', 'info'); }
 
-function clearAllItems() {
-  if (!items.length) return;
-  items = [];
-  renderTab1List();
-  showToast('Cleared all test items.', 'info');
+function decisionBadge(d) {
+  if (d === 'Retain') return `<span class="badge bg-emerald-100 text-emerald-800">✓ Retain</span>`;
+  if (d === 'Revise') return `<span class="badge bg-amber-100 text-amber-800">⚠ Revise</span>`;
+  if (d === 'Reject') return `<span class="badge bg-rose-100 text-rose-800">✕ Reject</span>`;
+  return `<span class="badge bg-pink-100 text-pink-700">Unaudited</span>`;
 }
 
 function renderTab1List() {
   document.getElementById('itemCountBadge').textContent = items.length;
   const box = document.getElementById('tab1List');
   if (!items.length) {
-    box.innerHTML = `<div class="text-center py-8 text-slate-400 text-xs">No test items yet. Upload an Excel file, paste questions, or click <b>Load Sample Flawed Test</b>.</div>`;
+    box.innerHTML = `<div class="text-center py-8 text-pink-700/70 text-xs">No test items yet. Upload an Excel file, paste questions, or click <b>Load Sample Flawed Test</b>.</div>`;
     return;
   }
   box.innerHTML = items.map((q, i) => `
-    <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 flex flex-wrap justify-between gap-3 items-start">
+    <div class="p-3.5 rounded-xl border border-pink-200 bg-pink-50/40 flex flex-wrap justify-between gap-3 items-start">
       <div class="flex-1 min-w-[240px]">
-        <div class="flex items-center gap-2 mb-1">
-          <span class="badge bg-indigo-100 text-indigo-800">#${i+1}</span>
-          <span class="badge bg-slate-200 text-slate-700">BTL: ${esc(q.btl)} (${BTL_MAP[q.btl]?.label || ''})</span>
+        <div class="flex flex-wrap items-center gap-2 mb-1">
+          <span class="badge bg-pink-600 text-white">#${i + 1}</span>
+          <span class="badge bg-pink-100 text-pink-800">BTL: ${esc(q.btl)} (${BTL_MAP[q.btl]?.label || ''})</span>
           ${q.answerKey ? `<span class="badge bg-emerald-100 text-emerald-800">Key: ${esc(q.answerKey)}</span>` : ''}
           ${q.decision ? decisionBadge(q.decision) : ''}
         </div>
-        <p class="font-semibold text-slate-800 text-xs sm:text-sm">${esc(q.stem)}</p>
-        ${q.image ? `<img src="${q.image}" class="mt-2 max-h-28 rounded-lg border border-slate-200" />` : ''}
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mt-2 text-xs text-slate-600">
-          ${['A','B','C','D'].map(k => `<div class="px-2 py-1 rounded bg-white border ${q.answerKey===k?'border-emerald-400 font-semibold text-emerald-800':'border-slate-200'}"><b>${k}.</b> ${esc(q.choices[k]||'—')}</div>`).join('')}
+        <p class="font-semibold text-pink-950 text-xs sm:text-sm">${esc(q.stem)}</p>
+        ${q.image ? `<img src="${q.image}" class="mt-2 max-h-28 rounded-lg border border-pink-200" />` : ''}
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mt-2 text-xs text-pink-900">
+          ${['A', 'B', 'C', 'D'].map(k => `<div class="px-2 py-1 rounded bg-white border ${q.answerKey === k ? 'border-emerald-400 font-semibold text-emerald-800' : 'border-pink-200'}"><b>${k}.</b> ${esc(q.choices[k] || '—')}</div>`).join('')}
         </div>
       </div>
       <div class="flex items-center gap-1.5">
-        <label class="px-2.5 py-1 rounded-lg border border-slate-300 bg-white text-xs font-semibold cursor-pointer hover:bg-slate-50">
+        <label class="px-2.5 py-1 rounded-lg border border-pink-300 bg-white text-pink-800 text-xs font-semibold cursor-pointer hover:bg-pink-50">
           🖼️ Image <input type="file" accept="image/*" class="hidden" onchange="attachItemImage(${i}, this)" />
         </label>
-        <button onclick="editItem(${i})" class="px-2.5 py-1 rounded-lg border border-slate-300 bg-white text-xs font-semibold hover:bg-slate-50">Edit</button>
-        <button onclick="deleteItem(${i})" class="px-2.5 py-1 rounded-lg border border-rose-200 text-rose-600 bg-white text-xs font-semibold hover:bg-rose-50">Delete</button>
+        <button onclick="editItem(${i})" class="px-2.5 py-1 rounded-lg border border-pink-300 bg-white text-pink-800 text-xs font-semibold hover:bg-pink-50">Edit</button>
+        <button onclick="deleteItem(${i})" class="px-2.5 py-1 rounded-lg border border-rose-300 text-rose-700 bg-white text-xs font-semibold hover:bg-rose-50">Delete</button>
       </div>
     </div>
   `).join('');
 }
 
-function decisionBadge(d) {
-  if (d === 'Retain') return `<span class="badge bg-emerald-100 text-emerald-800">✓ Retain</span>`;
-  if (d === 'Revise') return `<span class="badge bg-amber-100 text-amber-800">⚠ Revise</span>`;
-  if (d === 'Reject') return `<span class="badge bg-rose-100 text-rose-800">✕ Reject</span>`;
-  return `<span class="badge bg-slate-100 text-slate-500">Unaudited</span>`;
-}
-
 /* ===================== TAB 2: ITEM DETECTIVE & PSYCHOMETRIC ENGINE ===================== */
 function setTab2Mode(mode) {
   tab2Mode = mode;
-  document.getElementById('modeDetectiveBtn').className = mode==='detective' ? 'px-3.5 py-1.5 rounded-lg text-xs font-bold bg-white shadow text-indigo-700' : 'px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-600';
-  document.getElementById('modeStudentBtn').className = mode==='student' ? 'px-3.5 py-1.5 rounded-lg text-xs font-bold bg-white shadow text-indigo-700' : 'px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-600';
+  document.getElementById('modeDetectiveBtn').className = mode === 'detective' ? 'px-3.5 py-1.5 rounded-lg text-xs font-bold bg-white shadow text-pink-700' : 'px-3.5 py-1.5 rounded-lg text-xs font-bold text-pink-800';
+  document.getElementById('modeStudentBtn').className = mode === 'student' ? 'px-3.5 py-1.5 rounded-lg text-xs font-bold bg-white shadow text-pink-700' : 'px-3.5 py-1.5 rounded-lg text-xs font-bold text-pink-800';
   document.getElementById('detectiveControls').classList.toggle('hidden', mode !== 'detective');
   document.getElementById('studentControls').classList.toggle('hidden', mode !== 'student');
   document.getElementById('studentScoreBanner').classList.add('hidden');
@@ -893,76 +937,65 @@ function setTab2Mode(mode) {
 
 function setFilter(f) {
   detectiveFilter = f;
-  ['all','Retain','Revise','Reject'].forEach(k => {
-    const el = document.getElementById('flt_'+k);
-    el.className = k === f ? 'px-2.5 py-1 rounded-full bg-slate-800 text-white font-semibold' : 'px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-semibold';
+  ['all', 'Retain', 'Revise', 'Reject'].forEach(k => {
+    const el = document.getElementById('flt_' + k);
+    el.className = k === f ? 'px-2.5 py-1 rounded-full bg-pink-700 text-white font-semibold' : 'px-2.5 py-1 rounded-full bg-pink-100 text-pink-800 font-semibold';
   });
   renderTab2();
 }
 
-/* Built-in 10-Category Psychometric Engine (Always works offline) */
-function runBuiltInPsychometricAudit(q, idx) {
+function runBuiltInPsychometricAudit(q) {
   const stem = q.stem || '';
   const lowStem = stem.toLowerCase();
-  const opts = ['A','B','C','D'].map(k => ({ k, v: (q.choices[k] || '').trim() }));
+  const opts = ['A', 'B', 'C', 'D'].map(k => ({ k, v: (q.choices[k] || '').trim() }));
   const flags = [];
   let revisedStem = stem;
   let revisedChoices = { ...q.choices };
 
-  // 1. Item Interdependence
   if (/(based on|refer to|from|in)\s+(the\s+)?(given\s+in\s+)?(item|question|number|no\.?)\s*#?\d+/i.test(stem)) {
-    flags.push({ category: 'Item Interdependence', severity: 'High', detail: 'Item depends on a previous question. Make it self-contained by restating the given data.' });
+    flags.push({ category: 'Item Interdependence', severity: 'High', detail: 'Item depends on a previous question. Restate the given data so it is self-contained.' });
   }
-  // 2. Missing Visual Bias
   if (/(diagram|figure|picture|graph|table|chart|bar model|shown below|above|ratio of number of apples)/i.test(lowStem) && !q.image) {
     flags.push({ category: 'Missing Visual Bias', severity: 'High', detail: 'Stem references visual/given quantities not explicitly stated or attached as an image.' });
   }
-  // 3. Unordered Numerical Options
   const nums = opts.map(o => /^-?\d+(\.\d+)?$/.test(o.v) ? parseFloat(o.v) : null);
   if (nums.every(n => n !== null)) {
-    const asc = [...nums].sort((a,b) => a - b);
-    const desc = [...nums].sort((a,b) => b - a);
+    const asc = [...nums].sort((a, b) => a - b);
+    const desc = [...nums].sort((a, b) => b - a);
     if (JSON.stringify(nums) !== JSON.stringify(asc) && JSON.stringify(nums) !== JSON.stringify(desc)) {
       flags.push({ category: 'Unordered/Implausible Distractors', severity: 'Medium', detail: 'Numerical options are not arranged in ascending or descending order.' });
       const sortedVals = asc.map(String);
-      ['A','B','C','D'].forEach((k, i) => revisedChoices[k] = sortedVals[i]);
+      ['A', 'B', 'C', 'D'].forEach((k, i) => revisedChoices[k] = sortedVals[i]);
     }
   }
-  // 4. All / None of the Above
   if (opts.some(o => /\b(all|none)\s+of\s+the\s+above\b/i.test(o.v))) {
-    flags.push({ category: 'All/None of the Above', severity: 'Medium', detail: 'Uses "All/None of the above", which reduces reliability and enables partial-knowledge guessing.' });
+    flags.push({ category: 'All/None of the Above', severity: 'Medium', detail: 'Uses "All/None of the above", reducing reliability and allowing partial-knowledge guessing.' });
   }
-  // 5. Absolute Modifiers
-  if (/\b(always|never|only|every single|all of the time|none of the time)\b/i.test(stem + ' ' + opts.map(o=>o.v).join(' '))) {
-    flags.push({ category: 'Absolute Modifiers', severity: 'Medium', detail: 'Contains absolute qualifiers (e.g., "always", "never") that act as test-wise clues.' });
+  if (/\b(always|never|only|every single|all of the time|none of the time)\b/i.test(stem + ' ' + opts.map(o => o.v).join(' '))) {
+    flags.push({ category: 'Absolute Modifiers', severity: 'Medium', detail: 'Contains absolute qualifiers ("always", "never", etc.) that act as test-wise clues.' });
   }
-  // 6. Negative / Confusing Stem
   if (/\b(not|except|least|false|never)\b/i.test(lowStem)) {
     const negCount = (lowStem.match(/\b(not|no|never|except|false)\b/g) || []).length;
     flags.push({
       category: 'Negative/Confusing Stem',
       severity: negCount > 1 ? 'High' : 'Low',
-      detail: negCount > 1 ? 'Double negative detected in stem; rewrite positively for clarity.' : 'Negative phrasing detected; rephrase positively or emphasize NOT/EXCEPT in bold.'
+      detail: negCount > 1 ? 'Double negative detected in stem; rewrite positively.' : 'Negative phrasing detected; rephrase positively or bold NOT/EXCEPT.'
     });
   }
-  // 7. Length / Detail Bias
   const lens = opts.map(o => o.v.length).filter(n => n > 0);
   if (lens.length === 4) {
-    const avg = lens.reduce((a,b)=>a+b,0) / 4;
+    const avg = lens.reduce((a, b) => a + b, 0) / 4;
     const maxL = Math.max(...lens);
     if (maxL > avg * 2.1 && maxL > 35) {
-      flags.push({ category: 'Length/Detail Bias', severity: 'Medium', detail: 'One option is significantly longer/more detailed than the others, cueing test-wise students.' });
+      flags.push({ category: 'Length/Detail Bias', severity: 'Medium', detail: 'One option is much longer than the others, cueing test-wise students.' });
     }
   }
-  // 8. Grammatical Clue
   if (/\b(an|a)\s*(\?|_+$|\.\.\.)/i.test(stem.trim())) {
     flags.push({ category: 'Grammatical Clue', severity: 'Medium', detail: 'Stem ends with an article ("a"/"an") that may grammatically exclude distractors.' });
   }
-  // 9. Double-Barreled Question
   if ((stem.match(/\?/g) || []).length > 1 || /\band\b.+\band\b/i.test(lowStem)) {
-    flags.push({ category: 'Double-Barreled Question', severity: 'Medium', detail: 'Stem appears to ask multiple ideas at once. Focus on a single learning target.' });
+    flags.push({ category: 'Double-Barreled Question', severity: 'Medium', detail: 'Stem appears to ask multiple ideas at once. Focus on one learning target.' });
   }
-  // 10. Bloom's BTL Alignment
   let suggestedBtl = q.btl || 'R';
   if (/(what\s+(mathematical\s+)?term|define|identify|name\s+the)/i.test(lowStem)) suggestedBtl = 'R';
   else if (/(if\s+the\s+ratio|how\s+many|calculate|solve|compute|find\s+the)/i.test(lowStem)) suggestedBtl = 'Ap';
@@ -972,7 +1005,6 @@ function runBuiltInPsychometricAudit(q, idx) {
     flags.push({ category: "Bloom's BTL Alignment", severity: 'Low', detail: `Tagged as ${q.btl} (${BTL_MAP[q.btl]?.label}), but stem aligns closer to ${suggestedBtl} (${BTL_MAP[suggestedBtl]?.label}).` });
   }
 
-  // Determine verdict
   const highCount = flags.filter(f => f.severity === 'High').length;
   let recommendation = 'Retain';
   if (highCount >= 2 || flags.length >= 4) recommendation = 'Reject';
@@ -982,15 +1014,7 @@ function runBuiltInPsychometricAudit(q, idx) {
     ? flags.map(f => `${f.category}: ${f.detail}`).join(' | ')
     : 'Item is well-constructed, clear, and aligned with assessment standards.';
 
-  return {
-    engine: 'Built-in Psychometric Engine',
-    recommendation,
-    suggestedBtl,
-    flags,
-    remarks: summaryRemark,
-    revisedStem,
-    revisedChoices
-  };
+  return { engine: 'Built-in Psychometric Engine', recommendation, suggestedBtl, flags, remarks: summaryRemark, revisedStem, revisedChoices };
 }
 
 async function auditItem(idx) {
@@ -1001,9 +1025,9 @@ async function auditItem(idx) {
   if (apiKey) {
     try {
       const prompt = `You are a psychometrician auditing a multiple-choice test item. Return ONLY valid JSON (no markdown fences) with keys:
-{"recommendation":"Retain|Revise|Reject","suggestedBtl":"R|U|Ap|An|E|C","remarks":"concise 1-sentence remark for a validation sheet","flags":[{"category":"one of: Item Interdependence, Missing Visual Bias, Unordered/Implausible Distractors, All/None of the Above, Absolute Modifiers, Negative/Confusing Stem, Length/Detail Bias, Grammatical Clue, Double-Barreled Question, Bloom's BTL Alignment","severity":"High|Medium|Low","detail":"brief explanation"}],"revisedStem":"improved stem","revisedChoices":{"A":"...","B":"...","C":"...","D":"..."}}
+{"recommendation":"Retain|Revise|Reject","suggestedBtl":"R|U|Ap|An|E|C","remarks":"concise 1-sentence remark","flags":[{"category":"...","severity":"High|Medium|Low","detail":"..."}],"revisedStem":"...","revisedChoices":{"A":"...","B":"...","C":"...","D":"..."}}
 
-Item #${idx+1} (Tagged BTL: ${q.btl}):
+Item #${idx + 1} (Tagged BTL: ${q.btl}):
 Stem: ${q.stem}
 A. ${q.choices.A}
 B. ${q.choices.B}
@@ -1018,26 +1042,19 @@ Has Attached Image: ${q.image ? 'Yes' : 'No'}`;
         const mime = meta.match(/data:(.*?);/)[1];
         parts.push({ inline_data: { mime_type: mime, data: b64 } });
       }
-
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
-      let resp;
-      for (let attempt = 0; attempt < 2; attempt++) {
-        resp = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts }] })
-        });
-        if (resp.ok || ![429,500,503].includes(resp.status)) break;
-        await new Promise(r => setTimeout(r, 900 * (attempt + 1)));
-      }
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts }] })
+      });
       if (resp.ok) {
         const json = await resp.json();
-        let text = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        text = text.replace(/```json|```/gi, '').trim();
+        let text = (json.candidates?.[0]?.content?.parts?.[0]?.text || '').replace(/```json|```/gi, '').trim();
         const parsed = JSON.parse(text);
         result = {
           engine: 'Gemini AI',
-          recommendation: ['Retain','Revise','Reject'].includes(parsed.recommendation) ? parsed.recommendation : 'Revise',
+          recommendation: ['Retain', 'Revise', 'Reject'].includes(parsed.recommendation) ? parsed.recommendation : 'Revise',
           suggestedBtl: normalizeBtl(parsed.suggestedBtl || q.btl),
           flags: Array.isArray(parsed.flags) ? parsed.flags : [],
           remarks: parsed.remarks || '',
@@ -1050,7 +1067,7 @@ Has Attached Image: ${q.image ? 'Yes' : 'No'}`;
     }
   }
 
-  if (!result) result = runBuiltInPsychometricAudit(q, idx);
+  if (!result) result = runBuiltInPsychometricAudit(q);
   q.audit = result;
   q.decision = result.recommendation;
   q.remarks = result.remarks;
@@ -1062,22 +1079,14 @@ async function auditAllItems() {
   const btn = document.getElementById('auditAllBtn');
   btn.disabled = true;
   btn.textContent = '⏳ Auditing...';
-  for (let i = 0; i < items.length; i++) {
-    await auditItem(i);
-  }
+  for (let i = 0; i < items.length; i++) await auditItem(i);
   btn.disabled = false;
   btn.textContent = '🔍 Audit All Items';
   showToast(`Completed audit for ${items.length} items!`, 'success');
 }
 
-function setItemDecision(idx, dec) {
-  items[idx].decision = dec;
-  renderTab2();
-}
-
-function updateItemRemark(idx, val) {
-  items[idx].remarks = val;
-}
+function setItemDecision(idx, dec) { items[idx].decision = dec; renderTab2(); }
+function updateItemRemark(idx, val) { items[idx].remarks = val; }
 
 function applyRevision(idx) {
   const q = items[idx];
@@ -1088,13 +1097,13 @@ function applyRevision(idx) {
   q.decision = 'Retain';
   q.remarks = 'Revised based on psychometric audit.';
   renderTab2();
-  showToast(`Applied revision to Item #${idx+1}`, 'success');
+  showToast(`Applied revision to Item #${idx + 1}`, 'success');
 }
 
 function renderTab2() {
   const box = document.getElementById('tab2Container');
   if (!items.length) {
-    box.innerHTML = `<div class="card p-8 text-center text-slate-500 text-sm">No test items loaded. Go to <b>Tab 1</b> to upload an Excel sheet or load the sample test.</div>`;
+    box.innerHTML = `<div class="card p-8 text-center text-pink-800/75 text-sm">No test items loaded. Go to <b>Tab 1</b> to upload an Excel sheet or load the sample test.</div>`;
     return;
   }
 
@@ -1102,20 +1111,20 @@ function renderTab2() {
     box.innerHTML = items.map((q, i) => `
       <div class="card p-5 space-y-3">
         <div class="flex items-center justify-between">
-          <span class="badge bg-indigo-100 text-indigo-800">Question ${i+1}</span>
-          <span class="text-xs text-slate-400">BTL: ${esc(q.btl)}</span>
+          <span class="badge bg-pink-600 text-white">Question ${i + 1}</span>
+          <span class="text-xs text-pink-600 font-semibold">BTL: ${esc(q.btl)}</span>
         </div>
-        <p class="font-semibold text-slate-900 text-sm">${esc(q.stem)}</p>
-        ${q.image ? `<img src="${q.image}" class="max-h-40 rounded-lg border" />` : ''}
+        <p class="font-semibold text-pink-950 text-sm">${esc(q.stem)}</p>
+        ${q.image ? `<img src="${q.image}" class="max-h-40 rounded-lg border border-pink-200" />` : ''}
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          ${['A','B','C','D'].map(k => {
+          ${['A', 'B', 'C', 'D'].map(k => {
             const selected = studentAnswers[i] === k;
-            let cls = 'border-slate-200 hover:border-indigo-400 bg-white';
+            let cls = 'border-pink-200 hover:border-pink-500 bg-white';
             if (studentSubmitted) {
               if (q.answerKey === k) cls = 'border-emerald-500 bg-emerald-50 text-emerald-900 font-semibold';
               else if (selected && q.answerKey && q.answerKey !== k) cls = 'border-rose-500 bg-rose-50 text-rose-900';
-            } else if (selected) cls = 'border-indigo-600 bg-indigo-50 text-indigo-900 font-semibold';
-            return `<button onclick="pickStudentAns(${i},'${k}')" class="text-left px-3.5 py-2.5 rounded-xl border text-xs transition ${cls}"><b>${k}.</b> ${esc(q.choices[k]||'—')}</button>`;
+            } else if (selected) cls = 'border-pink-600 bg-pink-100 text-pink-950 font-semibold';
+            return `<button onclick="pickStudentAns(${i},'${k}')" class="text-left px-3.5 py-2.5 rounded-xl border text-xs transition ${cls}"><b>${k}.</b> ${esc(q.choices[k] || '—')}</button>`;
           }).join('')}
         </div>
       </div>
@@ -1123,47 +1132,47 @@ function renderTab2() {
     return;
   }
 
-  // Detective Mode
   const filtered = items.map((q, i) => ({ q, i })).filter(({ q }) => detectiveFilter === 'all' || q.decision === detectiveFilter);
   if (!filtered.length) {
-    box.innerHTML = `<div class="card p-8 text-center text-slate-400 text-xs">No items match the "${detectiveFilter}" filter.</div>`;
+    box.innerHTML = `<div class="card p-8 text-center text-pink-700/70 text-xs">No items match the "${detectiveFilter}" filter.</div>`;
     return;
   }
+
   box.innerHTML = filtered.map(({ q, i }) => `
     <div class="card p-5 space-y-3">
       <div class="flex flex-wrap items-center justify-between gap-2">
         <div class="flex flex-wrap items-center gap-2">
-          <span class="badge bg-slate-900 text-white">Item #${i+1}</span>
-          <span class="badge bg-indigo-50 text-indigo-700">BTL: ${esc(q.btl)} (${BTL_MAP[q.btl]?.label||''})</span>
+          <span class="badge bg-pink-900 text-white">Item #${i + 1}</span>
+          <span class="badge bg-pink-100 text-pink-800">BTL: ${esc(q.btl)} (${BTL_MAP[q.btl]?.label || ''})</span>
           ${decisionBadge(q.decision)}
-          ${q.audit ? `<span class="badge ${q.audit.engine==='Gemini AI'?'bg-purple-100 text-purple-800':'bg-amber-100 text-amber-800'}">${q.audit.engine==='Gemini AI'?'✨':'⚡'} ${q.audit.engine}</span>` : ''}
+          ${q.audit ? `<span class="badge ${q.audit.engine === 'Gemini AI' ? 'bg-fuchsia-100 text-fuchsia-800' : 'bg-pink-50 text-pink-700 border border-pink-200'}">${q.audit.engine === 'Gemini AI' ? '✨' : '⚡'} ${q.audit.engine}</span>` : ''}
         </div>
         <div class="flex flex-wrap items-center gap-1.5">
-          <div class="inline-flex rounded-lg border border-slate-200 overflow-hidden text-xs font-semibold">
-            ${['Retain','Revise','Reject'].map(d => `<button onclick="setItemDecision(${i},'${d}')" class="px-2.5 py-1 ${q.decision===d ? (d==='Retain'?'bg-emerald-600 text-white':d==='Revise'?'bg-amber-500 text-white':'bg-rose-600 text-white') : 'bg-white text-slate-600 hover:bg-slate-50'}">${d}</button>`).join('')}
+          <div class="inline-flex rounded-lg border border-pink-200 overflow-hidden text-xs font-semibold">
+            ${['Retain', 'Revise', 'Reject'].map(d => `<button onclick="setItemDecision(${i},'${d}')" class="px-2.5 py-1 ${q.decision === d ? (d === 'Retain' ? 'bg-emerald-600 text-white' : d === 'Revise' ? 'bg-amber-500 text-white' : 'bg-rose-600 text-white') : 'bg-white text-pink-800 hover:bg-pink-50'}">${d}</button>`).join('')}
           </div>
-          <label class="px-2.5 py-1 rounded-lg border border-slate-300 text-xs font-semibold cursor-pointer hover:bg-slate-50">
+          <label class="px-2.5 py-1 rounded-lg border border-pink-300 text-pink-800 text-xs font-semibold cursor-pointer hover:bg-pink-50">
             🖼️ Image <input type="file" accept="image/*" class="hidden" onchange="attachItemImage(${i}, this)" />
           </label>
-          <button onclick="auditItem(${i})" class="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold">🔍 Audit Item</button>
+          <button onclick="auditItem(${i})" class="px-3 py-1 rounded-lg bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold">🔍 Audit Item</button>
         </div>
       </div>
 
-      <p class="font-semibold text-slate-900 text-sm">${esc(q.stem)}</p>
-      ${q.image ? `<img src="${q.image}" class="max-h-36 rounded-lg border border-slate-200" />` : ''}
+      <p class="font-semibold text-pink-950 text-sm">${esc(q.stem)}</p>
+      ${q.image ? `<img src="${q.image}" class="max-h-36 rounded-lg border border-pink-200" />` : ''}
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-        ${['A','B','C','D'].map(k => `<div class="px-3 py-2 rounded-lg border ${q.answerKey===k?'border-emerald-400 bg-emerald-50 font-semibold':'border-slate-200 bg-slate-50/50'}"><b>${k}.</b> ${esc(q.choices[k]||'—')}</div>`).join('')}
+        ${['A', 'B', 'C', 'D'].map(k => `<div class="px-3 py-2 rounded-lg border ${q.answerKey === k ? 'border-emerald-400 bg-emerald-50 font-semibold' : 'border-pink-200 bg-pink-50/40'}"><b>${k}.</b> ${esc(q.choices[k] || '—')}</div>`).join('')}
       </div>
 
       ${q.audit ? `
-        <div class="rounded-xl p-3.5 bg-slate-50 border border-slate-200 space-y-2">
+        <div class="rounded-xl p-3.5 bg-pink-50/60 border border-pink-200 space-y-2">
           <div class="flex flex-wrap items-center justify-between gap-2">
-            <span class="text-xs font-bold text-slate-800">Psychometric Flags (${q.audit.flags.length})</span>
-            ${q.audit.flags.length ? `<button onclick="applyRevision(${i})" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold">✨ Apply Suggested Revision</button>` : ''}
+            <span class="text-xs font-bold text-pink-950">Psychometric Flags (${q.audit.flags.length})</span>
+            ${q.audit.flags.length ? `<button onclick="applyRevision(${i})" class="px-2.5 py-1 rounded-lg bg-pink-600 hover:bg-pink-700 text-white text-[11px] font-bold">✨ Apply Suggested Revision</button>` : ''}
           </div>
           ${q.audit.flags.length ? q.audit.flags.map(f => `
-            <div class="text-xs flex items-start gap-2 bg-white p-2 rounded-lg border border-slate-200">
-              <span class="badge ${f.severity==='High'?'bg-rose-100 text-rose-800':f.severity==='Medium'?'bg-amber-100 text-amber-800':'bg-sky-100 text-sky-800'}">${esc(f.severity)}</span>
+            <div class="text-xs flex items-start gap-2 bg-white p-2 rounded-lg border border-pink-200">
+              <span class="badge ${f.severity === 'High' ? 'bg-rose-100 text-rose-800' : f.severity === 'Medium' ? 'bg-amber-100 text-amber-800' : 'bg-pink-100 text-pink-800'}">${esc(f.severity)}</span>
               <div><b>${esc(f.category)}:</b> ${esc(f.detail)}</div>
             </div>
           `).join('') : `<div class="text-xs text-emerald-700 font-medium">✅ No major psychometric design flaws detected.</div>`}
@@ -1171,31 +1180,24 @@ function renderTab2() {
       ` : ''}
 
       <div>
-        <label class="text-[11px] font-bold text-slate-500">REMARKS (Synced to 7-Column Validation Excel Export)</label>
-        <input type="text" value="${esc(q.remarks)}" oninput="updateItemRemark(${i}, this.value)" class="w-full mt-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xs" placeholder="Enter validation remarks..." />
+        <label class="text-[11px] font-bold text-pink-700">REMARKS (Synced to 7-Column Validation Excel Export)</label>
+        <input type="text" value="${esc(q.remarks)}" oninput="updateItemRemark(${i}, this.value)" class="w-full mt-1 rounded-lg border border-pink-300 px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-pink-400" placeholder="Enter validation remarks..." />
       </div>
     </div>
   `).join('');
 }
 
-function pickStudentAns(i, k) {
-  if (studentSubmitted) return;
-  studentAnswers[i] = k;
-  renderTab2();
-}
+function pickStudentAns(i, k) { if (!studentSubmitted) { studentAnswers[i] = k; renderTab2(); } }
 function submitStudentQuiz() {
   studentSubmitted = true;
   let correct = 0, keyed = 0;
   items.forEach((q, i) => {
-    if (q.answerKey) {
-      keyed++;
-      if (studentAnswers[i] === q.answerKey) correct++;
-    }
+    if (q.answerKey) { keyed++; if (studentAnswers[i] === q.answerKey) correct++; }
   });
   const banner = document.getElementById('studentScoreBanner');
   banner.classList.remove('hidden');
-  banner.innerHTML = `<div class="text-sm font-bold text-indigo-900">🎓 Student Preview Score: ${keyed ? `${correct} / ${keyed} (${Math.round(correct/keyed*100)}%)` : 'No Answer Keys set in Tab 1'}</div>
-    <button onclick="resetStudentQuiz()" class="text-xs font-semibold text-indigo-700 underline">Try Again</button>`;
+  banner.innerHTML = `<div class="text-sm font-bold text-pink-950">🎓 Student Preview Score: ${keyed ? `${correct} / ${keyed} (${Math.round(correct / keyed * 100)}%)` : 'No Answer Keys set in Tab 1'}</div>
+    <button onclick="resetStudentQuiz()" class="text-xs font-bold text-pink-700 underline">Try Again</button>`;
   renderTab2();
 }
 function resetStudentQuiz() {
@@ -1219,52 +1221,48 @@ function renderTab3() {
   document.getElementById('kpiRevise').textContent = revise;
   document.getElementById('kpiReject').textContent = reject;
 
-  // TOS
   let hotsCount = 0;
-  const tosHtml = Object.entries(BTL_MAP).map(([code, info]) => {
+  document.getElementById('tosTableBody').innerHTML = Object.entries(BTL_MAP).map(([code, info]) => {
     const nums = items.map((q, i) => q.btl === code ? i + 1 : null).filter(Boolean);
     if (info.tier === 'HOTS') hotsCount += nums.length;
     const pct = total ? ((nums.length / total) * 100).toFixed(1) : '0.0';
     return `<tr>
-      <td class="p-2 border font-semibold">${code} — ${info.label}</td>
-      <td class="p-2 border text-center"><span class="badge ${info.tier==='HOTS'?'bg-indigo-100 text-indigo-800':'bg-slate-100 text-slate-700'}">${info.tier}</span></td>
-      <td class="p-2 border text-center font-bold">${nums.length}</td>
-      <td class="p-2 border text-center">${pct}%</td>
-      <td class="p-2 border">${nums.length ? nums.join(', ') : '—'}</td>
+      <td class="p-2 border border-pink-200 font-semibold">${code} — ${info.label}</td>
+      <td class="p-2 border border-pink-200 text-center"><span class="badge ${info.tier === 'HOTS' ? 'bg-pink-600 text-white' : 'bg-pink-100 text-pink-800'}">${info.tier}</span></td>
+      <td class="p-2 border border-pink-200 text-center font-bold">${nums.length}</td>
+      <td class="p-2 border border-pink-200 text-center">${pct}%</td>
+      <td class="p-2 border border-pink-200">${nums.length ? nums.join(', ') : '—'}</td>
     </tr>`;
   }).join('');
-  document.getElementById('tosTableBody').innerHTML = tosHtml;
-  document.getElementById('hotsBadge').textContent = `HOTS: ${total ? Math.round(hotsCount/total*100) : 0}% | LOTS: ${total ? Math.round((total-hotsCount)/total*100) : 0}%`;
+  document.getElementById('hotsBadge').textContent = `HOTS: ${total ? Math.round(hotsCount / total * 100) : 0}% | LOTS: ${total ? Math.round((total - hotsCount) / total * 100) : 0}%`;
 
-  // Flaw Breakdown
   const flawMap = {};
   items.forEach(q => (q.audit?.flags || []).forEach(f => flawMap[f.category] = (flawMap[f.category] || 0) + 1));
-  const flawEntries = Object.entries(flawMap).sort((a,b) => b[1] - a[1]);
+  const flawEntries = Object.entries(flawMap).sort((a, b) => b[1] - a[1]);
   document.getElementById('flawBreakdownList').innerHTML = flawEntries.length
     ? flawEntries.map(([cat, cnt]) => `
         <div>
-          <div class="flex justify-between font-semibold mb-1"><span>${esc(cat)}</span><span>${cnt}</span></div>
-          <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-amber-500" style="width:${Math.min(100, (cnt/Math.max(1,total))*100)}%"></div></div>
+          <div class="flex justify-between font-semibold mb-1 text-pink-950"><span>${esc(cat)}</span><span>${cnt}</span></div>
+          <div class="w-full h-2 bg-pink-100 rounded-full overflow-hidden"><div class="h-full bg-pink-500" style="width:${Math.min(100, (cnt / Math.max(1, total)) * 100)}%"></div></div>
         </div>`).join('')
-    : `<div class="text-slate-400">Run Item Detective audits in Tab 2 to see flaw frequencies.</div>`;
+    : `<div class="text-pink-700/70">Run Item Detective audits in Tab 2 to see flaw frequencies.</div>`;
 
-  // 7-Column Validation Preview
   document.getElementById('validationPreviewBody').innerHTML = items.length
     ? items.map((q, i) => `
         <tr>
-          <td class="text-center font-bold">${i+1}</td>
-          <td class="whitespace-pre-line"><b>${i+1}. ${esc(q.stem)}</b>
-A. ${esc(q.choices.A||'')}
-B. ${esc(q.choices.B||'')}
-C. ${esc(q.choices.C||'')}
-D. ${esc(q.choices.D||'')}</td>
+          <td class="text-center font-bold">${i + 1}</td>
+          <td class="whitespace-pre-line"><b>${i + 1}. ${esc(q.stem)}</b>
+A. ${esc(q.choices.A || '')}
+B. ${esc(q.choices.B || '')}
+C. ${esc(q.choices.C || '')}
+D. ${esc(q.choices.D || '')}</td>
           <td class="text-center font-bold">${esc(q.btl)}</td>
-          <td class="text-center font-bold text-emerald-700">${q.decision==='Retain'?'✓':''}</td>
-          <td class="text-center font-bold text-rose-700">${q.decision==='Reject'?'✓':''}</td>
-          <td class="text-center font-bold text-amber-700">${q.decision==='Revise'?'✓':''}</td>
+          <td class="text-center font-bold text-emerald-700">${q.decision === 'Retain' ? '✓' : ''}</td>
+          <td class="text-center font-bold text-rose-700">${q.decision === 'Reject' ? '✓' : ''}</td>
+          <td class="text-center font-bold text-amber-700">${q.decision === 'Revise' ? '✓' : ''}</td>
           <td>${esc(q.remarks)}</td>
         </tr>`).join('')
-    : `<tr><td colspan="7" class="text-center text-slate-400 py-6">No items to display.</td></tr>`;
+    : `<tr><td colspan="7" class="text-center text-pink-700/70 py-6">No items to display.</td></tr>`;
 }
 
 function exportValidationExcel() {
@@ -1272,20 +1270,20 @@ function exportValidationExcel() {
   const wb = XLSX.utils.book_new();
   const s1 = [['No.', 'Test Items', 'BTL', 'Retain', 'Reject', 'Revise', 'REMARKS']];
   items.forEach((q, i) => {
-    const cellText = `${i+1}. ${q.stem}\nA. ${q.choices.A||''}\nB. ${q.choices.B||''}\nC. ${q.choices.C||''}\nD. ${q.choices.D||''}`;
-    s1.push([i+1, cellText, q.btl, q.decision==='Retain'?'✓':'', q.decision==='Reject'?'✓':'', q.decision==='Revise'?'✓':'', q.remarks||'']);
+    const cellText = `${i + 1}. ${q.stem}\nA. ${q.choices.A || ''}\nB. ${q.choices.B || ''}\nC. ${q.choices.C || ''}\nD. ${q.choices.D || ''}`;
+    s1.push([i + 1, cellText, q.btl, q.decision === 'Retain' ? '✓' : '', q.decision === 'Reject' ? '✓' : '', q.decision === 'Revise' ? '✓' : '', q.remarks || '']);
   });
   const ws1 = XLSX.utils.aoa_to_sheet(s1);
-  ws1['!cols'] = [{wch:6},{wch:62},{wch:8},{wch:10},{wch:10},{wch:10},{wch:44}];
+  ws1['!cols'] = [{ wch: 6 }, { wch: 62 }, { wch: 8 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 44 }];
   XLSX.utils.book_append_sheet(wb, ws1, 'Validation Sheet');
 
   const s2 = [['BTL Code', 'Cognitive Level', 'Tier', 'Item Count', 'Percentage', 'Item Numbers']];
   Object.entries(BTL_MAP).forEach(([code, info]) => {
     const nums = items.map((q, i) => q.btl === code ? i + 1 : null).filter(Boolean);
-    s2.push([code, info.label, info.tier, nums.length, `${((nums.length/items.length)*100).toFixed(1)}%`, nums.join(', ')]);
+    s2.push([code, info.label, info.tier, nums.length, `${((nums.length / items.length) * 100).toFixed(1)}%`, nums.join(', ')]);
   });
   const ws2 = XLSX.utils.aoa_to_sheet(s2);
-  ws2['!cols'] = [{wch:10},{wch:18},{wch:10},{wch:12},{wch:12},{wch:24}];
+  ws2['!cols'] = [{ wch: 10 }, { wch: 18 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 24 }];
   XLSX.utils.book_append_sheet(wb, ws2, 'TOS Summary');
 
   XLSX.writeFile(wb, 'Item_Validation_Report.xlsx');
@@ -1293,7 +1291,7 @@ function exportValidationExcel() {
 }
 
 function buildRevisedText() {
-  return items.map((q, i) => `${i+1}. ${q.stem}\nA. ${q.choices.A||''}\nB. ${q.choices.B||''}\nC. ${q.choices.C||''}\nD. ${q.choices.D||''}\n[BTL: ${q.btl} | Decision: ${q.decision||'Unaudited'}${q.answerKey?` | Key: ${q.answerKey}`:''}]`).join('\n\n');
+  return items.map((q, i) => `${i + 1}. ${q.stem}\nA. ${q.choices.A || ''}\nB. ${q.choices.B || ''}\nC. ${q.choices.C || ''}\nD. ${q.choices.D || ''}\n[BTL: ${q.btl} | Decision: ${q.decision || 'Unaudited'}${q.answerKey ? ` | Key: ${q.answerKey}` : ''}]`).join('\n\n');
 }
 function copyRevisedTest() {
   if (!items.length) return;
@@ -1310,122 +1308,291 @@ function downloadRevisedTxt() {
 }
 
 /* ===================== TAB 4: CLASS DATA & ITEM ANALYSIS ===================== */
+function togglePasteScores() {
+  document.getElementById('pasteScoresBox').classList.toggle('hidden');
+}
+
+function parsePastedScores() {
+  const raw = document.getElementById('pasteScoresInput').value.trim();
+  if (!raw) return showToast('Paste score data first.', 'error');
+  const lines = raw.split(/\r?\n/).filter(l => l.trim() !== '');
+  const sep = lines[0].includes('\t') ? '\t' : ',';
+  const rows = lines.map(l => l.split(sep).map(c => c.trim()));
+  lastScoreWorkbook = null;
+  lastRawScoreRows = rows;
+  lastScoreSourceName = 'Pasted Table';
+  isScoreTransposed = false;
+  document.getElementById('sheetSelectWrap').classList.add('hidden');
+  processScoreRows(rows, lastScoreSourceName);
+}
+
 function handleScoreDrop(e) {
   e.preventDefault();
+  e.currentTarget.classList.remove('border-pink-600', 'bg-pink-100/60');
   if (e.dataTransfer.files[0]) handleScoreFile(e.dataTransfer.files[0]);
 }
 
 function handleScoreFile(file) {
   if (!file) return;
+  if (typeof XLSX === 'undefined') return showToast('Excel library failed to load. Check your internet connection.', 'error');
   const reader = new FileReader();
   reader.onload = ev => {
     try {
       const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
-      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '' });
-      if (rows.length < 2) return showToast('Score sheet needs at least a header row and student rows.', 'error');
+      lastScoreWorkbook = wb;
+      lastScoreSourceName = file.name;
+      isScoreTransposed = false;
 
-      const headers = rows[0].map(c => String(c).trim());
-      // Detect columns
-      const nameCol = Math.max(0, headers.findIndex(h => /name|student|learner|id/i.test(h)));
-      const totalCol = headers.findIndex(h => /^(total|score|raw\s*score|points)$/i.test(h));
-      const itemCols = [];
-      headers.forEach((h, idx) => {
-        if (idx === nameCol || idx === totalCol) return;
-        if (/^(q|item|no\.?|#)?\s*\d+$/i.test(h) || h.toLowerCase().startsWith('item')) itemCols.push(idx);
-      });
+      const sel = document.getElementById('sheetSelect');
+      sel.innerHTML = wb.SheetNames.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+      document.getElementById('sheetSelectWrap').classList.toggle('hidden', wb.SheetNames.length <= 1);
 
-      const bodyRows = rows.slice(1).filter(r => r && String(r[nameCol] || '').trim() !== '');
-      if (!bodyRows.length) return showToast('No student rows found.', 'error');
-
-      // Check if first row is Answer Key row
-      let keyRow = null;
-      if (/^(answer\s*key|key)$/i.test(String(bodyRows[0][nameCol]).trim())) {
-        keyRow = bodyRows.shift();
-      }
-
-      if (itemCols.length >= 2) {
-        // Check if binary (0/1) or letter (A-D)
-        let letterHits = 0, binaryHits = 0;
-        bodyRows.slice(0, 10).forEach(r => itemCols.forEach(c => {
-          const v = String(r[c]).trim().toUpperCase();
-          if (['A','B','C','D'].includes(v)) letterHits++;
-          else if (v === '0' || v === '1') binaryHits++;
-        }));
-        const isLetter = letterHits > binaryHits;
-        classState.format = isLetter ? 'B' : 'A';
-        classState.itemCount = itemCols.length;
-        classState.itemLabels = itemCols.map((c, i) => headers[c] || `Q${i+1}`);
-        classState.answerKey = isLetter
-          ? itemCols.map((c, i) => {
-              const fromRow = keyRow ? String(keyRow[c]).trim().toUpperCase() : '';
-              if (['A','B','C','D'].includes(fromRow)) return fromRow;
-              return items[i]?.answerKey || 'A';
-            })
-          : [];
-        classState.students = bodyRows.map(r => {
-          const responses = itemCols.map(c => isLetter ? String(r[c]).trim().toUpperCase() : (parseFloat(r[c]) === 1 ? 1 : 0));
-          return { name: String(r[nameCol]).trim(), responses, score: 0 };
-        });
-      } else if (totalCol >= 0 || headers.length >= 2) {
-        const sCol = totalCol >= 0 ? totalCol : 1;
-        classState.format = 'C';
-        const scores = bodyRows.map(r => parseFloat(r[sCol]) || 0);
-        classState.itemCount = Math.max(items.length, ...scores, 10);
-        classState.itemLabels = [];
-        classState.answerKey = [];
-        classState.students = bodyRows.map((r, i) => ({ name: String(r[nameCol]).trim(), responses: [], score: scores[i] }));
-      } else {
-        return showToast('Could not recognize score columns.', 'error');
-      }
-
-      renderAnswerKeyBar();
-      computeAndRenderClassAnalytics();
-      showToast(`Loaded ${classState.students.length} students (Format ${classState.format})!`, 'success');
+      loadSelectedSheet();
     } catch (e) {
       console.error(e);
-      showToast('Error reading score file.', 'error');
+      showToast('Error reading score file. Make sure it is a valid .xlsx, .xls, or .csv file.', 'error');
     }
   };
   reader.readAsArrayBuffer(file);
+}
+
+function loadSelectedSheet() {
+  if (!lastScoreWorkbook) return;
+  const sheetName = document.getElementById('sheetSelect').value || lastScoreWorkbook.SheetNames[0];
+  const rows = XLSX.utils.sheet_to_json(lastScoreWorkbook.Sheets[sheetName], { header: 1, defval: '' });
+  lastRawScoreRows = rows;
+  isScoreTransposed = false;
+  processScoreRows(rows, `${lastScoreSourceName} (${sheetName})`);
+}
+
+function transpose2D(matrix) {
+  const maxCols = Math.max(...matrix.map(r => r.length));
+  const out = [];
+  for (let c = 0; c < maxCols; c++) {
+    out.push(matrix.map(r => r[c] ?? ''));
+  }
+  return out;
+}
+
+function toggleTransposeScores() {
+  if (!lastRawScoreRows) return showToast('Upload or paste a score sheet first.', 'error');
+  isScoreTransposed = !isScoreTransposed;
+  const rowsToUse = isScoreTransposed ? transpose2D(lastRawScoreRows) : lastRawScoreRows;
+  processScoreRows(rowsToUse, lastScoreSourceName + (isScoreTransposed ? ' [Transposed]' : ''));
+}
+
+function isNumericVal(v) {
+  if (v === null || v === undefined) return false;
+  const s = String(v).trim().replace(/,/g, '');
+  return s !== '' && !isNaN(Number(s));
+}
+
+function parseNumericVal(v) {
+  return Number(String(v ?? '').trim().replace(/,/g, ''));
+}
+
+function looksLikeDataRow(row) {
+  const nonEmpty = row.map(c => String(c ?? '').trim()).filter(Boolean);
+  if (nonEmpty.length < 2) return false;
+  const rest = nonEmpty.slice(1);
+  if (rest.every(v => isNumericVal(v))) {
+    const nums = rest.map(parseNumericVal);
+    // Sequential 1, 2, 3... is an item-number header row, NOT a student row
+    const isSeq = nums.length >= 2 && nums.every((n, i) => n === nums[0] + i);
+    return !isSeq;
+  }
+  return false;
+}
+
+function processScoreRows(rawRows, sourceName) {
+  const rows = rawRows.filter(r => Array.isArray(r) && r.some(c => String(c ?? '').trim() !== ''));
+  if (rows.length < 2) return showToast('Score sheet needs at least 2 non-empty rows.', 'error');
+
+  // 1. Find the true table header row (ignores 1-cell title banners!)
+  let hIdx = 0;
+  let bestScore = -1;
+  const scanLimit = Math.min(15, rows.length - 1);
+  for (let i = 0; i < scanLimit; i++) {
+    const nonEmptyCount = rows[i].filter(c => String(c ?? '').trim() !== '').length;
+    if (nonEmptyCount < 2) continue;
+    const joined = rows[i].map(c => String(c ?? '').trim()).join(' ');
+    const kwHits = (joined.match(/\b(student|name|learner|pupil|q\s*\d+|item\s*\d+|score|total|1|2|3)\b/gi) || []).length;
+    const score = nonEmptyCount * 2 + kwHits * 3;
+    if (score > bestScore) {
+      bestScore = score;
+      hIdx = i;
+    }
+  }
+
+  let headers, bodyAll;
+  if (looksLikeDataRow(rows[hIdx])) {
+    // Headerless sheet — synthesize headers and keep row hIdx as data
+    const colCount = Math.max(...rows.slice(hIdx).map(r => r.length));
+    headers = Array.from({ length: colCount }, (_, idx) => idx === 0 ? 'Student Name' : (colCount === 2 ? 'Total Score' : `Q${idx}`));
+    bodyAll = rows.slice(hIdx);
+  } else {
+    const colCount = Math.max(rows[hIdx].length, ...rows.slice(hIdx + 1, hIdx + 10).map(r => r.length));
+    headers = Array.from({ length: colCount }, (_, idx) => String(rows[hIdx][idx] ?? '').trim() || `Col${idx + 1}`);
+    bodyAll = rows.slice(hIdx + 1);
+  }
+
+  // 2. Identify Name column
+  let nameCol = headers.findIndex(h => /^(student|name|student\s*name|learner|pupil|full\s*name)/i.test(h));
+  if (nameCol < 0) nameCol = headers.findIndex(h => /name|student|learner/i.test(h));
+  if (nameCol < 0) {
+    // Find first column with text names (not pure numbers)
+    for (let c = 0; c < headers.length; c++) {
+      const sample = bodyAll.slice(0, 10).map(r => String(r[c] ?? '').trim()).filter(Boolean);
+      const textRatio = sample.filter(v => !isNumericVal(v)).length / Math.max(1, sample.length);
+      if (textRatio >= 0.5) { nameCol = c; break; }
+    }
+    if (nameCol < 0) nameCol = 0;
+  }
+
+  // 3. Separate Answer Key row and filter out summary/footer rows
+  const bodyRows = [];
+  let keyRow = null;
+  bodyAll.forEach(r => {
+    const nm = String(r[nameCol] ?? '').trim();
+    if (!nm) return;
+    if (/^(answer\s*key|key|correct\s*answer|answers|ak)$/i.test(nm)) { keyRow = r; return; }
+    if (/^(total|average|mean|median|mode|sd|variance|summary|class\s*mean|mps|highest|lowest|n\s*=)/i.test(nm)) return;
+    bodyRows.push(r);
+  });
+  if (!bodyRows.length) return showToast('No valid student rows found. Try switching sheets or clicking Transpose.', 'error');
+
+  // 4. Identify Total column & Ignored metadata columns
+  const totalCol = headers.findIndex((h, idx) => idx !== nameCol && /^(total|score|raw\s*score|total\s*score|points|sum|final\s*score)$/i.test(h));
+  const ignoreRx = /^(no\.?|#|id|lrn|rank|percent|%|percentage|mps|grade|rating|remark|remarks|status|section|gender|sex|email|timestamp)$/i;
+
+  const candidateCols = [];
+  headers.forEach((h, idx) => {
+    if (idx === nameCol || idx === totalCol || ignoreRx.test(h)) return;
+    candidateCols.push(idx);
+  });
+
+  // 5. Identify Item columns (columns holding 1/0, TRUE/FALSE, ✓, or A-E responses)
+  const itemCols = candidateCols.filter(c => {
+    const sample = bodyRows.slice(0, 25).map(r => String(r[c] ?? '').trim().toUpperCase()).filter(Boolean);
+    if (!sample.length) return false;
+    const binaryOrLetter = sample.filter(v => ['0', '1', 'A', 'B', 'C', 'D', 'E', 'T', 'F', 'TRUE', 'FALSE', '✓', '✔', 'X', 'C', 'W'].includes(v)).length;
+    if (binaryOrLetter / sample.length >= 0.55) return true;
+    // Also accept small integer item points (0–5) if header looks like an item
+    const headerIsItem = /^(q|item|question|test|prob|problem|no\.?|#)?\s*(no\.?)?\s*\d+\.?$/i.test(headers[c]);
+    if (headerIsItem && sample.every(v => isNumericVal(v) && parseNumericVal(v) >= 0 && parseNumericVal(v) <= 10)) return true;
+    return false;
+  });
+
+  let detectedColDesc = '';
+  if (itemCols.length >= 2) {
+    let letterHits = 0, binaryHits = 0;
+    bodyRows.slice(0, 25).forEach(r => itemCols.forEach(c => {
+      const v = String(r[c] ?? '').trim().toUpperCase();
+      if (['A', 'B', 'C', 'D', 'E'].includes(v)) letterHits++;
+      else if (['0', '1', 'TRUE', 'FALSE', '✓', '✔', 'X'].includes(v) || isNumericVal(v)) binaryHits++;
+    }));
+    const isLetter = letterHits > binaryHits;
+    classState.format = isLetter ? 'B' : 'A';
+    classState.itemCount = itemCols.length;
+    classState.itemLabels = itemCols.map((c, i) => headers[c] || `Q${i + 1}`);
+    classState.answerKey = isLetter
+      ? itemCols.map((c, i) => {
+          const fromRow = keyRow ? String(keyRow[c] ?? '').trim().toUpperCase() : '';
+          if (['A', 'B', 'C', 'D'].includes(fromRow)) return fromRow;
+          return items[i]?.answerKey || 'A';
+        })
+      : [];
+    classState.students = bodyRows.map(r => {
+      const responses = itemCols.map(c => {
+        const raw = String(r[c] ?? '').trim().toUpperCase();
+        if (isLetter) return raw;
+        if (raw === '1' || raw === 'TRUE' || raw === 'T' || raw === '✓' || raw === '✔' || raw === 'C') return 1;
+        if (isNumericVal(raw) && parseNumericVal(raw) > 0) return 1;
+        return 0;
+      });
+      return { name: String(r[nameCol]).trim(), responses, score: 0 };
+    });
+    detectedColDesc = `Format ${classState.format} (${isLetter ? 'Letters A–D' : 'Binary 1/0'}) • Name: "${headers[nameCol]}" • ${itemCols.length} Item Columns (${classState.itemLabels[0]}–${classState.itemLabels[classState.itemLabels.length - 1]})`;
+  } else {
+    // Format C: Find a genuinely numeric score column
+    const numericCols = [];
+    if (totalCol >= 0) numericCols.push(totalCol);
+    candidateCols.forEach(c => numericCols.push(c));
+
+    let chosenCol = -1;
+    for (const c of numericCols) {
+      const sample = bodyRows.slice(0, 25).map(r => r[c]).filter(v => String(v ?? '').trim() !== '');
+      if (!sample.length) continue;
+      const numHits = sample.filter(isNumericVal).length;
+      if (numHits / sample.length >= 0.6) { chosenCol = c; break; }
+    }
+    if (chosenCol < 0) {
+      return showToast('Could not find any numeric score or item columns. Try switching sheets or clicking Transpose.', 'error');
+    }
+
+    classState.format = 'C';
+    const scores = bodyRows.map(r => isNumericVal(r[chosenCol]) ? parseNumericVal(r[chosenCol]) : 0);
+    classState.itemCount = Math.max(items.length || 0, Math.ceil(Math.max(...scores, 10)));
+    classState.itemLabels = [];
+    classState.answerKey = [];
+    classState.students = bodyRows.map((r, i) => ({ name: String(r[nameCol]).trim(), responses: [], score: scores[i] }));
+    detectedColDesc = `Format C (Total Scores) • Name: "${headers[nameCol]}" • Score Column: "${headers[chosenCol]}"`;
+  }
+
+  document.getElementById('sheetControlsBar').classList.remove('hidden');
+  document.getElementById('detectedMetaText').innerHTML = `✅ <b>${esc(sourceName)}</b> — ${esc(detectedColDesc)}`;
+  document.getElementById('maxScoreWrap').classList.toggle('hidden', classState.format !== 'C');
+  document.getElementById('maxScoreInput').value = classState.itemCount;
+  renderAnswerKeyBar();
+  computeAndRenderClassAnalytics();
+  showToast(`Analyzed ${classState.students.length} students!`, 'success');
 }
 
 function downloadScoreTemplate() {
   const wb = XLSX.utils.book_new();
   const sA = [
     ['Student Name', 'Q1', 'Q2', 'Q3', 'Q4', 'Q5'],
-    ['Student 1', 1, 1, 1, 1, 0],
-    ['Student 2', 1, 0, 1, 0, 0],
-    ['Student 3', 1, 1, 1, 1, 1]
+    ['Alvarez, Mia', 1, 1, 1, 1, 0],
+    ['Bautista, Liam', 1, 0, 1, 0, 0],
+    ['Castillo, Sofia', 1, 1, 1, 1, 1]
   ];
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sA), 'Format A (Binary 1-0)');
+
   const sB = [
     ['Student Name', 'Q1', 'Q2', 'Q3', 'Q4', 'Q5'],
     ['Answer Key', 'B', 'C', 'D', 'D', 'A'],
-    ['Student 1', 'B', 'C', 'D', 'D', 'B'],
-    ['Student 2', 'B', 'A', 'D', 'B', 'C']
+    ['Alvarez, Mia', 'B', 'C', 'D', 'D', 'B'],
+    ['Bautista, Liam', 'B', 'A', 'D', 'B', 'C']
   ];
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sB), 'Format B (Letters A-D)');
+
+  const sC = [
+    ['Student Name', 'Total Score'],
+    ['Alvarez, Mia', 18],
+    ['Bautista, Liam', 14],
+    ['Castillo, Sofia', 20]
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sC), 'Format C (Total Only)');
+
   XLSX.writeFile(wb, 'Class_Scores_Template.xlsx');
   showToast('Downloaded Class_Scores_Template.xlsx!', 'success');
 }
 
 function loadSampleClassData() {
   const K = 10;
-  const keys = ['B','C','D','D','A','B','A','C','D','B'];
+  const keys = ['B', 'C', 'D', 'D', 'A', 'B', 'A', 'C', 'D', 'B'];
   const names = [
-    'Alvarez, Mia','Bautista, Liam','Castillo, Sofia','Dela Cruz, Noah','Evangelista, Chloe',
-    'Fernandez, Lucas','Garcia, Hannah','Hernandez, Ethan','Ignacio, Zoe','Jimenez, Mateo',
-    'Lim, Avery','Mendoza, Gabriel','Navarro, Ella','Ocampo, Daniel','Pascual, Grace',
-    'Quinto, Nathan','Ramos, Aria','Santos, Elijah','Torres, Maya','Uy, Caleb',
-    'Valdez, Layla','Villanueva, Owen','Yap, Scarlett','Zamora, Isaac','Aquino, Nora',
-    'Borja, Leo','Corpuz, Riley','Diaz, Julian','Espino, Hazel','Flores, Mason'
+    'Alvarez, Mia', 'Bautista, Liam', 'Castillo, Sofia', 'Dela Cruz, Noah', 'Evangelista, Chloe',
+    'Fernandez, Lucas', 'Garcia, Hannah', 'Hernandez, Ethan', 'Ignacio, Zoe', 'Jimenez, Mateo',
+    'Lim, Avery', 'Mendoza, Gabriel', 'Navarro, Ella', 'Ocampo, Daniel', 'Pascual, Grace',
+    'Quinto, Nathan', 'Ramos, Aria', 'Santos, Elijah', 'Torres, Maya', 'Uy, Caleb',
+    'Valdez, Layla', 'Villanueva, Owen', 'Yap, Scarlett', 'Zamora, Isaac', 'Aquino, Nora',
+    'Borja, Leo', 'Corpuz, Riley', 'Diaz, Julian', 'Espino, Hazel', 'Flores, Mason'
   ];
-  // Item difficulty profile (mix of easy, ideal, hard, and 1 poor discriminator)
   const probsHigh = [0.95, 0.85, 0.90, 0.88, 0.45, 0.92, 0.80, 0.88, 0.35, 0.90];
   const probsLow  = [0.85, 0.35, 0.45, 0.30, 0.55, 0.40, 0.25, 0.35, 0.20, 0.38];
-  const letters = ['A','B','C','D'];
+  const letters = ['A', 'B', 'C', 'D'];
 
-  // Deterministic pseudo-random for reproducible realistic class
   let seed = 42;
   const rand = () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; };
 
@@ -1440,11 +1607,15 @@ function loadSampleClassData() {
     return { name, responses, score: 0 };
   });
 
+  lastScoreWorkbook = null;
+  lastRawScoreRows = null;
+  document.getElementById('sheetControlsBar').classList.add('hidden');
   classState.format = 'B';
   classState.itemCount = K;
-  classState.itemLabels = Array.from({ length: K }, (_, i) => `Q${i+1}`);
+  classState.itemLabels = Array.from({ length: K }, (_, i) => `Q${i + 1}`);
   classState.answerKey = keys;
   classState.students = students;
+  document.getElementById('maxScoreWrap').classList.add('hidden');
   renderAnswerKeyBar();
   computeAndRenderClassAnalytics();
   showToast('Loaded 30-student sample dataset (10 items, Format B)!', 'success');
@@ -1455,10 +1626,10 @@ function renderAnswerKeyBar() {
   if (classState.format !== 'B') { bar.classList.add('hidden'); return; }
   bar.classList.remove('hidden');
   document.getElementById('answerKeyInputs').innerHTML = classState.answerKey.map((k, i) => `
-    <div class="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-amber-300 text-xs">
-      <span class="font-bold text-slate-600">${esc(classState.itemLabels[i])}:</span>
-      <select onchange="classState.answerKey[${i}]=this.value; computeAndRenderClassAnalytics();" class="font-bold text-indigo-700 bg-transparent focus:outline-none">
-        ${['A','B','C','D'].map(o => `<option value="${o}" ${k===o?'selected':''}>${o}</option>`).join('')}
+    <div class="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-pink-300 text-xs">
+      <span class="font-bold text-pink-900">${esc(classState.itemLabels[i])}:</span>
+      <select onchange="classState.answerKey[${i}]=this.value; computeAndRenderClassAnalytics();" class="font-bold text-pink-600 bg-transparent focus:outline-none">
+        ${['A', 'B', 'C', 'D'].map(o => `<option value="${o}" ${k === o ? 'selected' : ''}>${o}</option>`).join('')}
       </select>
     </div>
   `).join('');
@@ -1487,32 +1658,29 @@ function computeAndRenderClassAnalytics() {
   document.getElementById('tab4Content').classList.remove('hidden');
 
   const N = classState.students.length;
-  const K = classState.itemCount;
+  const K = Math.max(1, classState.itemCount);
   const passPct = parseFloat(document.getElementById('passPctInput').value) || 75;
   const passScore = (passPct / 100) * K;
 
-  // Score each student
   classState.students.forEach(s => {
-    if (classState.format === 'A') s.score = s.responses.reduce((a,b) => a + (b === 1 ? 1 : 0), 0);
+    if (classState.format === 'A') s.score = s.responses.reduce((a, b) => a + (b === 1 ? 1 : 0), 0);
     else if (classState.format === 'B') s.score = s.responses.reduce((a, r, j) => a + (r === classState.answerKey[j] ? 1 : 0), 0);
   });
 
   const scores = classState.students.map(s => s.score);
-  const sorted = [...scores].sort((a,b) => a - b);
-  const mean = scores.reduce((a,b) => a + b, 0) / N;
+  const sorted = [...scores].sort((a, b) => a - b);
+  const mean = scores.reduce((a, b) => a + b, 0) / N;
   const mps = (mean / K) * 100;
   const median = quantile(sorted, 0.5);
   const q1 = quantile(sorted, 0.25);
   const q3 = quantile(sorted, 0.75);
   const iqr = q3 - q1;
 
-  // Mode
   const freq = {};
   scores.forEach(x => freq[x] = (freq[x] || 0) + 1);
   const maxF = Math.max(...Object.values(freq));
   const modes = Object.keys(freq).filter(k => freq[k] === maxF).map(Number);
 
-  // Sample Variance & SD
   const variance = N > 1 ? scores.reduce((a, x) => a + Math.pow(x - mean, 2), 0) / (N - 1) : 0;
   const sd = Math.sqrt(variance);
   const min = sorted[0], max = sorted[N - 1], range = max - min;
@@ -1520,19 +1688,17 @@ function computeAndRenderClassAnalytics() {
   const passRate = (passingCount / N) * 100;
   const skewness = sd > 0 ? (3 * (mean - median)) / sd : 0;
 
-  // Rank & Upper/Lower 27%
-  const ranked = [...classState.students].sort((a,b) => b.score - a.score);
+  const ranked = [...classState.students].sort((a, b) => b.score - a.score);
   const n27 = Math.max(1, Math.round(0.27 * N));
   const upperSet = new Set(ranked.slice(0, n27));
   const lowerSet = new Set(ranked.slice(N - n27));
 
-  // Item Analysis & KR-20
   let sumPQ = 0;
   const itemAnalysis = [];
   if (classState.format !== 'C') {
     for (let j = 0; j < K; j++) {
       let totalCorrect = 0, uCorrect = 0, lCorrect = 0;
-      const dist = { A:{u:0,l:0,t:0}, B:{u:0,l:0,t:0}, C:{u:0,l:0,t:0}, D:{u:0,l:0,t:0} };
+      const dist = { A: { u: 0, l: 0, t: 0 }, B: { u: 0, l: 0, t: 0 }, C: { u: 0, l: 0, t: 0 }, D: { u: 0, l: 0, t: 0 } };
       classState.students.forEach(s => {
         const isCorrect = classState.format === 'A' ? s.responses[j] === 1 : s.responses[j] === classState.answerKey[j];
         if (isCorrect) totalCorrect++;
@@ -1549,9 +1715,7 @@ function computeAndRenderClassAnalytics() {
       });
       const p = totalCorrect / N;
       sumPQ += p * (1 - p);
-      const pU = uCorrect / n27;
-      const pL = lCorrect / n27;
-      const D = pU - pL;
+      const D = (uCorrect / n27) - (lCorrect / n27);
       const diffLabel = p >= 0.85 ? 'Very Easy' : p >= 0.70 ? 'Easy' : p >= 0.30 ? 'Moderate (Ideal)' : p >= 0.15 ? 'Difficult' : 'Very Difficult';
       const discLabel = D >= 0.40 ? 'Very Good' : D >= 0.30 ? 'Good' : D >= 0.20 ? 'Marginal' : D >= 0 ? 'Poor' : 'Negative (Flawed)';
       let decision = 'Retain';
@@ -1566,7 +1730,6 @@ function computeAndRenderClassAnalytics() {
   classState.stats = { N, K, mean, mps, median, modes, sd, variance, min, max, range, q1, q3, iqr, passRate, passingCount, passPct, kr20, skewness, n27, upperSet, lowerSet };
   classState.itemAnalysis = itemAnalysis;
 
-  // Format Badge & Skewness Banner
   document.getElementById('scoreFormatBadge').innerHTML = `Loaded: <b>${N} students</b> • <b>${K} items</b> • Format ${classState.format}`;
   const skewText = skewness < -0.5
     ? `<b>Negatively Skewed (${skewness.toFixed(2)})</b> — Most students scored on the higher end; strong class mastery or relatively easy test.`
@@ -1575,44 +1738,44 @@ function computeAndRenderClassAnalytics() {
     : `<b>Approximately Symmetric (${skewness.toFixed(2)})</b> — Scores are evenly balanced around the mean.`;
   document.getElementById('skewBanner').innerHTML = `📈 <b>Distribution Shape:</b> ${skewText}`;
 
-  // Stats Cards
   const krLabel = kr20 === null ? 'N/A' : kr20.toFixed(2) + (kr20 >= 0.8 ? ' (High)' : kr20 >= 0.7 ? ' (Good)' : kr20 >= 0.5 ? ' (Moderate)' : ' (Low)');
   const cards = [
-    ['Students (N) / Items (K)', `${N} / ${K}`, 'text-slate-900'],
-    ['Mean (x̄) & MPS', `${mean.toFixed(2)} (${mps.toFixed(1)}%)`, 'text-indigo-700'],
-    ['Median / Mode', `${median.toFixed(1)} / ${modes.slice(0,2).join(', ')}`, 'text-slate-900'],
-    ['SD (s) / Variance (s²)', `${sd.toFixed(2)} / ${variance.toFixed(2)}`, 'text-slate-900'],
-    ['Range / IQR', `${min}–${max} (R=${range}) • IQR=${iqr.toFixed(1)}`, 'text-slate-900'],
-    ['Mastery & KR-20', `${passRate.toFixed(1)}% Pass • KR20: ${krLabel}`, passRate >= 75 ? 'text-emerald-700' : 'text-amber-700']
+    ['Students (N) / Items (K)', `${N} / ${K}`, 'text-pink-950'],
+    ['Mean (x̄) & MPS', `${mean.toFixed(2)} (${mps.toFixed(1)}%)`, 'text-pink-600'],
+    ['Median / Mode', `${median.toFixed(1)} / ${modes.slice(0, 2).join(', ')}`, 'text-pink-950'],
+    ['SD (s) / Variance (s²)', `${sd.toFixed(2)} / ${variance.toFixed(2)}`, 'text-pink-950'],
+    ['Range / IQR', `${min}–${max} (R=${range}) • IQR=${iqr.toFixed(1)}`, 'text-pink-950'],
+    ['Mastery & KR-20', `${passRate.toFixed(1)}% Pass • KR20: ${krLabel}`, passRate >= 75 ? 'text-emerald-700' : 'text-rose-700']
   ];
-  document.getElementById('statsCardsGrid').innerHTML = cards.map(([t,v,c]) => `
-    <div class="card p-3.5"><div class="text-[11px] font-semibold text-slate-500">${t}</div><div class="text-sm font-extrabold mt-1 ${c}">${v}</div></div>
+  document.getElementById('statsCardsGrid').innerHTML = cards.map(([t, v, c]) => `
+    <div class="card p-3.5"><div class="text-[11px] font-semibold text-pink-700">${t}</div><div class="text-sm font-extrabold mt-1 ${c}">${v}</div></div>
   `).join('');
 
-  renderCharts();
+  document.getElementById('scatterCard').classList.toggle('hidden', classState.format === 'C');
   renderItemAnalysisTable();
   renderRoster();
+  requestAnimationFrame(() => renderCharts());
 }
 
 function setHistMode(m) {
   classState.histMode = m;
-  document.getElementById('histExactBtn').className = m==='exact' ? 'px-2 py-1 rounded bg-white shadow font-bold text-indigo-700' : 'px-2 py-1 rounded text-slate-600 font-semibold';
-  document.getElementById('histGroupedBtn').className = m==='grouped' ? 'px-2 py-1 rounded bg-white shadow font-bold text-indigo-700' : 'px-2 py-1 rounded text-slate-600 font-semibold';
+  document.getElementById('histExactBtn').className = m === 'exact' ? 'px-2 py-1 rounded bg-white shadow font-bold text-pink-700' : 'px-2 py-1 rounded text-pink-800 font-semibold';
+  document.getElementById('histGroupedBtn').className = m === 'grouped' ? 'px-2 py-1 rounded bg-white shadow font-bold text-pink-700' : 'px-2 py-1 rounded text-pink-800 font-semibold';
   renderCharts();
 }
 
 function renderCharts() {
+  if (typeof Chart === 'undefined' || !classState.stats) return;
   const { K, passPct } = classState.stats;
   const scores = classState.students.map(s => s.score);
   const passScore = (passPct / 100) * K;
 
-  // Histogram
   let labels = [], counts = [], colors = [];
   if (classState.histMode === 'exact' && K <= 30) {
     for (let x = 0; x <= K; x++) {
       labels.push(String(x));
       counts.push(scores.filter(s => Math.round(s) === x).length);
-      colors.push(x >= passScore ? 'rgba(79,70,229,0.82)' : 'rgba(244,63,94,0.75)');
+      colors.push(x >= passScore ? 'rgba(219, 39, 119, 0.85)' : 'rgba(249, 168, 212, 0.90)');
     }
   } else {
     const binSize = Math.max(1, Math.ceil(K / 6));
@@ -1620,17 +1783,26 @@ function renderCharts() {
       const end = Math.min(K, start + binSize - 1);
       labels.push(`${start}–${end}`);
       counts.push(scores.filter(s => s >= start && s <= end).length);
-      colors.push(end >= passScore ? 'rgba(79,70,229,0.82)' : 'rgba(244,63,94,0.75)');
+      colors.push(end >= passScore ? 'rgba(219, 39, 119, 0.85)' : 'rgba(249, 168, 212, 0.90)');
     }
   }
+
   if (histChartInst) histChartInst.destroy();
   histChartInst = new Chart(document.getElementById('histChart'), {
     type: 'bar',
     data: { labels, datasets: [{ label: 'Students', data: counts, backgroundColor: colors, borderRadius: 6 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { title: { display: true, text: 'Score' } },
+        y: { beginAtZero: true, ticks: { precision: 0 }, title: { display: true, text: 'No. of Students' } }
+      }
+    }
   });
 
-  // Scatter Plot (p vs D)
+  if (classState.format === 'C') return;
   if (scatterChartInst) scatterChartInst.destroy();
   const ia = classState.itemAnalysis;
   const mkPts = dec => ia.filter(x => x.decision === dec).map(x => ({ x: Number(x.p.toFixed(2)), y: Number(x.D.toFixed(2)), label: x.label }));
@@ -1640,11 +1812,12 @@ function renderCharts() {
       datasets: [
         { label: 'Retain', data: mkPts('Retain'), backgroundColor: '#10b981', pointRadius: 6 },
         { label: 'Revise', data: mkPts('Revise'), backgroundColor: '#f59e0b', pointRadius: 6 },
-        { label: 'Reject', data: mkPts('Reject'), backgroundColor: '#f43f5e', pointRadius: 6 }
+        { label: 'Reject', data: mkPts('Reject'), backgroundColor: '#e11d48', pointRadius: 6 }
       ]
     },
     options: {
-      responsive: true, maintainAspectRatio: false,
+      responsive: true,
+      maintainAspectRatio: false,
       plugins: { tooltip: { callbacks: { label: ctx => `${ctx.raw.label}: p=${ctx.raw.x}, D=${ctx.raw.y}` } } },
       scales: {
         x: { min: 0, max: 1, title: { display: true, text: 'Difficulty Index (p)' } },
@@ -1656,14 +1829,14 @@ function renderCharts() {
 
 function setIaFilter(f) {
   classState.iaFilter = f;
-  ['all','Retain','Revise','Reject'].forEach(k => {
-    document.getElementById('iaf_'+k).className = k === f ? 'px-2.5 py-1 rounded-full bg-slate-800 text-white font-semibold' : 'px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-semibold';
+  ['all', 'Retain', 'Revise', 'Reject'].forEach(k => {
+    document.getElementById('iaf_' + k).className = k === f ? 'px-2.5 py-1 rounded-full bg-pink-700 text-white font-semibold' : 'px-2.5 py-1 rounded-full bg-pink-100 text-pink-800 font-semibold';
   });
   renderItemAnalysisTable();
 }
 
 function toggleDistractor(idx) {
-  const row = document.getElementById('distRow_'+idx);
+  const row = document.getElementById('distRow_' + idx);
   if (row) row.classList.toggle('hidden');
 }
 
@@ -1675,21 +1848,23 @@ function renderItemAnalysisTable() {
 
   const rows = classState.itemAnalysis.filter(x => classState.iaFilter === 'all' || x.decision === classState.iaFilter);
   document.getElementById('itemAnalysisBody').innerHTML = rows.map(x => {
-    const stem = items[x.idx]?.stem ? esc(items[x.idx].stem).slice(0, 70) + (items[x.idx].stem.length > 70 ? '…' : '') : '<span class="text-slate-400">No linked stem in Tab 1</span>';
+    const stem = items[x.idx]?.stem
+      ? esc(items[x.idx].stem).slice(0, 70) + (items[x.idx].stem.length > 70 ? '…' : '')
+      : '<span class="text-pink-400">No linked stem in Tab 1</span>';
     const distHtml = classState.format === 'B' ? `
-      <tr id="distRow_${x.idx}" class="hidden bg-slate-50">
-        <td colspan="8" class="p-3 border">
-          <div class="text-[11px] font-bold text-slate-700 mb-1.5">Distractor Analysis for ${esc(x.label)} (Key: ${esc(x.key)})</div>
+      <tr id="distRow_${x.idx}" class="hidden bg-pink-50/60">
+        <td colspan="8" class="p-3 border border-pink-200">
+          <div class="text-[11px] font-bold text-pink-900 mb-1.5">Distractor Analysis for ${esc(x.label)} (Key: ${esc(x.key)})</div>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            ${['A','B','C','D'].map(opt => {
+            ${['A', 'B', 'C', 'D'].map(opt => {
               const d = x.dist[opt];
               const isKey = opt === x.key;
               const pct = ((d.t / classState.stats.N) * 100).toFixed(0);
               const flag = !isKey && d.u > d.l ? '⚠️ Misleading (U>L)' : !isKey && d.t / classState.stats.N < 0.05 ? '⚠️ Non-functioning (<5%)' : isKey ? '✓ Correct Key' : 'OK';
-              return `<div class="p-2 rounded border ${isKey?'bg-emerald-50 border-emerald-300':'bg-white border-slate-200'}">
+              return `<div class="p-2 rounded border ${isKey ? 'bg-emerald-50 border-emerald-300' : 'bg-white border-pink-200'}">
                 <div class="font-bold">${opt} (${pct}%)</div>
-                <div class="text-[11px] text-slate-600">Upper: ${d.u} | Lower: ${d.l}</div>
-                <div class="text-[10px] font-semibold mt-0.5 ${flag.startsWith('⚠')?'text-rose-600':'text-emerald-700'}">${flag}</div>
+                <div class="text-[11px] text-pink-800">Upper: ${d.u} | Lower: ${d.l}</div>
+                <div class="text-[10px] font-semibold mt-0.5 ${flag.startsWith('⚠') ? 'text-rose-600' : 'text-emerald-700'}">${flag}</div>
               </div>`;
             }).join('')}
           </div>
@@ -1697,16 +1872,16 @@ function renderItemAnalysisTable() {
       </tr>` : '';
 
     return `
-      <tr class="hover:bg-slate-50">
-        <td class="p-2 border text-center font-bold">${esc(x.label)}</td>
-        <td class="p-2 border">${stem}</td>
-        <td class="p-2 border text-center">${x.uCorrect} / ${x.n27}</td>
-        <td class="p-2 border text-center">${x.lCorrect} / ${x.n27}</td>
-        <td class="p-2 border text-center"><b>${x.p.toFixed(2)}</b><div class="text-[10px] text-slate-500">${x.diffLabel}</div></td>
-        <td class="p-2 border text-center"><b>${x.D.toFixed(2)}</b><div class="text-[10px] text-slate-500">${x.discLabel}</div></td>
-        <td class="p-2 border text-center">${decisionBadge(x.decision)}</td>
-        <td class="p-2 border text-center no-print">
-          ${classState.format==='B' ? `<button onclick="toggleDistractor(${x.idx})" class="text-indigo-600 hover:underline font-semibold">Inspect</button>` : '<span class="text-slate-400">N/A</span>'}
+      <tr class="hover:bg-pink-50/50">
+        <td class="p-2 border border-pink-200 text-center font-bold">${esc(x.label)}</td>
+        <td class="p-2 border border-pink-200">${stem}</td>
+        <td class="p-2 border border-pink-200 text-center">${x.uCorrect} / ${x.n27}</td>
+        <td class="p-2 border border-pink-200 text-center">${x.lCorrect} / ${x.n27}</td>
+        <td class="p-2 border border-pink-200 text-center"><b>${x.p.toFixed(2)}</b><div class="text-[10px] text-pink-700">${x.diffLabel}</div></td>
+        <td class="p-2 border border-pink-200 text-center"><b>${x.D.toFixed(2)}</b><div class="text-[10px] text-pink-700">${x.discLabel}</div></td>
+        <td class="p-2 border border-pink-200 text-center">${decisionBadge(x.decision)}</td>
+        <td class="p-2 border border-pink-200 text-center no-print">
+          ${classState.format === 'B' ? `<button onclick="toggleDistractor(${x.idx})" class="text-pink-600 hover:underline font-semibold">Inspect</button>` : '<span class="text-pink-300">N/A</span>'}
         </td>
       </tr>${distHtml}`;
   }).join('');
@@ -1718,30 +1893,30 @@ function renderRoster() {
   const q = (document.getElementById('rosterSearch').value || '').toLowerCase();
   const sortMode = document.getElementById('rosterSort').value;
 
-  const rankedAll = [...classState.students].sort((a,b) => b.score - a.score);
+  const rankedAll = [...classState.students].sort((a, b) => b.score - a.score);
   const rankMap = new Map(rankedAll.map((s, i) => [s, i + 1]));
 
   let list = classState.students.filter(s => s.name.toLowerCase().includes(q));
-  if (sortMode === 'scoreDesc') list.sort((a,b) => b.score - a.score);
-  else if (sortMode === 'scoreAsc') list.sort((a,b) => a.score - b.score);
-  else list.sort((a,b) => a.name.localeCompare(b.name));
+  if (sortMode === 'scoreDesc') list.sort((a, b) => b.score - a.score);
+  else if (sortMode === 'scoreAsc') list.sort((a, b) => a.score - b.score);
+  else list.sort((a, b) => a.name.localeCompare(b.name));
 
   document.getElementById('rosterBody').innerHTML = list.map(s => {
     const pct = (s.score / K) * 100;
     const z = sd > 0 ? (s.score - mean) / sd : 0;
-    const grp = upperSet.has(s) ? '<span class="badge bg-indigo-100 text-indigo-800">Upper 27%</span>'
+    const grp = upperSet.has(s) ? '<span class="badge bg-pink-600 text-white">Upper 27%</span>'
               : lowerSet.has(s) ? '<span class="badge bg-rose-100 text-rose-800">Lower 27%</span>'
-              : '<span class="text-slate-400">Middle</span>';
+              : '<span class="text-pink-400">Middle</span>';
     const pass = s.score >= passScore;
     return `
-      <tr class="hover:bg-slate-50">
-        <td class="p-2 border text-center font-bold">${rankMap.get(s)}</td>
-        <td class="p-2 border font-semibold">${esc(s.name)}</td>
-        <td class="p-2 border text-center font-bold">${s.score} / ${K}</td>
-        <td class="p-2 border text-center">${pct.toFixed(1)}%</td>
-        <td class="p-2 border text-center">${z >= 0 ? '+' : ''}${z.toFixed(2)}</td>
-        <td class="p-2 border text-center">${grp}</td>
-        <td class="p-2 border text-center"><span class="badge ${pass?'bg-emerald-100 text-emerald-800':'bg-rose-100 text-rose-800'}">${pass?'Mastered':'Needs Support'}</span></td>
+      <tr class="hover:bg-pink-50/50">
+        <td class="p-2 border border-pink-200 text-center font-bold">${rankMap.get(s)}</td>
+        <td class="p-2 border border-pink-200 font-semibold">${esc(s.name)}</td>
+        <td class="p-2 border border-pink-200 text-center font-bold">${s.score} / ${K}</td>
+        <td class="p-2 border border-pink-200 text-center">${pct.toFixed(1)}%</td>
+        <td class="p-2 border border-pink-200 text-center">${z >= 0 ? '+' : ''}${z.toFixed(2)}</td>
+        <td class="p-2 border border-pink-200 text-center">${grp}</td>
+        <td class="p-2 border border-pink-200 text-center"><span class="badge ${pass ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${pass ? 'Mastered' : 'Needs Support'}</span></td>
       </tr>`;
   }).join('');
 }
@@ -1751,7 +1926,6 @@ function exportClassAnalysisExcel() {
   const st = classState.stats;
   const wb = XLSX.utils.book_new();
 
-  // Sheet 1: Class Summary
   const s1 = [
     ['Metric', 'Value'],
     ['Students (N)', st.N], ['Items (K)', st.K], ['Mean', st.mean.toFixed(2)],
@@ -1765,19 +1939,17 @@ function exportClassAnalysisExcel() {
   ];
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s1), 'Class Summary');
 
-  // Sheet 2: Item Analysis
   const s2 = [['Item', 'Upper 27% Correct', 'Lower 27% Correct', 'Difficulty (p)', 'Difficulty Interpretation', 'Discrimination (D)', 'Discrimination Interpretation', 'Decision']];
   classState.itemAnalysis.forEach(x => s2.push([x.label, x.uCorrect, x.lCorrect, x.p.toFixed(2), x.diffLabel, x.D.toFixed(2), x.discLabel, x.decision]));
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s2), 'Item Analysis');
 
-  // Sheet 3: Student Roster
-  const ranked = [...classState.students].sort((a,b) => b.score - a.score);
+  const ranked = [...classState.students].sort((a, b) => b.score - a.score);
   const passScore = (st.passPct / 100) * st.K;
   const s3 = [['Rank', 'Student Name', 'Score', 'Percentage', 'Z-Score', 'Group', 'Status']];
   ranked.forEach((s, i) => {
     const z = st.sd > 0 ? (s.score - st.mean) / st.sd : 0;
     const grp = st.upperSet.has(s) ? 'Upper 27%' : st.lowerSet.has(s) ? 'Lower 27%' : 'Middle';
-    s3.push([i+1, s.name, s.score, ((s.score/st.K)*100).toFixed(1)+'%', z.toFixed(2), grp, s.score >= passScore ? 'Mastered' : 'Needs Support']);
+    s3.push([i + 1, s.name, s.score, ((s.score / st.K) * 100).toFixed(1) + '%', z.toFixed(2), grp, s.score >= passScore ? 'Mastered' : 'Needs Support']);
   });
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s3), 'Student Roster');
 
